@@ -7,9 +7,9 @@
     "dev": "npm run clean && (ulimit -n 1048575 || true) && WATCHPACK_POLLING=true NEXT_DIST_DIR=.next-turbo next dev --turbopack",
     "dev:no-clean": "(ulimit -n 1048575 || true) && WATCHPACK_POLLING=true NEXT_DIST_DIR=.next-turbo next dev --turbopack",
     "dev:reset": "npm run dev",
-    "build": "NEXT_DIST_DIR=.next-turbo next build --turbopack",
+    "build": "next build --turbopack",
     "build:clean": "npm run clean && npm run build",
-    "start": "NEXT_DIST_DIR=.next-turbo next start",
+    "start": "next start",
     "lint": "eslint ."
   },
   "dependencies": {
