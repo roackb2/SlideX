@@ -1,0 +1,35 @@
+{
+  "name": "animark-motiondoc",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "clean": "node -e \"const fs=require('fs'); for (const p of ['.next','.next-turbo','tsconfig.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true})\"",
+    "dev": "npm run clean && (ulimit -n 1048575 || true) && WATCHPACK_POLLING=true NEXT_DIST_DIR=.next-turbo next dev --turbopack",
+    "dev:no-clean": "(ulimit -n 1048575 || true) && WATCHPACK_POLLING=true NEXT_DIST_DIR=.next-turbo next dev --turbopack",
+    "dev:reset": "npm run dev",
+    "build": "NEXT_DIST_DIR=.next-turbo next build --turbopack",
+    "build:clean": "npm run clean && npm run build",
+    "start": "NEXT_DIST_DIR=.next-turbo next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "framer-motion": "11.18.2",
+    "lucide-react": "1.16.0",
+    "next": "16.2.6",
+    "next-themes": "0.4.6",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "3.3.5",
+    "@tailwindcss/postcss": "4.3.0",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.2.6",
+    "postcss": "8.5.14",
+    "tailwindcss": "4.3.0",
+    "typescript": "5.9.3"
+  }
+}
