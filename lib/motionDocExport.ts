@@ -1,5 +1,5 @@
 import { parseMotionDoc, type MotionDocBlock } from "@/lib/motionDocParser";
-import { isAnimarkIconName, lucideIconPaths } from "@/lib/lucideIconRegistry";
+import { isSlideXIconName, lucideIconPaths } from "@/lib/lucideIconRegistry";
 import { motionDocExportRuntime } from "@/lib/motionDocExportRuntime";
 import { motionDocExportStyles } from "@/lib/motionDocExportStyles";
 
@@ -305,7 +305,7 @@ function fitProp(value: string | number | undefined) {
 }
 
 function renderLucideIcon(name: string) {
-  if (!isAnimarkIconName(name)) {
+  if (!isSlideXIconName(name)) {
     return "";
   }
 
@@ -355,5 +355,5 @@ export function slugifyFilename(name: string) {
   return name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "animark-deck";
+    .replace(/^-+|-+$/g, "") || "slidex-deck";
 }

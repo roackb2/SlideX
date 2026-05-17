@@ -2,7 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { motion, type MotionProps } from "framer-motion";
-import { isAnimarkIconName, lucideIconPaths } from "@/lib/lucideIconRegistry";
+import { isSlideXIconName, lucideIconPaths } from "@/lib/lucideIconRegistry";
 
 type EnterAnimation = "fadeIn" | "fadeUp" | "zoomIn" | "slideLeft";
 type ImageFit = NonNullable<CSSProperties["objectFit"]>;
@@ -391,7 +391,7 @@ function alignYToFlex(value: "top" | "center" | "bottom") {
 }
 
 function LucideSvg({ name }: { name: string }) {
-  if (!isAnimarkIconName(name)) {
+  if (!isSlideXIconName(name)) {
     return null;
   }
 

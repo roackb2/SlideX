@@ -1,4 +1,4 @@
-export const animarkIconNames = [
+export const slidexIconNames = [
   "Sparkles",
   "Zap",
   "Target",
@@ -53,13 +53,13 @@ export const animarkIconNames = [
   "SlidersHorizontal"
 ] as const;
 
-export type AnimarkIconName = (typeof animarkIconNames)[number];
+export type SlideXIconName = (typeof slidexIconNames)[number];
 
-export const lucideIconLabels: Record<AnimarkIconName, string> = Object.fromEntries(
-  animarkIconNames.map((name) => [name, name.replace(/([a-z0-9])([A-Z])/g, "$1 $2")])
-) as Record<AnimarkIconName, string>;
+export const lucideIconLabels: Record<SlideXIconName, string> = Object.fromEntries(
+  slidexIconNames.map((name) => [name, name.replace(/([a-z0-9])([A-Z])/g, "$1 $2")])
+) as Record<SlideXIconName, string>;
 
-export const lucideIconPaths: Record<AnimarkIconName, string[]> = {
+export const lucideIconPaths: Record<SlideXIconName, string[]> = {
   Sparkles: [
     "m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z",
     "M5 3v4",
@@ -125,6 +125,6 @@ export const lucideIconPaths: Record<AnimarkIconName, string[]> = {
   SlidersHorizontal: ["M21 4h-7", "M10 4H3", "M21 12h-9", "M8 12H3", "M21 20h-5", "M12 20H3", "circle 12 4 2", "circle 10 12 2", "circle 14 20 2"]
 };
 
-export function isAnimarkIconName(value: string): value is AnimarkIconName {
-  return animarkIconNames.includes(value as AnimarkIconName);
+export function isSlideXIconName(value: string): value is SlideXIconName {
+  return slidexIconNames.includes(value as SlideXIconName);
 }

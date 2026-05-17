@@ -1,4 +1,4 @@
-# Animark MotionDoc
+# SlideX
 
 MotionDoc is a document-to-motion prototype for validating MDX as a motion document format. It now includes a product intro website, documentation resources, a reusable template library, and a Studio editor with live Framer Motion preview.
 

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search as SearchIcon } from "lucide-react";
-import { animarkIconNames, isAnimarkIconName, lucideIconLabels, lucideIconPaths } from "@/lib/lucideIconRegistry";
+import { slidexIconNames, isSlideXIconName, lucideIconLabels, lucideIconPaths } from "@/lib/lucideIconRegistry";
 
 export function IconPicker({
   value,
@@ -16,10 +16,10 @@ export function IconPicker({
     const search = query.trim().toLowerCase();
 
     if (!search) {
-      return animarkIconNames;
+      return slidexIconNames;
     }
 
-    return animarkIconNames.filter((name) => {
+    return slidexIconNames.filter((name) => {
       const label = lucideIconLabels[name].toLowerCase();
       return name.toLowerCase().includes(search) || label.includes(search);
     });
@@ -74,7 +74,7 @@ export function IconPicker({
           <div className="col-span-4 px-2 py-6 text-center text-[10px] text-neutral-400">No icons found</div>
         ) : null}
       </div>
-      {value && !isAnimarkIconName(value) ? (
+      {value && !isSlideXIconName(value) ? (
         <span className="text-[10px] leading-relaxed text-amber-400/80">This icon is not in the local export registry yet.</span>
       ) : null}
     </div>
@@ -82,7 +82,7 @@ export function IconPicker({
 }
 
 function LucideIconPreview({ name }: { name: string }) {
-  if (!isAnimarkIconName(name)) {
+  if (!isSlideXIconName(name)) {
     return <span className="h-4 w-4" />;
   }
 
