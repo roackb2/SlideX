@@ -90,6 +90,18 @@ button {
   font: inherit;
 }
 
+.motion-positioned-block > * {
+  height: 100% !important;
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.motion-positioned-block img {
+  aspect-ratio: auto !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
 ::selection {
   background: rgba(94, 106, 210, 0.40);
   color: #ffffff;

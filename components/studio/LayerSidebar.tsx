@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, Layers, Plus, Trash2 } from "lucide-react";
+import type { MouseEvent } from "react";
 import { BlockLayerIcon, collectConsecutiveBlocks, LayerRow } from "@/components/studio/LayerRow";
 import type { MotionDocScene } from "@/lib/motionDocParser";
 
@@ -21,14 +22,15 @@ export function LayerSidebar({
   dragOverBlockIndex,
   isTemplateModalOpen,
   moveBlock,
+  onSelectBlock,
   onOpenTemplates,
   onSelectSlide,
   reorderBlock,
   scenes,
   selectedBlockIndex,
+  selectedBlockIndices,
   setDragOverBlockIndex,
   setDraggedBlockIndex,
-  setSelectedBlockIndex,
   slideRows
 }: {
   activeSlideCardFlow: string;
@@ -40,14 +42,15 @@ export function LayerSidebar({
   dragOverBlockIndex: number | null;
   isTemplateModalOpen: boolean;
   moveBlock: (index: number, direction: -1 | 1) => void;
+  onSelectBlock: (index: number, event: MouseEvent<HTMLDivElement>) => void;
   onOpenTemplates: () => void;
   onSelectSlide: (index: number) => void;
   reorderBlock: (fromIndex: number, toIndex: number) => void;
   scenes: MotionDocScene[];
   selectedBlockIndex: number | null;
+  selectedBlockIndices: number[];
   setDragOverBlockIndex: (index: number | null) => void;
   setDraggedBlockIndex: (index: number | null) => void;
-  setSelectedBlockIndex: (index: number) => void;
   slideRows: SlideRow[];
 }) {
   return (
@@ -146,11 +149,12 @@ export function LayerSidebar({
                                   index={groupedIndex}
                                   key={groupedIndex}
                                   moveBlock={moveBlock}
+                                  onSelectBlock={onSelectBlock}
                                   reorderBlock={reorderBlock}
                                   selectedBlockIndex={selectedBlockIndex}
+                                  selectedBlockIndices={selectedBlockIndices}
                                   setDraggedBlockIndex={setDraggedBlockIndex}
                                   setDragOverBlockIndex={setDragOverBlockIndex}
-                                  setSelectedBlockIndex={setSelectedBlockIndex}
                                   totalBlocks={currentSlide.blocks.length}
                                 />
                               ))}
@@ -168,11 +172,12 @@ export function LayerSidebar({
                           index={blockIndex}
                           key={blockIndex}
                           moveBlock={moveBlock}
+                          onSelectBlock={onSelectBlock}
                           reorderBlock={reorderBlock}
                           selectedBlockIndex={selectedBlockIndex}
+                          selectedBlockIndices={selectedBlockIndices}
                           setDraggedBlockIndex={setDraggedBlockIndex}
                           setDragOverBlockIndex={setDragOverBlockIndex}
-                          setSelectedBlockIndex={setSelectedBlockIndex}
                           totalBlocks={currentSlide.blocks.length}
                         />
                       );

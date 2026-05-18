@@ -11,6 +11,7 @@ type AnimationProps = {
   enter?: EnterAnimation;
   delay?: number;
   duration?: number;
+  fillFrame?: boolean;
 };
 
 type SpacingProps = {
@@ -21,6 +22,7 @@ type SpacingProps = {
 type MotionBlockProps = AnimationProps & SpacingProps & {
   children: ReactNode;
   className?: string;
+  style?: CSSProperties;
 };
 
 function getMotionProps({
@@ -60,11 +62,15 @@ function getSpacingStyle({ mb, marginBottom }: SpacingProps): CSSProperties | un
   };
 }
 
-function MotionBlock({ children, className, mb, marginBottom, ...animation }: MotionBlockProps) {
+function MotionBlock({ children, className, fillFrame, mb, marginBottom, style, ...animation }: MotionBlockProps) {
   return (
     <motion.div
       className={className}
-      style={getSpacingStyle({ mb, marginBottom })}
+      style={{
+        ...getSpacingStyle({ mb, marginBottom }),
+        ...(fillFrame ? { height: "100%", maxWidth: "none", width: "100%" } : {}),
+        ...style
+      }}
       {...getMotionProps(animation)}
     >
       {children}
@@ -82,6 +88,7 @@ export function Scene({
   alignY = "center",
   textAlign = "left",
   autoHeight = false,
+  freeform = false,
   children
 }: {
   duration: number;
@@ -93,6 +100,7 @@ export function Scene({
   alignY?: "top" | "center" | "bottom";
   textAlign?: "left" | "center" | "right";
   autoHeight?: boolean;
+  freeform?: boolean;
   children: ReactNode;
 }) {
   const isLight = theme === "light" || theme === "paper";
@@ -130,7 +138,7 @@ export function Scene({
           overflow: "hidden",
           borderRadius: 20,
           border: `1px solid ${borderColor}`,
-          padding: "clamp(16px, 3%, 32px)",
+          padding: freeform ? 0 : "clamp(16px, 3%, 32px)",
           background: slideBackground,
           display: "flex",
           flexDirection: "column",
@@ -158,6 +166,8 @@ export function Scene({
         alignItems: layout === "default" ? alignXToFlex(alignX) : "stretch",
         gap: layout === "default" ? 20 : 48, 
         minHeight: autoHeight ? "calc(100% - clamp(32px, 6%, 64px))" : 0, 
+        width: "100%",
+        height: freeform ? "100%" : undefined,
         overflow: "visible",
         textAlign 
       }}>
@@ -169,12 +179,14 @@ export function Scene({
 
 export function Title({
   children,
+  fontSize,
   ...animation
 }: AnimationProps & SpacingProps & {
   children: ReactNode;
+  fontSize?: number | string;
 }) {
   return (
-    <MotionBlock className="max-w-3xl text-5xl font-semibold leading-[1.02] tracking-normal text-[var(--slide-fg)] md:text-7xl" {...animation}>
+    <MotionBlock className="max-w-3xl text-5xl font-semibold leading-[1.02] tracking-normal text-[var(--slide-fg)] md:text-7xl" style={textStyle(fontSize, 1.02)} {...animation}>
       {children}
     </MotionBlock>
   );
@@ -182,15 +194,30 @@ export function Title({
 
 export function Text({
   children,
+  fontSize,
   ...animation
 }: AnimationProps & SpacingProps & {
   children: ReactNode;
+  fontSize?: number | string;
 }) {
   return (
-    <MotionBlock className="max-w-2xl text-lg leading-8 text-[var(--slide-muted)] md:text-2xl md:leading-9" {...animation}>
+    <MotionBlock className="max-w-2xl text-lg leading-8 text-[var(--slide-muted)] md:text-2xl md:leading-9" style={textStyle(fontSize, 1.45)} {...animation}>
       {children}
     </MotionBlock>
   );
+}
+
+function textStyle(fontSize: number | string | undefined, lineHeight: number): CSSProperties | undefined {
+  if (fontSize === undefined || fontSize === "") {
+    return undefined;
+  }
+
+  const size = typeof fontSize === "number" ? `${fontSize}px` : fontSize;
+
+  return {
+    fontSize: size,
+    lineHeight
+  };
 }
 
 export function Card({

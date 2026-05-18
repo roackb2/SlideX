@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { Code2, X } from "lucide-react";
 import { LayerSidebar } from "@/components/studio/LayerSidebar";
 import { getCodeCursor, MdxEditorPane } from "@/components/studio/MdxEditorPane";
@@ -13,6 +14,7 @@ import { downloadFile } from "@/lib/browserFile";
 import { defaultMdx } from "@/lib/defaultMdx";
 import { buildMotionDocHtml, slugifyFilename } from "@/lib/motionDocExport";
 import { createMotionDocBlock } from "@/lib/motionDocBlockFactory";
+import { materializeFreeformSource } from "@/lib/motionDocFreeform";
 import { cloneBlock, generateSlideString, getSelectionMdx, getSlideTitle, replaceSlideContent, replaceSlideOpeningTag } from "@/lib/motionDocSerialize";
 import { getMotionDocStats } from "@/lib/mdxStats";
 import { parseMotionDoc, type MotionDocBlock, type MotionDocScene } from "@/lib/motionDocParser";
@@ -28,6 +30,7 @@ export function MotionDocApp() {
   const [draggedBlockIndex, setDraggedBlockIndex] = useState<number | null>(null);
   const [dragOverBlockIndex, setDragOverBlockIndex] = useState<number | null>(null);
   const [selectedBlockIndex, setSelectedBlockIndex] = useState<number | null>(null);
+  const [selectedBlockIndices, setSelectedBlockIndices] = useState<number[]>([]);
   const [copiedBlock, setCopiedBlock] = useState<MotionDocBlock | null>(null);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
@@ -35,6 +38,7 @@ export function MotionDocApp() {
   const [codeScroll, setCodeScroll] = useState({ left: 0, top: 0 });
   const [codeCursor, setCodeCursor] = useState({ line: 1, column: 1 });
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
+  const undoStackRef = useRef<string[]>([]);
 
   /* ─── Mobile panel states ─── */
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -73,6 +77,17 @@ export function MotionDocApp() {
       return Math.min(current, maxIndex);
     });
   }, [sliderDocument.scenes.length]);
+
+  useEffect(() => {
+    setSelectedBlockIndices((current) => current.filter((index) => index >= 0 && index < (activeSlide?.blocks.length ?? 0)));
+    setSelectedBlockIndex((current) => {
+      if (current === null || current < (activeSlide?.blocks.length ?? 0)) {
+        return current;
+      }
+
+      return null;
+    });
+  }, [activeSlide?.blocks.length]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -135,9 +150,27 @@ export function MotionDocApp() {
         return;
       }
 
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z" && !event.shiftKey) {
+        event.preventDefault();
+        undoLastChange();
+        return;
+      }
+
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "v") {
         event.preventDefault();
         pasteCopiedBlock();
+        return;
+      }
+
+      if ((event.key === "Delete" || event.key === "Backspace") && (selectedBlockIndex !== null || selectedBlockIndices.length > 0)) {
+        event.preventDefault();
+        deleteSelectedBlocks();
+        return;
+      }
+
+      if (isArrowKey(event.key) && (selectedBlockIndex !== null || selectedBlockIndices.length > 0)) {
+        event.preventDefault();
+        nudgeSelectedBlocks(arrowDelta(event.key, event.shiftKey, event.altKey));
         return;
       }
 
@@ -156,21 +189,103 @@ export function MotionDocApp() {
     return () => window.removeEventListener("keydown", handleKeyDown);
     // The shortcut handler intentionally reads the current editor state from this render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCodeEditorOpen, isExportMenuOpen, isTemplateModalOpen, isMobileSidebarOpen, isMobileInspectorOpen, activeSlideIndex, selectedBlockIndex, source, copiedBlock]);
+  }, [isCodeEditorOpen, isExportMenuOpen, isTemplateModalOpen, isMobileSidebarOpen, isMobileInspectorOpen, activeSlideIndex, selectedBlockIndex, selectedBlockIndices, source, copiedBlock]);
+
+  function pushUndoSnapshot(snapshot = source) {
+    const undoStack = undoStackRef.current;
+
+    if (undoStack[undoStack.length - 1] === snapshot) {
+      return;
+    }
+
+    undoStackRef.current = [...undoStack.slice(-79), snapshot];
+  }
+
+  function commitSource(nextSource: string | ((current: string) => string)) {
+    setSource((current) => {
+      const resolvedSource = typeof nextSource === "function" ? nextSource(current) : nextSource;
+
+      if (resolvedSource !== current) {
+        pushUndoSnapshot(current);
+      }
+
+      return resolvedSource;
+    });
+  }
+
+  function undoLastChange() {
+    const previousSource = undoStackRef.current.pop();
+
+    if (!previousSource) {
+      setNotice("Nothing to undo");
+      return;
+    }
+
+    setSource(previousSource);
+    setReplayNonce((value) => value + 1);
+    setSelectedBlockIndex(null);
+    setSelectedBlockIndices([]);
+    setNotice("Undo");
+  }
+
+  function selectSingleBlock(index: number | null) {
+    setSelectedBlockIndex(index);
+    setSelectedBlockIndices(index === null ? [] : [index]);
+  }
+
+  function clearBlockSelection() {
+    selectSingleBlock(null);
+  }
+
+  function selectBlock(index: number, options: { additive?: boolean; range?: boolean } = {}) {
+    if (options.range && selectedBlockIndex !== null) {
+      const start = Math.min(selectedBlockIndex, index);
+      const end = Math.max(selectedBlockIndex, index);
+      const range = Array.from({ length: end - start + 1 }, (_, offset) => start + offset);
+      setSelectedBlockIndices(range);
+      setSelectedBlockIndex(index);
+      return;
+    }
+
+    if (options.additive) {
+      setSelectedBlockIndices((current) => {
+        const nextSelection = current.includes(index)
+          ? current.filter((item) => item !== index)
+          : [...current, index].sort((a, b) => a - b);
+
+        setSelectedBlockIndex(nextSelection.includes(index) ? index : nextSelection[nextSelection.length - 1] ?? null);
+        return nextSelection;
+      });
+      return;
+    }
+
+    selectSingleBlock(index);
+  }
+
+  function selectBlockFromLayer(index: number, event: ReactMouseEvent<HTMLDivElement>) {
+    selectBlock(index, {
+      additive: event.metaKey || event.ctrlKey,
+      range: event.shiftKey
+    });
+  }
+
+  function beginBlockTransform() {
+    pushUndoSnapshot();
+  }
 
   function applyTemplate(templateId: string) {
     const template = motionTemplates.find((item) => item.id === templateId) ?? defaultTemplate;
     setSelectedTemplateId(template.id);
-    setSource(template.source);
+    commitSource(materializeFreeformSource(template.source));
     setActiveSlideIndex(0);
-    setSelectedBlockIndex(null);
+    selectSingleBlock(null);
     setIsTemplateModalOpen(false);
     setReplayNonce((value) => value + 1);
     setNotice(`${template.name} loaded`);
   }
 
   function insertSnippet(code: string) {
-    setSource((current) => `${current.trimEnd()}\n\n${code}`);
+    commitSource((current) => `${current.trimEnd()}\n\n${code}`);
     setReplayNonce((value) => value + 1);
     setNotice("Block inserted");
   }
@@ -180,7 +295,7 @@ export function MotionDocApp() {
     const background = activeSlideBackground;
     const accent = activeSlideAccent;
 
-    setSource((current) => `${current.trimEnd()}\n\n<Slide duration={5} theme="${theme}" background="${background}" accent="${accent}">\n  <Title enter="fadeUp" mb={16}>Next slide</Title>\n  <Text enter="fadeUp" delay={0.25}>\n    Continue the presentation here.\n  </Text>\n</Slide>`);
+    commitSource((current) => `${current.trimEnd()}\n\n<Slide duration={5} theme="${theme}" background="${background}" accent="${accent}">\n  <Title enter="fadeUp" fontSize={72} x={8} y={12} w={64} h={18}>Next slide</Title>\n  <Text enter="fadeUp" delay={0.25} fontSize={24} x={8} y={38} w={52} h={16}>\n    Continue the presentation here.\n  </Text>\n</Slide>`);
     setActiveSlideIndex(sliderDocument.scenes.length);
     setReplayNonce((value) => value + 1);
     setNotice("Slide added");
@@ -203,7 +318,7 @@ export function MotionDocApp() {
       currentIndex += 1;
     }
 
-    setSource(nextSource.replace(/\n{3,}/g, '\n\n').trim());
+    commitSource(nextSource.replace(/\n{3,}/g, '\n\n').trim());
     setActiveSlideIndex((current) => Math.min(current, sliderDocument.scenes.length - 2));
     setReplayNonce((value) => value + 1);
     setNotice("Slide deleted");
@@ -214,9 +329,33 @@ export function MotionDocApp() {
     const newBlocks = [...activeSlide.blocks];
     newBlocks.splice(blockIndex, 1);
     const nextSlide: MotionDocScene = { ...activeSlide, blocks: newBlocks };
-    setSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+    commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+    selectSingleBlock(null);
     setReplayNonce((value) => value + 1);
     setNotice("Layer deleted");
+  }
+
+  function deleteSelectedBlocks() {
+    if (!activeSlide) return;
+
+    const indices = (selectedBlockIndices.length > 0 ? selectedBlockIndices : selectedBlockIndex === null ? [] : [selectedBlockIndex])
+      .filter((index, offset, items) => items.indexOf(index) === offset)
+      .sort((a, b) => b - a);
+
+    if (indices.length === 0) {
+      return;
+    }
+
+    const newBlocks = [...activeSlide.blocks];
+    for (const index of indices) {
+      newBlocks.splice(index, 1);
+    }
+
+    const nextSlide: MotionDocScene = { ...activeSlide, blocks: newBlocks };
+    commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+    selectSingleBlock(null);
+    setReplayNonce((value) => value + 1);
+    setNotice(indices.length > 1 ? "Layers deleted" : "Layer deleted");
   }
 
   function moveBlock(blockIndex: number, direction: -1 | 1) {
@@ -230,7 +369,7 @@ export function MotionDocApp() {
     newBlocks[newIndex] = temp;
     
     const nextSlide: MotionDocScene = { ...activeSlide, blocks: newBlocks };
-    setSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+    commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
     setReplayNonce((value) => value + 1);
     setNotice("Layer reordered");
   }
@@ -264,8 +403,8 @@ export function MotionDocApp() {
     nextBlocks.splice(insertIndex, 0, cloneBlock(copiedBlock));
 
     const nextSlide: MotionDocScene = { ...activeSlide, blocks: nextBlocks };
-    setSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
-    setSelectedBlockIndex(insertIndex);
+    commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+    selectSingleBlock(insertIndex);
     setReplayNonce((value) => value + 1);
     setNotice("Layer pasted");
   }
@@ -277,7 +416,7 @@ export function MotionDocApp() {
     newBlocks.splice(toIndex, 0, movedItem);
     
     const nextSlide: MotionDocScene = { ...activeSlide, blocks: newBlocks };
-    setSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+    commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
     setReplayNonce((value) => value + 1);
     setNotice("Layer reordered");
   }
@@ -289,9 +428,112 @@ export function MotionDocApp() {
 
     newBlocks.push(newBlock);
     const nextSlide: MotionDocScene = { ...activeSlide, blocks: newBlocks };
-    setSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+    commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+    selectSingleBlock(newBlocks.length - 1);
     setReplayNonce((value) => value + 1);
     setNotice(`${type} added`);
+  }
+
+  function addTextAtPosition(position: { x: number; y: number }) {
+    if (!activeSlide) return;
+
+    const newBlocks = [...activeSlide.blocks];
+    const newBlock: MotionDocBlock = {
+      type: "Text",
+      props: {
+        enter: "fadeIn",
+        fontSize: 24,
+        x: Math.min(Math.max(position.x, 0), 70),
+        y: Math.min(Math.max(position.y, 0), 88),
+        w: 30
+      },
+      text: "Double-click text"
+    };
+
+    newBlocks.push(newBlock);
+    const nextSlide: MotionDocScene = { ...activeSlide, blocks: newBlocks };
+    commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+    selectSingleBlock(newBlocks.length - 1);
+    setReplayNonce((value) => value + 1);
+    setNotice("Text added");
+  }
+
+  function updatePositionedBlockFrames(updates: Array<{ blockIndex: number; frame: { h?: number; w?: number; x?: number; y?: number } }>, commit = false) {
+    if (!activeSlide) return;
+
+    const newBlocks = [...activeSlide.blocks];
+
+    for (const { blockIndex, frame } of updates) {
+      const currentBlock = newBlocks[blockIndex];
+
+      if (!currentBlock || !("props" in currentBlock)) {
+        continue;
+      }
+
+      newBlocks[blockIndex] = {
+        ...currentBlock,
+        props: {
+          ...currentBlock.props,
+          w: currentBlock.props.w ?? defaultBlockWidth(currentBlock.type),
+          h: currentBlock.props.h ?? defaultBlockHeight(currentBlock.type),
+          ...frame
+        }
+      };
+    }
+
+    const nextSlide: MotionDocScene = { ...activeSlide, blocks: newBlocks };
+    setSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+
+    if (commit) {
+      setNotice(updates.length > 1 ? "Layers updated" : "Layer updated");
+    }
+  }
+
+  function nudgeSelectedBlocks(delta: { x: number; y: number }) {
+    if (!activeSlide) return;
+
+    const indices = (selectedBlockIndices.length > 0 ? selectedBlockIndices : selectedBlockIndex === null ? [] : [selectedBlockIndex])
+      .filter((index, offset, items) => items.indexOf(index) === offset);
+
+    if (indices.length === 0) {
+      return;
+    }
+
+    const newBlocks = [...activeSlide.blocks];
+    let didMove = false;
+
+    for (const blockIndex of indices) {
+      const currentBlock = newBlocks[blockIndex];
+
+      if (!currentBlock || !("props" in currentBlock)) {
+        continue;
+      }
+
+      const w = percentFrameValue(currentBlock.props.w, defaultBlockWidth(currentBlock.type));
+      const h = percentFrameValue(currentBlock.props.h, defaultBlockHeight(currentBlock.type));
+      const x = percentFrameValue(currentBlock.props.x, defaultBlockX(currentBlock.type));
+      const y = percentFrameValue(currentBlock.props.y, defaultBlockY(currentBlock.type));
+
+      newBlocks[blockIndex] = {
+        ...currentBlock,
+        props: {
+          ...currentBlock.props,
+          h: currentBlock.props.h ?? h,
+          w: currentBlock.props.w ?? w,
+          x: clampFramePosition(x + delta.x, w),
+          y: clampFramePosition(y + delta.y, h)
+        }
+      } as MotionDocBlock;
+      didMove = true;
+    }
+
+    if (!didMove) {
+      return;
+    }
+
+    const nextSlide: MotionDocScene = { ...activeSlide, blocks: newBlocks };
+    commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+    setNotice(indices.length > 1 ? "Layers nudged" : "Layer nudged");
   }
 
   function updateActiveSlideStyle(updates: Record<string, string | number>) {
@@ -305,7 +547,7 @@ export function MotionDocApp() {
       ...updates
     };
 
-    setSource((current) => replaceSlideOpeningTag(current, activeSlideIndex, nextProps));
+    commitSource((current) => replaceSlideOpeningTag(current, activeSlideIndex, nextProps));
     setReplayNonce((value) => value + 1);
     setNotice("Slide style updated");
   }
@@ -336,7 +578,7 @@ export function MotionDocApp() {
       blocks: newBlocks
     };
 
-    setSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+    commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
     setReplayNonce((value) => value + 1);
     setNotice("Block updated");
   }
@@ -428,7 +670,7 @@ export function MotionDocApp() {
         return;
       }
 
-      setSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+      commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
       setReplayNonce((current) => current + 1);
       setNotice("Scene MDX updated");
       return;
@@ -444,9 +686,43 @@ export function MotionDocApp() {
 
     const nextBlocks = [...activeSlide.blocks];
     nextBlocks[selectedBlockIndex] = nextBlock;
-    setSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString({ ...activeSlide, blocks: nextBlocks })));
+    commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString({ ...activeSlide, blocks: nextBlocks })));
     setReplayNonce((current) => current + 1);
     setNotice("Layer MDX updated");
+  }
+
+  function defaultBlockWidth(type: MotionDocBlock["type"]) {
+    if (type === "Title") return 52;
+    if (type === "Text") return 42;
+    if (type === "Metric") return 32;
+    if (type === "Chart") return 70;
+    if (type === "ImageBlock") return 80;
+
+    return 40;
+  }
+
+  function defaultBlockHeight(type: MotionDocBlock["type"]) {
+    if (type === "Title") return 18;
+    if (type === "Text") return 16;
+    if (type === "Metric") return 36;
+    if (type === "Chart") return 42;
+    if (type === "ImageBlock") return 54;
+
+    return 32;
+  }
+
+  function defaultBlockX(type: MotionDocBlock["type"]) {
+    if (type === "ImageBlock" || type === "Chart") return 10;
+
+    return 8;
+  }
+
+  function defaultBlockY(type: MotionDocBlock["type"]) {
+    if (type === "Title") return 12;
+    if (type === "Chart") return 36;
+    if (type === "ImageBlock") return 20;
+
+    return 38;
   }
 
   return (
@@ -460,6 +736,7 @@ export function MotionDocApp() {
         onExportHtml={exportHtmlFile}
         onExportMdx={exportMdxFile}
         onReplay={() => setReplayNonce((value) => value + 1)}
+        onUndo={undoLastChange}
         onToggleInspector={() => {
           setIsMobileInspectorOpen((v) => !v);
           setIsMobileSidebarOpen(false);
@@ -485,18 +762,19 @@ export function MotionDocApp() {
             dragOverBlockIndex={dragOverBlockIndex}
             isTemplateModalOpen={isTemplateModalOpen}
             moveBlock={moveBlock}
+            onSelectBlock={selectBlockFromLayer}
             onOpenTemplates={() => setIsTemplateModalOpen(true)}
             onSelectSlide={(index) => {
               setActiveSlideIndex(index);
-              setSelectedBlockIndex(null);
+              selectSingleBlock(null);
               setReplayNonce((value) => value + 1);
             }}
             reorderBlock={reorderBlock}
             scenes={sliderDocument.scenes}
             selectedBlockIndex={selectedBlockIndex}
+            selectedBlockIndices={selectedBlockIndices}
             setDraggedBlockIndex={setDraggedBlockIndex}
             setDragOverBlockIndex={setDragOverBlockIndex}
-            setSelectedBlockIndex={setSelectedBlockIndex}
             slideRows={slideRows}
           />
         </div>
@@ -519,19 +797,20 @@ export function MotionDocApp() {
                 dragOverBlockIndex={dragOverBlockIndex}
                 isTemplateModalOpen={isTemplateModalOpen}
                 moveBlock={moveBlock}
+                onSelectBlock={selectBlockFromLayer}
                 onOpenTemplates={() => setIsTemplateModalOpen(true)}
                 onSelectSlide={(index) => {
                   setActiveSlideIndex(index);
-                  setSelectedBlockIndex(null);
+                  selectSingleBlock(null);
                   setReplayNonce((value) => value + 1);
                   setIsMobileSidebarOpen(false);
                 }}
                 reorderBlock={reorderBlock}
                 scenes={sliderDocument.scenes}
                 selectedBlockIndex={selectedBlockIndex}
+                selectedBlockIndices={selectedBlockIndices}
                 setDraggedBlockIndex={setDraggedBlockIndex}
                 setDragOverBlockIndex={setDragOverBlockIndex}
-                setSelectedBlockIndex={setSelectedBlockIndex}
                 slideRows={slideRows}
               />
             </div>
@@ -539,13 +818,21 @@ export function MotionDocApp() {
         )}
 
         <PreviewCanvas
+          activeSlide={activeSlide}
           activeSlideIndex={activeSlideIndex}
           onAddBlock={addBlockToActiveSlide}
+          onAddTextAtPosition={addTextAtPosition}
+          onBeginBlockTransform={beginBlockTransform}
+          onClearSelection={clearBlockSelection}
+          onSelectBlock={selectBlock}
+          onUpdateBlockFrames={updatePositionedBlockFrames}
           onNextSlide={goToNextSlide}
           onPreviousSlide={goToPreviousSlide}
           onSelectSlide={setActiveSlideIndex}
           replayNonce={replayNonce}
           sceneCount={sliderDocument.scenes.length}
+          selectedBlockIndex={selectedBlockIndex}
+          selectedBlockIndices={selectedBlockIndices}
           slideRows={slideRows}
           source={source}
           totalDuration={stats.totalDuration}
@@ -566,7 +853,7 @@ export function MotionDocApp() {
             activeSlideTheme={activeSlideTheme}
             onOpenMdxEditor={() => setIsCodeEditorOpen(true)}
             selectedBlockIndex={selectedBlockIndex}
-            setSelectedBlockIndex={setSelectedBlockIndex}
+            setSelectedBlockIndex={selectSingleBlock}
             updateActiveSlideStyle={updateActiveSlideStyle}
             updateBlock={updateBlock}
             uploadImageForBlock={uploadImageForBlock}
@@ -598,7 +885,7 @@ export function MotionDocApp() {
                 }}
                 selectedBlockIndex={selectedBlockIndex}
                 setSelectedBlockIndex={(idx) => {
-                  setSelectedBlockIndex(idx);
+                  selectSingleBlock(idx);
                   if (idx !== null) setIsMobileInspectorOpen(false);
                 }}
                 updateActiveSlideStyle={updateActiveSlideStyle}
@@ -642,7 +929,10 @@ export function MotionDocApp() {
               source={source}
               updateCodeCursor={updateCodeCursor}
               onSelectionSourceChange={updateSelectionMdx}
-              onSourceChange={setSource}
+              onSourceChange={(value) => {
+                pushUndoSnapshot();
+                setSource(value);
+              }}
             />
           </div>
         </div>
@@ -669,4 +959,32 @@ export function MotionDocApp() {
       `}} />
     </main>
   );
+}
+
+function isArrowKey(key: string) {
+  return key === "ArrowLeft" || key === "ArrowRight" || key === "ArrowUp" || key === "ArrowDown";
+}
+
+function arrowDelta(key: string, isLargeStep: boolean, isFineStep: boolean) {
+  const step = isFineStep ? 0.2 : isLargeStep ? 5 : 1;
+
+  if (key === "ArrowLeft") return { x: -step, y: 0 };
+  if (key === "ArrowRight") return { x: step, y: 0 };
+  if (key === "ArrowUp") return { x: 0, y: -step };
+
+  return { x: 0, y: step };
+}
+
+function percentFrameValue(value: string | number | undefined, fallback: number) {
+  const parsed = typeof value === "number" ? value : Number(value);
+
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(parsed, 0), 100);
+}
+
+function clampFramePosition(value: number, size: number) {
+  return Math.round(Math.min(Math.max(value, 0), Math.max(100 - size, 0)) * 10) / 10;
 }

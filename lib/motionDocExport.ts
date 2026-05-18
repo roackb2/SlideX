@@ -62,16 +62,17 @@ function renderSceneHtml(
   const cardBackground = isLight ? "rgba(255,255,255,0.72)" : "rgba(255,255,255,0.075)";
   const foreground = isLight ? "#111827" : "#ffffff";
   const muted = isLight ? "#475569" : "#cbd5e1";
+  const hasPositionedBlocks = blocks.some((block) => "props" in block && isPositionedProps(block.props));
   const imageBlocks = blocks.filter((block) => block.type === "ImageBlock");
   const contentBlocks = blocks.filter((block) => block.type !== "ImageBlock");
-  const shouldSplit = layout !== "default" && imageBlocks.length > 0;
+  const shouldSplit = !hasPositionedBlocks && layout !== "default" && imageBlocks.length > 0;
   const textOrder = layout === "split-left" ? 1 : 2;
   const imageOrder = layout === "split-left" ? 2 : 1;
   const alignX = props.alignX === "center" || props.alignX === "right" || props.alignX === "stretch" ? props.alignX : "left";
   const alignY = props.alignY === "top" || props.alignY === "bottom" ? props.alignY : "center";
   const textAlign = props.textAlign === "center" || props.textAlign === "right" ? props.textAlign : "left";
 
-  return `<section class="slide" data-duration="${Math.max(duration, 1)}" style="${escapeAttribute(inlineCss({
+  return `<section class="slide${hasPositionedBlocks ? " slide--freeform" : ""}" data-duration="${Math.max(duration, 1)}" style="${escapeAttribute(inlineCss({
     "--slide-accent": accent,
     "--slide-align-x": shouldSplit ? "stretch" : alignXToFlex(alignX),
     "--slide-align-y": alignYToFlex(alignY),
@@ -80,6 +81,7 @@ function renderSceneHtml(
     "--slide-card": cardBackground,
     "--slide-direction": shouldSplit ? "row" : "column",
     "--slide-fg": foreground,
+    "--slide-gap": shouldSplit ? "48px" : "20px",
     "--slide-muted": muted,
     "--slide-text-align": textAlign
   }))}">
@@ -97,10 +99,12 @@ function renderSceneHtml(
 
 function renderBlocks(blocks: MotionDocBlock[], cardFlow: "stack" | "row" | "grid", metricFlow: "stack" | "row" | "grid" = "stack") {
   const rendered: string[] = [];
+  const flowBlocks = blocks.filter((block) => !("props" in block) || !isPositionedProps(block.props));
+  const positionedBlocks = blocks.filter((block) => "props" in block && isPositionedProps(block.props));
   let index = 0;
 
-  while (index < blocks.length) {
-    const block = blocks[index];
+  while (index < flowBlocks.length) {
+    const block = flowBlocks[index];
     const flowType = flowBlockType(block);
     const flow = flowType === "Card" ? cardFlow : flowType === "Metric" ? metricFlow : "stack";
 
@@ -108,8 +112,8 @@ function renderBlocks(blocks: MotionDocBlock[], cardFlow: "stack" | "row" | "gri
       const cards: string[] = [];
       let cursor = index;
 
-      while (cursor < blocks.length && blocks[cursor].type === flowType) {
-        cards.push(renderBlock(blocks[cursor]));
+      while (cursor < flowBlocks.length && flowBlocks[cursor].type === flowType) {
+        cards.push(renderBlock(flowBlocks[cursor]));
         cursor += 1;
       }
 
@@ -124,6 +128,10 @@ function renderBlocks(blocks: MotionDocBlock[], cardFlow: "stack" | "row" | "gri
 
     rendered.push(renderBlock(block));
     index += 1;
+  }
+
+  for (const block of positionedBlocks) {
+    rendered.push(renderBlock(block));
   }
 
   return rendered.join("");
@@ -203,11 +211,14 @@ function renderMotionBlock(block: MotionDocBlock, content: string) {
   const duration = numberProp(props.duration, 0.6);
   const marginBottom = spacingProp(props.marginBottom ?? props.mb);
   const fullClass = props.full === "true" || props.full === 1 ? " motion-block--full" : "";
+  const positionClass = isPositionedProps(props) ? " motion-block--positioned" : "";
 
-  return `<div class="motion-block ${enter}${fullClass}" style="${escapeAttribute(inlineCss({
+  return `<div class="motion-block ${enter}${fullClass}${positionClass}" style="${escapeAttribute(inlineCss({
     "--motion-delay": `${delay}s`,
     "--motion-duration": `${duration}s`,
-    "--motion-mb": marginBottom
+    "--motion-mb": marginBottom,
+    ...fontSizeVars(props),
+    ...positionVars(props)
   }))}">${content}</div>`;
 }
 
@@ -228,6 +239,45 @@ function spacingProp(value: string | number | undefined) {
   if (typeof value === "string" && value.trim() !== "") return value;
 
   return "18px";
+}
+
+function isPositionedProps(props: Record<string, string | number>) {
+  return Number.isFinite(Number(props.x)) || Number.isFinite(Number(props.y));
+}
+
+function positionVars(props: Record<string, string | number>): Record<string, string> {
+  if (!isPositionedProps(props)) {
+    return {};
+  }
+
+  return {
+    "--motion-h": `${percentProp(props.h, 18)}%`,
+    "--motion-x": `${percentProp(props.x, 8)}%`,
+    "--motion-y": `${percentProp(props.y, 12)}%`,
+    "--motion-w": `${percentProp(props.w, 42)}%`
+  };
+}
+
+function fontSizeVars(props: Record<string, string | number>): Record<string, string> {
+  const fontSize = numberProp(props.fontSize, 0);
+
+  if (fontSize <= 0) {
+    return {};
+  }
+
+  return {
+    "--motion-font-size": `${fontSize}px`
+  };
+}
+
+function percentProp(value: string | number | undefined, fallback: number) {
+  const parsed = typeof value === "number" ? value : Number(value);
+
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(parsed, 0), 100);
 }
 
 function chartValues(value: string) {

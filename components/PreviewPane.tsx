@@ -41,7 +41,8 @@ export function PreviewPane({ source, replayNonce, activeSlideIndex = 0, autoHei
   const layout = layoutProp(activeSlide.props.layout);
   const imageBlocks = activeSlide.blocks.filter((block) => block.type === "ImageBlock");
   const contentBlocks = activeSlide.blocks.filter((block) => block.type !== "ImageBlock");
-  const shouldSplit = layout !== "default" && imageBlocks.length > 0;
+  const hasPositionedBlocks = activeSlide.blocks.some(isPositionedBlock);
+  const shouldSplit = !hasPositionedBlocks && layout !== "default" && imageBlocks.length > 0;
   const textOrder = layout === "split-left" ? 1 : 2;
   const imageOrder = layout === "split-left" ? 2 : 1;
   const cardFlow = groupFlowProp(activeSlide.props.cardFlow);
@@ -56,6 +57,7 @@ export function PreviewPane({ source, replayNonce, activeSlideIndex = 0, autoHei
         autoHeight={autoHeight}
         background={stringProp(activeSlide.props.background)}
         duration={activeSlide.duration}
+        freeform={hasPositionedBlocks}
         key={`${replayNonce}-${activeSlideIndex}-${activeSlide.duration}`}
         layout={shouldSplit ? layout : "default"}
         textAlign={textAlignProp(activeSlide.props.textAlign)}
@@ -108,25 +110,32 @@ const splitImageStyle: CSSProperties = {
 
 function PreviewBlockList({ blocks, cardFlow, metricFlow }: { blocks: MotionDocBlock[]; cardFlow: CardFlow; metricFlow: CardFlow }) {
   const rendered: ReactNode[] = [];
+  const flowBlocks = blocks
+    .map((block, originalIndex) => ({ block, originalIndex }))
+    .filter(({ block }) => !isPositionedBlock(block));
+  const positionedBlocks = blocks
+    .map((block, originalIndex) => ({ block, originalIndex }))
+    .filter(({ block }) => isPositionedBlock(block));
   let index = 0;
 
-  while (index < blocks.length) {
-    const block = blocks[index];
+  while (index < flowBlocks.length) {
+    const { block, originalIndex } = flowBlocks[index];
     const flowType = flowBlockType(block);
     const flow = flowType === "Card" ? cardFlow : flowType === "Metric" ? metricFlow : "stack";
 
     if (flowType && flow !== "stack") {
       const cards: MotionDocBlock[] = [];
+      const groupStartIndex = originalIndex;
       let cursor = index;
 
-      while (cursor < blocks.length && blocks[cursor].type === flowType) {
-        cards.push(blocks[cursor]);
+      while (cursor < flowBlocks.length && flowBlocks[cursor].block.type === flowType) {
+        cards.push(flowBlocks[cursor].block);
         cursor += 1;
       }
 
       rendered.push(
         <div
-          key={`${flowType.toLowerCase()}-group-${index}`}
+          key={`${flowType.toLowerCase()}-group-${groupStartIndex}`}
           style={{
             alignItems: "stretch",
             display: "flex",
@@ -137,7 +146,7 @@ function PreviewBlockList({ blocks, cardFlow, metricFlow }: { blocks: MotionDocB
         >
           {cards.map((card, cardIndex) => (
             <div
-              key={`card-${index}-${cardIndex}`}
+              key={`card-${groupStartIndex}-${cardIndex}`}
               style={{
                 flex: flow === "grid" ? "1 1 min(240px, 100%)" : "0 1 auto",
                 minWidth: 0
@@ -153,17 +162,26 @@ function PreviewBlockList({ blocks, cardFlow, metricFlow }: { blocks: MotionDocB
     }
 
     rendered.push(
-      <div key={`${block.type}-${index}`}>
+      <div key={`${block.type}-${originalIndex}`}>
         <PreviewBlock block={block} />
       </div>
     );
     index += 1;
   }
 
-  return <>{rendered}</>;
+  return (
+    <>
+      {rendered}
+      {positionedBlocks.map(({ block, originalIndex }) => (
+        <div className="motion-positioned-block" key={`${block.type}-positioned-${originalIndex}`} style={positionedBlockStyle(block, originalIndex)}>
+          <PreviewBlock block={block} fillFrame />
+        </div>
+      ))}
+    </>
+  );
 }
 
-function PreviewBlock({ block }: { block: MotionDocBlock }) {
+function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlock; fillFrame?: boolean }) {
   if (block.type === "heading") {
     return (
       <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-400">
@@ -178,6 +196,8 @@ function PreviewBlock({ block }: { block: MotionDocBlock }) {
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
+        fillFrame={fillFrame}
+        fontSize={sizeNumberProp(block.props.fontSize, undefined)}
         marginBottom={spacingProp(block.props.marginBottom ?? block.props.mb)}
       >
         {block.text}
@@ -191,6 +211,8 @@ function PreviewBlock({ block }: { block: MotionDocBlock }) {
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
+        fillFrame={fillFrame}
+        fontSize={sizeNumberProp(block.props.fontSize, undefined)}
         marginBottom={spacingProp(block.props.marginBottom ?? block.props.mb)}
       >
         {block.text}
@@ -204,6 +226,7 @@ function PreviewBlock({ block }: { block: MotionDocBlock }) {
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
+        fillFrame={fillFrame}
         icon={stringProp(block.props.icon)}
         layout={cardLayoutProp(block.props.layout)}
         marginBottom={spacingProp(block.props.marginBottom ?? block.props.mb)}
@@ -221,6 +244,7 @@ function PreviewBlock({ block }: { block: MotionDocBlock }) {
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
+        fillFrame={fillFrame}
         fit={fitProp(block.props.fit)}
         full={booleanProp(block.props.full)}
         marginBottom={spacingProp(block.props.marginBottom ?? block.props.mb)}
@@ -236,6 +260,7 @@ function PreviewBlock({ block }: { block: MotionDocBlock }) {
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
+        fillFrame={fillFrame}
         label={String(block.props.label ?? "Metric")}
         marginBottom={spacingProp(block.props.marginBottom ?? block.props.mb)}
         value={String(block.props.value ?? "0")}
@@ -250,6 +275,7 @@ function PreviewBlock({ block }: { block: MotionDocBlock }) {
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
+        fillFrame={fillFrame}
         height={sizeNumberProp(block.props.height, 144)}
         labels={stringProp(block.props.labels)}
         marginBottom={spacingProp(block.props.marginBottom ?? block.props.mb)}
@@ -269,6 +295,37 @@ function flowBlockType(block: MotionDocBlock): FlowBlockType | null {
   }
 
   return null;
+}
+
+function isPositionedBlock(block: MotionDocBlock) {
+  return "props" in block && (Number.isFinite(Number(block.props.x)) || Number.isFinite(Number(block.props.y)));
+}
+
+function positionedBlockStyle(block: MotionDocBlock, index: number): CSSProperties {
+  const props = "props" in block ? block.props : {};
+  const x = percentProp(props.x, 8);
+  const y = percentProp(props.y, 12);
+  const w = percentProp(props.w, block.type === "Title" ? 52 : 42);
+  const h = percentProp(props.h);
+
+  return {
+    left: `${x}%`,
+    position: "absolute",
+    top: `${y}%`,
+    width: `${w}%`,
+    ...(h === undefined ? {} : { height: `${h}%` }),
+    zIndex: 20 + index
+  };
+}
+
+function percentProp(value: string | number | undefined, fallback?: number) {
+  const parsed = typeof value === "number" ? value : Number(value);
+
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(parsed, 0), 100);
 }
 
 function numberProp(value: string | number | undefined) {
@@ -364,7 +421,9 @@ function blockWidthProp(value: string | number | undefined, fallback: "sm" | "md
   return fallback;
 }
 
-function sizeNumberProp(value: string | number | undefined, fallback: number) {
+function sizeNumberProp(value: string | number | undefined, fallback: number): number;
+function sizeNumberProp(value: string | number | undefined, fallback: undefined): number | undefined;
+function sizeNumberProp(value: string | number | undefined, fallback: number | undefined) {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;
   }

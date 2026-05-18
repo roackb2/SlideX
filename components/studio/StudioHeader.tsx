@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { RefObject } from "react";
-import { Download, FileCode2, FileText, Layers, PanelRight, RotateCcw } from "lucide-react";
+import { Download, FileCode2, FileText, Layers, PanelRight, RotateCcw, Undo2 } from "lucide-react";
 
 export function StudioHeader({
   exportMenuRef,
@@ -13,6 +13,7 @@ export function StudioHeader({
   onExportHtml,
   onExportMdx,
   onReplay,
+  onUndo,
   onToggleInspector,
   onToggleSidebar,
   setIsExportMenuOpen
@@ -25,6 +26,7 @@ export function StudioHeader({
   onExportHtml: () => void;
   onExportMdx: () => void;
   onReplay: () => void;
+  onUndo: () => void;
   onToggleInspector: () => void;
   onToggleSidebar: () => void;
   setIsExportMenuOpen: (updater: (current: boolean) => boolean) => void;
@@ -51,6 +53,16 @@ export function StudioHeader({
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3 md:gap-4">
         <span className="hidden sm:block font-mono text-[10px] sm:text-[11px] text-neutral-400">{notice}</span>
+
+        <button
+          className="flex items-center justify-center gap-1 rounded-md px-2 py-1.5 sm:px-3 text-xs font-medium text-neutral-400 transition-all hover:bg-white/[0.07] hover:text-white"
+          onClick={onUndo}
+          type="button"
+          title="Undo"
+        >
+          <Undo2 size={14} />
+          <span className="hidden sm:inline">Undo</span>
+        </button>
 
         {/* Replay - icon only on mobile */}
         <button

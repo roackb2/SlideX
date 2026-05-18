@@ -1,6 +1,7 @@
 "use client";
 
 import { BarChart3, ChevronDown, ChevronUp, Code2, Gauge, GripVertical, Image as ImageIcon, Trash2 } from "lucide-react";
+import type { MouseEvent } from "react";
 import type { MotionDocBlock } from "@/lib/motionDocParser";
 
 export function LayerTextIcon({ className = "", label }: { className?: string; label: "H" | "T" }) {
@@ -28,11 +29,12 @@ export function LayerRow({
   dragOverBlockIndex,
   index,
   moveBlock,
+  onSelectBlock,
   reorderBlock,
   selectedBlockIndex,
+  selectedBlockIndices,
   setDraggedBlockIndex,
   setDragOverBlockIndex,
-  setSelectedBlockIndex,
   totalBlocks
 }: {
   block: MotionDocBlock;
@@ -41,14 +43,15 @@ export function LayerRow({
   dragOverBlockIndex: number | null;
   index: number;
   moveBlock: (index: number, direction: -1 | 1) => void;
+  onSelectBlock: (index: number, event: MouseEvent<HTMLDivElement>) => void;
   reorderBlock: (fromIndex: number, toIndex: number) => void;
   selectedBlockIndex: number | null;
+  selectedBlockIndices: number[];
   setDraggedBlockIndex: (index: number | null) => void;
   setDragOverBlockIndex: (index: number | null) => void;
-  setSelectedBlockIndex: (index: number) => void;
   totalBlocks: number;
 }) {
-  const isSelected = selectedBlockIndex === index;
+  const isSelected = selectedBlockIndices.includes(index) || selectedBlockIndex === index;
   const isDragged = draggedBlockIndex === index;
   const isDragOver = dragOverBlockIndex === index && !isDragged;
   let itemClass = "group flex items-center justify-between p-1.5 rounded-md transition-all cursor-pointer border ";
@@ -69,7 +72,7 @@ export function LayerRow({
     <div
       className={itemClass}
       draggable
-      onClick={() => setSelectedBlockIndex(index)}
+      onClick={(event) => onSelectBlock(index, event)}
       onDragEnd={() => {
         setDraggedBlockIndex(null);
         setDragOverBlockIndex(null);

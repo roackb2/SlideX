@@ -59,10 +59,10 @@ export const motionDocExportStyles = `      :root {
       .viewport {
         position: relative;
         width: min(100%, calc((100vh - 98px) * 16 / 9));
-        max-width: 1440px;
+        max-width: 64rem;
         aspect-ratio: 16 / 9;
         overflow: hidden;
-        border-radius: 22px;
+        border-radius: 20px;
         border: 1px solid rgba(255,255,255,0.14);
         background: #0a0a0a;
         box-shadow: 0 28px 90px rgba(0,0,0,0.58);
@@ -93,13 +93,16 @@ export const motionDocExportStyles = `      :root {
         z-index: 1;
         display: flex;
         flex-direction: var(--slide-direction);
-        gap: clamp(20px, 4vw, 52px);
+        gap: var(--slide-gap, 20px);
         width: 100%;
         height: 100%;
-        padding: clamp(24px, 4vw, 64px);
+        padding: clamp(16px, 3%, 32px);
         justify-content: var(--slide-align-y);
         align-items: var(--slide-align-x);
         text-align: var(--slide-text-align);
+      }
+      .slide--freeform .slide__content {
+        padding: 0;
       }
       .slide__column,
       .slide__image-column {
@@ -116,6 +119,25 @@ export const motionDocExportStyles = `      :root {
         opacity: 0;
         margin-bottom: var(--motion-mb, 18px);
         transform: translate3d(0, 28px, 0);
+      }
+      .motion-block--positioned {
+        position: absolute;
+        left: var(--motion-x, 8%);
+        top: var(--motion-y, 12%);
+        width: var(--motion-w, 42%);
+        height: var(--motion-h, auto);
+        margin-bottom: 0;
+        z-index: 2;
+      }
+      .motion-block--positioned > * {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+      }
+      .motion-block--positioned .block-title,
+      .motion-block--positioned .block-text {
+        width: 100%;
+        max-width: none;
       }
       .slide.is-active .motion-block {
         animation: enter-motion var(--motion-duration, 0.6s) cubic-bezier(0.22, 1, 0.36, 1) var(--motion-delay, 0s) both;
@@ -140,28 +162,28 @@ export const motionDocExportStyles = `      :root {
       }
       .block-title {
         margin: 0;
-        max-width: 13ch;
-        font-size: clamp(42px, 7vw, 96px);
+        max-width: 48rem;
+        font-size: var(--motion-font-size, clamp(42px, 7vw, 96px));
         font-weight: 650;
         letter-spacing: 0;
-        line-height: 0.98;
+        line-height: 1.02;
         color: var(--slide-fg);
       }
       .block-text {
         margin: 0;
         max-width: 46rem;
-        font-size: clamp(18px, 2.1vw, 32px);
-        line-height: 1.55;
+        font-size: var(--motion-font-size, clamp(18px, 2.1vw, 32px));
+        line-height: 1.45;
         color: var(--slide-muted);
       }
       .block-card {
         display: flex;
         flex-direction: column;
         gap: 0;
-        max-width: 48rem;
+        max-width: 42rem;
         overflow: hidden;
-        padding: clamp(18px, 2.2vw, 30px);
-        border-radius: 14px;
+        padding: 20px;
+        border-radius: 16px;
         border: 1px solid var(--slide-border);
         background: var(--slide-card);
         box-shadow: 0 20px 60px rgba(0,0,0,0.18);
@@ -198,11 +220,11 @@ export const motionDocExportStyles = `      :root {
       .block-card__icon {
         display: grid;
         flex: 0 0 auto;
-        width: 42px;
-        height: 42px;
+        width: 36px;
+        height: 36px;
         place-items: center;
-        margin-bottom: 18px;
-        border-radius: 10px;
+        margin-bottom: 16px;
+        border-radius: 8px;
         border: 1px solid var(--slide-border);
         background: rgba(255,255,255,0.06);
         color: var(--slide-fg);
@@ -214,27 +236,27 @@ export const motionDocExportStyles = `      :root {
         min-width: 0;
       }
       .block-card__icon svg {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
       }
       .block-card h3 {
         margin: 0;
-        font-size: clamp(19px, 2vw, 30px);
-        line-height: 1.15;
+        font-size: 20px;
+        line-height: 1.4;
         color: var(--slide-fg);
       }
       .block-card p {
-        margin: 10px 0 0;
-        font-size: clamp(15px, 1.25vw, 20px);
-        line-height: 1.65;
+        margin: 8px 0 0;
+        font-size: 16px;
+        line-height: 1.75;
         color: var(--slide-muted);
       }
       .block-metric,
       .block-chart {
         width: 100%;
         max-width: 54rem;
-        padding: clamp(18px, 2.2vw, 30px);
-        border-radius: 14px;
+        padding: 20px;
+        border-radius: 16px;
         border: 1px solid var(--slide-border);
         background: var(--slide-card);
         box-shadow: 0 20px 60px rgba(0,0,0,0.18);
@@ -261,21 +283,21 @@ export const motionDocExportStyles = `      :root {
         color: var(--slide-muted);
       }
       .block-metric__value {
-        margin: 14px 0 0;
-        font-size: clamp(42px, 6vw, 72px);
+        margin: 12px 0 0;
+        font-size: 48px;
         font-weight: 650;
-        line-height: 0.95;
+        line-height: 1;
         color: var(--slide-fg);
       }
       .block-metric__caption {
-        margin: 14px 0 0;
-        font-size: 15px;
-        line-height: 1.6;
+        margin: 12px 0 0;
+        font-size: 14px;
+        line-height: 1.5rem;
         color: var(--slide-muted);
       }
       .block-chart h3 {
         margin: 0;
-        font-size: clamp(19px, 2vw, 30px);
+        font-size: 20px;
         color: var(--slide-fg);
       }
       .block-chart--sm {
@@ -341,6 +363,10 @@ export const motionDocExportStyles = `      :root {
         aspect-ratio: 16 / 9;
         object-fit: cover;
       }
+      .motion-block--positioned .block-image img {
+        height: 100%;
+        aspect-ratio: auto;
+      }
       .motion-block--full {
         position: absolute;
         inset: 0;
@@ -374,7 +400,7 @@ export const motionDocExportStyles = `      :root {
         grid-template-columns: auto minmax(160px, 1fr) auto;
         align-items: center;
         gap: 12px;
-        width: min(100%, 1440px);
+        width: min(100%, 64rem);
         margin: 0 auto;
       }
       .button-group {
