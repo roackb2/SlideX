@@ -15,7 +15,7 @@ import { defaultMdx } from "@/lib/defaultMdx";
 import { buildMotionDocHtml, slugifyFilename } from "@/lib/motionDocExport";
 import { createMotionDocBlock } from "@/lib/motionDocBlockFactory";
 import { materializeFreeformSource } from "@/lib/motionDocFreeform";
-import { cloneBlock, generateSlideString, getSelectionMdx, getSlideTitle, replaceSlideContent, replaceSlideOpeningTag } from "@/lib/motionDocSerialize";
+import { cloneBlock, explicitGroupFlowProps, generateSlideString, getSelectionMdx, getSlideTitle, replaceSlideContent, replaceSlideOpeningTag } from "@/lib/motionDocSerialize";
 import { getMotionDocStats } from "@/lib/mdxStats";
 import { parseMotionDoc, type MotionDocBlock, type MotionDocScene } from "@/lib/motionDocParser";
 import { defaultTemplate, motionTemplates } from "@/lib/templates";
@@ -584,7 +584,7 @@ export function MotionDocApp() {
       ...updates
     };
 
-    commitSource((current) => replaceSlideOpeningTag(current, activeSlideIndex, nextProps));
+    commitSource((current) => replaceSlideOpeningTag(current, activeSlideIndex, explicitGroupFlowProps(activeSlide, nextProps)));
     setReplayNonce((value) => value + 1);
     setNotice("Slide style updated");
   }
@@ -602,7 +602,7 @@ export function MotionDocApp() {
           ...updates
         };
 
-        return replaceSlideOpeningTag(nextSource, index, nextProps);
+        return replaceSlideOpeningTag(nextSource, index, explicitGroupFlowProps(slide, nextProps));
       }, current)
     );
     setReplayNonce((value) => value + 1);
@@ -775,9 +775,10 @@ export function MotionDocApp() {
       return;
     }
 
+    const { block: normalizedBlock, flowUpdates } = normalizeLayerFlowProps(nextBlock);
     const nextBlocks = [...activeSlide.blocks];
-    nextBlocks[selectedBlockIndex] = nextBlock;
-    commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString({ ...activeSlide, blocks: nextBlocks })));
+    nextBlocks[selectedBlockIndex] = normalizedBlock;
+    commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString({ ...activeSlide, blocks: nextBlocks, props: { ...activeSlide.props, ...flowUpdates } })));
     setReplayNonce((current) => current + 1);
     setNotice("Layer MDX updated");
   }
@@ -1148,4 +1149,38 @@ function clampFramePosition(value: number, size: number) {
 
 function roundFrameValue(value: number) {
   return Math.round(Math.min(Math.max(value, 0), 100) * 10) / 10;
+}
+
+function normalizeLayerFlowProps(block: MotionDocBlock) {
+  if (!("props" in block) || (block.type !== "Card" && block.type !== "Metric" && block.type !== "Chart")) {
+    return { block, flowUpdates: {} };
+  }
+
+  const flowValue = stringValue(
+    block.props.flow ??
+    block.props.groupFlow ??
+    block.props.cardFlow ??
+    block.props.metricFlow ??
+    block.props.chartFlow
+  );
+  const { cardFlow, chartFlow, flow, groupFlow, metricFlow, ...nextProps } = block.props;
+  void cardFlow;
+  void chartFlow;
+  void flow;
+  void groupFlow;
+  void metricFlow;
+
+  if (!flowValue) {
+    return {
+      block: { ...block, props: nextProps } as MotionDocBlock,
+      flowUpdates: {}
+    };
+  }
+
+  const flowProp = block.type === "Card" ? "cardFlow" : block.type === "Metric" ? "metricFlow" : "chartFlow";
+
+  return {
+    block: { ...block, props: nextProps } as MotionDocBlock,
+    flowUpdates: { [flowProp]: flowValue }
+  };
 }

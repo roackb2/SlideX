@@ -16,6 +16,27 @@ export function replaceSlideOpeningTag(source: string, slideIndex: number, props
   return source;
 }
 
+export function explicitGroupFlowProps(slide: MotionDocScene, props: Record<string, string | number> = slide.props) {
+  const nextProps = { ...props };
+  const hasCard = slide.blocks.some((block) => block.type === "Card");
+  const hasMetric = slide.blocks.some((block) => block.type === "Metric");
+  const hasChart = slide.blocks.some((block) => block.type === "Chart");
+
+  if (hasCard && nextProps.cardFlow === undefined) {
+    nextProps.cardFlow = "stack";
+  }
+
+  if (hasMetric && nextProps.metricFlow === undefined) {
+    nextProps.metricFlow = stringProp(nextProps.cardFlow) ?? "stack";
+  }
+
+  if (hasChart && nextProps.chartFlow === undefined) {
+    nextProps.chartFlow = "stack";
+  }
+
+  return nextProps;
+}
+
 export function cloneBlock(block: MotionDocBlock): MotionDocBlock {
   if ("props" in block) {
     return {
@@ -42,14 +63,29 @@ export function replaceSlideContent(source: string, slideIndex: number, newSlide
 }
 
 export function generateSlideString(slide: MotionDocScene) {
-  const tag = formatSlideTag(slide.props);
+  const tag = formatSlideTag(explicitGroupFlowProps(slide));
   const blockStrings = slide.blocks.map((block) => `  ${generateBlockString(block)}`);
   return `${tag}\n${blockStrings.join("\n")}\n</Slide>`;
 }
 
 export function generateBlockString(block: MotionDocBlock) {
+  return generateBlockStringWithProps(block, "props" in block ? block.props : undefined);
+}
+
+export function generateLayerBlockString(block: MotionDocBlock, slide: MotionDocScene) {
+  if (!("props" in block) || !isGroupableType(block.type)) {
+    return generateBlockString(block);
+  }
+
+  return generateBlockStringWithProps(block, {
+    ...block.props,
+    flow: groupFlowForBlock(slide, block.type)
+  });
+}
+
+function generateBlockStringWithProps(block: MotionDocBlock, overrideProps: Record<string, string | number> | undefined) {
   if (block.type === "Title" || block.type === "Text") {
-    const propsStr = formatProps(block.props);
+    const propsStr = formatProps(overrideProps ?? block.props);
     return `<${block.type}${propsStr ? " " + propsStr : ""}>${block.text}</${block.type}>`;
   }
 
@@ -58,7 +94,7 @@ export function generateBlockString(block: MotionDocBlock) {
   }
 
   if ("props" in block) {
-    const propsStr = formatProps(block.props);
+    const propsStr = formatProps(overrideProps ?? block.props);
     return `<${block.type}${propsStr ? " " + propsStr : ""} />`;
   }
 
@@ -81,7 +117,7 @@ export function getSelectionMdx(slide: MotionDocScene | undefined, selectedBlock
 
   return {
     label: block ? `${block.type.toLowerCase()}-${selectedBlockIndex + 1}.mdx` : "layer.mdx",
-    source: block ? generateBlockString(block) : ""
+    source: block ? generateLayerBlockString(block, slide) : ""
   };
 }
 
@@ -112,4 +148,28 @@ function formatSlideTag(props: Record<string, string | number>) {
   const duration = typeof props.duration === "number" ? props.duration : 5;
   const rest = formatProps(props);
   return `<Slide duration={${duration}}${rest ? ` ${rest}` : ""}>`;
+}
+
+function stringProp(value: string | number | undefined) {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function isGroupableType(type: MotionDocBlock["type"]) {
+  return type === "Card" || type === "Metric" || type === "Chart";
+}
+
+function groupFlowForBlock(slide: MotionDocScene, type: MotionDocBlock["type"]) {
+  if (type === "Card") {
+    return stringProp(slide.props.cardFlow) ?? "stack";
+  }
+
+  if (type === "Metric") {
+    return stringProp(slide.props.metricFlow ?? slide.props.cardFlow) ?? "stack";
+  }
+
+  if (type === "Chart") {
+    return stringProp(slide.props.chartFlow) ?? "stack";
+  }
+
+  return "stack";
 }
