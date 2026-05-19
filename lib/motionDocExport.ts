@@ -1,12 +1,16 @@
 import { parseMotionDoc, type MotionDocBlock } from "@/lib/motionDocParser";
 import { isSlideXIconName, lucideIconPaths } from "@/lib/lucideIconRegistry";
+import { materializeFreeformScene } from "@/lib/motionDocFreeform";
 import { motionDocExportRuntime } from "@/lib/motionDocExportRuntime";
 import { motionDocExportStyles } from "@/lib/motionDocExportStyles";
+
+const FRAME_WIDTH = 1024;
+const FRAME_HEIGHT = 576;
 
 export function buildMotionDocHtml(source: string) {
   const document = parseMotionDoc(source);
   const slidesHtml = document.scenes
-    .map((scene, index) => renderSceneHtml(scene.blocks, scene.props, scene.duration, index, document.scenes.length))
+    .map((scene) => renderSceneHtml(materializeFreeformScene(scene)))
     .join("\n");
 
   return `<!DOCTYPE html>
@@ -21,7 +25,9 @@ export function buildMotionDocHtml(source: string) {
     <main class="player" data-slide-count="${document.scenes.length}">
       <div class="stage">
         <div class="viewport" aria-live="polite">
-          ${slidesHtml}
+          <div class="frame">
+            ${slidesHtml}
+          </div>
         </div>
       </div>
       <nav class="controls" aria-label="Slide controls">
@@ -42,15 +48,11 @@ export function buildMotionDocHtml(source: string) {
 }
 
 function renderSceneHtml(
-  blocks: MotionDocBlock[],
-  props: Record<string, string | number>,
-  duration: number,
-  index: number,
-  total: number
+  scene: ReturnType<typeof materializeFreeformScene>
 ) {
+  const { blocks, duration, props } = scene;
   const theme = typeof props.theme === "string" ? props.theme : "dark";
   const isLight = theme === "light" || theme === "paper";
-  const layout = props.layout === "split-left" || props.layout === "split-right" ? props.layout : "default";
   const background =
     typeof props.background === "string"
       ? props.background
@@ -60,81 +62,19 @@ function renderSceneHtml(
   const accent = typeof props.accent === "string" ? props.accent : isLight ? "#111111" : "#ffffff";
   const borderColor = isLight ? "rgba(15,23,42,0.12)" : "rgba(255,255,255,0.12)";
   const cardBackground = isLight ? "rgba(255,255,255,0.72)" : "rgba(255,255,255,0.075)";
-  const foreground = isLight ? "#111827" : "#ffffff";
-  const muted = isLight ? "#475569" : "#cbd5e1";
-  const hasPositionedBlocks = blocks.some((block) => "props" in block && isPositionedProps(block.props));
-  const imageBlocks = blocks.filter((block) => block.type === "ImageBlock");
-  const contentBlocks = blocks.filter((block) => block.type !== "ImageBlock");
-  const shouldSplit = !hasPositionedBlocks && layout !== "default" && imageBlocks.length > 0;
-  const textOrder = layout === "split-left" ? 1 : 2;
-  const imageOrder = layout === "split-left" ? 2 : 1;
-  const alignX = props.alignX === "center" || props.alignX === "right" || props.alignX === "stretch" ? props.alignX : "left";
-  const alignY = props.alignY === "top" || props.alignY === "bottom" ? props.alignY : "center";
-  const textAlign = props.textAlign === "center" || props.textAlign === "right" ? props.textAlign : "left";
+  const foreground = stringProp(props.textColor ?? props.foreground ?? props.color) ?? (isLight ? "#111827" : "#ffffff");
+  const muted = stringProp(props.mutedColor) ?? (isLight ? "#475569" : "#cbd5e1");
 
-  return `<section class="slide${hasPositionedBlocks ? " slide--freeform" : ""}" data-duration="${Math.max(duration, 1)}" style="${escapeAttribute(inlineCss({
+  return `<section class="slide" data-duration="${Math.max(duration, 1)}" style="${escapeAttribute(inlineCss({
     "--slide-accent": accent,
-    "--slide-align-x": shouldSplit ? "stretch" : alignXToFlex(alignX),
-    "--slide-align-y": alignYToFlex(alignY),
     "--slide-bg": background,
     "--slide-border": borderColor,
     "--slide-card": cardBackground,
-    "--slide-direction": shouldSplit ? "row" : "column",
     "--slide-fg": foreground,
-    "--slide-gap": shouldSplit ? "48px" : "20px",
-    "--slide-muted": muted,
-    "--slide-text-align": textAlign
+    "--slide-muted": muted
   }))}">
-    <div class="slide-meta">Slide ${index + 1} / ${total}</div>
-    <div class="slide__content">
-      ${
-        shouldSplit
-          ? `<div class="slide__column" style="${escapeAttribute(inlineCss({ order: String(textOrder) }))}">${renderBlocks(contentBlocks, cardFlowProp(props.cardFlow), cardFlowProp(props.metricFlow ?? props.cardFlow))}</div>
-             <div class="slide__image-column" style="${escapeAttribute(inlineCss({ order: String(imageOrder) }))}">${renderBlocks(imageBlocks, "stack")}</div>`
-          : renderBlocks(blocks, cardFlowProp(props.cardFlow), cardFlowProp(props.metricFlow ?? props.cardFlow))
-      }
-    </div>
+    ${blocks.map((block) => renderBlock(block)).join("")}
   </section>`;
-}
-
-function renderBlocks(blocks: MotionDocBlock[], cardFlow: "stack" | "row" | "grid", metricFlow: "stack" | "row" | "grid" = "stack") {
-  const rendered: string[] = [];
-  const flowBlocks = blocks.filter((block) => !("props" in block) || !isPositionedProps(block.props));
-  const positionedBlocks = blocks.filter((block) => "props" in block && isPositionedProps(block.props));
-  let index = 0;
-
-  while (index < flowBlocks.length) {
-    const block = flowBlocks[index];
-    const flowType = flowBlockType(block);
-    const flow = flowType === "Card" ? cardFlow : flowType === "Metric" ? metricFlow : "stack";
-
-    if (flowType && flow !== "stack") {
-      const cards: string[] = [];
-      let cursor = index;
-
-      while (cursor < flowBlocks.length && flowBlocks[cursor].type === flowType) {
-        cards.push(renderBlock(flowBlocks[cursor]));
-        cursor += 1;
-      }
-
-      rendered.push(
-        `<div class="card-group card-group--${flow}">${cards
-          .map((card) => `<div class="card-group__item">${card}</div>`)
-          .join("")}</div>`
-      );
-      index = cursor;
-      continue;
-    }
-
-    rendered.push(renderBlock(block));
-    index += 1;
-  }
-
-  for (const block of positionedBlocks) {
-    rendered.push(renderBlock(block));
-  }
-
-  return rendered.join("");
 }
 
 function renderBlock(block: MotionDocBlock) {
@@ -196,29 +136,22 @@ function renderBlock(block: MotionDocBlock) {
   return "";
 }
 
-function flowBlockType(block: MotionDocBlock) {
-  if (block.type === "Card" || block.type === "Metric") {
-    return block.type;
-  }
-
-  return null;
-}
-
 function renderMotionBlock(block: MotionDocBlock, content: string) {
   const props = "props" in block ? block.props : {};
   const enter = animationClass(props.enter);
   const delay = numberProp(props.delay, 0);
   const duration = numberProp(props.duration, 0.6);
-  const marginBottom = spacingProp(props.marginBottom ?? props.mb);
   const fullClass = props.full === "true" || props.full === 1 ? " motion-block--full" : "";
   const positionClass = isPositionedProps(props) ? " motion-block--positioned" : "";
 
   return `<div class="motion-block ${enter}${fullClass}${positionClass}" style="${escapeAttribute(inlineCss({
     "--motion-delay": `${delay}s`,
     "--motion-duration": `${duration}s`,
-    "--motion-mb": marginBottom,
     ...fontSizeVars(props),
-    ...positionVars(props)
+    ...positionVars(props),
+    ...radiusVars(props),
+    ...colorVars(props),
+    ...textAlignVars(props)
   }))}">${content}</div>`;
 }
 
@@ -234,13 +167,6 @@ function numberProp(value: string | number | undefined, fallback: number) {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
-function spacingProp(value: string | number | undefined) {
-  if (typeof value === "number") return `${value}px`;
-  if (typeof value === "string" && value.trim() !== "") return value;
-
-  return "18px";
-}
-
 function isPositionedProps(props: Record<string, string | number>) {
   return Number.isFinite(Number(props.x)) || Number.isFinite(Number(props.y));
 }
@@ -251,10 +177,10 @@ function positionVars(props: Record<string, string | number>): Record<string, st
   }
 
   return {
-    "--motion-h": `${percentProp(props.h, 18)}%`,
-    "--motion-x": `${percentProp(props.x, 8)}%`,
-    "--motion-y": `${percentProp(props.y, 12)}%`,
-    "--motion-w": `${percentProp(props.w, 42)}%`
+    "--motion-h": `${framePx(props.h, FRAME_HEIGHT, 18)}px`,
+    "--motion-x": `${framePx(props.x, FRAME_WIDTH, 8)}px`,
+    "--motion-y": `${framePx(props.y, FRAME_HEIGHT, 12)}px`,
+    "--motion-w": `${framePx(props.w, FRAME_WIDTH, 42)}px`
   };
 }
 
@@ -270,14 +196,64 @@ function fontSizeVars(props: Record<string, string | number>): Record<string, st
   };
 }
 
-function percentProp(value: string | number | undefined, fallback: number) {
+function radiusVars(props: Record<string, string | number>): Record<string, string> {
+  const value = props.radius ?? props.borderRadius;
+
+  if (value === undefined || value === "") {
+    return {};
+  }
+
+  const parsed = typeof value === "number" ? value : Number(value);
+
+  if (Number.isFinite(parsed)) {
+    return { "--motion-radius": `${Math.max(parsed, 0)}px` };
+  }
+
+  return { "--motion-radius": String(value) };
+}
+
+function colorVars(props: Record<string, string | number>): Record<string, string> {
+  const background = stringProp(props.background ?? props.backgroundColor ?? props.bg);
+  const color = stringProp(props.color ?? props.textColor);
+  const mutedColor = stringProp(props.mutedColor);
+
+  return {
+    ...(background ? { "--motion-bg": background } : {}),
+    ...(background ? { "--motion-text-padding": "0.12em 0.18em" } : {}),
+    ...(color ? { "--motion-fg": color } : {}),
+    ...(mutedColor || color ? { "--motion-muted": mutedColor ?? color } : {})
+  };
+}
+
+function textAlignVars(props: Record<string, string | number>): Record<string, string> {
+  if (props.textAlign === "center" || props.textAlign === "right") {
+    return { "--motion-text-align": props.textAlign };
+  }
+
+  if (props.textAlign === "left") {
+    return { "--motion-text-align": "left" };
+  }
+
+  return {};
+}
+
+function stringProp(value: string | number | undefined) {
+  const stringValue = typeof value === "string" ? value.trim() : "";
+  return stringValue || undefined;
+}
+
+function framePx(value: string | number | undefined, dimension: number, fallbackPercent: number) {
   const parsed = typeof value === "number" ? value : Number(value);
 
   if (!Number.isFinite(parsed)) {
-    return fallback;
+    return roundPx((fallbackPercent / 100) * dimension);
   }
 
-  return Math.min(Math.max(parsed, 0), 100);
+  return roundPx((Math.min(Math.max(parsed, 0), 100) / 100) * dimension);
+}
+
+function roundPx(value: number) {
+  return Math.round(value * 100) / 100;
 }
 
 function chartValues(value: string) {
@@ -287,14 +263,6 @@ function chartValues(value: string) {
     .filter((item) => Number.isFinite(item) && item >= 0);
 
   return values.length > 0 ? values : [24, 42, 68, 54];
-}
-
-function cardFlowProp(value: string | number | undefined): "stack" | "row" | "grid" {
-  if (value === "row" || value === "grid") {
-    return value;
-  }
-
-  return "stack";
 }
 
 function cardWidthClassName(value: string | number | undefined) {
@@ -329,21 +297,6 @@ function chartHeightProp(value: string | number | undefined) {
   }
 
   return Math.min(Math.max(parsed, 80), 320);
-}
-
-function alignXToFlex(value: string) {
-  if (value === "center") return "center";
-  if (value === "right") return "flex-end";
-  if (value === "stretch") return "stretch";
-
-  return "flex-start";
-}
-
-function alignYToFlex(value: string) {
-  if (value === "top") return "flex-start";
-  if (value === "bottom") return "flex-end";
-
-  return "center";
 }
 
 function fitProp(value: string | number | undefined) {

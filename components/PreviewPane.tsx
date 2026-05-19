@@ -18,7 +18,7 @@ type AlignX = "left" | "center" | "right" | "stretch";
 type AlignY = "top" | "center" | "bottom";
 type TextAlign = "left" | "center" | "right";
 type CardFlow = "stack" | "row" | "grid";
-type FlowBlockType = "Card" | "Metric";
+type FlowBlockType = "Card" | "Metric" | "Chart";
 
 export function PreviewPane({ source, replayNonce, activeSlideIndex = 0, autoHeight = false }: PreviewPaneProps) {
   const document = useMemo(() => parseMotionDoc(source), [source]);
@@ -47,6 +47,7 @@ export function PreviewPane({ source, replayNonce, activeSlideIndex = 0, autoHei
   const imageOrder = layout === "split-left" ? 2 : 1;
   const cardFlow = groupFlowProp(activeSlide.props.cardFlow);
   const metricFlow = groupFlowProp(activeSlide.props.metricFlow ?? activeSlide.props.cardFlow);
+  const chartFlow = groupFlowProp(activeSlide.props.chartFlow);
 
   return (
     <div key={replayNonce} style={autoHeight ? { minHeight: "100%", position: "relative" } : { position: "absolute", inset: 0 }}>
@@ -60,14 +61,16 @@ export function PreviewPane({ source, replayNonce, activeSlideIndex = 0, autoHei
         freeform={hasPositionedBlocks}
         key={`${replayNonce}-${activeSlideIndex}-${activeSlide.duration}`}
         layout={shouldSplit ? layout : "default"}
+        mutedColor={stringProp(activeSlide.props.mutedColor)}
         textAlign={textAlignProp(activeSlide.props.textAlign)}
+        textColor={stringProp(activeSlide.props.textColor ?? activeSlide.props.foreground ?? activeSlide.props.color)}
         theme={stringProp(activeSlide.props.theme)}
       >
         {shouldSplit ? (
           <>
             <div style={{ ...splitContentStyle, order: textOrder }}>
               {contentBlocks.length > 0 ? (
-                <PreviewBlockList blocks={contentBlocks} cardFlow={cardFlow} metricFlow={metricFlow} />
+                <PreviewBlockList blocks={contentBlocks} cardFlow={cardFlow} chartFlow={chartFlow} metricFlow={metricFlow} />
               ) : (
                 <Text enter="fadeIn">Add a text layer for this side.</Text>
               )}
@@ -81,10 +84,8 @@ export function PreviewPane({ source, replayNonce, activeSlideIndex = 0, autoHei
             </div>
           </>
         ) : activeSlide.blocks.length > 0 ? (
-          <PreviewBlockList blocks={activeSlide.blocks} cardFlow={cardFlow} metricFlow={metricFlow} />
-        ) : (
-          <Text enter="fadeIn">This slide is empty.</Text>
-        )}
+          <PreviewBlockList blocks={activeSlide.blocks} cardFlow={cardFlow} chartFlow={chartFlow} metricFlow={metricFlow} />
+        ) : null}
       </Scene>
     </div>
   );
@@ -108,7 +109,7 @@ const splitImageStyle: CSSProperties = {
   minWidth: 0
 };
 
-function PreviewBlockList({ blocks, cardFlow, metricFlow }: { blocks: MotionDocBlock[]; cardFlow: CardFlow; metricFlow: CardFlow }) {
+function PreviewBlockList({ blocks, cardFlow, chartFlow, metricFlow }: { blocks: MotionDocBlock[]; cardFlow: CardFlow; chartFlow: CardFlow; metricFlow: CardFlow }) {
   const rendered: ReactNode[] = [];
   const flowBlocks = blocks
     .map((block, originalIndex) => ({ block, originalIndex }))
@@ -121,7 +122,7 @@ function PreviewBlockList({ blocks, cardFlow, metricFlow }: { blocks: MotionDocB
   while (index < flowBlocks.length) {
     const { block, originalIndex } = flowBlocks[index];
     const flowType = flowBlockType(block);
-    const flow = flowType === "Card" ? cardFlow : flowType === "Metric" ? metricFlow : "stack";
+    const flow = flowType === "Card" ? cardFlow : flowType === "Metric" ? metricFlow : flowType === "Chart" ? chartFlow : "stack";
 
     if (flowType && flow !== "stack") {
       const cards: MotionDocBlock[] = [];
@@ -196,9 +197,12 @@ function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlock; fil
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
+        background={stringProp(block.props.background ?? block.props.backgroundColor ?? block.props.bg)}
         fillFrame={fillFrame}
         fontSize={sizeNumberProp(block.props.fontSize, undefined)}
-        marginBottom={spacingProp(block.props.marginBottom ?? block.props.mb)}
+        textColor={stringProp(block.props.color ?? block.props.textColor)}
+        textAlign={optionalTextAlignProp(block.props.textAlign)}
+        radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
       >
         {block.text}
       </Title>
@@ -211,9 +215,12 @@ function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlock; fil
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
+        background={stringProp(block.props.background ?? block.props.backgroundColor ?? block.props.bg)}
         fillFrame={fillFrame}
         fontSize={sizeNumberProp(block.props.fontSize, undefined)}
-        marginBottom={spacingProp(block.props.marginBottom ?? block.props.mb)}
+        textColor={stringProp(block.props.color ?? block.props.textColor)}
+        textAlign={optionalTextAlignProp(block.props.textAlign)}
+        radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
       >
         {block.text}
       </Text>
@@ -226,10 +233,13 @@ function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlock; fil
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
+        background={stringProp(block.props.background ?? block.props.backgroundColor ?? block.props.bg)}
+        color={stringProp(block.props.color ?? block.props.textColor)}
         fillFrame={fillFrame}
         icon={stringProp(block.props.icon)}
         layout={cardLayoutProp(block.props.layout)}
-        marginBottom={spacingProp(block.props.marginBottom ?? block.props.mb)}
+        mutedColor={stringProp(block.props.mutedColor)}
+        radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
         text={String(block.props.text ?? "")}
         title={String(block.props.title ?? "Card")}
         width={cardWidthProp(block.props.width)}
@@ -244,10 +254,11 @@ function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlock; fil
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
+        background={stringProp(block.props.background ?? block.props.backgroundColor ?? block.props.bg)}
         fillFrame={fillFrame}
         fit={fitProp(block.props.fit)}
         full={booleanProp(block.props.full)}
-        marginBottom={spacingProp(block.props.marginBottom ?? block.props.mb)}
+        radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
         src={String(block.props.src ?? "")}
       />
     );
@@ -260,9 +271,12 @@ function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlock; fil
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
+        background={stringProp(block.props.background ?? block.props.backgroundColor ?? block.props.bg)}
+        color={stringProp(block.props.color ?? block.props.textColor)}
         fillFrame={fillFrame}
         label={String(block.props.label ?? "Metric")}
-        marginBottom={spacingProp(block.props.marginBottom ?? block.props.mb)}
+        mutedColor={stringProp(block.props.mutedColor)}
+        radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
         value={String(block.props.value ?? "0")}
         width={blockWidthProp(block.props.width, "sm")}
       />
@@ -275,10 +289,13 @@ function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlock; fil
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
+        background={stringProp(block.props.background ?? block.props.backgroundColor ?? block.props.bg)}
+        color={stringProp(block.props.color ?? block.props.textColor)}
         fillFrame={fillFrame}
         height={sizeNumberProp(block.props.height, 144)}
         labels={stringProp(block.props.labels)}
-        marginBottom={spacingProp(block.props.marginBottom ?? block.props.mb)}
+        mutedColor={stringProp(block.props.mutedColor)}
+        radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
         title={String(block.props.title ?? "Chart")}
         values={stringProp(block.props.values)}
         width={blockWidthProp(block.props.width, "lg")}
@@ -290,7 +307,7 @@ function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlock; fil
 }
 
 function flowBlockType(block: MotionDocBlock): FlowBlockType | null {
-  if (block.type === "Card" || block.type === "Metric") {
+  if (block.type === "Card" || block.type === "Metric" || block.type === "Chart") {
     return block.type;
   }
 
@@ -395,6 +412,14 @@ function textAlignProp(value: string | number | undefined): TextAlign {
   }
 
   return "left";
+}
+
+function optionalTextAlignProp(value: string | number | undefined): TextAlign | undefined {
+  if (value === "left" || value === "center" || value === "right") {
+    return value;
+  }
+
+  return undefined;
 }
 
 function cardLayoutProp(value: string | number | undefined) {

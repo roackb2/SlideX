@@ -34,6 +34,7 @@ export function materializeFreeformScene(scene: MotionDocScene): MotionDocScene 
         props: {
           ...block.props,
           ...(defaultFontSize(block) === undefined || block.props.fontSize !== undefined ? {} : { fontSize: defaultFontSize(block) }),
+          ...(block.props.radius !== undefined || block.props.borderRadius !== undefined ? {} : { radius: defaultRadius(block) }),
           x: block.props.x ?? layout.x,
           y: block.props.y ?? layout.y,
           w: block.props.w ?? layout.w,
@@ -124,4 +125,12 @@ function defaultFontSize(block: MotionDocBlock) {
   if (block.type === "Text") return 24;
 
   return undefined;
+}
+
+function defaultRadius(block: MotionDocBlock) {
+  if (block.type === "Card" || block.type === "Chart" || block.type === "ImageBlock" || block.type === "Metric") {
+    return 16;
+  }
+
+  return 0;
 }

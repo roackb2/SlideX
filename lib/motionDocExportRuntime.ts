@@ -5,8 +5,15 @@ export const motionDocExportRuntime = `      (() => {
         const playButton = document.querySelector('[data-action="play"]');
         const fullscreenButton = document.querySelector('[data-action="fullscreen"]');
         const player = document.querySelector(".player");
+        const viewport = document.querySelector(".viewport");
         let index = 0;
         let timer = null;
+
+        function updateFrameScale() {
+          if (!viewport) return;
+          const rect = viewport.getBoundingClientRect();
+          viewport.style.setProperty("--frame-scale", String(rect.width / 1024));
+        }
 
         function render(nextIndex, replay = false) {
           if (slides.length === 0) return;
@@ -56,6 +63,7 @@ export const motionDocExportRuntime = `      (() => {
         }
 
         function updateFullscreenButton() {
+          updateFrameScale();
           if (!fullscreenButton) return;
           fullscreenButton.textContent = document.fullscreenElement ? "×" : "⛶";
           fullscreenButton.setAttribute("aria-label", document.fullscreenElement ? "Exit fullscreen" : "Enter fullscreen");
@@ -86,6 +94,7 @@ export const motionDocExportRuntime = `      (() => {
         });
 
         document.addEventListener("fullscreenchange", updateFullscreenButton);
+        window.addEventListener("resize", updateFrameScale);
 
         document.addEventListener("keydown", (event) => {
           if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
@@ -112,6 +121,7 @@ export const motionDocExportRuntime = `      (() => {
           }
         });
 
+        updateFrameScale();
         render(0);
         updateFullscreenButton();
       })();`;

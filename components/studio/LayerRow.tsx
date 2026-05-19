@@ -1,8 +1,10 @@
 "use client";
 
-import { BarChart3, ChevronDown, ChevronUp, Code2, Gauge, GripVertical, Image as ImageIcon, Trash2 } from "lucide-react";
-import type { MouseEvent } from "react";
+import { BarChart3, ChevronDown, ChevronUp, Code2, Gauge, GripVertical, Image as ImageIcon, Layers, Trash2 } from "lucide-react";
+import type { KeyboardEvent, MouseEvent } from "react";
 import type { MotionDocBlock } from "@/lib/motionDocParser";
+
+export type GroupableLayerType = "Card" | "Metric" | "Chart";
 
 export function LayerTextIcon({ className = "", label }: { className?: string; label: "H" | "T" }) {
   return (
@@ -117,18 +119,67 @@ export function LayerRow({
   );
 }
 
-export function collectConsecutiveBlocks(blocks: MotionDocBlock[], startIndex: number, type: "Card" | "Metric") {
-  const groupedBlocks: Array<{ block: MotionDocBlock; index: number }> = [];
+export function GroupLayerRow({
+  count,
+  flow,
+  isExpanded,
+  indices,
+  isSelected,
+  label,
+  onToggleExpanded,
+  onSelectBlocks
+}: {
+  count: number;
+  flow: string;
+  isExpanded: boolean;
+  indices: number[];
+  isSelected: boolean;
+  label: string;
+  onToggleExpanded: () => void;
+  onSelectBlocks: (indices: number[], options?: { additive?: boolean }) => void;
+}) {
+  return (
+    <div
+      className={`group flex cursor-pointer items-center justify-between rounded-md border p-1.5 transition-all ${
+        isSelected
+          ? "border-neutral-700 bg-neutral-800 text-white"
+          : "border-neutral-800 bg-neutral-950 text-neutral-400 hover:bg-neutral-900"
+      }`}
+      onClick={(event) => onSelectBlocks(indices, { additive: event.metaKey || event.ctrlKey || event.shiftKey })}
+      onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelectBlocks(indices);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
+      <div className="flex min-w-0 items-center gap-2">
+        <button
+          aria-label={isExpanded ? "Collapse group" : "Expand group"}
+          className="flex h-4 w-4 shrink-0 items-center justify-center rounded text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleExpanded();
+          }}
+          type="button"
+        >
+          <ChevronDown size={12} className={`transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
+        </button>
+        <Layers size={12} className={isSelected ? "text-white" : "text-neutral-400"} />
+        <span className="truncate text-[11px] font-medium">{label}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-[9px] uppercase text-neutral-500">{count}</span>
+        <span className="font-mono text-[9px] uppercase text-neutral-400">{flow}</span>
+      </div>
+    </div>
+  );
+}
 
-  for (let index = startIndex; index < blocks.length; index += 1) {
-    const block = blocks[index];
-
-    if (block.type !== type) {
-      break;
-    }
-
-    groupedBlocks.push({ block, index });
-  }
-
-  return groupedBlocks;
+export function collectBlocksOfType(blocks: MotionDocBlock[], type: GroupableLayerType) {
+  return blocks
+    .map((block, index) => ({ block, index }))
+    .filter(({ block }) => block.type === type);
 }

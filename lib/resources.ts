@@ -44,7 +44,7 @@ export const docSections: DocSection[] = [
     description: "SlideX treats a presentation as an MDX scene deck with editable source.",
     points: [
       "Each Scene defines one timed page.",
-      "Title, Text, Card, and CTA layers receive enter, delay, duration, and spacing props.",
+      "Title, Text, Card, and CTA layers receive enter, delay, and duration props.",
       "The same MDX deck powers the scene list, preview, timeline, and export."
     ]
   },

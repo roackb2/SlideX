@@ -1,17 +1,15 @@
 "use client";
 
-import { Field, NumberInput, OptionButtons, TextInput, type BlockFieldProps } from "@/components/studio/inspector/InspectorControls";
-import { cardWidthOptions } from "@/components/studio/studioOptions";
+import { Field, NumberInput, TextInput, type BlockFieldProps } from "@/components/studio/inspector/InspectorControls";
 
 export function ChartFields({ block, selectedBlockIndex, updateBlock }: BlockFieldProps) {
   return (
     <>
-      <OptionButtons label="Chart width" options={cardWidthOptions} value={String(block.props.width ?? "lg")} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, width: value })} />
       <Field label="Chart height">
         <NumberInput
           max="320"
           min="80"
-          onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, height: value || "" })}
+          onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, height: value === "" ? "" : value })}
           placeholder="144"
           step="8"
           suffix="px"

@@ -9,7 +9,6 @@ import {
   AlignLeft,
   Layout,
   MousePointer,
-  Keyboard,
   Terminal,
   Sparkles,
   ChevronRight,
@@ -40,10 +39,9 @@ const fadeInUp = {
 const componentReference: [string, string, React.ElementType][] = [
   ["Scene", "Creates one timed presentation page.", Layers],
   ["Title", "Large animated headline layer for a scene.", Type],
-  ["Text", "Supporting body copy with enter, delay, duration, and spacing props.", AlignLeft],
+  ["Text", "Supporting body copy with enter, delay, and duration props.", AlignLeft],
   ["Card", "Structured information block with title and text props.", Layout],
-  ["CTA", "Call-to-action label for scene endings.", MousePointer],
-  ["mb", "Optional margin-bottom spacing prop for scene layers.", Keyboard]
+  ["CTA", "Call-to-action label for scene endings.", MousePointer]
 ];
 
 export default function ResourcesPage() {

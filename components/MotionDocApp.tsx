@@ -35,6 +35,7 @@ export function MotionDocApp() {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [isCanvasGridVisible, setIsCanvasGridVisible] = useState(false);
   const [codeScroll, setCodeScroll] = useState({ left: 0, top: 0 });
   const [codeCursor, setCodeCursor] = useState({ line: 1, column: 1 });
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
@@ -44,8 +45,9 @@ export function MotionDocApp() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isMobileInspectorOpen, setIsMobileInspectorOpen] = useState(false);
 
-  const stats = useMemo(() => getMotionDocStats(source), [source]);
-  const sliderDocument = useMemo(() => parseMotionDoc(source), [source]);
+  const canvasSource = useMemo(() => materializeFreeformSource(source), [source]);
+  const stats = useMemo(() => getMotionDocStats(canvasSource), [canvasSource]);
+  const sliderDocument = useMemo(() => parseMotionDoc(canvasSource), [canvasSource]);
   const activeSlide = sliderDocument.scenes[activeSlideIndex] ?? sliderDocument.scenes[0];
   const activeSlideBackground = stringValue(activeSlide?.props.background) ?? "#0f172a";
   const activeSlideAccent = stringValue(activeSlide?.props.accent) ?? "#7c3aed";
@@ -53,9 +55,14 @@ export function MotionDocApp() {
   const activeSlideLayout = stringValue(activeSlide?.props.layout) ?? "default";
   const activeSlideAlignX = stringValue(activeSlide?.props.alignX) ?? "left";
   const activeSlideAlignY = stringValue(activeSlide?.props.alignY) ?? "center";
-  const activeSlideTextAlign = stringValue(activeSlide?.props.textAlign) ?? "left";
   const activeSlideCardFlow = stringValue(activeSlide?.props.cardFlow) ?? "stack";
   const activeSlideMetricFlow = stringValue(activeSlide?.props.metricFlow ?? activeSlide?.props.cardFlow) ?? "stack";
+  const activeSlideChartFlow = stringValue(activeSlide?.props.chartFlow) ?? "stack";
+  const activeSlideCardGap = numberValue(activeSlide?.props.cardGap) ?? 3;
+  const activeSlideChartGap = numberValue(activeSlide?.props.chartGap) ?? 3;
+  const activeSlideMetricGap = numberValue(activeSlide?.props.metricGap) ?? 3;
+  const activeSlideTextColor = stringValue(activeSlide?.props.textColor ?? activeSlide?.props.foreground ?? activeSlide?.props.color) ?? "";
+  const activeSlideMutedColor = stringValue(activeSlide?.props.mutedColor) ?? "";
   const selectionMdx = useMemo(
     () => getSelectionMdx(activeSlide, selectedBlockIndex, activeSlideIndex),
     [activeSlide, activeSlideIndex, selectedBlockIndex]
@@ -145,6 +152,10 @@ export function MotionDocApp() {
         return;
       }
 
+      if (isCodeEditorOpen || isExportMenuOpen || isTemplateModalOpen || isMobileSidebarOpen || isMobileInspectorOpen) {
+        return;
+      }
+
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "c") {
         copySelectedBlock();
         return;
@@ -165,6 +176,12 @@ export function MotionDocApp() {
       if ((event.key === "Delete" || event.key === "Backspace") && (selectedBlockIndex !== null || selectedBlockIndices.length > 0)) {
         event.preventDefault();
         deleteSelectedBlocks();
+        return;
+      }
+
+      if (event.key === "Delete" || event.key === "Backspace") {
+        event.preventDefault();
+        deleteSlide(activeSlideIndex);
         return;
       }
 
@@ -262,6 +279,24 @@ export function MotionDocApp() {
     selectSingleBlock(index);
   }
 
+  function selectBlocks(indices: number[], options: { additive?: boolean } = {}) {
+    const uniqueIndices = indices
+      .filter((index, offset, items) => items.indexOf(index) === offset)
+      .sort((a, b) => a - b);
+
+    if (options.additive) {
+      setSelectedBlockIndices((current) => {
+        const nextSelection = [...new Set([...current, ...uniqueIndices])].sort((a, b) => a - b);
+        setSelectedBlockIndex(nextSelection[nextSelection.length - 1] ?? null);
+        return nextSelection;
+      });
+      return;
+    }
+
+    setSelectedBlockIndices(uniqueIndices);
+    setSelectedBlockIndex(uniqueIndices[uniqueIndices.length - 1] ?? null);
+  }
+
   function selectBlockFromLayer(index: number, event: ReactMouseEvent<HTMLDivElement>) {
     selectBlock(index, {
       additive: event.metaKey || event.ctrlKey,
@@ -295,10 +330,11 @@ export function MotionDocApp() {
     const background = activeSlideBackground;
     const accent = activeSlideAccent;
 
-    commitSource((current) => `${current.trimEnd()}\n\n<Slide duration={5} theme="${theme}" background="${background}" accent="${accent}">\n  <Title enter="fadeUp" fontSize={72} x={8} y={12} w={64} h={18}>Next slide</Title>\n  <Text enter="fadeUp" delay={0.25} fontSize={24} x={8} y={38} w={52} h={16}>\n    Continue the presentation here.\n  </Text>\n</Slide>`);
+    commitSource((current) => `${current.trimEnd()}\n\n<Slide duration={5} theme="${theme}" background="${background}" accent="${accent}">\n</Slide>`);
     setActiveSlideIndex(sliderDocument.scenes.length);
+    selectSingleBlock(null);
     setReplayNonce((value) => value + 1);
-    setNotice("Slide added");
+    setNotice("Blank slide added");
   }
 
   function deleteSlide(slideIndex: number) {
@@ -443,6 +479,7 @@ export function MotionDocApp() {
       props: {
         enter: "fadeIn",
         fontSize: 24,
+        radius: 0,
         x: Math.min(Math.max(position.x, 0), 70),
         y: Math.min(Math.max(position.y, 0), 88),
         w: 30
@@ -552,6 +589,60 @@ export function MotionDocApp() {
     setNotice("Slide style updated");
   }
 
+  function updateAllSlidesStyle(updates: Record<string, string | number>) {
+    if (sliderDocument.scenes.length === 0) {
+      return;
+    }
+
+    commitSource((current) =>
+      sliderDocument.scenes.reduce((nextSource, slide, index) => {
+        const nextProps = {
+          ...slide.props,
+          duration: slide.duration,
+          ...updates
+        };
+
+        return replaceSlideOpeningTag(nextSource, index, nextProps);
+      }, current)
+    );
+    setReplayNonce((value) => value + 1);
+    setNotice("Theme applied to all slides");
+  }
+
+  function updateBlockGroupFlow(blockType: "Card" | "Chart" | "Metric", flow: string, gap?: number) {
+    if (!activeSlide) {
+      return;
+    }
+
+    const flowProp = blockType === "Card" ? "cardFlow" : blockType === "Chart" ? "chartFlow" : "metricFlow";
+    const gapProp = blockType === "Card" ? "cardGap" : blockType === "Chart" ? "chartGap" : "metricGap";
+    const resolvedGap = gap ?? numberValue(activeSlide.props[gapProp]) ?? 3;
+    const blocksWithLayout = activeSlide.blocks
+      .map((block, index) => ({ block, index }))
+      .filter(({ block }) => block.type === blockType && "props" in block);
+    const nextBlocks = [...activeSlide.blocks];
+    const nextProps = { ...activeSlide.props, [flowProp]: flow, [gapProp]: resolvedGap };
+
+    blocksWithLayout.forEach(({ block, index }, order) => {
+      if (!("props" in block)) {
+        return;
+      }
+
+      nextBlocks[index] = {
+        ...block,
+        props: {
+          ...block.props,
+          ...groupFrameFor(blockType, flow, resolvedGap, order, blocksWithLayout.length, block.props)
+        }
+      } as MotionDocBlock;
+    });
+
+    const nextSlide: MotionDocScene = { ...activeSlide, blocks: nextBlocks, props: nextProps };
+    commitSource((current) => replaceSlideContent(current, activeSlideIndex, generateSlideString(nextSlide)));
+    setReplayNonce((value) => value + 1);
+    setNotice(flow === "stack" ? "Group stacked" : "Group arranged");
+  }
+
   function updateBlock(blockIndex: number, newProps: Record<string, string | number>, newText?: string) {
     if (!activeSlide) return;
 
@@ -634,20 +725,20 @@ export function MotionDocApp() {
       return;
     }
 
-    await navigator.clipboard.writeText(source);
+    await navigator.clipboard.writeText(canvasSource);
     setNotice("Source copied");
   }
 
   function exportMdxFile() {
     const title = sliderDocument.title || "slidesx-deck";
-    downloadFile(`${slugifyFilename(title)}.mdx`, source, "text/markdown;charset=utf-8");
+    downloadFile(`${slugifyFilename(title)}.mdx`, canvasSource, "text/markdown;charset=utf-8");
     setIsExportMenuOpen(false);
     setNotice("MDX exported");
   }
 
   function exportHtmlFile() {
     const title = sliderDocument.title || "slidesx-deck";
-    downloadFile(`${slugifyFilename(title)}.html`, buildMotionDocHtml(source), "text/html;charset=utf-8");
+    downloadFile(`${slugifyFilename(title)}.html`, buildMotionDocHtml(canvasSource), "text/html;charset=utf-8");
     setIsExportMenuOpen(false);
     setNotice("HTML exported");
   }
@@ -725,6 +816,42 @@ export function MotionDocApp() {
     return 38;
   }
 
+  function groupFrameFor(
+    type: "Card" | "Chart" | "Metric",
+    flow: string,
+    gap: number,
+    index: number,
+    count: number,
+    props: Record<string, string | number>
+  ) {
+    const defaultW = defaultBlockWidth(type);
+    const defaultH = defaultBlockHeight(type);
+    const currentW = percentFrameValue(props.w, defaultW);
+    const currentH = percentFrameValue(props.h, defaultH);
+
+    if (flow === "row") {
+      const normalizedGap = Math.min(Math.max(gap, 0), 16);
+      const width = Math.max((84 - normalizedGap * Math.max(count - 1, 0)) / Math.max(count, 1), 8);
+      const groupWidth = Math.min(width * count + normalizedGap * Math.max(count - 1, 0), 96);
+      return {
+        h: roundFrameValue(currentH),
+        w: roundFrameValue(width),
+        x: roundFrameValue((100 - groupWidth) / 2 + index * (width + normalizedGap)),
+        y: type === "Chart" ? 34 : 38
+      };
+    }
+
+    const stackWidth = type === "Chart" ? Math.max(currentW, 64) : Math.max(currentW, defaultW);
+    const stackHeight = Math.min(currentH, type === "Chart" ? 42 : defaultH);
+
+    return {
+      h: roundFrameValue(stackHeight),
+      w: roundFrameValue(stackWidth),
+      x: type === "Chart" ? 10 : 8,
+      y: clampFramePosition((type === "Chart" ? 28 : 30) + index * (stackHeight + 4), stackHeight)
+    };
+  }
+
   return (
     <main className="flex h-screen flex-col bg-black text-neutral-300 font-sans overflow-hidden">
       <StudioHeader
@@ -754,6 +881,7 @@ export function MotionDocApp() {
         <div className="hidden md:flex h-full">
           <LayerSidebar
             activeSlideCardFlow={activeSlideCardFlow}
+            activeSlideChartFlow={activeSlideChartFlow}
             activeSlideIndex={activeSlideIndex}
             activeSlideMetricFlow={activeSlideMetricFlow}
             deleteBlock={deleteBlock}
@@ -763,6 +891,7 @@ export function MotionDocApp() {
             isTemplateModalOpen={isTemplateModalOpen}
             moveBlock={moveBlock}
             onSelectBlock={selectBlockFromLayer}
+            onSelectBlocks={selectBlocks}
             onOpenTemplates={() => setIsTemplateModalOpen(true)}
             onSelectSlide={(index) => {
               setActiveSlideIndex(index);
@@ -789,6 +918,7 @@ export function MotionDocApp() {
             <div className="md:hidden fixed inset-y-0 left-0 z-40 w-[260px] sm:w-[280px] flex flex-col border-r border-white/[0.12] bg-[#0a0a0a] shadow-2xl">
               <LayerSidebar
                 activeSlideCardFlow={activeSlideCardFlow}
+                activeSlideChartFlow={activeSlideChartFlow}
                 activeSlideIndex={activeSlideIndex}
                 activeSlideMetricFlow={activeSlideMetricFlow}
                 deleteBlock={deleteBlock}
@@ -798,6 +928,7 @@ export function MotionDocApp() {
                 isTemplateModalOpen={isTemplateModalOpen}
                 moveBlock={moveBlock}
                 onSelectBlock={selectBlockFromLayer}
+                onSelectBlocks={selectBlocks}
                 onOpenTemplates={() => setIsTemplateModalOpen(true)}
                 onSelectSlide={(index) => {
                   setActiveSlideIndex(index);
@@ -820,11 +951,13 @@ export function MotionDocApp() {
         <PreviewCanvas
           activeSlide={activeSlide}
           activeSlideIndex={activeSlideIndex}
+          isGridVisible={isCanvasGridVisible}
           onAddBlock={addBlockToActiveSlide}
           onAddTextAtPosition={addTextAtPosition}
           onBeginBlockTransform={beginBlockTransform}
           onClearSelection={clearBlockSelection}
           onSelectBlock={selectBlock}
+          onSelectBlocks={selectBlocks}
           onUpdateBlockFrames={updatePositionedBlockFrames}
           onNextSlide={goToNextSlide}
           onPreviousSlide={goToPreviousSlide}
@@ -834,7 +967,7 @@ export function MotionDocApp() {
           selectedBlockIndex={selectedBlockIndex}
           selectedBlockIndices={selectedBlockIndices}
           slideRows={slideRows}
-          source={source}
+          source={canvasSource}
           totalDuration={stats.totalDuration}
         />
 
@@ -847,14 +980,23 @@ export function MotionDocApp() {
             activeSlideAlignY={activeSlideAlignY}
             activeSlideBackground={activeSlideBackground}
             activeSlideCardFlow={activeSlideCardFlow}
+            activeSlideCardGap={activeSlideCardGap}
+            activeSlideChartFlow={activeSlideChartFlow}
+            activeSlideChartGap={activeSlideChartGap}
             activeSlideLayout={activeSlideLayout}
             activeSlideMetricFlow={activeSlideMetricFlow}
-            activeSlideTextAlign={activeSlideTextAlign}
+            activeSlideMetricGap={activeSlideMetricGap}
+            activeSlideMutedColor={activeSlideMutedColor}
+            activeSlideTextColor={activeSlideTextColor}
             activeSlideTheme={activeSlideTheme}
+            isGridVisible={isCanvasGridVisible}
             onOpenMdxEditor={() => setIsCodeEditorOpen(true)}
             selectedBlockIndex={selectedBlockIndex}
             setSelectedBlockIndex={selectSingleBlock}
+            setIsGridVisible={setIsCanvasGridVisible}
+            updateAllSlidesStyle={updateAllSlidesStyle}
             updateActiveSlideStyle={updateActiveSlideStyle}
+            updateBlockGroupFlow={updateBlockGroupFlow}
             updateBlock={updateBlock}
             uploadImageForBlock={uploadImageForBlock}
           />
@@ -875,10 +1017,16 @@ export function MotionDocApp() {
                 activeSlideAlignY={activeSlideAlignY}
                 activeSlideBackground={activeSlideBackground}
                 activeSlideCardFlow={activeSlideCardFlow}
+                activeSlideCardGap={activeSlideCardGap}
+                activeSlideChartFlow={activeSlideChartFlow}
+                activeSlideChartGap={activeSlideChartGap}
                 activeSlideLayout={activeSlideLayout}
                 activeSlideMetricFlow={activeSlideMetricFlow}
-                activeSlideTextAlign={activeSlideTextAlign}
+                activeSlideMetricGap={activeSlideMetricGap}
+                activeSlideMutedColor={activeSlideMutedColor}
+                activeSlideTextColor={activeSlideTextColor}
                 activeSlideTheme={activeSlideTheme}
+                isGridVisible={isCanvasGridVisible}
                 onOpenMdxEditor={() => {
                   setIsMobileInspectorOpen(false);
                   setIsCodeEditorOpen(true);
@@ -888,8 +1036,11 @@ export function MotionDocApp() {
                   selectSingleBlock(idx);
                   if (idx !== null) setIsMobileInspectorOpen(false);
                 }}
+                updateAllSlidesStyle={updateAllSlidesStyle}
                 updateActiveSlideStyle={updateActiveSlideStyle}
+                updateBlockGroupFlow={updateBlockGroupFlow}
                 updateBlock={updateBlock}
+                setIsGridVisible={setIsCanvasGridVisible}
                 uploadImageForBlock={uploadImageForBlock}
               />
             </div>
@@ -985,6 +1136,16 @@ function percentFrameValue(value: string | number | undefined, fallback: number)
   return Math.min(Math.max(parsed, 0), 100);
 }
 
+function numberValue(value: string | number | undefined) {
+  const parsed = typeof value === "number" ? value : Number(value);
+
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 function clampFramePosition(value: number, size: number) {
   return Math.round(Math.min(Math.max(value, 0), Math.max(100 - size, 0)) * 10) / 10;
+}
+
+function roundFrameValue(value: number) {
+  return Math.round(Math.min(Math.max(value, 0), 100) * 10) / 10;
 }

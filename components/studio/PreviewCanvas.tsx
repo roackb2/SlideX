@@ -1,33 +1,48 @@
 "use client";
 
-import { useRef, useState, type MouseEvent, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { PreviewPane } from "@/components/PreviewPane";
 import { blockTools, type AddBlockType } from "@/components/studio/studioOptions";
 import type { SlideRow } from "@/components/studio/LayerSidebar";
 import type { MotionDocBlock, MotionDocScene } from "@/lib/motionDocParser";
 
-const CANVAS_WIDTH = 1920;
-const CANVAS_HEIGHT = 1080;
+const CANVAS_WIDTH = 1024;
+const CANVAS_HEIGHT = 576;
 const MIN_FRAME_WIDTH = 8;
 const MIN_FRAME_HEIGHT = 6;
+const GUIDE_THRESHOLD = 0.7;
 type ResizeHandle = "n" | "e" | "s" | "w" | "nw" | "ne" | "sw" | "se";
+type Frame = { h: number; w: number; x: number; y: number };
+type FrameUpdate = { blockIndex: number; frame: Frame };
 type CanvasInteraction = {
   blockIndex: number;
   handle?: ResizeHandle;
   mode: "move" | "resize";
-  startFrame: { h: number; w: number; x: number; y: number };
-  startFrames: Array<{ blockIndex: number; frame: { h: number; w: number; x: number; y: number } }>;
+  startFrame: Frame;
+  startFrames: Array<{ blockIndex: number; frame: Frame }>;
   startPointer: { x: number; y: number };
+};
+type MarqueeSelection = {
+  additive: boolean;
+  current: { x: number; y: number };
+  pointerId: number;
+  start: { x: number; y: number };
+};
+type AlignmentGuide = {
+  orientation: "horizontal" | "vertical";
+  position: number;
 };
 
 export function PreviewCanvas({
   activeSlide,
   activeSlideIndex,
+  isGridVisible,
   onAddBlock,
   onAddTextAtPosition,
   onBeginBlockTransform,
   onClearSelection,
   onSelectBlock,
+  onSelectBlocks,
   onUpdateBlockFrames,
   onNextSlide,
   onPreviousSlide,
@@ -42,11 +57,13 @@ export function PreviewCanvas({
 }: {
   activeSlide: MotionDocScene | undefined;
   activeSlideIndex: number;
+  isGridVisible: boolean;
   onAddBlock: (type: AddBlockType) => void;
   onAddTextAtPosition: (position: { x: number; y: number }) => void;
   onBeginBlockTransform: () => void;
   onClearSelection: () => void;
   onSelectBlock: (index: number, options?: { additive?: boolean; range?: boolean }) => void;
+  onSelectBlocks: (indices: number[], options?: { additive?: boolean }) => void;
   onUpdateBlockFrames: (updates: Array<{ blockIndex: number; frame: { h?: number; w?: number; x?: number; y?: number } }>, commit?: boolean) => void;
   onNextSlide: () => void;
   onPreviousSlide: () => void;
@@ -61,7 +78,31 @@ export function PreviewCanvas({
 }) {
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const interactionRef = useRef<CanvasInteraction | null>(null);
+  const [canvasScale, setCanvasScale] = useState(1);
+  const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([]);
   const [interactionBlockIndex, setInteractionBlockIndex] = useState<number | null>(null);
+  const [marqueeSelection, setMarqueeSelection] = useState<MarqueeSelection | null>(null);
+  const gridColor = gridLineColor(activeSlide);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    const updateScale = () => {
+      const rect = canvas.getBoundingClientRect();
+      setCanvasScale(rect.width > 0 ? rect.width / CANVAS_WIDTH : 1);
+    };
+
+    updateScale();
+
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(canvas);
+
+    return () => observer.disconnect();
+  }, []);
 
   function getCanvasPosition(event: { clientX: number; clientY: number }) {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -87,22 +128,29 @@ export function PreviewCanvas({
     onAddTextAtPosition(getCanvasPosition(event));
   }
 
-  function startMove(event: PointerEvent<HTMLButtonElement>, blockIndex: number, frame: { h: number; w: number; x: number; y: number }) {
+  function startMove(event: PointerEvent<HTMLButtonElement>, blockIndex: number, frame: Frame) {
     event.preventDefault();
     const additive = event.metaKey || event.ctrlKey;
     const range = event.shiftKey;
+    const groupIndices = groupedMoveIndices(blockIndex);
 
     if (additive || range) {
       onSelectBlock(blockIndex, { additive, range });
       return;
     }
 
-    if (!selectedBlockIndices.includes(blockIndex)) {
+    if (groupIndices.length > 1) {
+      onSelectBlocks(groupIndices);
+    } else if (!selectedBlockIndices.includes(blockIndex)) {
       onSelectBlock(blockIndex);
     }
 
     event.currentTarget.setPointerCapture(event.pointerId);
-    const moveIndices = selectedBlockIndices.includes(blockIndex) ? selectedBlockIndices : [blockIndex];
+    const moveIndices = groupIndices.length > 1
+      ? groupIndices
+      : selectedBlockIndices.includes(blockIndex)
+        ? selectedBlockIndices
+        : [blockIndex];
     interactionRef.current = {
       blockIndex,
       mode: "move",
@@ -117,7 +165,7 @@ export function PreviewCanvas({
     setInteractionBlockIndex(blockIndex);
   }
 
-  function startResize(event: PointerEvent<HTMLSpanElement>, blockIndex: number, handle: ResizeHandle, frame: { h: number; w: number; x: number; y: number }) {
+  function startResize(event: PointerEvent<HTMLSpanElement>, blockIndex: number, handle: ResizeHandle, frame: Frame) {
     event.preventDefault();
     event.stopPropagation();
     const frameButton = event.currentTarget.closest("button");
@@ -145,7 +193,7 @@ export function PreviewCanvas({
     const pointer = getCanvasPosition(event);
     const dx = pointer.x - interaction.startPointer.x;
     const dy = pointer.y - interaction.startPointer.y;
-    const updates =
+    const updates: FrameUpdate[] =
       interaction.mode === "resize" && interaction.handle
         ? [
             {
@@ -162,7 +210,7 @@ export function PreviewCanvas({
               y: clampPosition(frame.y + dy, frame.h)
             }
           }));
-
+    setAlignmentGuides(findAlignmentGuides(activeSlide?.blocks ?? [], updates));
     onUpdateBlockFrames(updates, commit);
   }
 
@@ -176,13 +224,104 @@ export function PreviewCanvas({
     updateInteraction(event, true);
     event.currentTarget.releasePointerCapture(event.pointerId);
     interactionRef.current = null;
+    setAlignmentGuides([]);
     setInteractionBlockIndex(null);
+  }
+
+  function startMarquee(event: PointerEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
+    event.preventDefault();
+    const pointer = getCanvasPosition(event);
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setMarqueeSelection({
+      additive: event.metaKey || event.ctrlKey || event.shiftKey,
+      current: pointer,
+      pointerId: event.pointerId,
+      start: pointer
+    });
+  }
+
+  function updateMarquee(event: PointerEvent<HTMLDivElement>) {
+    setMarqueeSelection((current) => {
+      if (!current || current.pointerId !== event.pointerId) {
+        return current;
+      }
+
+      return {
+        ...current,
+        current: getCanvasPosition(event)
+      };
+    });
+  }
+
+  function endMarquee(event: PointerEvent<HTMLDivElement>) {
+    const selection = marqueeSelection
+      ? { ...marqueeSelection, current: getCanvasPosition(event) }
+      : null;
+
+    if (!selection || selection.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const rect = marqueeRect(selection);
+    const selectedIndices = (activeSlide?.blocks ?? [])
+      .map((block, blockIndex) => ({ block, blockIndex }))
+      .filter(({ block }) => isMovableBlock(block))
+      .filter(({ block }) => intersectsRect(blockFrame(block), rect))
+      .map(({ blockIndex }) => blockIndex);
+    const isClick = rect.w < 0.6 && rect.h < 0.6;
+
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    setMarqueeSelection(null);
+
+    if (isClick) {
+      onClearSelection();
+      return;
+    }
+
+    onSelectBlocks(selectedIndices, { additive: selection.additive });
+  }
+
+  function cancelMarquee(event: PointerEvent<HTMLDivElement>) {
+    if (marqueeSelection?.pointerId === event.pointerId) {
+      setMarqueeSelection(null);
+    }
+  }
+
+  function groupedMoveIndices(blockIndex: number) {
+    const block = activeSlide?.blocks[blockIndex];
+
+    if (!block || !isMovableBlock(block) || !isRowGroupedBlock(block)) {
+      return [blockIndex];
+    }
+
+    return (activeSlide?.blocks ?? [])
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => item.type === block.type && isMovableBlock(item))
+      .map(({ index }) => index);
+  }
+
+  function isRowGroupedBlock(block: MotionDocScene["blocks"][number]) {
+    if (block.type === "Card") {
+      return activeSlide?.props.cardFlow === "row";
+    }
+
+    if (block.type === "Metric") {
+      return (activeSlide?.props.metricFlow ?? activeSlide?.props.cardFlow) === "row";
+    }
+
+    if (block.type === "Chart") {
+      return activeSlide?.props.chartFlow === "row";
+    }
+
+    return false;
   }
 
   return (
     <div id="canvas-v4" className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-[#050505]">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.02]" style={{ backgroundImage: "linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-
       {/* Slide counter nav - compact on mobile */}
       <div className="absolute left-1/2 top-2 sm:top-4 z-10 flex -translate-x-1/2 items-center gap-0.5 rounded-md border border-neutral-800 bg-[#0a0a0a] p-0.5 shadow-sm">
         <button aria-label="Previous slide" className="rounded p-1 sm:p-1.5 text-neutral-400 transition-all hover:bg-neutral-800 hover:text-white active:bg-neutral-700" onClick={onPreviousSlide}>
@@ -213,19 +352,62 @@ export function PreviewCanvas({
           onDoubleClick={handleCanvasDoubleClick}
           ref={canvasRef}
         >
-          <PreviewPane
-            activeSlideIndex={activeSlideIndex}
-            replayNonce={replayNonce}
-            source={source}
-          />
           <div
-            className="absolute inset-0 z-40"
-            onPointerDown={(event) => {
-              if (event.target === event.currentTarget) {
-                onClearSelection();
-              }
+            className="absolute left-0 top-0 overflow-hidden"
+            style={{
+              height: CANVAS_HEIGHT,
+              transform: `scale(${canvasScale})`,
+              transformOrigin: "left top",
+              width: CANVAS_WIDTH
             }}
           >
+            <PreviewPane
+              activeSlideIndex={activeSlideIndex}
+              replayNonce={replayNonce}
+              source={source}
+            />
+          </div>
+          {isGridVisible ? (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 z-30"
+              style={{
+                backgroundImage: `linear-gradient(to right, ${gridColor} 1px, transparent 1px), linear-gradient(to bottom, ${gridColor} 1px, transparent 1px)`,
+                backgroundSize: `${40 * canvasScale}px ${40 * canvasScale}px`
+              }}
+            />
+          ) : null}
+          <div
+            className="absolute inset-0 z-40"
+            onPointerCancel={cancelMarquee}
+            onPointerDown={startMarquee}
+            onPointerMove={updateMarquee}
+            onPointerUp={endMarquee}
+          >
+            {alignmentGuides.map((guide, index) => (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute bg-sky-300 shadow-[0_0_0_1px_rgba(14,165,233,0.2),0_0_12px_rgba(125,211,252,0.55)]"
+                key={`${guide.orientation}-${guide.position}-${index}`}
+                style={
+                  guide.orientation === "vertical"
+                    ? { bottom: 0, left: `${guide.position}%`, top: 0, width: 1 }
+                    : { height: 1, left: 0, right: 0, top: `${guide.position}%` }
+                }
+              />
+            ))}
+            {marqueeSelection ? (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute border border-white/80 bg-white/10 shadow-[0_0_0_1px_rgba(0,0,0,0.45)]"
+                style={{
+                  height: `${marqueeRect(marqueeSelection).h}%`,
+                  left: `${marqueeRect(marqueeSelection).x}%`,
+                  top: `${marqueeRect(marqueeSelection).y}%`,
+                  width: `${marqueeRect(marqueeSelection).w}%`
+                }}
+              />
+            ) : null}
             {activeSlide?.blocks.map((block, blockIndex) => {
               if (!isMovableBlock(block)) {
                 return null;
@@ -329,6 +511,28 @@ function isMovableBlock(block: MotionDocScene["blocks"][number]): block is Movab
   );
 }
 
+function gridLineColor(slide: MotionDocScene | undefined) {
+  const background = typeof slide?.props.background === "string" ? slide.props.background : "";
+  const theme = typeof slide?.props.theme === "string" ? slide.props.theme : "dark";
+  const isLight = isLightBackground(background) ?? (theme === "light" || theme === "paper");
+
+  return isLight ? "rgba(15,23,42,0.12)" : "rgba(255,255,255,0.1)";
+}
+
+function isLightBackground(background: string) {
+  const hex = background.trim().replace("#", "");
+
+  if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
+    return null;
+  }
+
+  const red = parseInt(hex.slice(0, 2), 16);
+  const green = parseInt(hex.slice(2, 4), 16);
+  const blue = parseInt(hex.slice(4, 6), 16);
+
+  return (0.299 * red + 0.587 * green + 0.114 * blue) / 255 > 0.62;
+}
+
 function percentValue(value: string | number | undefined, fallback: number) {
   const parsed = typeof value === "number" ? value : Number(value);
 
@@ -360,7 +564,7 @@ function clampPosition(value: number, size: number) {
   return Math.round(Math.min(Math.max(value, 0), Math.max(100 - size, 0)) * 10) / 10;
 }
 
-function resizeFrame(frame: { h: number; w: number; x: number; y: number }, dx: number, dy: number, handle: ResizeHandle) {
+function resizeFrame(frame: Frame, dx: number, dy: number, handle: ResizeHandle) {
   let nextX = frame.x;
   let nextY = frame.y;
   let nextW = frame.w;
@@ -394,6 +598,106 @@ function resizeFrame(frame: { h: number; w: number; x: number; y: number }, dx: 
     x: roundPercent(nextX),
     y: roundPercent(nextY)
   };
+}
+
+function marqueeRect(selection: MarqueeSelection) {
+  const x = Math.min(selection.start.x, selection.current.x);
+  const y = Math.min(selection.start.y, selection.current.y);
+  const right = Math.max(selection.start.x, selection.current.x);
+  const bottom = Math.max(selection.start.y, selection.current.y);
+
+  return {
+    h: roundPercent(bottom - y),
+    w: roundPercent(right - x),
+    x: roundPercent(x),
+    y: roundPercent(y)
+  };
+}
+
+function intersectsRect(frame: Frame, rect: Frame) {
+  const frameRight = frame.x + frame.w;
+  const frameBottom = frame.y + frame.h;
+  const rectRight = rect.x + rect.w;
+  const rectBottom = rect.y + rect.h;
+
+  return frame.x < rectRight && frameRight > rect.x && frame.y < rectBottom && frameBottom > rect.y;
+}
+
+function findAlignmentGuides(blocks: MotionDocScene["blocks"], updates: FrameUpdate[]) {
+  const targets = getAlignmentTargets(blocks, updates);
+  const guides: AlignmentGuide[] = [];
+
+  updates.forEach(({ frame }) => {
+    const verticalGuide = nearestGuide([frame.x, frame.x + frame.w / 2, frame.x + frame.w], targets.vertical);
+    const horizontalGuide = nearestGuide([frame.y, frame.y + frame.h / 2, frame.y + frame.h], targets.horizontal);
+
+    if (verticalGuide !== null) {
+      guides.push({ orientation: "vertical", position: verticalGuide });
+    }
+
+    if (horizontalGuide !== null) {
+      guides.push({ orientation: "horizontal", position: horizontalGuide });
+    }
+  });
+
+  return uniqueGuides(guides);
+}
+
+function getAlignmentTargets(
+  blocks: MotionDocScene["blocks"],
+  movingFrames: FrameUpdate[]
+) {
+  const movingIndices = new Set(movingFrames.map(({ blockIndex }) => blockIndex));
+  const verticalTargets = [0, 50, 100];
+  const horizontalTargets = [0, 50, 100];
+
+  blocks.forEach((block, index) => {
+    if (movingIndices.has(index) || !isMovableBlock(block)) {
+      return;
+    }
+
+    const frame = blockFrame(block);
+    verticalTargets.push(frame.x, frame.x + frame.w / 2, frame.x + frame.w);
+    horizontalTargets.push(frame.y, frame.y + frame.h / 2, frame.y + frame.h);
+  });
+
+  return {
+    horizontal: horizontalTargets,
+    vertical: verticalTargets
+  };
+}
+
+function nearestGuide(points: number[], targets: number[]) {
+  let nearest: number | null = null;
+  let nearestDistance = GUIDE_THRESHOLD;
+
+  for (const point of points) {
+    for (const target of targets) {
+      const distance = Math.abs(point - target);
+
+      if (distance <= nearestDistance) {
+        nearest = roundPercent(target);
+        nearestDistance = distance;
+      }
+    }
+  }
+
+  return nearest;
+}
+
+function uniqueGuides(guides: AlignmentGuide[]) {
+  const seen = new Set<string>();
+
+  return guides.filter((guide) => {
+    const key = `${guide.orientation}-${guide.position}`;
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
 }
 
 function resizeHandleClass(handle: ResizeHandle) {

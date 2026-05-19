@@ -2,7 +2,8 @@
 
 import { ChevronDown, Layers, Plus, Trash2 } from "lucide-react";
 import type { MouseEvent } from "react";
-import { BlockLayerIcon, collectConsecutiveBlocks, LayerRow } from "@/components/studio/LayerRow";
+import { useState } from "react";
+import { collectBlocksOfType, GroupLayerRow, LayerRow, type GroupableLayerType } from "@/components/studio/LayerRow";
 import type { MotionDocScene } from "@/lib/motionDocParser";
 
 export type SlideRow = {
@@ -14,6 +15,7 @@ export type SlideRow = {
 
 export function LayerSidebar({
   activeSlideCardFlow,
+  activeSlideChartFlow,
   activeSlideIndex,
   activeSlideMetricFlow,
   deleteBlock,
@@ -23,6 +25,7 @@ export function LayerSidebar({
   isTemplateModalOpen,
   moveBlock,
   onSelectBlock,
+  onSelectBlocks,
   onOpenTemplates,
   onSelectSlide,
   reorderBlock,
@@ -34,6 +37,7 @@ export function LayerSidebar({
   slideRows
 }: {
   activeSlideCardFlow: string;
+  activeSlideChartFlow: string;
   activeSlideIndex: number;
   activeSlideMetricFlow: string;
   deleteBlock: (index: number) => void;
@@ -43,6 +47,7 @@ export function LayerSidebar({
   isTemplateModalOpen: boolean;
   moveBlock: (index: number, direction: -1 | 1) => void;
   onSelectBlock: (index: number, event: MouseEvent<HTMLDivElement>) => void;
+  onSelectBlocks: (indices: number[], options?: { additive?: boolean }) => void;
   onOpenTemplates: () => void;
   onSelectSlide: (index: number) => void;
   reorderBlock: (fromIndex: number, toIndex: number) => void;
@@ -53,6 +58,22 @@ export function LayerSidebar({
   setDraggedBlockIndex: (index: number | null) => void;
   slideRows: SlideRow[];
 }) {
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  function toggleGroup(groupKey: string) {
+    setExpandedGroups((current) => {
+      const next = new Set(current);
+
+      if (next.has(groupKey)) {
+        next.delete(groupKey);
+      } else {
+        next.add(groupKey);
+      }
+
+      return next;
+    });
+  }
+
   return (
     <div id="sidebar-v4" className="flex w-[300px] shrink-0 flex-col overflow-hidden border-r border-neutral-800 bg-[#0a0a0a]">
       <div className="flex shrink-0 items-center justify-between border-b border-neutral-800 px-4 py-3">
@@ -90,6 +111,7 @@ export function LayerSidebar({
           {slideRows.map((slide) => {
             const isActive = slide.index === activeSlideIndex;
             const currentSlide = scenes[slide.index];
+            const renderedGroupedTypes = new Set<GroupableLayerType>();
             return (
               <div className="mb-1 flex flex-col" key={slide.index}>
                 <div
@@ -113,52 +135,62 @@ export function LayerSidebar({
                 {isActive && currentSlide && currentSlide.blocks.length > 0 && (
                   <div className="ml-4 mt-1 flex flex-col gap-1 border-l border-neutral-800 pl-2">
                     {currentSlide.blocks.map((block, blockIndex) => {
-                      const groupFlow =
-                        block.type === "Card"
-                          ? activeSlideCardFlow
-                          : block.type === "Metric"
-                            ? activeSlideMetricFlow
+                      const groupType = groupableLayerType(block.type);
+                      const groupFlow = groupType === "Card"
+                        ? activeSlideCardFlow
+                        : groupType === "Metric"
+                          ? activeSlideMetricFlow
+                          : groupType === "Chart"
+                            ? activeSlideChartFlow
                             : "stack";
 
-                      if (groupFlow !== "stack" && (block.type === "Card" || block.type === "Metric")) {
-                        const previousBlock = currentSlide.blocks[blockIndex - 1];
-
-                        if (previousBlock?.type === block.type) {
+                      if (groupType && groupFlow !== "stack") {
+                        if (renderedGroupedTypes.has(groupType)) {
                           return null;
                         }
 
-                        const groupedBlocks = collectConsecutiveBlocks(currentSlide.blocks, blockIndex, block.type);
-                        const groupLabel = block.type === "Card" ? "Card group" : "Metric group";
+                        renderedGroupedTypes.add(groupType);
+
+                        const groupedBlocks = collectBlocksOfType(currentSlide.blocks, groupType);
+                        const groupIndices = groupedBlocks.map(({ index }) => index);
+                        const isGroupSelected = groupIndices.length > 0 && groupIndices.every((index) => selectedBlockIndices.includes(index));
+                        const groupKey = `${slide.index}-${groupType}`;
+                        const isExpanded = expandedGroups.has(groupKey);
 
                         return (
-                          <div className="flex flex-col gap-1" key={`${block.type.toLowerCase()}-group-${blockIndex}`}>
-                            <div className="flex items-center justify-between rounded-md border border-neutral-800 bg-neutral-950 px-2 py-1.5 text-neutral-400">
-                              <span className="flex min-w-0 items-center gap-2">
-                                <BlockLayerIcon block={block} className="text-neutral-400" />
-                                <span className="truncate text-[11px] font-medium">{groupLabel}</span>
-                              </span>
-                              <span className="font-mono text-[9px] uppercase text-neutral-400">{groupFlow}</span>
-                            </div>
-                            <div className="ml-3 flex flex-col gap-1 border-l border-neutral-800 pl-2">
-                              {groupedBlocks.map(({ block: groupedBlock, index: groupedIndex }) => (
-                                <LayerRow
-                                  block={groupedBlock}
-                                  deleteBlock={deleteBlock}
-                                  draggedBlockIndex={draggedBlockIndex}
-                                  dragOverBlockIndex={dragOverBlockIndex}
-                                  index={groupedIndex}
-                                  key={groupedIndex}
-                                  moveBlock={moveBlock}
-                                  onSelectBlock={onSelectBlock}
-                                  reorderBlock={reorderBlock}
-                                  selectedBlockIndex={selectedBlockIndex}
-                                  selectedBlockIndices={selectedBlockIndices}
-                                  setDraggedBlockIndex={setDraggedBlockIndex}
-                                  setDragOverBlockIndex={setDragOverBlockIndex}
-                                  totalBlocks={currentSlide.blocks.length}
-                                />
-                              ))}
-                            </div>
+                          <div className="flex flex-col gap-1" key={`${groupType.toLowerCase()}-stack`}>
+                            <GroupLayerRow
+                              count={groupedBlocks.length}
+                              flow={groupFlow}
+                              indices={groupIndices}
+                              isExpanded={isExpanded}
+                              isSelected={isGroupSelected}
+                              label={`${groupType} stack`}
+                              onSelectBlocks={onSelectBlocks}
+                              onToggleExpanded={() => toggleGroup(groupKey)}
+                            />
+                            {isExpanded ? (
+                              <div className="ml-3 flex flex-col gap-1 border-l border-neutral-800 pl-2">
+                                {groupedBlocks.map(({ block: groupedBlock, index: groupedIndex }) => (
+                                  <LayerRow
+                                    block={groupedBlock}
+                                    deleteBlock={deleteBlock}
+                                    draggedBlockIndex={draggedBlockIndex}
+                                    dragOverBlockIndex={dragOverBlockIndex}
+                                    index={groupedIndex}
+                                    key={groupedIndex}
+                                    moveBlock={moveBlock}
+                                    onSelectBlock={onSelectBlock}
+                                    reorderBlock={reorderBlock}
+                                    selectedBlockIndex={selectedBlockIndex}
+                                    selectedBlockIndices={selectedBlockIndices}
+                                    setDraggedBlockIndex={setDraggedBlockIndex}
+                                    setDragOverBlockIndex={setDragOverBlockIndex}
+                                    totalBlocks={currentSlide.blocks.length}
+                                  />
+                                ))}
+                              </div>
+                            ) : null}
                           </div>
                         );
                       }
@@ -191,4 +223,12 @@ export function LayerSidebar({
       </div>
     </div>
   );
+}
+
+function groupableLayerType(type: string): GroupableLayerType | null {
+  if (type === "Card" || type === "Metric" || type === "Chart") {
+    return type;
+  }
+
+  return null;
 }

@@ -59,7 +59,7 @@ export const motionDocExportStyles = `      :root {
       .viewport {
         position: relative;
         width: min(100%, calc((100vh - 98px) * 16 / 9));
-        max-width: 64rem;
+        max-width: 1024px;
         aspect-ratio: 16 / 9;
         overflow: hidden;
         border-radius: 20px;
@@ -67,9 +67,22 @@ export const motionDocExportStyles = `      :root {
         background: #0a0a0a;
         box-shadow: 0 28px 90px rgba(0,0,0,0.58);
       }
+      .frame {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1024px;
+        height: 576px;
+        overflow: hidden;
+        transform: scale(var(--frame-scale, 1));
+        transform-origin: left top;
+      }
       .slide {
         position: absolute;
-        inset: 0;
+        left: 0;
+        top: 0;
+        width: 1024px;
+        height: 576px;
         display: none;
         overflow: hidden;
         background: var(--slide-bg);
@@ -88,54 +101,23 @@ export const motionDocExportStyles = `      :root {
         opacity: 0.72;
         pointer-events: none;
       }
-      .slide__content {
-        position: relative;
-        z-index: 1;
-        display: flex;
-        flex-direction: var(--slide-direction);
-        gap: var(--slide-gap, 20px);
-        width: 100%;
-        height: 100%;
-        padding: clamp(16px, 3%, 32px);
-        justify-content: var(--slide-align-y);
-        align-items: var(--slide-align-x);
-        text-align: var(--slide-text-align);
-      }
-      .slide--freeform .slide__content {
-        padding: 0;
-      }
-      .slide__column,
-      .slide__image-column {
-        display: flex;
-        flex: 1 1 0;
-        flex-direction: column;
-        justify-content: center;
-        min-width: 0;
-      }
-      .slide__image-column {
-        align-items: center;
-      }
       .motion-block {
+        position: absolute;
+        left: var(--motion-x, 82px);
+        top: var(--motion-y, 69px);
+        width: var(--motion-w, 430px);
+        height: var(--motion-h, auto);
+        z-index: 2;
         opacity: 0;
-        margin-bottom: var(--motion-mb, 18px);
         transform: translate3d(0, 28px, 0);
       }
-      .motion-block--positioned {
-        position: absolute;
-        left: var(--motion-x, 8%);
-        top: var(--motion-y, 12%);
-        width: var(--motion-w, 42%);
-        height: var(--motion-h, auto);
-        margin-bottom: 0;
-        z-index: 2;
-      }
-      .motion-block--positioned > * {
+      .motion-block > * {
         width: 100%;
         height: 100%;
         max-width: none;
       }
-      .motion-block--positioned .block-title,
-      .motion-block--positioned .block-text {
+      .motion-block .block-title,
+      .motion-block .block-text {
         width: 100%;
         max-width: none;
       }
@@ -163,44 +145,40 @@ export const motionDocExportStyles = `      :root {
       .block-title {
         margin: 0;
         max-width: 48rem;
-        font-size: var(--motion-font-size, clamp(42px, 7vw, 96px));
+        border-radius: var(--motion-radius, 0);
+        font-size: var(--motion-font-size, 72px);
         font-weight: 650;
         letter-spacing: 0;
         line-height: 1.02;
-        color: var(--slide-fg);
+        padding: var(--motion-text-padding, 0);
+        background: var(--motion-bg, transparent);
+        color: var(--motion-fg, var(--slide-fg));
+        text-align: var(--motion-text-align, inherit);
       }
       .block-text {
         margin: 0;
         max-width: 46rem;
-        font-size: var(--motion-font-size, clamp(18px, 2.1vw, 32px));
+        border-radius: var(--motion-radius, 0);
+        font-size: var(--motion-font-size, 24px);
         line-height: 1.45;
-        color: var(--slide-muted);
+        padding: var(--motion-text-padding, 0);
+        background: var(--motion-bg, transparent);
+        color: var(--motion-fg, var(--slide-muted));
+        text-align: var(--motion-text-align, inherit);
       }
       .block-card {
         display: flex;
         flex-direction: column;
         gap: 0;
+        margin: 0;
         max-width: 42rem;
         overflow: hidden;
         padding: 20px;
-        border-radius: 16px;
+        border-radius: var(--motion-radius, 16px);
         border: 1px solid var(--slide-border);
-        background: var(--slide-card);
+        background: var(--motion-bg, var(--slide-card));
         box-shadow: 0 20px 60px rgba(0,0,0,0.18);
         backdrop-filter: blur(16px);
-      }
-      .card-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px;
-        align-items: stretch;
-        width: 100%;
-      }
-      .card-group--grid > .card-group__item {
-        flex: 1 1 min(240px, 100%);
-      }
-      .card-group--row > .card-group__item {
-        flex: 0 1 auto;
       }
       .block-card--sm {
         max-width: 24rem;
@@ -227,7 +205,7 @@ export const motionDocExportStyles = `      :root {
         border-radius: 8px;
         border: 1px solid var(--slide-border);
         background: rgba(255,255,255,0.06);
-        color: var(--slide-fg);
+        color: var(--motion-fg, var(--slide-fg));
       }
       .block-card--horizontal .block-card__icon {
         margin-bottom: 0;
@@ -243,22 +221,23 @@ export const motionDocExportStyles = `      :root {
         margin: 0;
         font-size: 20px;
         line-height: 1.4;
-        color: var(--slide-fg);
+        color: var(--motion-fg, var(--slide-fg));
       }
       .block-card p {
         margin: 8px 0 0;
         font-size: 16px;
         line-height: 1.75;
-        color: var(--slide-muted);
+        color: var(--motion-muted, var(--slide-muted));
       }
       .block-metric,
       .block-chart {
+        margin: 0;
         width: 100%;
         max-width: 54rem;
         padding: 20px;
-        border-radius: 16px;
+        border-radius: var(--motion-radius, 16px);
         border: 1px solid var(--slide-border);
-        background: var(--slide-card);
+        background: var(--motion-bg, var(--slide-card));
         box-shadow: 0 20px 60px rgba(0,0,0,0.18);
         backdrop-filter: blur(16px);
       }
@@ -280,25 +259,25 @@ export const motionDocExportStyles = `      :root {
         font-weight: 700;
         letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: var(--slide-muted);
+        color: var(--motion-muted, var(--slide-muted));
       }
       .block-metric__value {
         margin: 12px 0 0;
         font-size: 48px;
         font-weight: 650;
         line-height: 1;
-        color: var(--slide-fg);
+        color: var(--motion-fg, var(--slide-fg));
       }
       .block-metric__caption {
         margin: 12px 0 0;
         font-size: 14px;
         line-height: 1.5rem;
-        color: var(--slide-muted);
+        color: var(--motion-muted, var(--slide-muted));
       }
       .block-chart h3 {
         margin: 0;
         font-size: 20px;
-        color: var(--slide-fg);
+        color: var(--motion-fg, var(--slide-fg));
       }
       .block-chart--sm {
         max-width: 36rem;
@@ -336,12 +315,12 @@ export const motionDocExportStyles = `      :root {
       .block-chart__bar {
         width: 100%;
         border-radius: 8px;
-        background: var(--slide-fg);
+        background: var(--motion-fg, var(--slide-fg));
       }
       .block-chart__label {
         max-width: 100%;
         overflow: hidden;
-        color: var(--slide-muted);
+        color: var(--motion-muted, var(--slide-muted));
         font-size: 10px;
         letter-spacing: 0.1em;
         text-overflow: ellipsis;
@@ -349,23 +328,21 @@ export const motionDocExportStyles = `      :root {
         white-space: nowrap;
       }
       .block-image {
+        margin: 0;
         width: 100%;
         max-width: 54rem;
         overflow: hidden;
-        border-radius: 18px;
+        border-radius: var(--motion-radius, 16px);
         border: 1px solid var(--slide-border);
-        background: rgba(255,255,255,0.06);
+        background: var(--motion-bg, rgba(255,255,255,0.06));
         box-shadow: 0 24px 72px rgba(0,0,0,0.24);
       }
       .block-image img {
         display: block;
         width: 100%;
-        aspect-ratio: 16 / 9;
-        object-fit: cover;
-      }
-      .motion-block--positioned .block-image img {
         height: 100%;
         aspect-ratio: auto;
+        object-fit: cover;
       }
       .motion-block--full {
         position: absolute;
@@ -378,22 +355,11 @@ export const motionDocExportStyles = `      :root {
         height: 100%;
         max-width: none;
         border: 0;
-        border-radius: 0;
+        border-radius: var(--motion-radius, 0);
       }
       .motion-block--full .block-image img {
         height: 100%;
         aspect-ratio: auto;
-      }
-      .slide-meta {
-        position: absolute;
-        top: 18px;
-        right: 18px;
-        z-index: 2;
-        padding: 7px 10px;
-        border-radius: 999px;
-        background: rgba(0,0,0,0.2);
-        color: var(--slide-muted);
-        font: 12px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
       }
       .controls {
         display: grid;
@@ -447,13 +413,6 @@ export const motionDocExportStyles = `      :root {
         }
         .viewport {
           width: 100%;
-        }
-        .slide__content {
-          flex-direction: column;
-          padding: 22px;
-        }
-        .slide-meta {
-          display: none;
         }
         .controls {
           grid-template-columns: 1fr;

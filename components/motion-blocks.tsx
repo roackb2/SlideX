@@ -14,16 +14,25 @@ type AnimationProps = {
   fillFrame?: boolean;
 };
 
-type SpacingProps = {
-  mb?: number | string;
-  marginBottom?: number | string;
+type RadiusProps = {
+  borderRadius?: number | string;
+  radius?: number | string;
 };
 
-type MotionBlockProps = AnimationProps & SpacingProps & {
+type ColorProps = {
+  background?: string;
+  backgroundColor?: string;
+  color?: string;
+  mutedColor?: string;
+  textAlign?: "left" | "center" | "right";
+  textColor?: string;
+};
+
+type MotionBlockProps = AnimationProps & {
   children: ReactNode;
   className?: string;
   style?: CSSProperties;
-};
+} & RadiusProps;
 
 function getMotionProps({
   enter = "fadeUp",
@@ -50,24 +59,28 @@ function getMotionProps({
   return { ...shared, initial: { opacity: 0, y: 28 } };
 }
 
-function getSpacingStyle({ mb, marginBottom }: SpacingProps): CSSProperties | undefined {
-  const value = marginBottom ?? mb;
+function radiusStyle({ borderRadius, radius }: RadiusProps): CSSProperties | undefined {
+  const value = borderRadius ?? radius;
 
-  if (value === undefined) {
+  if (value === undefined || value === "") {
     return undefined;
   }
 
-  return {
-    marginBottom: value
-  };
+  const parsed = typeof value === "number" ? value : Number(value);
+
+  if (Number.isFinite(parsed)) {
+    return { borderRadius: `${Math.max(parsed, 0)}px` };
+  }
+
+  return { borderRadius: value };
 }
 
-function MotionBlock({ children, className, fillFrame, mb, marginBottom, style, ...animation }: MotionBlockProps) {
+function MotionBlock({ borderRadius, children, className, fillFrame, radius, style, ...animation }: MotionBlockProps) {
   return (
     <motion.div
       className={className}
       style={{
-        ...getSpacingStyle({ mb, marginBottom }),
+        ...radiusStyle({ borderRadius, radius }),
         ...(fillFrame ? { height: "100%", maxWidth: "none", width: "100%" } : {}),
         ...style
       }}
@@ -83,6 +96,8 @@ export function Scene({
   theme = "dark",
   background,
   accent = "#7c3aed",
+  textColor,
+  mutedColor,
   layout = "default",
   alignX = "left",
   alignY = "center",
@@ -95,6 +110,8 @@ export function Scene({
   theme?: string;
   background?: string;
   accent?: string;
+  textColor?: string;
+  mutedColor?: string;
   layout?: "default" | "split-left" | "split-right";
   alignX?: "left" | "center" | "right" | "stretch";
   alignY?: "top" | "center" | "bottom";
@@ -114,7 +131,8 @@ export function Scene({
           ? "#0b1f3a"
           : "#0f172a");
   const foreground = isLight ? "#111827" : "#ffffff";
-  const muted = isLight ? "#475569" : "#cbd5e1";
+  const muted = cssColor(mutedColor) ?? (isLight ? "#475569" : "#cbd5e1");
+  const textForeground = cssColor(textColor) ?? foreground;
   const cardBackground = isLight ? "rgba(255,255,255,0.72)" : "rgba(255,255,255,0.075)";
   const borderColor = isLight ? "rgba(15,23,42,0.12)" : "rgba(255,255,255,0.12)";
 
@@ -128,7 +146,7 @@ export function Scene({
           "--slide-bg": slideBackground,
           "--slide-border": borderColor,
           "--slide-card": cardBackground,
-          "--slide-fg": foreground,
+          "--slide-fg": textForeground,
           "--slide-muted": muted,
           "--slide-text-align": textAlign,
           position: autoHeight ? "relative" : "absolute",
@@ -178,51 +196,88 @@ export function Scene({
 }
 
 export function Title({
+  background,
+  backgroundColor,
   children,
+  color,
   fontSize,
+  textAlign,
+  textColor,
   ...animation
-}: AnimationProps & SpacingProps & {
+}: AnimationProps & {
   children: ReactNode;
   fontSize?: number | string;
-}) {
+} & RadiusProps & ColorProps) {
   return (
-    <MotionBlock className="max-w-3xl text-5xl font-semibold leading-[1.02] tracking-normal text-[var(--slide-fg)] md:text-7xl" style={textStyle(fontSize, 1.02)} {...animation}>
+    <MotionBlock className="max-w-3xl text-5xl font-semibold leading-[1.02] tracking-normal text-[var(--slide-fg)] md:text-7xl" style={{ ...textStyle(fontSize, 1.02, textAlign), ...surfaceStyle({ background, backgroundColor, color, textColor }, true) }} {...animation}>
       {children}
     </MotionBlock>
   );
 }
 
 export function Text({
+  background,
+  backgroundColor,
   children,
+  color,
   fontSize,
+  textAlign,
+  textColor,
   ...animation
-}: AnimationProps & SpacingProps & {
+}: AnimationProps & {
   children: ReactNode;
   fontSize?: number | string;
-}) {
+} & RadiusProps & ColorProps) {
   return (
-    <MotionBlock className="max-w-2xl text-lg leading-8 text-[var(--slide-muted)] md:text-2xl md:leading-9" style={textStyle(fontSize, 1.45)} {...animation}>
+    <MotionBlock className="max-w-2xl text-lg leading-8 text-[var(--slide-muted)] md:text-2xl md:leading-9" style={{ ...textStyle(fontSize, 1.45, textAlign), ...surfaceStyle({ background, backgroundColor, color, textColor }, true) }} {...animation}>
       {children}
     </MotionBlock>
   );
 }
 
-function textStyle(fontSize: number | string | undefined, lineHeight: number): CSSProperties | undefined {
-  if (fontSize === undefined || fontSize === "") {
-    return undefined;
-  }
-
-  const size = typeof fontSize === "number" ? `${fontSize}px` : fontSize;
-
+function textStyle(fontSize: number | string | undefined, lineHeight: number, textAlign: ColorProps["textAlign"]): CSSProperties | undefined {
   return {
-    fontSize: size,
-    lineHeight
+    ...(fontSize === undefined || fontSize === "" ? {} : { fontSize: typeof fontSize === "number" ? `${fontSize}px` : fontSize }),
+    lineHeight,
+    ...(textAlign ? { textAlign } : {})
   };
 }
 
+function cssColor(value: string | undefined) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function surfaceStyle(props: Pick<ColorProps, "background" | "backgroundColor" | "color" | "textColor">, padWhenFilled = false): CSSProperties {
+  const background = cssColor(props.background ?? props.backgroundColor);
+  const color = cssColor(props.color ?? props.textColor);
+
+  return {
+    ...(background ? { background, padding: padWhenFilled ? "0.12em 0.18em" : undefined } : {}),
+    ...(color ? { color } : {})
+  };
+}
+
+function surfaceVars(props: ColorProps): CSSProperties {
+  const background = cssColor(props.background ?? props.backgroundColor);
+  const color = cssColor(props.color ?? props.textColor);
+  const mutedColor = cssColor(props.mutedColor);
+
+  return {
+    ...(background ? { "--block-bg": background, background } : {}),
+    ...(color ? { "--block-fg": color } : {}),
+    ...(mutedColor || color ? { "--block-muted": mutedColor ?? color } : {})
+  } as CSSProperties;
+}
+
 export function Card({
+  background,
+  backgroundColor,
+  color,
   icon,
   layout = "vertical",
+  mutedColor,
+  textColor,
   title,
   text,
   width = "md",
@@ -233,26 +288,28 @@ export function Card({
   title: string;
   text: string;
   width?: string;
-} & SpacingProps) {
+} & RadiusProps & ColorProps) {
   const isHorizontal = layout === "horizontal";
+  const colors = surfaceVars({ background, backgroundColor, color, mutedColor, textColor });
 
   return (
     <MotionBlock
       className={`${cardWidthClass(width)} overflow-hidden rounded-2xl border border-[var(--slide-border)] bg-[var(--slide-card)] p-5 shadow-xl shadow-black/20 backdrop-blur ${
         isHorizontal ? "flex items-start gap-4" : ""
       }`}
+      style={colors}
       {...animation}
     >
       {icon ? (
         <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--slide-border)] bg-white/[0.08] text-[var(--slide-fg)] ${
           isHorizontal ? "" : "mb-4"
-        }`}>
+        }`} style={{ color: "var(--block-fg, var(--slide-fg))" }}>
           <LucideSvg name={icon} />
         </div>
       ) : null}
       <div className="min-w-0">
-        <h3 className="text-xl font-semibold text-[var(--slide-fg)]">{title}</h3>
-        <p className="mt-2 text-base leading-7 text-[var(--slide-muted)]">{text}</p>
+        <h3 className="text-xl font-semibold text-[var(--slide-fg)]" style={{ color: "var(--block-fg, var(--slide-fg))" }}>{title}</h3>
+        <p className="mt-2 text-base leading-7 text-[var(--slide-muted)]" style={{ color: "var(--block-muted, var(--slide-muted))" }}>{text}</p>
       </div>
     </MotionBlock>
   );
@@ -267,8 +324,13 @@ function cardWidthClass(value: string) {
 }
 
 export function Metric({
+  background,
+  backgroundColor,
   caption,
+  color,
   label,
+  mutedColor,
+  textColor,
   value,
   width = "sm",
   ...animation
@@ -277,19 +339,24 @@ export function Metric({
   label: string;
   value: string;
   width?: string;
-} & SpacingProps) {
+} & RadiusProps & ColorProps) {
   return (
-    <MotionBlock className={`${metricWidthClass(width)} rounded-2xl border border-[var(--slide-border)] bg-[var(--slide-card)] p-5 shadow-xl shadow-black/20 backdrop-blur`} {...animation}>
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--slide-muted)]">{label}</p>
-      <p className="mt-3 text-5xl font-semibold leading-none text-[var(--slide-fg)]">{value}</p>
-      {caption ? <p className="mt-3 text-sm leading-6 text-[var(--slide-muted)]">{caption}</p> : null}
+    <MotionBlock className={`${metricWidthClass(width)} rounded-2xl border border-[var(--slide-border)] bg-[var(--slide-card)] p-5 shadow-xl shadow-black/20 backdrop-blur`} style={surfaceVars({ background, backgroundColor, color, mutedColor, textColor })} {...animation}>
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--slide-muted)]" style={{ color: "var(--block-muted, var(--slide-muted))" }}>{label}</p>
+      <p className="mt-3 text-5xl font-semibold leading-none text-[var(--slide-fg)]" style={{ color: "var(--block-fg, var(--slide-fg))" }}>{value}</p>
+      {caption ? <p className="mt-3 text-sm leading-6 text-[var(--slide-muted)]" style={{ color: "var(--block-muted, var(--slide-muted))" }}>{caption}</p> : null}
     </MotionBlock>
   );
 }
 
 export function Chart({
+  background,
+  backgroundColor,
+  color,
   height = 144,
   labels = "",
+  mutedColor,
+  textColor,
   title,
   values = "",
   width = "lg",
@@ -300,25 +367,25 @@ export function Chart({
   title: string;
   values?: string;
   width?: string;
-} & SpacingProps) {
+} & RadiusProps & ColorProps) {
   const chartValues = parseChartValues(values);
   const chartLabels = labels.split(",").map((item) => item.trim()).filter(Boolean);
   const maxValue = Math.max(...chartValues, 1);
   const chartHeight = normalizeChartHeight(height);
 
   return (
-    <MotionBlock className={`${chartWidthClass(width)} rounded-2xl border border-[var(--slide-border)] bg-[var(--slide-card)] p-5 shadow-xl shadow-black/20 backdrop-blur`} {...animation}>
-      <h3 className="text-xl font-semibold text-[var(--slide-fg)]">{title}</h3>
+    <MotionBlock className={`${chartWidthClass(width)} rounded-2xl border border-[var(--slide-border)] bg-[var(--slide-card)] p-5 shadow-xl shadow-black/20 backdrop-blur`} style={surfaceVars({ background, backgroundColor, color, mutedColor, textColor })} {...animation}>
+      <h3 className="text-xl font-semibold text-[var(--slide-fg)]" style={{ color: "var(--block-fg, var(--slide-fg))" }}>{title}</h3>
       <div className="mt-5 flex items-end gap-3" style={{ minHeight: chartHeight + 48 }}>
         {chartValues.map((value, index) => (
           <div className="flex min-w-0 flex-1 flex-col items-center gap-2" key={`${value}-${index}`}>
             <div className="flex w-full items-end rounded-md bg-white/[0.08]" style={{ height: chartHeight }}>
               <div
                 className="w-full rounded-md bg-[var(--slide-fg)]"
-                style={{ height: `${Math.max((value / maxValue) * 100, 4)}%` }}
+                style={{ height: `${Math.max((value / maxValue) * 100, 4)}%`, background: "var(--block-fg, var(--slide-fg))" }}
               />
             </div>
-            <span className="max-w-full truncate text-[10px] uppercase tracking-wide text-[var(--slide-muted)]">
+            <span className="max-w-full truncate text-[10px] uppercase tracking-wide text-[var(--slide-muted)]" style={{ color: "var(--block-muted, var(--slide-muted))" }}>
               {chartLabels[index] ?? `D${index + 1}`}
             </span>
           </div>
@@ -355,17 +422,21 @@ function normalizeChartHeight(value: number | string | undefined) {
 }
 
 export function ImageBlock({
-  src,
   alt,
+  background,
+  backgroundColor,
   fit = "cover",
   full = false,
+  src,
   ...animation
 }: AnimationProps & {
   src: string;
   alt: string;
   fit?: string;
   full?: boolean;
-} & SpacingProps) {
+} & RadiusProps & Pick<ColorProps, "background" | "backgroundColor">) {
+  const fillFrame = Boolean(animation.fillFrame);
+
   return (
     <MotionBlock
       className={
@@ -373,10 +444,11 @@ export function ImageBlock({
           ? "absolute -inset-8 z-0 w-auto max-w-none overflow-hidden rounded-none border-0 bg-white/[0.08]"
           : "w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-white/[0.08]"
       }
+      style={surfaceStyle({ background, backgroundColor })}
       {...animation}
     >
       <img
-        className={full ? "h-full w-full" : "aspect-video w-full"}
+        className={full || fillFrame ? "h-full w-full" : "aspect-video w-full"}
         src={src}
         alt={alt}
         style={{ objectFit: normalizeImageFit(fit) }}
