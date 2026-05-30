@@ -1,9 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Clock, Folder, FileCode, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Clock,
+  Folder,
+  Layers,
+  Play,
+  Sparkles
+} from "lucide-react";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
-import { motionTemplates } from "@/lib/templates";
+import { StyleThumbnail } from "@/components/StyleThumbnail";
+import { motionTemplates, type MotionTemplate } from "@/lib/templates";
 
 const easeSmooth = [0.22, 1, 0.36, 1] as const;
 
@@ -11,190 +22,304 @@ const staggerContainer = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.1 }
+    transition: { staggerChildren: 0.08, delayChildren: 0.12 }
   }
 };
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 26 },
   visible: (i: number = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.05, duration: 0.55, ease: easeSmooth }
+    transition: { delay: i * 0.06, duration: 0.62, ease: easeSmooth }
   })
 };
 
+function TemplateCard({
+  template,
+  index
+}: {
+  template: MotionTemplate;
+  index: number;
+}) {
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ delay: index * 0.04, duration: 0.55, ease: easeSmooth }}
+    >
+      <Link
+        href="/studio"
+        className="group flex h-full flex-col overflow-hidden rounded-[28px] border border-white/[0.1] bg-white/[0.045] transition hover:border-[#8ea5ff]/[0.35] hover:bg-white/[0.07] active:scale-[0.99]"
+      >
+        <div className="relative h-52 overflow-hidden bg-[#0c0f17]">
+          <StyleThumbnail
+            className="h-full w-full transition duration-700 group-hover:scale-[1.03]"
+            label={template.category}
+            templateId={template.id}
+            title={template.name}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#080a0f]/80 via-transparent to-transparent" />
+          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3">
+            <span className="rounded-full border border-white/[0.14] bg-black/30 px-3 py-1 text-xs font-medium text-neutral-200 backdrop-blur-md">
+              {template.category}
+            </span>
+            <span className="flex items-center gap-1.5 rounded-full border border-white/[0.14] bg-black/30 px-3 py-1 text-xs text-neutral-300 backdrop-blur-md">
+              <Clock className="h-3 w-3" />
+              {template.duration}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-1 flex-col p-5">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <h2 className="text-xl font-semibold tracking-tight text-white">{template.name}</h2>
+            <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-neutral-500 transition group-hover:translate-x-1 group-hover:text-[#8ea5ff]" />
+          </div>
+          <p className="text-sm leading-relaxed text-neutral-400">{template.description}</p>
+          <p className="mt-5 text-xs font-medium leading-relaxed text-neutral-500">{template.useCase}</p>
+        </div>
+      </Link>
+    </motion.article>
+  );
+}
+
+function FeaturedPreset() {
+  const featured = motionTemplates[0];
+
+  if (!featured) {
+    return null;
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 34, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.8, delay: 0.2, ease: easeSmooth }}
+      className="relative"
+    >
+      <div className="absolute -inset-6 rounded-[2rem] bg-[radial-gradient(circle_at_72%_12%,rgba(142,165,255,0.18),transparent_44%)] blur-2xl" />
+      <Link
+        href="/studio"
+        className="group relative block overflow-hidden rounded-[32px] border border-white/[0.12] bg-[#0d1018] shadow-2xl shadow-black/50"
+      >
+        <div className="relative aspect-[1.16] min-h-[390px] overflow-hidden">
+          <StyleThumbnail
+            className="h-full w-full transition duration-700 group-hover:scale-[1.02]"
+            label={featured.category}
+            templateId={featured.id}
+            title={featured.name}
+            variant="hero"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#080a0f] via-[#080a0f]/30 to-transparent" />
+
+          <div className="absolute left-5 right-5 top-5 flex items-center justify-between gap-3">
+            <span className="flex items-center gap-2 rounded-full border border-white/[0.14] bg-black/30 px-3 py-1.5 text-sm text-neutral-200 backdrop-blur-md">
+              <Play className="h-3.5 w-3.5 text-[#8ea5ff]" />
+              Featured preset
+            </span>
+            <span className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black">
+              Open
+            </span>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6">
+            <div className="mb-4 flex flex-wrap gap-2">
+              {[featured.category, featured.duration, "MDX deck"].map((item) => (
+                <span
+                  key={item}
+                  className="rounded-full border border-white/[0.12] bg-white/[0.07] px-3 py-1 text-xs text-neutral-300 backdrop-blur-md"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+            <h2 className="max-w-md text-2xl font-semibold tracking-tight text-white md:text-3xl">
+              {featured.name}
+            </h2>
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-neutral-300">
+              {featured.description}
+            </p>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
+
 export default function TemplatesPage() {
   return (
-    <main className="min-h-screen bg-[#111118] text-neutral-200 selection:bg-[#5e6ad2]/35 overflow-x-hidden">
+    <main className="min-h-screen overflow-x-hidden bg-[#080a0f] text-neutral-200">
       <SiteNav />
 
-      {/* ═══════════ HERO ═══════════ */}
-      <section className="relative px-4 pb-12 pt-28 sm:px-6 sm:pb-16 sm:pt-32 md:pb-24 md:pt-36">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 h-[250px] w-[300px] sm:h-[400px] sm:w-[600px] rounded-full opacity-30"
-            style={{
-              background:
-                "radial-gradient(circle, rgba(94,106,210,0.08) 0%, transparent 70%)"
-            }}
-          />
+      <section className="relative px-6 pt-24">
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute left-1/2 top-0 h-[500px] w-[900px] -translate-x-1/2 rounded-full bg-[#8ea5ff]/[0.1] blur-3xl" />
+          <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:72px_72px]" />
         </div>
 
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-          className="relative mx-auto max-w-6xl"
-        >
-          <motion.div
-            variants={fadeInUp}
-            custom={0}
-            className="mb-3 sm:mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.07] px-3 py-1 text-[11px] sm:text-xs font-medium text-neutral-400 backdrop-blur-sm"
-          >
-            <Folder className="h-3 w-3 text-[#8b95e0]" />
-            Deck Presets
-          </motion.div>
-
-          <motion.h1
-            variants={fadeInUp}
-            custom={1}
-            className="max-w-3xl text-2xl sm:text-4xl font-bold tracking-tight text-white md:text-6xl leading-[1.05]"
-          >
-            Ready-to-Use
-            <br />
-            <span className="gradient-text-accent">Motion Deck Presets</span>
-          </motion.h1>
-
-          <motion.p
-            variants={fadeInUp}
-            custom={2}
-            className="mt-3 sm:mt-5 max-w-2xl text-sm sm:text-lg leading-relaxed text-neutral-400 md:text-xl"
-          >
-            Each preset is a complete MDX scene deck. Load one into the Studio, edit scenes on the left, preview on the right, and prepare the sequence for video export.
-          </motion.p>
-        </motion.div>
-      </section>
-
-      {/* ═══════════ TEMPLATES GRID ═══════════ */}
-      <section className="relative border-t border-white/[0.12]">
-        <div className="absolute inset-x-0 top-0 h-px shimmer-line" />
-
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16 md:py-20">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-40px" }}
-            variants={staggerContainer}
-            className="grid gap-4 sm:gap-6 md:grid-cols-2"
-          >
-            {motionTemplates.map((template, idx) => (
-              <motion.article
-                key={template.id}
-                variants={fadeInUp}
-                custom={idx}
-                className="group relative rounded-2xl border border-white/[0.10] bg-white/[0.06] p-4 sm:p-6 transition-all hover:border-[#5e6ad2]/20 hover:bg-white/[0.08]"
+        <div className="mx-auto grid max-w-7xl gap-10 pb-16 md:pb-20 lg:grid-cols-[0.86fr_1.14fr] lg:items-center">
+          <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="max-w-2xl">
+            <motion.div
+              variants={fadeInUp}
+              className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.05] px-3 py-1.5 text-sm font-medium text-neutral-300"
+            >
+              <Folder className="h-3.5 w-3.5 text-[#8ea5ff]" />
+              Deck Presets
+            </motion.div>
+            <motion.h1
+              variants={fadeInUp}
+              custom={1}
+              className="text-5xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl"
+            >
+              Useful decks with motion built in.
+            </motion.h1>
+            <motion.p
+              variants={fadeInUp}
+              custom={2}
+              className="mt-6 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg"
+            >
+              Start from complete MDX scene decks for reviews, launches, board updates, and customer stories.
+            </motion.p>
+            <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                href="/studio"
+                className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
               >
-                {/* Top meta */}
-                <div className="mb-3 sm:mb-4 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                    <span className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.12] bg-white/[0.08] text-neutral-400">
-                      <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    </span>
-                    <div className="flex flex-wrap items-center gap-x-1">
-                      <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-neutral-400">
-                        {template.category}
-                      </span>
-                      <span className="mx-1 text-neutral-500">·</span>
-                      <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-neutral-400 flex items-center gap-1">
-                        <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                        {template.duration}
-                      </span>
-                    </div>
-                  </div>
-                  <a
-                    href="/studio"
-                    className="group/btn relative overflow-hidden rounded-full bg-white px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-semibold text-black transition-all hover:shadow-[0_0_20px_rgba(94,106,210,0.2)] active:scale-95 shrink-0 whitespace-nowrap"
-                  >
-                    <span className="relative z-10 flex items-center gap-1 sm:gap-1.5">
-                      <span className="hidden sm:inline">Use in</span> Studio
-                      <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transition-transform group-hover/btn:translate-x-0.5" />
-                    </span>
-                    <div className="absolute inset-0 bg-neutral-200 opacity-0 transition-opacity group-hover/btn:opacity-100" />
-                  </a>
-                </div>
-
-                {/* Title & description */}
-                <h2 className="text-base sm:text-xl font-semibold text-white tracking-tight mb-1.5 sm:mb-2">
-                  {template.name}
-                </h2>
-                <p className="text-sm leading-relaxed text-neutral-400 mb-1.5 sm:mb-2">
-                  {template.description}
-                </p>
-                <p className="text-xs leading-relaxed text-neutral-400 mb-3 sm:mb-5">
-                  {template.useCase}
-                </p>
-
-                {/* Code preview - hidden on mobile, shown on sm+ */}
-                <div className="hidden sm:block relative rounded-xl border border-white/[0.10] bg-[#080808] p-3 sm:p-4 overflow-hidden">
-                  <div className="absolute top-2.5 sm:top-3 left-3 sm:left-4 flex items-center gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-red-500/50" />
-                    <div className="h-2 w-2 rounded-full bg-yellow-500/50" />
-                    <div className="h-2 w-2 rounded-full bg-green-500/50" />
-                  </div>
-                  <div className="flex items-center gap-2 mb-2 sm:mb-3 pt-4 sm:pt-5">
-                    <FileCode className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-neutral-500" />
-                    <span className="text-[9px] sm:text-[10px] font-mono text-neutral-500 tracking-wide">
-                      {template.id}.mdx
-                    </span>
-                  </div>
-                  <pre className="max-h-32 sm:max-h-40 md:max-h-56 overflow-auto text-[10px] sm:text-[11px] md:text-xs leading-5 text-neutral-400 font-mono scrollbar-thin">
-                    <code>{template.source.slice(0, 350)}...</code>
-                  </pre>
-                </div>
-
-                {/* Mobile: simplified code hint */}
-                <div className="sm:hidden flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#080808] px-3 py-2">
-                  <FileCode className="h-3 w-3 text-neutral-500 shrink-0" />
-                  <span className="text-[10px] font-mono text-neutral-500 truncate">
-                    {template.id}.mdx — {template.source.split('\n').length} lines
-                  </span>
-                </div>
-              </motion.article>
-            ))}
+                Open Studio
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+              </Link>
+              <Link
+                href="#gallery"
+                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95"
+              >
+                View Presets
+              </Link>
+            </motion.div>
           </motion.div>
+
+          <FeaturedPreset />
         </div>
       </section>
 
-      {/* ═══════════ CTA ═══════════ */}
-      <section className="relative border-t border-white/[0.12]">
-        <div className="absolute inset-x-0 top-0 h-px shimmer-line" />
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-20 text-center">
+      <section className="border-y border-white/[0.1] bg-white/[0.025]">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 divide-y divide-white/[0.08] px-6 md:grid-cols-3 md:divide-x md:divide-y-0">
+          {[
+            ["Complete scenes", "Structure, copy rhythm, timing, and visual direction."],
+            ["Editable source", "Everything stays as MDX so teams can rewrite the story."],
+            ["Export path", "Use the same scene tree for playback and capture."]
+          ].map(([title, body]) => (
+            <div key={title} className="py-6 md:px-8 md:py-7 first:md:pl-0 last:md:pr-0">
+              <p className="text-sm font-semibold text-white">{title}</p>
+              <p className="mt-1 text-sm leading-relaxed text-neutral-500">{body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="gallery" className="px-6 py-24 md:py-32">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 grid gap-6 lg:grid-cols-[0.78fr_1fr] lg:items-end">
+            <div>
+              <h2 className="text-4xl font-semibold tracking-tight text-white md:text-6xl">
+                Choose the closest story.
+              </h2>
+              <p className="mt-5 max-w-2xl text-base leading-relaxed text-neutral-400 md:text-lg">
+                The gallery is organized around business moments, not decorative themes.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                ["01", "Pick a deck"],
+                ["02", "Rewrite scenes"],
+                ["03", "Preview timing"]
+              ].map(([step, label]) => (
+                <div key={step} className="rounded-[24px] border border-white/[0.1] bg-white/[0.04] p-4">
+                  <p className="font-mono text-xs text-[#8ea5ff]">{step}</p>
+                  <p className="mt-2 text-sm font-medium text-white">{label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {motionTemplates.map((template, index) => (
+              <TemplateCard key={template.id} template={template} index={index} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 pb-24 md:pb-32">
+        <div className="mx-auto max-w-7xl">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: easeSmooth }}
+            className="grid gap-8 rounded-[32px] border border-white/[0.1] bg-[#0d1018] p-6 md:p-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center"
           >
-            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-3 sm:mb-4">
-              Want to build your own?
-            </h3>
-            <p className="text-neutral-400 mb-5 sm:mb-8 max-w-md mx-auto text-sm sm:text-base">
-              Start from a blank canvas or remix any preset. Every scene is editable MDX.
-            </p>
-            <a
-              href="/studio"
-              className="group relative overflow-hidden inline-flex items-center gap-2 rounded-full bg-white px-6 py-2.5 sm:px-7 sm:py-3 text-sm font-semibold text-black transition-all hover:shadow-[0_0_30px_rgba(94,106,210,0.25)] active:scale-95"
-            >
-              <span className="relative z-10 flex items-center gap-2">
-                Open Studio
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </span>
-              <div className="absolute inset-0 bg-neutral-200 opacity-0 transition-opacity group-hover:opacity-100" />
-            </a>
+            <div>
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <h2 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">
+                Presets are starting points.
+              </h2>
+              <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-400">
+                Open a deck, keep the motion grammar, and replace the content with your real story.
+              </p>
+            </div>
+
+            <div className="grid gap-3">
+              {[
+                ["Scene structure", "A complete deck outline with timed sections."],
+                ["Motion defaults", "Enter, delay, and duration choices already tuned."],
+                ["MDX source", "Readable source that can be maintained by the team."]
+              ].map(([title, body]) => (
+                <div
+                  key={title}
+                  className="grid gap-4 rounded-[24px] border border-white/[0.09] bg-black/20 p-4 sm:grid-cols-[40px_1fr] sm:items-center"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.08] text-[#8ea5ff]">
+                    <Check className="h-4 w-4" />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-semibold text-white">{title}</span>
+                    <span className="mt-1 block text-sm leading-relaxed text-neutral-500">{body}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
           </motion.div>
         </div>
       </section>
+
+      <section className="border-t border-white/[0.1] px-6 py-20 text-center">
+        <div className="mx-auto max-w-3xl">
+          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.07] text-[#8ea5ff]">
+            <Layers className="h-6 w-6" />
+          </div>
+          <h2 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
+            Build from a preset today.
+          </h2>
+          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-neutral-400">
+            Load a deck into Studio, edit the scenes, and keep the motion system intact.
+          </p>
+          <div className="mt-8">
+            <Link
+              href="/studio"
+              className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
+            >
+              Open Studio
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <SiteFooter />
     </main>
   );
 }

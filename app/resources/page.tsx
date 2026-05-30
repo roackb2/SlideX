@@ -1,21 +1,25 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
+  AlignLeft,
   ArrowRight,
   BookOpen,
+  Check,
+  ChevronRight,
+  Code2,
+  ExternalLink,
+  FileCode2,
   Layers,
-  Type,
-  AlignLeft,
   Layout,
   MousePointer,
   Terminal,
-  Sparkles,
-  ChevronRight,
-  ExternalLink
+  Type
 } from "lucide-react";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
-import { resourceItems, docSections } from "@/lib/resources";
+import { docSections, resourceItems } from "@/lib/resources";
 
 const easeSmooth = [0.22, 1, 0.36, 1] as const;
 
@@ -23,202 +27,241 @@ const staggerContainer = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.1 }
+    transition: { staggerChildren: 0.08, delayChildren: 0.12 }
   }
 };
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 28 },
+  hidden: { opacity: 0, y: 26 },
   visible: (i: number = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.06, duration: 0.6, ease: easeSmooth }
+    transition: { delay: i * 0.06, duration: 0.62, ease: easeSmooth }
   })
 };
 
 const componentReference: [string, string, React.ElementType][] = [
-  ["Scene", "Creates one timed presentation page.", Layers],
-  ["Title", "Large animated headline layer for a scene.", Type],
-  ["Text", "Supporting body copy with enter, delay, and duration props.", AlignLeft],
-  ["Card", "Structured information block with title and text props.", Layout],
-  ["CTA", "Call-to-action label for scene endings.", MousePointer]
+  ["Scene", "Timed page container for one presentation moment.", Layers],
+  ["Title", "Animated headline layer with enter and timing props.", Type],
+  ["Text", "Supporting copy with delay, duration, and layout controls.", AlignLeft],
+  ["Card", "Structured proof block for context and decisions.", Layout],
+  ["CTA", "Action label for scene endings and transitions.", MousePointer]
 ];
+
+const quickStart = [
+  "npm install",
+  "npm run dev",
+  "http://localhost:3000/studio"
+];
+
+function ResourceHeroVisual() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 34, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.8, delay: 0.2, ease: easeSmooth }}
+      className="relative"
+    >
+      <div className="absolute -inset-6 rounded-[2rem] bg-[radial-gradient(circle_at_74%_10%,rgba(142,165,255,0.16),transparent_44%)] blur-2xl" />
+      <div className="relative overflow-hidden rounded-[32px] border border-white/[0.12] bg-[#0d1018] shadow-2xl shadow-black/50">
+        <div className="flex items-center justify-between border-b border-white/[0.1] bg-white/[0.04] px-5 py-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-white">
+            <BookOpen className="h-4 w-4 text-[#8ea5ff]" />
+            Resources
+          </div>
+          <span className="rounded-full border border-white/[0.12] px-3 py-1 font-mono text-xs text-neutral-400">
+            MDX
+          </span>
+        </div>
+
+        <div className="grid gap-4 p-5 md:p-6">
+          <div className="rounded-[24px] border border-white/[0.1] bg-black/35 p-4 font-mono text-xs leading-6 text-neutral-400">
+            <p className="text-neutral-600">{`<Scene duration={5}>`}</p>
+            <p className="pl-4 text-white">{`<Title enter="fadeUp">`}</p>
+            <p className="pl-8 text-[#8ea5ff]">Motion Design Resources</p>
+            <p className="pl-4 text-white">{`</Title>`}</p>
+            <p className="pl-4 text-white">{`<Text delay={0.2}>`}</p>
+            <p className="pl-8 text-neutral-500">Scene model, workflow, export path.</p>
+            <p className="pl-4 text-white">{`</Text>`}</p>
+            <p className="text-neutral-600">{`</Scene>`}</p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              ["Scene", "Timed page"],
+              ["Layer", "Motion block"],
+              ["Export", "Portable output"]
+            ].map(([title, body]) => (
+              <div key={title} className="rounded-[20px] border border-white/[0.1] bg-white/[0.045] p-4">
+                <p className="text-sm font-semibold text-white">{title}</p>
+                <p className="mt-1 text-xs text-neutral-500">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function ResourcesPage() {
   return (
-    <main className="min-h-screen bg-[#111118] text-neutral-200 selection:bg-[#5e6ad2]/35 overflow-x-hidden">
+    <main className="min-h-screen overflow-x-hidden bg-[#080a0f] text-neutral-200">
       <SiteNav />
 
-      {/* ═══════════ HERO ═══════════ */}
-      <section className="relative px-6 pb-20 pt-32 md:pb-28 md:pt-40">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 h-[400px] w-[600px] rounded-full opacity-30"
-            style={{
-              background:
-                "radial-gradient(circle, rgba(94,106,210,0.08) 0%, transparent 70%)"
-            }}
-          />
+      <section className="relative px-6 pt-24">
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute left-1/2 top-0 h-[500px] w-[900px] -translate-x-1/2 rounded-full bg-[#8ea5ff]/[0.1] blur-3xl" />
+          <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:72px_72px]" />
         </div>
 
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-          className="relative mx-auto max-w-6xl"
-        >
-          <motion.div
-            variants={fadeInUp}
-            custom={0}
-            className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.07] px-3.5 py-1.5 text-xs font-medium text-neutral-400 backdrop-blur-sm"
-          >
-            <BookOpen className="h-3 w-3 text-[#8b95e0]" />
-            Documentation
+        <div className="mx-auto grid max-w-7xl gap-10 pb-16 md:pb-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="max-w-2xl">
+            <motion.div
+              variants={fadeInUp}
+              className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.05] px-3 py-1.5 text-sm font-medium text-neutral-300"
+            >
+              <BookOpen className="h-3.5 w-3.5 text-[#8ea5ff]" />
+              Documentation
+            </motion.div>
+            <motion.h1
+              variants={fadeInUp}
+              custom={1}
+              className="text-5xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl"
+            >
+              Learn the scene system.
+            </motion.h1>
+            <motion.p
+              variants={fadeInUp}
+              custom={2}
+              className="mt-6 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg"
+            >
+              A focused hub for MDX scenes, component syntax, Studio workflow, keyboard navigation, and export direction.
+            </motion.p>
+            <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                href="#quick-start"
+                className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
+              >
+                Quick Start
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+              </Link>
+              <Link
+                href="/studio"
+                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95"
+              >
+                Open Studio
+              </Link>
+            </motion.div>
           </motion.div>
 
-          <motion.h1
-            variants={fadeInUp}
-            custom={1}
-            className="max-w-3xl text-4xl font-bold tracking-tight text-white md:text-5xl leading-[1.05]"
-          >
-            Motion Design
-            <br />
-            <span className="gradient-text-accent">Resources &amp; Workflow</span>
-          </motion.h1>
-
-          <motion.p
-            variants={fadeInUp}
-            custom={2}
-            className="mt-5 max-w-2xl text-lg leading-relaxed text-neutral-400 md:text-xl"
-          >
-            Find the MDX scene model, component syntax, Studio workflow, keyboard navigation, and video export direction in one clear learning hub.
-          </motion.p>
-        </motion.div>
+          <ResourceHeroVisual />
+        </div>
       </section>
 
-      {/* ═══════════ RESOURCE LINKS + DOCS ═══════════ */}
-      <section className="relative border-t border-white/[0.12]">
-        <div className="absolute inset-x-0 top-0 h-px shimmer-line" />
-
-        <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
-          <div className="grid gap-10 lg:grid-cols-[0.35fr_0.65fr] lg:gap-12">
-            {/* Left: Resource Links */}
-            <motion.aside
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-60px" }}
-              variants={staggerContainer}
-              className="h-fit"
+      <section className="border-y border-white/[0.1] bg-white/[0.025]">
+        <div className="mx-auto grid max-w-7xl gap-3 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
+          {resourceItems.map((item, index) => (
+            <motion.a
+              key={item.title}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.04, duration: 0.45, ease: easeSmooth }}
+              href={item.href}
+              className="group rounded-[24px] border border-white/[0.1] bg-white/[0.04] p-4 transition hover:border-[#8ea5ff]/[0.3] hover:bg-white/[0.07]"
             >
-              <motion.div variants={fadeInUp} custom={0} className="mb-6">
-                <h2 className="text-lg font-semibold text-white tracking-tight">
-                  Resource Links
-                </h2>
-                <div className="mt-2 h-px w-12 bg-gradient-to-r from-[#5e6ad2]/50 to-transparent" />
-              </motion.div>
-
-              <div className="grid gap-3">
-                {resourceItems.map((item, idx) => (
-                  <motion.a
-                    key={item.title}
-                    variants={fadeInUp}
-                    custom={idx + 1}
-                    href={item.href}
-                    className="group flex flex-col rounded-xl border border-white/[0.10] bg-white/[0.08] p-4 transition-all hover:border-[#5e6ad2]/20 hover:bg-white/[0.08]"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-400">
-                        {item.label}
-                      </span>
-                      <ExternalLink className="h-3 w-3 text-neutral-500 transition-colors group-hover:text-[#8b95e0]" />
-                    </div>
-                    <span className="font-semibold text-sm text-white mb-1">
-                      {item.title}
-                    </span>
-                    <span className="text-xs leading-relaxed text-neutral-400">
-                      {item.description}
-                    </span>
-                  </motion.a>
-                ))}
+              <div className="mb-4 flex items-center justify-between">
+                <span className="rounded-full border border-white/[0.1] px-3 py-1 text-xs text-neutral-400">
+                  {item.label}
+                </span>
+                <ExternalLink className="h-4 w-4 text-neutral-600 transition group-hover:text-[#8ea5ff]" />
               </div>
-            </motion.aside>
+              <h2 className="text-base font-semibold text-white">{item.title}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-neutral-500">{item.description}</p>
+            </motion.a>
+          ))}
+        </div>
+      </section>
 
-            {/* Right: Doc Sections */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-60px" }}
-              variants={staggerContainer}
-              className="grid gap-5"
-            >
-              {docSections.map((section, idx) => (
-                <motion.article
-                  key={section.title}
-                  variants={fadeInUp}
-                  custom={idx}
-                  className="group rounded-2xl border border-white/[0.10] bg-white/[0.08] p-6 transition-all hover:border-[#5e6ad2]/15"
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.12] bg-white/[0.08]">
-                      <Sparkles className="h-4 w-4 text-[#8b95e0]" />
+      <section className="px-6 py-24 md:py-32">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 max-w-3xl">
+            <h2 className="text-4xl font-semibold tracking-tight text-white md:text-6xl">
+              The docs follow the build loop.
+            </h2>
+            <p className="mt-5 max-w-2xl text-base leading-relaxed text-neutral-400 md:text-lg">
+              Start with the scene model, move through composition, then prepare the output path.
+            </p>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-3">
+            {docSections.map((section, index) => (
+              <motion.article
+                key={section.title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{ delay: index * 0.06, duration: 0.55, ease: easeSmooth }}
+                className="flex min-h-[340px] flex-col rounded-[28px] border border-white/[0.1] bg-white/[0.045] p-5 md:p-6"
+              >
+                <div className="mb-8 flex items-center justify-between">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
+                    <FileCode2 className="h-5 w-5" />
+                  </span>
+                  <span className="font-mono text-xs text-neutral-600">0{index + 1}</span>
+                </div>
+                <h3 className="text-2xl font-semibold tracking-tight text-white">{section.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-neutral-400">{section.description}</p>
+
+                <div className="mt-6 grid gap-2">
+                  {section.points.map((point) => (
+                    <div
+                      key={point}
+                      className="flex gap-3 rounded-[18px] border border-white/[0.08] bg-black/20 px-3 py-3 text-sm leading-relaxed text-neutral-400"
+                    >
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#8ea5ff]" />
+                      <span>{point}</span>
                     </div>
-                    <h2 className="text-lg font-semibold text-white tracking-tight">
-                      {section.title}
-                    </h2>
-                  </div>
-                  <p className="text-sm leading-relaxed text-neutral-400 mb-4">
-                    {section.description}
-                  </p>
-                  <ul className="grid gap-2">
-                    {section.points.map((point) => (
-                      <li
-                        key={point}
-                        className="flex items-start gap-3 rounded-lg border border-white/[0.12] bg-white/[0.08] px-4 py-3 text-sm text-neutral-400"
-                      >
-                        <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5e6ad2]/60" />
-                        <span>{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </motion.article>
-              ))}
-            </motion.div>
+                  ))}
+                </div>
+              </motion.article>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════ QUICK START ═══════════ */}
-      <section id="quick-start" className="relative border-t border-white/[0.12]">
-        <div className="absolute inset-x-0 top-0 h-px shimmer-line" />
-
-        <div className="mx-auto max-w-6xl px-6 py-16 md:py-20">
+      <section id="quick-start" className="px-6 pb-24 md:pb-32">
+        <div className="mx-auto max-w-7xl">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: easeSmooth }}
+            className="grid gap-8 rounded-[32px] border border-white/[0.1] bg-[#0d1018] p-6 md:p-10 lg:grid-cols-[0.78fr_1.22fr] lg:items-center"
           >
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.12] bg-white/[0.08]">
-                <Terminal className="h-4 w-4 text-neutral-400" />
+            <div>
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.08] text-[#8ea5ff]">
+                <Terminal className="h-5 w-5" />
               </div>
-              <h2 className="text-lg font-semibold text-white tracking-tight">
-                Quick Start
+              <h2 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">
+                Run it locally, then open Studio.
               </h2>
+              <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-400">
+                Install, run, open, then inspect the scene source.
+              </p>
             </div>
 
-            <div className="grid gap-3 text-sm md:grid-cols-3">
-              {[
-                "npm install",
-                "npm run dev",
-                "http://localhost:3000/studio"
-              ].map((cmd) => (
+            <div className="rounded-[24px] border border-white/[0.1] bg-black/35 p-3">
+              {quickStart.map((command, index) => (
                 <div
-                  key={cmd}
-                  className="group flex items-center gap-3 rounded-xl border border-white/[0.10] bg-[#080808] px-5 py-4 font-mono text-xs text-neutral-400 transition-colors hover:border-[#5e6ad2]/20 hover:text-neutral-400"
+                  key={command}
+                  className="grid grid-cols-[42px_1fr] items-center gap-3 rounded-[18px] px-3 py-3 font-mono text-sm text-neutral-300 transition hover:bg-white/[0.06]"
                 >
-                  <div className="h-2 w-2 rounded-full bg-[#5e6ad2]/50" />
-                  {cmd}
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.07] text-xs text-[#8ea5ff]">
+                    {index + 1}
+                  </span>
+                  <code className="min-w-0 truncate">{command}</code>
                 </div>
               ))}
             </div>
@@ -226,100 +269,76 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      {/* ═══════════ COMPONENT REFERENCE ═══════════ */}
-      <section id="components" className="relative border-t border-white/[0.12]">
-        <div className="absolute inset-x-0 top-0 h-px shimmer-line" />
-
-        <div className="mx-auto max-w-6xl px-6 py-16 md:py-20">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, ease: easeSmooth }}
-          >
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.12] bg-white/[0.08]">
-                <Layers className="h-4 w-4 text-neutral-400" />
+      <section id="components" className="px-6 pb-24 md:pb-32">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
+            <div>
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
+                <Code2 className="h-5 w-5" />
               </div>
-              <h2 className="text-lg font-semibold text-white tracking-tight">
-                Scene Component Reference
+              <h2 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
+                Scene component reference.
               </h2>
+              <p className="mt-5 max-w-lg text-base leading-relaxed text-neutral-400">
+                A small component vocabulary keeps the Studio predictable while still supporting rich presentation work.
+              </p>
+              <p className="mt-6 text-sm leading-relaxed text-neutral-500">
+                Full maintenance notes remain in{" "}
+                <span className="rounded-full border border-white/[0.1] bg-white/[0.05] px-3 py-1 font-mono text-xs text-neutral-300">
+                  docs/USAGE.zh-TW.md
+                </span>
+              </p>
             </div>
 
-            <div className="rounded-2xl border border-white/[0.10] bg-white/[0.08] p-2">
-              <div className="divide-y divide-white/[0.07]">
-                {componentReference.map(([name, description, Icon], i) => (
-                  <motion.div
-                    key={name}
-                    initial={{ opacity: 0, x: -10 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{
-                      delay: i * 0.05,
-                      duration: 0.5,
-                      ease: easeSmooth
-                    }}
-                    className="group flex items-center gap-4 rounded-xl px-4 py-3.5 transition-colors hover:bg-white/[0.07]"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.10] bg-white/[0.07] text-neutral-400 transition-colors group-hover:border-[#5e6ad2]/20 group-hover:text-neutral-300">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {componentReference.map(([name, description, Icon], index) => (
+                <motion.div
+                  key={name}
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.04, duration: 0.45, ease: easeSmooth }}
+                  className="group rounded-[24px] border border-white/[0.1] bg-white/[0.04] p-4 transition hover:bg-white/[0.07]"
+                >
+                  <div className="mb-5 flex items-center justify-between">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.07] text-neutral-400 transition group-hover:text-[#8ea5ff]">
                       <Icon className="h-4 w-4" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono text-sm font-medium text-white">
-                          {name}
-                        </span>
-                        <div className="h-px flex-1 bg-gradient-to-r from-white/[0.06] to-transparent" />
-                      </div>
-                      <p className="mt-0.5 text-sm text-neutral-400">
-                        {description}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+                    <ChevronRight className="h-4 w-4 text-neutral-600 transition group-hover:text-neutral-300" />
+                  </div>
+                  <h3 className="font-mono text-sm font-semibold text-white">{name}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-neutral-500">{description}</p>
+                </motion.div>
+              ))}
             </div>
-
-            <p className="mt-5 text-sm leading-relaxed text-neutral-400">
-              Detailed local documentation remains available in{" "}
-              <span className="rounded bg-white/[0.08] px-1.5 py-0.5 font-mono text-xs text-neutral-400">
-                docs/USAGE.zh-TW.md
-              </span>{" "}
-              as the complete maintenance guide for developers.
-            </p>
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* ═══════════ CTA ═══════════ */}
-      <section className="relative border-t border-white/[0.12]">
-        <div className="absolute inset-x-0 top-0 h-px shimmer-line" />
-        <div className="mx-auto max-w-6xl px-6 py-20 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, ease: easeSmooth }}
-          >
-            <h3 className="text-2xl font-bold tracking-tight text-white mb-4">
-              Ready to design?
-            </h3>
-            <p className="text-neutral-400 mb-8 max-w-md mx-auto">
-              Open the Studio and start building motion-rich presentations in minutes.
-            </p>
-            <a
+      <section className="border-t border-white/[0.1] px-6 py-20 text-center">
+        <div className="mx-auto max-w-3xl">
+          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.07] text-[#8ea5ff]">
+            <BookOpen className="h-6 w-6" />
+          </div>
+          <h2 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
+            Ready to build a scene?
+          </h2>
+          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-neutral-400">
+            Open Studio and use the reference as you shape the first deck.
+          </p>
+          <div className="mt-8">
+            <Link
               href="/studio"
-              className="group relative overflow-hidden inline-flex items-center gap-2 rounded-full bg-white px-7 py-3 text-sm font-semibold text-black transition-all hover:shadow-[0_0_30px_rgba(94,106,210,0.25)] active:scale-95"
+              className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
             >
-              <span className="relative z-10 flex items-center gap-2">
-                Open Studio
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </span>
-              <div className="absolute inset-0 bg-neutral-200 opacity-0 transition-opacity group-hover:opacity-100" />
-            </a>
-          </motion.div>
+              Open Studio
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+            </Link>
+          </div>
         </div>
       </section>
+
+      <SiteFooter />
     </main>
   );
 }
