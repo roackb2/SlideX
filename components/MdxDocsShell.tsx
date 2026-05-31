@@ -328,7 +328,7 @@ export default function MdxDocsShell({ section }: { section: MdxDocsSection }) {
     <main className="min-h-screen overflow-x-hidden bg-[#080a0f] text-neutral-200">
       <SiteNav />
 
-      <section className="px-5 pt-24">
+      <section className="px-4 pt-24 sm:px-5">
         <div className="mx-auto grid w-full max-w-[1068px] gap-0 xl:grid-cols-[248px_minmax(0,780px)] xl:gap-10">
           <aside className="hidden border-r border-white/[0.08] xl:block">
             <div className="sticky top-24 max-h-[calc(100dvh-7rem)] overflow-y-auto py-8 pr-6">
@@ -387,7 +387,7 @@ export default function MdxDocsShell({ section }: { section: MdxDocsSection }) {
                   <CurrentIcon className="h-3.5 w-3.5 text-[#8ea5ff]" />
                   {syntax.eyebrow}
                 </div>
-                <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+                <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl">
                   {section === "overview" ? syntax.overviewPageTitle : currentSection.label}
                 </h1>
                 <p className="mt-4 max-w-2xl text-base leading-7 text-neutral-400">
@@ -398,71 +398,71 @@ export default function MdxDocsShell({ section }: { section: MdxDocsSection }) {
             </motion.header>
 
             <article className="py-8">
-            <div className="mb-8 xl:hidden">
-              <button
-                type="button"
-                aria-expanded={isMobileNavOpen}
-                className="flex w-full items-center justify-between rounded-2xl border border-white/[0.1] bg-white/[0.04] px-4 py-3.5 text-left shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur"
-                onClick={() => setIsMobileNavOpen((value) => !value)}
-              >
-                <span className="flex min-w-0 items-center gap-3">
-                  <CurrentIcon className="h-4 w-4 shrink-0 text-neutral-400" />
-                  <span className="truncate text-sm font-semibold text-neutral-200">
-                    {currentSection.label}
+              <div className="mb-8 xl:hidden">
+                <button
+                  type="button"
+                  aria-expanded={isMobileNavOpen}
+                  className="flex w-full items-center justify-between rounded-2xl border border-white/[0.1] bg-white/[0.04] px-4 py-3.5 text-left shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur"
+                  onClick={() => setIsMobileNavOpen((value) => !value)}
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    <CurrentIcon className="h-4 w-4 shrink-0 text-neutral-400" />
+                    <span className="truncate text-sm font-semibold text-neutral-200">
+                      {currentSection.label}
+                    </span>
                   </span>
-                </span>
-                {isMobileNavOpen ? (
-                  <ChevronUp className="h-4 w-4 shrink-0 text-neutral-500" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500" />
-                )}
-              </button>
+                  {isMobileNavOpen ? (
+                    <ChevronUp className="h-4 w-4 shrink-0 text-neutral-500" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500" />
+                  )}
+                </button>
 
-              <AnimatePresence initial={false}>
-                {isMobileNavOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8, height: 0 }}
-                    animate={{ opacity: 1, y: 0, height: "auto" }}
-                    exit={{ opacity: 0, y: -8, height: 0 }}
-                    transition={{ duration: 0.25, ease: easeSmooth }}
-                    className="overflow-hidden"
-                  >
-                    <nav className="mt-3 rounded-2xl border border-white/[0.1] bg-white/[0.035] p-4 shadow-[0_18px_45px_rgba(0,0,0,0.22)] backdrop-blur">
-                      <div className="space-y-6">
-                        {docsGroups.map((group) => (
-                          <div key={group.title}>
-                            <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-600">
-                              {group.title}
-                            </p>
-                            <div className="space-y-1">
-                              {group.links.map((item) => {
-                                const Icon = item.icon;
+                <AnimatePresence initial={false}>
+                  {isMobileNavOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: "auto" }}
+                      exit={{ opacity: 0, y: -8, height: 0 }}
+                      transition={{ duration: 0.25, ease: easeSmooth }}
+                      className="overflow-hidden"
+                    >
+                      <nav className="mt-3 rounded-2xl border border-white/[0.1] bg-white/[0.035] p-4 shadow-[0_18px_45px_rgba(0,0,0,0.22)] backdrop-blur">
+                        <div className="space-y-6">
+                          {docsGroups.map((group) => (
+                            <div key={group.title}>
+                              <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-600">
+                                {group.title}
+                              </p>
+                              <div className="space-y-1">
+                                {group.links.map((item) => {
+                                  const Icon = item.icon;
 
-                                return (
-                                  <Link
-                                    key={`${group.title}-${item.href}`}
-                                    href={item.href}
-                                    onClick={() => setIsMobileNavOpen(false)}
-                                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
-                                      item.active
-                                        ? "bg-white/[0.08] text-[#b9c6ff]"
-                                        : "text-neutral-400 hover:bg-white/[0.055] hover:text-white"
-                                    }`}
-                                  >
-                                    <Icon className="h-4 w-4 shrink-0" />
-                                    <span>{item.label}</span>
-                                  </Link>
-                                );
-                              })}
+                                  return (
+                                    <Link
+                                      key={`${group.title}-${item.href}`}
+                                      href={item.href}
+                                      onClick={() => setIsMobileNavOpen(false)}
+                                      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+                                        item.active
+                                          ? "bg-white/[0.08] text-[#b9c6ff]"
+                                          : "text-neutral-400 hover:bg-white/[0.055] hover:text-white"
+                                      }`}
+                                    >
+                                      <Icon className="h-4 w-4 shrink-0" />
+                                      <span>{item.label}</span>
+                                    </Link>
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </nav>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                          ))}
+                        </div>
+                      </nav>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
             <SectionContent section={section} syntax={syntax} />
 

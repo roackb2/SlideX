@@ -110,7 +110,7 @@ function FeaturedPreset({
         href="/studio"
         className="group relative block overflow-hidden rounded-[32px] border border-white/[0.12] bg-[#0d1018] shadow-2xl shadow-black/50"
       >
-        <div className="relative aspect-[1.16] min-h-[390px] overflow-hidden">
+        <div className="relative aspect-[1.16] min-h-[320px] overflow-hidden sm:min-h-[390px]">
           <StyleThumbnail
             className="h-full w-full transition duration-700 group-hover:scale-[1.02]"
             label={featured.category}
@@ -163,13 +163,13 @@ export default function TemplatesPage() {
     <main className="min-h-screen overflow-x-hidden bg-[#080a0f] text-neutral-200">
       <SiteNav />
 
-      <section className="relative px-6 pt-24">
+      <section className="relative px-4 pt-24 sm:px-6">
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute left-1/2 top-0 h-[500px] w-[900px] -translate-x-1/2 rounded-full bg-[#8ea5ff]/[0.1] blur-3xl" />
           <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:72px_72px]" />
         </div>
 
-        <div className="mx-auto grid max-w-7xl gap-10 pb-16 md:pb-20 lg:grid-cols-[0.86fr_1.14fr] lg:items-center">
+        <div className="mx-auto grid max-w-7xl gap-8 pb-14 sm:pb-16 md:pb-20 lg:grid-cols-[0.86fr_1.14fr] lg:items-center lg:gap-10">
           <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="max-w-2xl">
             <motion.div
               variants={fadeInUp}
@@ -181,7 +181,7 @@ export default function TemplatesPage() {
             <motion.h1
               variants={fadeInUp}
               custom={1}
-              className="text-5xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl"
+              className="text-[2.65rem] font-semibold leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
             >
               {t.templatesPage.hero.title}
             </motion.h1>
@@ -192,17 +192,17 @@ export default function TemplatesPage() {
             >
               {t.templatesPage.hero.body}
             </motion.p>
-            <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-wrap items-center gap-3">
+            <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <Link
                 href="/studio"
-                className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
+                className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
               >
                 {t.templatesPage.hero.primary}
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="#gallery"
-                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95"
+                className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95 sm:w-auto"
               >
                 {t.templatesPage.hero.secondary}
               </Link>
@@ -214,7 +214,7 @@ export default function TemplatesPage() {
       </section>
 
       <section className="border-y border-white/[0.1] bg-white/[0.025]">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 divide-y divide-white/[0.08] px-6 md:grid-cols-3 md:divide-x md:divide-y-0">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 divide-y divide-white/[0.08] px-4 sm:px-6 md:grid-cols-3 md:divide-x md:divide-y-0">
           {t.templatesPage.stats.map(([title, body]) => (
             <div key={title} className="py-6 md:px-8 md:py-7 first:md:pl-0 last:md:pr-0">
               <p className="text-sm font-semibold text-white">{title}</p>
@@ -224,11 +224,11 @@ export default function TemplatesPage() {
         </div>
       </section>
 
-      <section id="gallery" className="px-6 py-24 md:py-32">
+      <section id="gallery" className="px-4 py-16 sm:px-6 md:py-24 lg:py-28">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 grid gap-6 lg:grid-cols-[0.78fr_1fr] lg:items-end">
             <div>
-              <h2 className="text-4xl font-semibold tracking-tight text-white md:text-6xl">
+              <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
                 {t.templatesPage.gallery.title}
               </h2>
               <p className="mt-5 max-w-2xl text-base leading-relaxed text-neutral-400 md:text-lg">
@@ -253,7 +253,7 @@ export default function TemplatesPage() {
         </div>
       </section>
 
-      <section className="px-6 pb-24 md:pb-32">
+      <section className="px-4 pb-16 sm:px-6 md:pb-24 lg:pb-28">
         <div className="mx-auto max-w-7xl">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -266,7 +266,7 @@ export default function TemplatesPage() {
               <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
                 <Sparkles className="h-5 w-5" />
               </div>
-              <h2 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">
+              <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl md:text-5xl">
                 {t.templatesPage.startingPoint.title}
               </h2>
               <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-400">
@@ -294,12 +294,12 @@ export default function TemplatesPage() {
         </div>
       </section>
 
-      <section className="border-t border-white/[0.1] px-6 py-20 text-center">
+      <section className="border-t border-white/[0.1] px-4 py-16 text-center sm:px-6 md:py-20">
         <div className="mx-auto max-w-3xl">
           <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.07] text-[#8ea5ff]">
             <Layers className="h-6 w-6" />
           </div>
-          <h2 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl">
             {t.templatesPage.cta.title}
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-neutral-400">
@@ -308,7 +308,7 @@ export default function TemplatesPage() {
           <div className="mt-8">
             <Link
               href="/studio"
-              className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
+              className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
             >
               {t.templatesPage.cta.button}
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />

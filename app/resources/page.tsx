@@ -53,7 +53,7 @@ function ResourceHeroVisual({ copy }: { copy: Dictionary["resourcesPage"]["heroV
       className="relative"
     >
       <div className="absolute -inset-6 rounded-[2rem] bg-[radial-gradient(circle_at_74%_10%,rgba(142,165,255,0.16),transparent_44%)] blur-2xl" />
-      <div className="relative overflow-hidden rounded-[32px] border border-white/[0.12] bg-[#0d1018] shadow-2xl shadow-black/50">
+      <div className="relative overflow-hidden rounded-[24px] border border-white/[0.12] bg-[#0d1018] shadow-2xl shadow-black/50 md:rounded-[32px]">
         <div className="flex items-center justify-between border-b border-white/[0.1] bg-white/[0.04] px-5 py-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-white">
             <BookOpen className="h-4 w-4 text-[#8ea5ff]" />
@@ -102,13 +102,13 @@ export default function ResourcesPage() {
     <main className="min-h-screen overflow-x-hidden bg-[#080a0f] text-neutral-200">
       <SiteNav />
 
-      <section className="relative px-6 pt-24">
+      <section className="relative px-4 pt-24 sm:px-6">
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute left-1/2 top-0 h-[500px] w-[900px] -translate-x-1/2 rounded-full bg-[#8ea5ff]/[0.1] blur-3xl" />
           <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:72px_72px]" />
         </div>
 
-        <div className="mx-auto grid max-w-7xl gap-10 pb-16 md:pb-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <div className="mx-auto grid max-w-7xl gap-8 pb-14 sm:pb-16 md:pb-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-10">
           <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="max-w-2xl">
             <motion.div
               variants={fadeInUp}
@@ -120,7 +120,7 @@ export default function ResourcesPage() {
             <motion.h1
               variants={fadeInUp}
               custom={1}
-              className="text-5xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl"
+              className="text-[2.65rem] font-semibold leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
             >
               {t.resourcesPage.hero.title}
             </motion.h1>
@@ -131,17 +131,17 @@ export default function ResourcesPage() {
             >
               {t.resourcesPage.hero.body}
             </motion.p>
-            <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-wrap items-center gap-3">
+            <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <Link
                 href="/resources/mdx"
-                className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
+                className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
               >
                 {t.resourcesPage.hero.primary}
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="/studio"
-                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95"
+                className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95 sm:w-auto"
               >
                 {t.resourcesPage.hero.secondary}
               </Link>
@@ -153,7 +153,7 @@ export default function ResourcesPage() {
       </section>
 
       <section className="border-y border-white/[0.1] bg-white/[0.025]">
-        <div className="mx-auto grid max-w-7xl gap-3 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto grid max-w-7xl gap-3 px-4 py-5 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
           {t.resourcesPage.resourceItems.map((item, index) => (
             <motion.a
               key={item.title}
@@ -177,10 +177,10 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      <section className="px-6 py-24 md:py-32">
+      <section className="px-4 py-16 sm:px-6 md:py-24 lg:py-28">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 max-w-3xl">
-            <h2 className="text-4xl font-semibold tracking-tight text-white md:text-6xl">
+            <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
               {t.resourcesPage.docsIntro.title}
             </h2>
             <p className="mt-5 max-w-2xl text-base leading-relaxed text-neutral-400 md:text-lg">
@@ -196,7 +196,7 @@ export default function ResourcesPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ delay: index * 0.06, duration: 0.55, ease: easeSmooth }}
-                className="flex min-h-[340px] flex-col rounded-[28px] border border-white/[0.1] bg-white/[0.045] p-5 md:p-6"
+                className="flex min-h-[300px] flex-col rounded-[24px] border border-white/[0.1] bg-white/[0.045] p-5 md:min-h-[340px] md:rounded-[28px] md:p-6"
               >
                 <div className="mb-8 flex items-center justify-between">
                   <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
@@ -224,14 +224,14 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      <section id="components" className="px-6 pb-24 md:pb-32">
+      <section id="components" className="px-4 pb-16 sm:px-6 md:pb-24 lg:pb-28">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
             <div>
               <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
                 <Code2 className="h-5 w-5" />
               </div>
-              <h2 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
+              <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl">
                 {t.resourcesPage.components.title}
               </h2>
               <p className="mt-5 max-w-lg text-base leading-relaxed text-neutral-400">
@@ -270,12 +270,12 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      <section className="border-t border-white/[0.1] px-6 py-20 text-center">
+      <section className="border-t border-white/[0.1] px-4 py-16 text-center sm:px-6 md:py-20">
         <div className="mx-auto max-w-3xl">
           <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.07] text-[#8ea5ff]">
             <BookOpen className="h-6 w-6" />
           </div>
-          <h2 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl">
             {t.resourcesPage.cta.title}
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-neutral-400">
@@ -284,7 +284,7 @@ export default function ResourcesPage() {
           <div className="mt-8">
             <Link
               href="/studio"
-              className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
+              className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
             >
               {t.resourcesPage.cta.button}
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
