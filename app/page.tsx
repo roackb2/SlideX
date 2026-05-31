@@ -21,9 +21,11 @@ import {
   Sparkles,
   Type
 } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
 import { StyleThumbnail } from "@/components/StyleThumbnail";
+import { localizeTemplates, type Dictionary } from "@/lib/i18n";
 import { motionTemplates } from "@/lib/templates";
 
 const easeSmooth = [0.22, 1, 0.36, 1] as const;
@@ -77,42 +79,21 @@ function Reveal({
   );
 }
 
-const selectedTemplates = motionTemplates.slice(0, 4);
+const workflowIcons = [FileCode2, Eye, Download];
+const toolIcons = [Type, AlignLeft, CreditCard, BarChart3, Image, MousePointerClick];
+const layerIcons = [Type, AlignLeft, BarChart3, CreditCard];
 
-const workflow = [
-  {
-    icon: FileCode2,
-    title: "Write the narrative",
-    body: "Start with editable MDX scenes instead of rebuilding slides from shapes."
-  },
-  {
-    icon: Eye,
-    title: "Tune the motion",
-    body: "Adjust timing, layers, and pacing while the deck stays playable."
-  },
-  {
-    icon: Download,
-    title: "Package the output",
-    body: "Keep source, preview, and exported sequences aligned from one studio."
-  }
-];
+function HeroStudio({ copy }: { copy: Dictionary["home"]["heroStudio"] }) {
+  const layers = copy.layers.map((label, index) => ({
+    icon: layerIcons[index] ?? Type,
+    label,
+    active: index === 0
+  }));
 
-const toolButtons = [
-  { icon: Type, label: "Title" },
-  { icon: AlignLeft, label: "Text" },
-  { icon: CreditCard, label: "Card" },
-  { icon: BarChart3, label: "Chart" },
-  { icon: Image, label: "Image" },
-  { icon: MousePointerClick, label: "CTA" }
-];
-
-function HeroStudio() {
-  const layers = [
-    { icon: Type, label: "Title", active: true },
-    { icon: AlignLeft, label: "Narrative", active: false },
-    { icon: BarChart3, label: "Momentum chart", active: false },
-    { icon: CreditCard, label: "Decision card", active: false }
-  ];
+  const toolButtons = copy.toolLabels.map((label, index) => ({
+    icon: toolIcons[index] ?? Type,
+    label
+  }));
 
   return (
     <motion.div
@@ -127,11 +108,11 @@ function HeroStudio() {
         <div className="flex items-center justify-between border-b border-white/[0.1] bg-white/[0.04] px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="h-2.5 w-2.5 rounded-full bg-[#8ea5ff]" />
-            <span className="text-sm font-semibold text-white">Studio</span>
-            <span className="hidden text-xs text-neutral-500 sm:inline">Project Alpha</span>
+            <span className="text-sm font-semibold text-white">{copy.title}</span>
+            <span className="hidden text-xs text-neutral-500 sm:inline">{copy.project}</span>
           </div>
           <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-black">
-            Export
+            {copy.export}
           </span>
         </div>
 
@@ -141,16 +122,16 @@ function HeroStudio() {
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-black">
                 <Plus className="h-3.5 w-3.5" />
               </span>
-              New slide
+              {copy.newSlide}
             </button>
 
             <div className="mb-2 flex items-center justify-between px-1 text-[11px] text-neutral-500">
-              <span>Scenes</span>
+              <span>{copy.scenes}</span>
               <span className="font-mono">4</span>
             </div>
 
             <div className="space-y-1">
-              {["Memo", "Signal", "Plan", "Ask"].map((slide, index) => (
+              {copy.slides.map((slide, index) => (
                 <div
                   key={slide}
                   className={`flex items-center justify-between rounded-xl px-2.5 py-2 text-xs ${
@@ -190,14 +171,14 @@ function HeroStudio() {
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(142,165,255,0.18),transparent_42%)]" />
                   <div className="relative z-10 max-w-[320px]">
                     <div className="mb-4 flex items-center gap-2 text-xs text-neutral-500">
-                      <span>Scene 01</span>
+                      <span>{copy.sceneLabel}</span>
                       <span className="h-px flex-1 bg-white/[0.12]" />
                     </div>
                     <h3 className="mb-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                      Growth Investment Memo
+                      {copy.slideTitle}
                     </h3>
                     <p className="mb-5 text-sm leading-relaxed text-neutral-400">
-                      A concise decision story with paced evidence, motion cues, and export-ready structure.
+                      {copy.slideBody}
                     </p>
                     <div className="flex h-16 items-end gap-2">
                       {[42, 58, 72, 92].map((height, index) => (
@@ -235,6 +216,13 @@ function HeroStudio() {
 }
 
 export default function Home() {
+  const { t } = useI18n();
+  const selectedTemplates = localizeTemplates(motionTemplates, t.templateMeta).slice(0, 4);
+  const workflow = t.home.workflow.items.map((item, index) => ({
+    ...item,
+    icon: workflowIcons[index] ?? FileCode2
+  }));
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#080a0f] text-neutral-200">
       <SiteNav />
@@ -252,40 +240,40 @@ export default function Home() {
               className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.05] px-3 py-1.5 text-sm font-medium text-neutral-300"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-[#8ea5ff]" />
-              SlideX Studio
+              {t.home.hero.eyebrow}
             </motion.div>
             <motion.h1
               variants={fadeInUp}
               custom={1}
               className="text-5xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl"
             >
-              Motion decks without the rebuild.
+              {t.home.hero.title}
             </motion.h1>
             <motion.p
               variants={fadeInUp}
               custom={2}
               className="mt-6 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg"
             >
-              Compose MDX scenes, tune timing, preview motion, and export the deck from one studio.
+              {t.home.hero.body}
             </motion.p>
             <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 href="/download"
                 className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
               >
-                Download
+                {t.home.hero.primary}
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="/templates"
                 className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95"
               >
-                View Presets
+                {t.home.hero.secondary}
               </Link>
             </motion.div>
 
             <motion.div variants={fadeInUp} custom={4} className="mt-8 grid max-w-lg gap-3 sm:grid-cols-3">
-              {["Author", "Preview", "Export"].map((item) => (
+              {t.home.hero.checkpoints.map((item) => (
                 <div key={item} className="flex items-center gap-2 text-sm text-neutral-500">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
                     <Check className="h-3 w-3" />
@@ -296,17 +284,13 @@ export default function Home() {
             </motion.div>
           </motion.div>
 
-          <HeroStudio />
+          <HeroStudio copy={t.home.heroStudio} />
         </div>
       </section>
 
       <section className="border-y border-white/[0.1] bg-white/[0.025]">
         <div className="mx-auto grid max-w-7xl grid-cols-1 divide-y divide-white/[0.08] px-6 md:grid-cols-3 md:divide-x md:divide-y-0">
-          {[
-            ["MDX-first", "Scenes stay editable after the pitch"],
-            ["Live timing", "Preview animations as you compose"],
-            ["Export ready", "Ship source, HTML, or captured sequences"]
-          ].map(([title, body]) => (
+          {t.home.stats.map(([title, body]) => (
             <div key={title} className="py-6 md:px-8 md:py-7 first:md:pl-0 last:md:pr-0">
               <p className="text-sm font-semibold text-white">{title}</p>
               <p className="mt-1 text-sm leading-relaxed text-neutral-500">{body}</p>
@@ -319,10 +303,10 @@ export default function Home() {
         <div className="mx-auto max-w-7xl">
           <Reveal className="max-w-3xl">
             <h2 className="text-4xl font-semibold tracking-tight text-white md:text-6xl">
-              Compose decks like software.
+              {t.home.compose.title}
             </h2>
             <p className="mt-5 max-w-2xl text-base leading-relaxed text-neutral-400 md:text-lg">
-              SlideX turns presentation work into reusable scenes, live preview, and outputs your team can maintain.
+              {t.home.compose.body}
             </p>
           </Reveal>
 
@@ -330,12 +314,12 @@ export default function Home() {
             <Reveal className="rounded-[28px] border border-white/[0.1] bg-white/[0.045] p-5 md:p-7 lg:col-span-7">
               <div className="mb-5 flex items-center gap-2 text-sm font-medium text-[#8ea5ff]">
                 <Code2 className="h-4 w-4" />
-                MDX scene source
+                {t.home.compose.sourceLabel}
               </div>
               <div className="overflow-hidden rounded-[22px] border border-white/[0.1] bg-black p-4 font-mono text-xs leading-6 shadow-xl shadow-black/30">
                 <p className="text-neutral-600">{`<Slide duration={5} theme="dark">`}</p>
                 <p className="pl-4 text-white">{`<Title enter="fadeUp">`}</p>
-                <p className="pl-8 text-[#8ea5ff]">Growth Investment Memo</p>
+                <p className="pl-8 text-[#8ea5ff]">{t.home.compose.codeTitle}</p>
                 <p className="pl-4 text-white">{`</Title>`}</p>
                 <p className="pl-4 text-white">{`<Chart values="42,58,72,92" />`}</p>
                 <p className="text-neutral-600">{`</Slide>`}</p>
@@ -351,14 +335,14 @@ export default function Home() {
                 <div className="mb-6 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm font-medium text-white">
                     <Play className="h-4 w-4 text-[#8ea5ff]" />
-                    Preview timeline
+                    {t.home.compose.timelineLabel}
                   </div>
                   <span className="rounded-full border border-white/[0.1] px-3 py-1 font-mono text-xs text-neutral-400">
                     00:05
                   </span>
                 </div>
                 <div className="space-y-3">
-                  {["Title fade", "Chart rise", "Decision card"].map((item, index) => (
+                  {t.home.compose.timelineItems.map((item, index) => (
                     <div key={item} className="grid grid-cols-[90px_1fr] items-center gap-3">
                       <span className="text-xs text-neutral-500">{item}</span>
                       <span className="h-3 overflow-hidden rounded-full bg-white/[0.08]">
@@ -379,15 +363,15 @@ export default function Home() {
             <Reveal className="overflow-hidden rounded-[28px] border border-white/[0.1] bg-white/[0.045] lg:col-span-4">
               <StyleThumbnail
                 className="h-48 w-full"
-                label={selectedTemplates[0]?.category ?? "Preset"}
+                label={selectedTemplates[0]?.category ?? t.thumbnail.fallbackLabel}
                 templateId={selectedTemplates[0]?.id ?? "preset"}
-                title={selectedTemplates[0]?.name ?? "Template-backed starts"}
+                title={selectedTemplates[0]?.name ?? t.home.compose.templateTitle}
                 variant="feature"
               />
               <div className="p-5">
-                <h3 className="text-xl font-semibold tracking-tight text-white">Template-backed starts</h3>
+                <h3 className="text-xl font-semibold tracking-tight text-white">{t.home.compose.templateTitle}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-neutral-400">
-                  Load complete scene decks for reviews, launches, updates, and QBRs.
+                  {t.home.compose.templateBody}
                 </p>
               </div>
             </Reveal>
@@ -396,9 +380,9 @@ export default function Home() {
               <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
                 <Palette className="h-5 w-5" />
               </div>
-              <h3 className="text-xl font-semibold tracking-tight text-white">A controlled block kit</h3>
+              <h3 className="text-xl font-semibold tracking-tight text-white">{t.home.compose.blockTitle}</h3>
               <p className="mt-2 text-sm leading-relaxed text-neutral-400">
-                Titles, cards, charts, media, and actions share one timing model.
+                {t.home.compose.blockBody}
               </p>
             </Reveal>
 
@@ -406,9 +390,9 @@ export default function Home() {
               <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-white text-black">
                 <Sparkles className="h-5 w-5" />
               </div>
-              <h3 className="text-xl font-semibold tracking-tight text-white">Presentation polish stays editable</h3>
+              <h3 className="text-xl font-semibold tracking-tight text-white">{t.home.compose.polishTitle}</h3>
               <p className="mt-2 text-sm leading-relaxed text-neutral-300">
-                Motion survives revisions because the deck remains a document, not a pile of flattened frames.
+                {t.home.compose.polishBody}
               </p>
             </Reveal>
           </div>
@@ -421,10 +405,10 @@ export default function Home() {
             <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
               <div>
                 <h2 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
-                  One flow from draft to playback.
+                  {t.home.workflow.title}
                 </h2>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-neutral-400">
-                  Write once, shape the timing, and keep the finished story portable.
+                  {t.home.workflow.body}
                 </p>
               </div>
 
@@ -456,10 +440,10 @@ export default function Home() {
         <div className="mx-auto max-w-7xl">
           <Reveal className="max-w-3xl">
             <h2 className="text-4xl font-semibold tracking-tight text-white md:text-6xl">
-              Start from a useful deck.
+              {t.home.presets.title}
             </h2>
             <p className="mt-5 max-w-2xl text-base leading-relaxed text-neutral-400 md:text-lg">
-              Presets are complete scene systems, not blank themes. Pick one, rewrite the story, and keep the motion.
+              {t.home.presets.body}
             </p>
           </Reveal>
 
@@ -502,30 +486,30 @@ export default function Home() {
                 <Download className="h-6 w-6" />
               </div>
               <h2 className="max-w-3xl text-4xl font-semibold tracking-tight text-white md:text-6xl">
-                Mac download is next.
+                {t.home.downloadTeaser.title}
               </h2>
               <p className="mt-5 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg">
-                The download page is ready for the future macOS build, release notes, and installation guidance.
+                {t.home.downloadTeaser.body}
               </p>
               <div className="mt-8">
                 <Link
                   href="/download"
                   className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
                 >
-                  View Download Page
+                  {t.home.downloadTeaser.cta}
                   <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
                 </Link>
               </div>
             </div>
             <div className="rounded-[28px] border border-white/[0.1] bg-black/30 p-5">
               <div className="mb-5 flex items-center justify-between">
-                <span className="text-sm font-semibold text-white">SlideX for macOS</span>
+                <span className="text-sm font-semibold text-white">{t.home.downloadTeaser.cardTitle}</span>
                 <span className="rounded-full border border-white/[0.1] px-3 py-1 text-xs text-neutral-500">
-                  Soon
+                  {t.home.downloadTeaser.status}
                 </span>
               </div>
               <div className="space-y-3">
-                {["Universal app", "Local projects", "Export workflow"].map((item) => (
+                {t.home.downloadTeaser.items.map((item) => (
                   <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/[0.06] px-4 py-3 text-sm text-neutral-300">
                     <Check className="h-4 w-4 text-[#8ea5ff]" />
                     {item}

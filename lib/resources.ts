@@ -13,14 +13,8 @@ export type DocSection = {
 
 export const resourceItems: ResourceItem[] = [
   {
-    title: "Quick Start",
-    description: "Install, run the local server, and open the Studio.",
-    href: "/resources#quick-start",
-    label: "Guide"
-  },
-  {
     title: "Scene Components",
-    description: "Reference for Scene, Title, Text, Card, CTA, and timing props.",
+    description: "Reference for Scene, Title, Text, Card, Metric, Chart, ImageBlock, and timing props.",
     href: "/resources#components",
     label: "Reference"
   },
@@ -44,7 +38,7 @@ export const docSections: DocSection[] = [
     description: "SlideX treats a presentation as an MDX scene deck with editable source.",
     points: [
       "Each Scene defines one timed page.",
-      "Title, Text, Card, and CTA layers receive enter, delay, and duration props.",
+      "Title, Text, Card, Metric, Chart, and ImageBlock layers receive enter, delay, and duration props.",
       "The same MDX deck powers the scene list, preview, timeline, and export."
     ]
   },

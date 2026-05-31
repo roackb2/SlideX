@@ -5,21 +5,23 @@ import { motion } from "framer-motion";
 import {
   AlignLeft,
   ArrowRight,
+  BarChart3,
   BookOpen,
   Check,
   ChevronRight,
   Code2,
   ExternalLink,
   FileCode2,
+  Gauge,
+  Image as ImageIcon,
   Layers,
   Layout,
-  MousePointer,
-  Terminal,
   Type
 } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
-import { docSections, resourceItems } from "@/lib/resources";
+import type { Dictionary } from "@/lib/i18n";
 
 const easeSmooth = [0.22, 1, 0.36, 1] as const;
 
@@ -40,21 +42,9 @@ const fadeInUp = {
   })
 };
 
-const componentReference: [string, string, React.ElementType][] = [
-  ["Scene", "Timed page container for one presentation moment.", Layers],
-  ["Title", "Animated headline layer with enter and timing props.", Type],
-  ["Text", "Supporting copy with delay, duration, and layout controls.", AlignLeft],
-  ["Card", "Structured proof block for context and decisions.", Layout],
-  ["CTA", "Action label for scene endings and transitions.", MousePointer]
-];
+const componentIcons = [Layers, Type, AlignLeft, Layout, Gauge, BarChart3, ImageIcon];
 
-const quickStart = [
-  "npm install",
-  "npm run dev",
-  "http://localhost:3000/studio"
-];
-
-function ResourceHeroVisual() {
+function ResourceHeroVisual({ copy }: { copy: Dictionary["resourcesPage"]["heroVisual"] }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 34, scale: 0.98 }}
@@ -67,7 +57,7 @@ function ResourceHeroVisual() {
         <div className="flex items-center justify-between border-b border-white/[0.1] bg-white/[0.04] px-5 py-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-white">
             <BookOpen className="h-4 w-4 text-[#8ea5ff]" />
-            Resources
+            {copy.label}
           </div>
           <span className="rounded-full border border-white/[0.12] px-3 py-1 font-mono text-xs text-neutral-400">
             MDX
@@ -78,20 +68,16 @@ function ResourceHeroVisual() {
           <div className="rounded-[24px] border border-white/[0.1] bg-black/35 p-4 font-mono text-xs leading-6 text-neutral-400">
             <p className="text-neutral-600">{`<Scene duration={5}>`}</p>
             <p className="pl-4 text-white">{`<Title enter="fadeUp">`}</p>
-            <p className="pl-8 text-[#8ea5ff]">Motion Design Resources</p>
+            <p className="pl-8 text-[#8ea5ff]">{copy.codeTitle}</p>
             <p className="pl-4 text-white">{`</Title>`}</p>
             <p className="pl-4 text-white">{`<Text delay={0.2}>`}</p>
-            <p className="pl-8 text-neutral-500">Scene model, workflow, export path.</p>
+            <p className="pl-8 text-neutral-500">{copy.codeBody}</p>
             <p className="pl-4 text-white">{`</Text>`}</p>
             <p className="text-neutral-600">{`</Scene>`}</p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            {[
-              ["Scene", "Timed page"],
-              ["Layer", "Motion block"],
-              ["Export", "Portable output"]
-            ].map(([title, body]) => (
+            {copy.cards.map(([title, body]) => (
               <div key={title} className="rounded-[20px] border border-white/[0.1] bg-white/[0.045] p-4">
                 <p className="text-sm font-semibold text-white">{title}</p>
                 <p className="mt-1 text-xs text-neutral-500">{body}</p>
@@ -105,6 +91,13 @@ function ResourceHeroVisual() {
 }
 
 export default function ResourcesPage() {
+  const { t } = useI18n();
+  const componentReference = t.resourcesPage.components.items.map(([name, description], index) => [
+    name,
+    description,
+    componentIcons[index] ?? Layers
+  ] as const);
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#080a0f] text-neutral-200">
       <SiteNav />
@@ -122,46 +115,46 @@ export default function ResourcesPage() {
               className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.05] px-3 py-1.5 text-sm font-medium text-neutral-300"
             >
               <BookOpen className="h-3.5 w-3.5 text-[#8ea5ff]" />
-              Documentation
+              {t.resourcesPage.hero.eyebrow}
             </motion.div>
             <motion.h1
               variants={fadeInUp}
               custom={1}
               className="text-5xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl"
             >
-              Learn the scene system.
+              {t.resourcesPage.hero.title}
             </motion.h1>
             <motion.p
               variants={fadeInUp}
               custom={2}
               className="mt-6 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg"
             >
-              A focused hub for MDX scenes, component syntax, Studio workflow, keyboard navigation, and export direction.
+              {t.resourcesPage.hero.body}
             </motion.p>
             <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-wrap items-center gap-3">
               <Link
-                href="#quick-start"
+                href="/resources/mdx"
                 className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
               >
-                Quick Start
+                {t.resourcesPage.hero.primary}
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="/studio"
                 className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95"
               >
-                Open Studio
+                {t.resourcesPage.hero.secondary}
               </Link>
             </motion.div>
           </motion.div>
 
-          <ResourceHeroVisual />
+          <ResourceHeroVisual copy={t.resourcesPage.heroVisual} />
         </div>
       </section>
 
       <section className="border-y border-white/[0.1] bg-white/[0.025]">
         <div className="mx-auto grid max-w-7xl gap-3 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
-          {resourceItems.map((item, index) => (
+          {t.resourcesPage.resourceItems.map((item, index) => (
             <motion.a
               key={item.title}
               initial={{ opacity: 0, y: 18 }}
@@ -188,15 +181,15 @@ export default function ResourcesPage() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 max-w-3xl">
             <h2 className="text-4xl font-semibold tracking-tight text-white md:text-6xl">
-              The docs follow the build loop.
+              {t.resourcesPage.docsIntro.title}
             </h2>
             <p className="mt-5 max-w-2xl text-base leading-relaxed text-neutral-400 md:text-lg">
-              Start with the scene model, move through composition, then prepare the output path.
+              {t.resourcesPage.docsIntro.body}
             </p>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            {docSections.map((section, index) => (
+            {t.resourcesPage.docSections.map((section, index) => (
               <motion.article
                 key={section.title}
                 initial={{ opacity: 0, y: 24 }}
@@ -231,44 +224,6 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      <section id="quick-start" className="px-6 pb-24 md:pb-32">
-        <div className="mx-auto max-w-7xl">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, ease: easeSmooth }}
-            className="grid gap-8 rounded-[32px] border border-white/[0.1] bg-[#0d1018] p-6 md:p-10 lg:grid-cols-[0.78fr_1.22fr] lg:items-center"
-          >
-            <div>
-              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.08] text-[#8ea5ff]">
-                <Terminal className="h-5 w-5" />
-              </div>
-              <h2 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">
-                Run it locally, then open Studio.
-              </h2>
-              <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-400">
-                Install, run, open, then inspect the scene source.
-              </p>
-            </div>
-
-            <div className="rounded-[24px] border border-white/[0.1] bg-black/35 p-3">
-              {quickStart.map((command, index) => (
-                <div
-                  key={command}
-                  className="grid grid-cols-[42px_1fr] items-center gap-3 rounded-[18px] px-3 py-3 font-mono text-sm text-neutral-300 transition hover:bg-white/[0.06]"
-                >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.07] text-xs text-[#8ea5ff]">
-                    {index + 1}
-                  </span>
-                  <code className="min-w-0 truncate">{command}</code>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
       <section id="components" className="px-6 pb-24 md:pb-32">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
@@ -277,15 +232,15 @@ export default function ResourcesPage() {
                 <Code2 className="h-5 w-5" />
               </div>
               <h2 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
-                Scene component reference.
+                {t.resourcesPage.components.title}
               </h2>
               <p className="mt-5 max-w-lg text-base leading-relaxed text-neutral-400">
-                A small component vocabulary keeps the Studio predictable while still supporting rich presentation work.
+                {t.resourcesPage.components.body}
               </p>
               <p className="mt-6 text-sm leading-relaxed text-neutral-500">
-                Full maintenance notes remain in{" "}
+                {t.resourcesPage.components.notePrefix}{" "}
                 <span className="rounded-full border border-white/[0.1] bg-white/[0.05] px-3 py-1 font-mono text-xs text-neutral-300">
-                  docs/USAGE.zh-TW.md
+                  {t.resourcesPage.components.docPath}
                 </span>
               </p>
             </div>
@@ -321,17 +276,17 @@ export default function ResourcesPage() {
             <BookOpen className="h-6 w-6" />
           </div>
           <h2 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
-            Ready to build a scene?
+            {t.resourcesPage.cta.title}
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-neutral-400">
-            Open Studio and use the reference as you shape the first deck.
+            {t.resourcesPage.cta.body}
           </p>
           <div className="mt-8">
             <Link
               href="/studio"
               className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
             >
-              Open Studio
+              {t.resourcesPage.cta.button}
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
             </Link>
           </div>

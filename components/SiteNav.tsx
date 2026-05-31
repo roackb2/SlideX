@@ -4,12 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Menu, X } from "lucide-react";
-
-const navItems = [
-  { href: "/resources", label: "Docs" },
-  { href: "/templates", label: "Presets" }
-];
+import { Download, Languages, Menu, X } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
 
 const easeSmooth = [0.22, 1, 0.36, 1] as const;
 
@@ -43,6 +39,12 @@ const itemVariants = {
 export function SiteNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { locale, setLocale, t } = useI18n();
+  const nextLocale = locale === "zh-TW" ? "en" : "zh-TW";
+  const navItems = [
+    { href: "/resources", label: t.nav.resources },
+    { href: "/templates", label: t.nav.templates }
+  ];
 
   useEffect(() => {
     if (isMenuOpen) {
@@ -68,11 +70,12 @@ export function SiteNav() {
               <Link
                 className="flex items-center shrink-0"
                 href="/"
+                aria-label={t.nav.homeLabel}
                 onClick={() => setIsMenuOpen(false)}
               >
                 <img
                   src="/logo.png"
-                  alt="SlideX"
+                  alt={t.common.productName}
                   className="w-[72px] md:w-[88px] h-auto rounded-md object-contain"
                 />
               </Link>
@@ -105,6 +108,16 @@ export function SiteNav() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-3">
+            <button
+              className="hidden h-9 items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-3 text-xs font-semibold text-neutral-300 transition hover:border-white/[0.22] hover:bg-white/[0.08] hover:text-white sm:inline-flex"
+              type="button"
+              aria-label={t.nav.languageLabel}
+              onClick={() => setLocale(nextLocale)}
+            >
+              <Languages className="h-3.5 w-3.5" />
+              {t.nav.localeShortLabel}
+            </button>
+
             <motion.div
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -115,7 +128,7 @@ export function SiteNav() {
                 className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold text-black shadow-[0_0_0_1px_rgba(255,255,255,0.2)] transition-all hover:bg-neutral-200 hover:shadow-[0_0_22px_rgba(94,106,210,0.28)] md:px-5"
               >
                 <Download className="h-3.5 w-3.5" />
-                <span>Download</span>
+                <span>{t.nav.download}</span>
               </Link>
             </motion.div>
 
@@ -124,7 +137,7 @@ export function SiteNav() {
               transition={{ duration: 0.2 }}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.04] text-neutral-300 transition-colors hover:border-white/[0.2] hover:bg-white/[0.08] hover:text-white md:hidden"
               onClick={() => setIsMenuOpen((v) => !v)}
-              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+              aria-label={isMenuOpen ? t.nav.closeMenu : t.nav.openMenu}
               aria-expanded={isMenuOpen}
               type="button"
             >
@@ -182,9 +195,9 @@ export function SiteNav() {
               <div className="mx-auto max-w-5xl">
                 <div className="overflow-hidden rounded-[2rem] border border-white/[0.13] bg-[#111118]/96 shadow-2xl shadow-black/60 backdrop-blur-2xl">
                   <div className="border-b border-white/[0.08] px-5 py-4">
-                    <p className="text-sm font-semibold text-white">SlideX</p>
+                    <p className="text-sm font-semibold text-white">{t.common.productName}</p>
                     <p className="mt-1 text-xs leading-relaxed text-neutral-500">
-                      Design animated MDX scene decks.
+                      {t.nav.mobileDescription}
                     </p>
                   </div>
 
@@ -232,13 +245,22 @@ export function SiteNav() {
                     transition={{ delay: 0.2, duration: 0.3, ease: easeSmooth }}
                     className="border-t border-white/[0.08] p-3"
                   >
+                    <button
+                      className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/[0.1] bg-white/[0.06] px-4 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.2] hover:bg-white/[0.09]"
+                      type="button"
+                      aria-label={t.nav.languageLabel}
+                      onClick={() => setLocale(nextLocale)}
+                    >
+                      <Languages className="h-4 w-4" />
+                      {t.nav.localeShortLabel}
+                    </button>
                     <Link
                       href="/download"
                       onClick={() => setIsMenuOpen(false)}
                       className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3.5 text-sm font-semibold text-black transition-all hover:bg-neutral-200 active:scale-[0.98]"
                     >
                       <Download className="h-4 w-4" />
-                      Download
+                      {t.nav.download}
                     </Link>
                   </motion.div>
                 </div>

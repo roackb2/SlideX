@@ -11,9 +11,11 @@ import {
   Play,
   Sparkles
 } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
 import { StyleThumbnail } from "@/components/StyleThumbnail";
+import { localizeTemplates, type Dictionary } from "@/lib/i18n";
 import { motionTemplates, type MotionTemplate } from "@/lib/templates";
 
 const easeSmooth = [0.22, 1, 0.36, 1] as const;
@@ -85,9 +87,13 @@ function TemplateCard({
   );
 }
 
-function FeaturedPreset() {
-  const featured = motionTemplates[0];
-
+function FeaturedPreset({
+  copy,
+  featured
+}: {
+  copy: Dictionary["templatesPage"]["featured"];
+  featured: MotionTemplate | undefined;
+}) {
   if (!featured) {
     return null;
   }
@@ -117,16 +123,16 @@ function FeaturedPreset() {
           <div className="absolute left-5 right-5 top-5 flex items-center justify-between gap-3">
             <span className="flex items-center gap-2 rounded-full border border-white/[0.14] bg-black/30 px-3 py-1.5 text-sm text-neutral-200 backdrop-blur-md">
               <Play className="h-3.5 w-3.5 text-[#8ea5ff]" />
-              Featured preset
+              {copy.label}
             </span>
             <span className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black">
-              Open
+              {copy.open}
             </span>
           </div>
 
           <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6">
             <div className="mb-4 flex flex-wrap gap-2">
-              {[featured.category, featured.duration, "MDX deck"].map((item) => (
+              {[featured.category, featured.duration, copy.deckLabel].map((item) => (
                 <span
                   key={item}
                   className="rounded-full border border-white/[0.12] bg-white/[0.07] px-3 py-1 text-xs text-neutral-300 backdrop-blur-md"
@@ -149,6 +155,10 @@ function FeaturedPreset() {
 }
 
 export default function TemplatesPage() {
+  const { t } = useI18n();
+  const templates = localizeTemplates(motionTemplates, t.templateMeta);
+  const featured = templates[0];
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#080a0f] text-neutral-200">
       <SiteNav />
@@ -166,50 +176,46 @@ export default function TemplatesPage() {
               className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.05] px-3 py-1.5 text-sm font-medium text-neutral-300"
             >
               <Folder className="h-3.5 w-3.5 text-[#8ea5ff]" />
-              Deck Presets
+              {t.templatesPage.hero.eyebrow}
             </motion.div>
             <motion.h1
               variants={fadeInUp}
               custom={1}
               className="text-5xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl"
             >
-              Useful decks with motion built in.
+              {t.templatesPage.hero.title}
             </motion.h1>
             <motion.p
               variants={fadeInUp}
               custom={2}
               className="mt-6 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg"
             >
-              Start from complete MDX scene decks for reviews, launches, board updates, and customer stories.
+              {t.templatesPage.hero.body}
             </motion.p>
             <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 href="/studio"
                 className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
               >
-                Open Studio
+                {t.templatesPage.hero.primary}
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="#gallery"
                 className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95"
               >
-                View Presets
+                {t.templatesPage.hero.secondary}
               </Link>
             </motion.div>
           </motion.div>
 
-          <FeaturedPreset />
+          <FeaturedPreset copy={t.templatesPage.featured} featured={featured} />
         </div>
       </section>
 
       <section className="border-y border-white/[0.1] bg-white/[0.025]">
         <div className="mx-auto grid max-w-7xl grid-cols-1 divide-y divide-white/[0.08] px-6 md:grid-cols-3 md:divide-x md:divide-y-0">
-          {[
-            ["Complete scenes", "Structure, copy rhythm, timing, and visual direction."],
-            ["Editable source", "Everything stays as MDX so teams can rewrite the story."],
-            ["Export path", "Use the same scene tree for playback and capture."]
-          ].map(([title, body]) => (
+          {t.templatesPage.stats.map(([title, body]) => (
             <div key={title} className="py-6 md:px-8 md:py-7 first:md:pl-0 last:md:pr-0">
               <p className="text-sm font-semibold text-white">{title}</p>
               <p className="mt-1 text-sm leading-relaxed text-neutral-500">{body}</p>
@@ -223,18 +229,14 @@ export default function TemplatesPage() {
           <div className="mb-12 grid gap-6 lg:grid-cols-[0.78fr_1fr] lg:items-end">
             <div>
               <h2 className="text-4xl font-semibold tracking-tight text-white md:text-6xl">
-                Choose the closest story.
+                {t.templatesPage.gallery.title}
               </h2>
               <p className="mt-5 max-w-2xl text-base leading-relaxed text-neutral-400 md:text-lg">
-                The gallery is organized around business moments, not decorative themes.
+                {t.templatesPage.gallery.body}
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                ["01", "Pick a deck"],
-                ["02", "Rewrite scenes"],
-                ["03", "Preview timing"]
-              ].map(([step, label]) => (
+              {t.templatesPage.gallery.steps.map(([step, label]) => (
                 <div key={step} className="rounded-[24px] border border-white/[0.1] bg-white/[0.04] p-4">
                   <p className="font-mono text-xs text-[#8ea5ff]">{step}</p>
                   <p className="mt-2 text-sm font-medium text-white">{label}</p>
@@ -244,7 +246,7 @@ export default function TemplatesPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {motionTemplates.map((template, index) => (
+            {templates.map((template, index) => (
               <TemplateCard key={template.id} template={template} index={index} />
             ))}
           </div>
@@ -265,19 +267,15 @@ export default function TemplatesPage() {
                 <Sparkles className="h-5 w-5" />
               </div>
               <h2 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">
-                Presets are starting points.
+                {t.templatesPage.startingPoint.title}
               </h2>
               <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-400">
-                Open a deck, keep the motion grammar, and replace the content with your real story.
+                {t.templatesPage.startingPoint.body}
               </p>
             </div>
 
             <div className="grid gap-3">
-              {[
-                ["Scene structure", "A complete deck outline with timed sections."],
-                ["Motion defaults", "Enter, delay, and duration choices already tuned."],
-                ["MDX source", "Readable source that can be maintained by the team."]
-              ].map(([title, body]) => (
+              {t.templatesPage.startingPoint.items.map(([title, body]) => (
                 <div
                   key={title}
                   className="grid gap-4 rounded-[24px] border border-white/[0.09] bg-black/20 p-4 sm:grid-cols-[40px_1fr] sm:items-center"
@@ -302,17 +300,17 @@ export default function TemplatesPage() {
             <Layers className="h-6 w-6" />
           </div>
           <h2 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
-            Build from a preset today.
+            {t.templatesPage.cta.title}
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-neutral-400">
-            Load a deck into Studio, edit the scenes, and keep the motion system intact.
+            {t.templatesPage.cta.body}
           </p>
           <div className="mt-8">
             <Link
               href="/studio"
               className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
             >
-              Open Studio
+              {t.templatesPage.cta.button}
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
             </Link>
           </div>

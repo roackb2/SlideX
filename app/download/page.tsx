@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Sparkles
 } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
 
@@ -34,6 +35,8 @@ const fadeInUp = {
 };
 
 export default function DownloadPage() {
+  const { t } = useI18n();
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#080a0f] text-neutral-200">
       <SiteNav />
@@ -51,21 +54,21 @@ export default function DownloadPage() {
               className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.05] px-3 py-1.5 text-sm font-medium text-neutral-300"
             >
               <Download className="h-3.5 w-3.5 text-[#8ea5ff]" />
-              Download
+              {t.downloadPage.hero.eyebrow}
             </motion.div>
             <motion.h1
               variants={fadeInUp}
               custom={1}
               className="text-5xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl"
             >
-              SlideX for Mac is coming.
+              {t.downloadPage.hero.title}
             </motion.h1>
             <motion.p
               variants={fadeInUp}
               custom={2}
               className="mt-6 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg"
             >
-              This page is ready for the future macOS installer, release notes, and local workflow guidance.
+              {t.downloadPage.hero.body}
             </motion.p>
             <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-wrap items-center gap-3">
               <button
@@ -73,13 +76,13 @@ export default function DownloadPage() {
                 disabled
                 type="button"
               >
-                Mac Download Soon
+                {t.downloadPage.hero.disabledButton}
               </button>
               <Link
                 href="/studio"
                 className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95"
               >
-                Open Web Studio
+                {t.downloadPage.hero.secondary}
               </Link>
             </motion.div>
           </motion.div>
@@ -98,27 +101,22 @@ export default function DownloadPage() {
                     <Laptop className="h-5 w-5" />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-white">macOS package</p>
-                    <p className="mt-1 text-xs text-neutral-500">Universal build target</p>
+                    <p className="text-sm font-semibold text-white">{t.downloadPage.packageCard.title}</p>
+                    <p className="mt-1 text-xs text-neutral-500">{t.downloadPage.packageCard.subtitle}</p>
                   </div>
                 </div>
                 <span className="rounded-full border border-white/[0.1] px-3 py-1 text-xs text-neutral-500">
-                  Planned
+                  {t.downloadPage.packageCard.status}
                 </span>
               </div>
 
               <div className="rounded-[24px] border border-white/[0.1] bg-black/30 p-4">
                 <div className="mb-4 flex items-center gap-2 text-sm font-medium text-white">
                   <FileCode2 className="h-4 w-4 text-[#8ea5ff]" />
-                  Release checklist
+                  {t.downloadPage.packageCard.heading}
                 </div>
                 <div className="space-y-3">
-                  {[
-                    "Signed installer",
-                    "Local project support",
-                    "Export workflow",
-                    "Version notes"
-                  ].map((item) => (
+                  {t.downloadPage.packageCard.items.map((item) => (
                     <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/[0.06] px-4 py-3 text-sm text-neutral-300">
                       <Check className="h-4 w-4 text-[#8ea5ff]" />
                       {item}
@@ -130,10 +128,10 @@ export default function DownloadPage() {
               <div className="mt-5 rounded-[24px] border border-[#8ea5ff]/[0.2] bg-[#8ea5ff]/[0.08] p-4">
                 <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
                   <ShieldCheck className="h-4 w-4 text-[#8ea5ff]" />
-                  Local-first direction
+                  {t.downloadPage.packageCard.localTitle}
                 </div>
                 <p className="text-sm leading-relaxed text-neutral-400">
-                  The page is structured for a future Mac build with private local project handling and export-first workflows.
+                  {t.downloadPage.packageCard.localBody}
                 </p>
               </div>
             </div>
@@ -143,11 +141,7 @@ export default function DownloadPage() {
 
       <section className="border-y border-white/[0.1] bg-white/[0.025]">
         <div className="mx-auto grid max-w-7xl grid-cols-1 divide-y divide-white/[0.08] px-6 md:grid-cols-3 md:divide-x md:divide-y-0">
-          {[
-            ["Mac first", "Prepared for a future native desktop workflow."],
-            ["Local projects", "Keep confidential deck work on your machine."],
-            ["Export focus", "Package decks for review, playback, and capture."]
-          ].map(([title, body]) => (
+          {t.downloadPage.stats.map(([title, body]) => (
             <div key={title} className="py-6 md:px-8 md:py-7 first:md:pl-0 last:md:pr-0">
               <p className="text-sm font-semibold text-white">{title}</p>
               <p className="mt-1 text-sm leading-relaxed text-neutral-500">{body}</p>
@@ -170,10 +164,10 @@ export default function DownloadPage() {
                 <Sparkles className="h-5 w-5" />
               </div>
               <h2 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">
-                Until then, use the web Studio.
+                {t.downloadPage.webStudio.title}
               </h2>
               <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-400">
-                The web Studio remains the fastest place to compose scenes, test motion, and prepare deck outputs.
+                {t.downloadPage.webStudio.body}
               </p>
             </div>
             <div>
@@ -181,7 +175,7 @@ export default function DownloadPage() {
                 href="/studio"
                 className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95"
               >
-                Open Studio
+                {t.downloadPage.webStudio.button}
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </Link>
             </div>

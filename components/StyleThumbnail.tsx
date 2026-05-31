@@ -1,4 +1,7 @@
+"use client";
+
 import { BarChart3, Layers, Play, Sparkles } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
 
 type StyleThumbnailProps = {
   className?: string;
@@ -28,13 +31,14 @@ export function StyleThumbnail({
   title,
   variant = "card"
 }: StyleThumbnailProps) {
+  const { t } = useI18n();
   const palette = paletteFor(templateId);
   const isHero = variant === "hero";
   const isFeature = variant === "feature";
 
   return (
     <div
-      aria-label={`${title} style thumbnail`}
+      aria-label={t.thumbnail.ariaLabel(title)}
       className={`relative overflow-hidden bg-[#0c0f17] ${className}`}
       role="img"
       style={{
@@ -54,7 +58,7 @@ export function StyleThumbnail({
           <div className="mb-auto flex items-center justify-between gap-3">
             <span className="flex items-center gap-2 rounded-full border border-white/[0.14] bg-black/25 px-3 py-1 text-xs font-medium text-neutral-200 backdrop-blur-md">
               <Sparkles className="h-3.5 w-3.5" style={{ color: palette.accent }} />
-              {label ?? "Preset"}
+              {label ?? t.thumbnail.fallbackLabel}
             </span>
             <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.14] bg-black/25 text-neutral-200 backdrop-blur-md">
               <Play className="h-3.5 w-3.5" />
@@ -94,10 +98,10 @@ export function StyleThumbnail({
               <div className="hidden rounded-[20px] border border-white/[0.12] bg-black/20 p-4 backdrop-blur-md sm:block">
                 <div className="mb-4 flex items-center gap-2 text-xs font-medium text-neutral-300">
                   <Layers className="h-3.5 w-3.5" style={{ color: palette.accent }} />
-                  Scene layers
+                  {t.thumbnail.sceneLayers}
                 </div>
                 <div className="space-y-2">
-                  {["Title", "Metric", "Chart"].map((item, index) => (
+                  {t.thumbnail.layers.map((item, index) => (
                     <div key={item} className="flex items-center gap-2 rounded-full bg-white/[0.07] px-3 py-2">
                       <span
                         className="h-1.5 w-1.5 rounded-full"
@@ -109,7 +113,7 @@ export function StyleThumbnail({
                 </div>
                 <div className="mt-4 flex items-center gap-2 text-xs text-neutral-500">
                   <BarChart3 className="h-3.5 w-3.5" />
-                  Motion ready
+                  {t.thumbnail.motionReady}
                 </div>
               </div>
             )}

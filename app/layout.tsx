@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { I18nProvider } from "@/components/I18nProvider";
+import { defaultLocale, dictionaries } from "@/lib/i18n";
 import "./globals.css";
 
+const defaultMetadata = dictionaries[defaultLocale].metadata;
+
 export const metadata: Metadata = {
-  title: "SlideX — Motion Design System",
-  description: "Design animated presentations as MDX scene decks. Edit scenes, preview motion, and export sequences.",
+  title: defaultMetadata.title,
+  description: defaultMetadata.description,
   other: {
     google: "notranslate"
   }
@@ -15,14 +19,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning translate="no">
+    <html lang="zh-TW" suppressHydrationWarning translate="no">
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
       </head>
-      <body>{children}</body>
+      <body>
+        <I18nProvider>{children}</I18nProvider>
+      </body>
     </html>
   );
 }
