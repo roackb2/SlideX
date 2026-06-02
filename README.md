@@ -1,99 +1,61 @@
 # SlideX
 
-MotionDoc is a document-to-motion prototype for validating MDX as a motion document format. It now includes a product intro website, documentation resources, a reusable template library, and a Studio editor with live Framer Motion preview.
+SlideX 是一個以 MDX scene 為核心的動態簡報系統。它把簡報內容、版面、動畫節奏、預覽與桌面專案流程放在同一個可維護的程式碼結構裡。
 
-This is intentionally not a full video editor. There is no auth, database, billing, asset management, audio editing, timeline editor, cloud rendering, or MP4 export in this MVP.
+目前版本包含：
 
-## Project Structure
+- public website：產品首頁、文件、範本頁、下載頁
+- web Studio：MDX 編輯、圖層、Inspector、即時 preview、template/snippet
+- Tauri desktop shell：離線 Mac Studio、專案開啟/儲存、最近專案、匯出入口
+- MotionDoc core：parser、serializer、freeform frame rules、export runtime、presets
+- DDD/SOLID/DRY layer refactor：以 `app/`、`common/`、`core/`、`features/` 分層
+- `eslint-plugin-boundaries`：用 lint 固定 import direction
 
-```text
-.
-├── app/
-│   ├── globals.css
-│   ├── layout.tsx
-│   ├── page.tsx
-│   ├── resources/
-│   │   └── page.tsx
-│   ├── studio/
-│   │   └── page.tsx
-│   └── templates/
-│       └── page.tsx
-├── components/
-│   ├── MotionDocApp.tsx
-│   ├── PreviewPane.tsx
-│   ├── SiteNav.tsx
-│   └── motion-blocks.tsx
-├── docs/
-│   └── USAGE.zh-TW.md
-├── lib/
-│   ├── defaultMdx.ts
-│   ├── mdxStats.ts
-│   ├── resources.ts
-│   └── templates.ts
-├── next.config.mjs
-├── package.json
-├── postcss.config.cjs
-├── tailwind.config.ts
-└── tsconfig.json
-```
+這還不是完整影片剪輯器。現在沒有 auth、database、billing、雲端 rendering、audio editor、完整 MP4 export pipeline；目前重點是「可編輯、可預覽、可維護」的 motion document workflow。
 
-## Setup
+## Quick Start
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open:
+開啟：
 
-- Intro website: `http://localhost:3000`
-- Documentation resources: `http://localhost:3000/resources`
-- Template library: `http://localhost:3000/templates`
-- MotionDoc Studio editor: `http://localhost:3000/studio`
+- Website: `http://localhost:3000`
+- Resources: `http://localhost:3000/resources`
+- Templates: `http://localhost:3000/templates`
+- Studio: `http://localhost:3000/studio`
 
-For detailed instructions, see [docs/USAGE.zh-TW.md](docs/USAGE.zh-TW.md).
+Production build：
 
-## Mac Desktop App
+```bash
+npm run build
+npm run start
+```
 
-The project includes a Tauri shell for the offline Mac editor build. The desktop
-app opens the Studio route by default and uses the static Next.js export from
-`out/`.
+品質檢查：
+
+```bash
+npm run lint
+```
+
+## Desktop App
+
+SlideX 內建 Tauri desktop shell。桌面版預設開啟 `/studio/`，使用 Next static output。
 
 ```bash
 npm run tauri:dev
 npm run tauri:build
 ```
 
-Build outputs:
-
-- `.app`: `src-tauri/target/release/bundle/macos/SlideX.app`
-- `.dmg`: `src-tauri/target/release/bundle/dmg/SlideX_0.1.0_aarch64.dmg`
-
-Production builds use `next build --webpack` because the current Next/Turbopack
-build hits a local process/port limitation in this environment.
-
-The Mac app shows a desktop start screen before entering the editor. Native File
-menu actions are wired to the editor:
-
-- New Project
-- Open Project
-- Save
-- Export HTML
-- Export MDX
-
-Saved or opened projects are stored in the desktop recent-project list and are
-shown on the start screen on the next launch.
-
-App and project icons are generated from source SVGs with:
+icon 來源由 SVG 產生：
 
 ```bash
 npm run icons:tauri
 ```
 
-The icon set intentionally does not reuse the website logo. It generates the
-desktop app icon plus a separate `.slidex` project icon.
-
-Local projects are saved as `.slidex` folders:
+`.slidex` 專案格式：
 
 ```text
 My Deck.slidex/
@@ -103,61 +65,217 @@ My Deck.slidex/
 └── exports/
 ```
 
-The first desktop implementation stores the editable deck source in
-`document.mdx`; `assets/` and `exports/` are reserved for the upcoming local
-asset library and export outputs.
+目前桌面版已支援：
 
-## What Is Included
+- New Project
+- Open Project
+- Save Project
+- recent project list
+- Export HTML
+- Export MDX
 
-- Next.js, React, TypeScript, and Tailwind CSS
-- Public website introduction page
-- Documentation resources route
-- Template library route and shared template data
-- Purpose-built MotionDoc parser for the supported scene and motion blocks
-- Framer Motion powered preview blocks
-- Studio editor with template loading, snippet insertion, copy, replay, and live preview
-- Custom MDX components:
-  - `Scene`
-  - `Title`
-  - `Text`
-  - `Card`
-  - `ImageBlock`
-  - `CTA`
-- Enter animations:
-  - `fadeIn`
-  - `fadeUp`
-  - `zoomIn`
-  - `slideLeft`
+## Architecture
 
-## Motion Component Props
+新版架構採用 domain-driven layering。不要再新增 root `components/` 或 root `lib/`。
 
-All animated blocks support:
+```text
+app/
+  Next route composition only.
+
+common/
+  lib/    Cross-feature libraries and providers.
+  ui/     Cross-feature reusable UI.
+  util/   Framework-light utilities.
+
+core/
+  motion-doc/
+    domain/          Domain types, parser, frame/value rules.
+    application/     Commands, serializers, factories, stats.
+    infrastructure/  Export/runtime adapters.
+    presets/         Default MDX, templates, shader presets.
+
+features/
+  docs/
+    domain/
+    ui/
+    index.ts
+
+  marketing/
+    ui/
+    index.ts
+
+  studio/
+    application/
+    infrastructure/
+    ui/
+    index.ts
+```
+
+`app/*` 應優先 import feature public API，例如：
+
+```ts
+import { MotionDocApp } from "@/features/studio";
+import MdxDocsShell from "@/features/docs";
+import { HomePage } from "@/features/marketing";
+```
+
+詳細規則見 [docs/ARCHITECTURE.zh-TW.md](docs/ARCHITECTURE.zh-TW.md)。
+
+## Boundaries
+
+`eslint-plugin-boundaries` 在 [eslint.config.mjs](eslint.config.mjs) 中限制 import direction。
+
+核心原則：
+
+- `app/` 只做 route composition。
+- `common/` 只能放跨 feature 共用能力。
+- `core/motion-doc/domain` 不依賴 React、Tauri、features。
+- `features/*/application` 放非 UI 決策與 commands。
+- `features/*/infrastructure` 放 localStorage、Tauri、filesystem、browser adapter。
+- `features/*/ui` 放 React components、UI hooks、interaction state。
+- shared 邏輯先判斷 ownership，不把東西丟進 generic dumping ground。
+
+每次移動檔案、改 public API、或新增 feature 後都應跑：
+
+```bash
+npm run lint
+npm run build
+```
+
+## Studio Structure
+
+Studio 是目前最重要的 feature，拆成：
+
+```text
+features/studio/
+├── application/
+│   ├── motionDocCommands.ts
+│   ├── previewCanvas.ts
+│   ├── previewProps.ts
+│   ├── colorPalettes.ts
+│   └── themeColors.ts
+├── infrastructure/
+│   ├── customSwatches.ts
+│   ├── customThemes.ts
+│   ├── recentProjects.ts
+│   └── tauriProject.ts
+└── ui/
+    ├── MotionDocApp.tsx
+    ├── StudioWorkspace.tsx
+    ├── PreviewCanvas.tsx
+    ├── inspector/
+    ├── preview/
+    ├── hooks/
+    └── workspace/
+```
+
+設計方向：
+
+- `MotionDocApp.tsx`：整體 state orchestration。
+- `StudioWorkspace.tsx`：workspace composition。
+- `PreviewCanvas.tsx`：canvas interaction orchestration。
+- `inspector/InspectorControls.tsx`：小型 facade。
+- color/theme storage 放 `infrastructure`。
+- frame、selection、palette、preview prop normalization 放 `application`。
+
+## MotionDoc Components
+
+目前 parser 支援的主要 scene/block：
+
+- `Slide` / `Scene`
+- `Title`
+- `Text`
+- `Card`
+- `Metric`
+- `Chart`
+- `ImageBlock`
+
+常用 motion props：
 
 ```tsx
 enter?: "fadeIn" | "fadeUp" | "zoomIn" | "slideLeft";
 delay?: number;
 duration?: number;
+x?: number;
+y?: number;
+w?: number;
+h?: number;
 ```
 
-Defaults:
+`x/y/w/h` 使用 percent frame coordinate，供 preview canvas、freeform layout、drag/resize 操作共用。
 
-- `enter`: `fadeUp`
-- `delay`: `0`
-- `duration`: `0.6`
+## Templates And Shaders
 
-`Scene` accepts:
+MotionDoc presets 位於：
 
-```tsx
-duration: number;
+```text
+core/motion-doc/presets/
+├── defaultMdx.ts
+├── templates.ts
+├── templates/
+│   ├── commercialTemplates.ts
+│   ├── premiumBusinessTemplates.ts
+│   ├── snippetTemplates.ts
+│   ├── templateFactory.ts
+│   └── templateTypes.ts
+├── shaderPresets.ts
+└── shaders/
+    ├── shaderPresetFactory.ts
+    ├── shaderCollections.ts
+    ├── atmosphericShaderBodies.ts
+    ├── motionShaderBodies.ts
+    └── watercolorShaderBodies.ts
 ```
 
-## Future MP4 Export Direction
+`templates.ts` 與 `shaderPresets.ts` 是 public facade；新增 preset 時請放到對應子模組，不要把大型資料重新塞回 facade。
 
-MP4 export is not implemented yet, but the code leaves clear extension points:
+## Development Rules
 
-- `Scene duration` can map to a future video timeline duration.
-- `PreviewPane` can become the browser recording surface.
-- A server-side renderer or FFmpeg pipeline can consume the same MDX scene tree.
-- A future export panel can calculate total duration, scene count, FPS, and aspect ratio before rendering.
+新增功能時請先描述：
 
-The current MVP keeps the architecture simple: MDX is the source document, React components are motion blocks, and Framer Motion powers the interactive preview.
+- Goal：功能要解決什麼問題
+- Scope：這次做什麼、不做什麼
+- Owner：屬於 `core`、`common`、或哪個 `features/*`
+- Layer：domain / application / infrastructure / ui
+- Types：有限選項用 literal union、preset 用 `satisfies`
+- Validation：至少跑 `npm run lint`，移動 API 或觸 React/Tauri 邊界時跑 `npm run build`
+
+檔案原則：
+
+- 儘量讓單一 `.ts/.tsx` 低於 500 行。
+- 大 React component 優先拆 section、panel、hook、pure helper。
+- browser/Tauri/localStorage 邏輯不要放 UI component 裡。
+- UI option value 不要隨便放寬成 `string`。
+- parser 邊界可以使用較寬的 record type；UI field 逐步收斂成更明確的型別。
+
+## Useful Docs
+
+- [Architecture](docs/ARCHITECTURE.zh-TW.md)
+- [Usage](docs/USAGE.zh-TW.md)
+- [Feature request skill](.agents/skills/slidex-feature-principles/SKILL.md)
+- [Architecture skill](.agents/skills/slidex-architecture/SKILL.md)
+
+## Scripts
+
+```bash
+npm run dev          # Next dev server with Turbopack
+npm run dev:no-clean # Dev server without cleaning build cache
+npm run build        # Next production build with webpack
+npm run build:clean  # Clean then build
+npm run start        # Start production Next server
+npm run lint         # ESLint + boundaries
+npm run icons:tauri  # Generate Tauri icon assets
+npm run tauri:dev    # Tauri development app
+npm run tauri:build  # Tauri production app bundle
+```
+
+## Current Direction
+
+SlideX 的方向是先把 MDX scene deck、Studio editor、desktop local project workflow 穩定下來。未來可延伸：
+
+- local asset library
+- richer export outputs
+- MP4/render pipeline
+- stronger block-specific typing
+- more motion presets and shader controls
+- project-level versioning and packaging
