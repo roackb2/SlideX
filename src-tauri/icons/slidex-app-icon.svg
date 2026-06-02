@@ -1,0 +1,33 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="128" y1="80" x2="912" y2="944" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#171B26"/>
+      <stop offset="1" stop-color="#05070D"/>
+    </linearGradient>
+    <linearGradient id="strokeA" x1="242" y1="232" x2="782" y2="792" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FFF9"/>
+      <stop offset="0.46" stop-color="#7EF2C6"/>
+      <stop offset="1" stop-color="#2CB795"/>
+    </linearGradient>
+    <linearGradient id="strokeB" x1="792" y1="226" x2="232" y2="808" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FBFF"/>
+      <stop offset="0.5" stop-color="#93A2FF"/>
+      <stop offset="1" stop-color="#5664E5"/>
+    </linearGradient>
+    <linearGradient id="core" x1="410" y1="406" x2="616" y2="616" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF4A8"/>
+      <stop offset="1" stop-color="#FF8A4D"/>
+    </linearGradient>
+    <filter id="shadow" x="132" y="118" width="760" height="794" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="34" stdDeviation="44" flood-color="#000000" flood-opacity="0.46"/>
+    </filter>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="206" fill="url(#bg)"/>
+  <rect x="83" y="83" width="858" height="858" rx="188" stroke="white" stroke-opacity="0.08" stroke-width="38"/>
+  <g filter="url(#shadow)">
+    <path d="M285 248C308.8 224.2 347.4 224.2 371.2 248L512 388.8L652.8 248C676.6 224.2 715.2 224.2 739 248L774.4 283.4C798.2 307.2 798.2 345.8 774.4 369.6L633.6 510.4L779 655.8C802.8 679.6 802.8 718.2 779 742L743.6 777.4C719.8 801.2 681.2 801.2 657.4 777.4L512 632L366.6 777.4C342.8 801.2 304.2 801.2 280.4 777.4L245 742C221.2 718.2 221.2 679.6 245 655.8L390.4 510.4L249.6 369.6C225.8 345.8 225.8 307.2 249.6 283.4L285 248Z" fill="#070A10"/>
+    <path d="M326 279L512 465L698 279" stroke="url(#strokeB)" stroke-width="106" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M326 746L512 560L698 746" stroke="url(#strokeA)" stroke-width="106" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="442" y="442" width="140" height="140" rx="38" fill="url(#core)" transform="rotate(45 512 512)"/>
+  </g>
+</svg>

@@ -1,0 +1,321 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DesktopWelcome } from "@/features/studio/ui/DesktopWelcome";
+import { getCodeCursor } from "@/features/studio/ui/MdxEditorPane";
+import { StudioWorkspace } from "@/features/studio/ui/StudioWorkspace";
+import { defaultMdx } from "@/core/motion-doc/presets/defaultMdx";
+import { getSelectionMdx } from "@/core/motion-doc/application/motionDocSerialize";
+import { useLayerSelection } from "@/features/studio/ui/hooks/useLayerSelection";
+import { useMotionDocDocument } from "@/features/studio/ui/hooks/useMotionDocDocument";
+import { useStudioCommands } from "@/features/studio/ui/hooks/useStudioCommands";
+import { useStudioExport } from "@/features/studio/ui/hooks/useStudioExport";
+import { useStudioProject } from "@/features/studio/ui/hooks/useStudioProject";
+import { useStudioShortcuts } from "@/features/studio/ui/hooks/useStudioShortcuts";
+import { useStudioUndo } from "@/features/studio/ui/hooks/useStudioUndo";
+import { defaultTemplate } from "@/core/motion-doc/presets/templates";
+
+export function MotionDocApp() {
+  const [source, setSource] = useState(defaultMdx);
+  const [replayNonce, setReplayNonce] = useState(0);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(defaultTemplate.id);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const [notice, setNotice] = useState("Ready");
+  const [draggedBlockIndex, setDraggedBlockIndex] = useState<number | null>(null);
+  const [dragOverBlockIndex, setDragOverBlockIndex] = useState<number | null>(null);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [isCanvasGridVisible, setIsCanvasGridVisible] = useState(false);
+  const [codeScroll, setCodeScroll] = useState({ left: 0, top: 0 });
+  const [codeCursor, setCodeCursor] = useState({ line: 1, column: 1 });
+  const exportMenuRef = useRef<HTMLDivElement | null>(null);
+  const undoStackRef = useRef<string[]>([]);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isMobileInspectorOpen, setIsMobileInspectorOpen] = useState(false);
+
+  const {
+    activeSlide,
+    activeSlideAccent,
+    activeSlideAlignX,
+    activeSlideAlignY,
+    activeSlideBackground,
+    activeSlideCardFlow,
+    activeSlideCardGap,
+    activeSlideChartFlow,
+    activeSlideChartGap,
+    activeSlideLayout,
+    activeSlideMetricFlow,
+    activeSlideMetricGap,
+    activeSlideMutedColor,
+    activeSlideShader,
+    activeSlideShaderColor1,
+    activeSlideShaderColor2,
+    activeSlideShaderColor3,
+    activeSlideShaderDetail,
+    activeSlideShaderIntensity,
+    activeSlideShaderScale,
+    activeSlideShaderSoftness,
+    activeSlideShaderSpeed,
+    activeSlideTextColor,
+    activeSlideTheme,
+    canvasSource,
+    slideRows,
+    sliderDocument,
+    stats
+  } = useMotionDocDocument({
+    activeSlideIndex,
+    source
+  });
+  const {
+    clearBlockSelection,
+    selectBlock,
+    selectBlocks,
+    selectedBlockIndex,
+    selectedBlockIndices,
+    selectSingleBlock
+  } = useLayerSelection(activeSlide?.blocks.length ?? 0);
+  const selectionMdx = useMemo(
+    () => getSelectionMdx(activeSlide, selectedBlockIndex, activeSlideIndex),
+    [activeSlide, activeSlideIndex, selectedBlockIndex]
+  );
+  const {
+    hasEnteredStudio,
+    isProjectDirty,
+    isRuntimeChecked,
+    isTauri,
+    markProjectDirty,
+    newProject,
+    openProject,
+    openRecentProject,
+    projectName,
+    recentProjects,
+    saveProject
+  } = useStudioProject({
+    canvasSource,
+    documentTitle: sliderDocument.title,
+    resetSelection: clearBlockSelection,
+    setActiveSlideIndex,
+    setNotice,
+    setReplayNonce,
+    setSource,
+    undoStackRef
+  });
+  const { commitSource, pushUndoSnapshot, undoLastChange } = useStudioUndo({
+    clearBlockSelection,
+    markProjectDirty,
+    setNotice,
+    setReplayNonce,
+    setSource,
+    source,
+    undoStackRef
+  });
+  const { copySource, exportHtmlFile, exportMdxFile } = useStudioExport({
+    canvasSource,
+    documentTitle: sliderDocument.title,
+    isTauri,
+    setIsExportMenuOpen,
+    setNotice
+  });
+  const studioCommands = useStudioCommands({
+    activeSlide,
+    activeSlideAccent,
+    activeSlideBackground,
+    activeSlideIndex,
+    activeSlideTheme,
+    commitSource,
+    markProjectDirty,
+    pushUndoSnapshot,
+    scenes: sliderDocument.scenes,
+    selectBlock,
+    selectedBlockIndex,
+    selectedBlockIndices,
+    selectSingleBlock,
+    setActiveSlideIndex,
+    setIsTemplateModalOpen,
+    setNotice,
+    setReplayNonce,
+    setSelectedTemplateId,
+    setSource,
+    source
+  });
+
+  useEffect(() => {
+    setActiveSlideIndex((current) => {
+      const maxIndex = Math.max(sliderDocument.scenes.length - 1, 0);
+      return Math.min(current, maxIndex);
+    });
+  }, [sliderDocument.scenes.length]);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!isExportMenuOpen) {
+        return;
+      }
+
+      if (exportMenuRef.current?.contains(event.target as Node)) {
+        return;
+      }
+
+      setIsExportMenuOpen(false);
+    }
+
+    window.addEventListener("mousedown", handlePointerDown);
+    return () => window.removeEventListener("mousedown", handlePointerDown);
+  }, [isExportMenuOpen]);
+
+  useStudioShortcuts({
+    activeSlideIndex,
+    closeCodeEditor: () => setIsCodeEditorOpen(false),
+    closeExportMenu: () => setIsExportMenuOpen(false),
+    closeMobileInspector: () => setIsMobileInspectorOpen(false),
+    closeMobileSidebar: () => setIsMobileSidebarOpen(false),
+    closeTemplateModal: () => setIsTemplateModalOpen(false),
+    copySelectedBlock: studioCommands.copySelectedBlock,
+    deleteSelectedBlocks: studioCommands.deleteSelectedBlocks,
+    deleteSlide: studioCommands.deleteSlide,
+    exportHtmlFile,
+    exportMdxFile,
+    goToNextSlide: studioCommands.goToNextSlide,
+    goToPreviousSlide: studioCommands.goToPreviousSlide,
+    isCodeEditorOpen,
+    isExportMenuOpen,
+    isMobileInspectorOpen,
+    isMobileSidebarOpen,
+    isTauri,
+    isTemplateModalOpen,
+    newProject,
+    nudgeSelectedBlocks: studioCommands.nudgeSelectedBlocks,
+    openProject,
+    pasteCopiedBlock: studioCommands.pasteCopiedBlock,
+    saveProject,
+    selectedBlockIndex,
+    selectedBlockIndices,
+    undoLastChange
+  });
+
+  const updateCodeCursor = useCallback(
+    (selectionStart: number, cursorSource = source) => {
+      setCodeCursor(getCodeCursor(cursorSource, selectionStart));
+    },
+    [source]
+  );
+
+  if (!isRuntimeChecked) {
+    return <main className="h-screen bg-[#0f1017]" />;
+  }
+
+  if (isTauri && !hasEnteredStudio) {
+    return (
+      <DesktopWelcome
+        newProject={newProject}
+        openProject={openProject}
+        openRecentProject={openRecentProject}
+        recentProjects={recentProjects}
+      />
+    );
+  }
+
+  return (
+    <StudioWorkspace
+      activeSlide={activeSlide}
+      activeSlideAccent={activeSlideAccent}
+      activeSlideAlignX={activeSlideAlignX}
+      activeSlideAlignY={activeSlideAlignY}
+      activeSlideBackground={activeSlideBackground}
+      activeSlideCardFlow={activeSlideCardFlow}
+      activeSlideCardGap={activeSlideCardGap}
+      activeSlideChartFlow={activeSlideChartFlow}
+      activeSlideChartGap={activeSlideChartGap}
+      activeSlideIndex={activeSlideIndex}
+      activeSlideLayout={activeSlideLayout}
+      activeSlideMetricFlow={activeSlideMetricFlow}
+      activeSlideMetricGap={activeSlideMetricGap}
+      activeSlideMutedColor={activeSlideMutedColor}
+      activeSlideShader={activeSlideShader}
+      activeSlideShaderColor1={activeSlideShaderColor1}
+      activeSlideShaderColor2={activeSlideShaderColor2}
+      activeSlideShaderColor3={activeSlideShaderColor3}
+      activeSlideShaderDetail={activeSlideShaderDetail}
+      activeSlideShaderIntensity={activeSlideShaderIntensity}
+      activeSlideShaderScale={activeSlideShaderScale}
+      activeSlideShaderSoftness={activeSlideShaderSoftness}
+      activeSlideShaderSpeed={activeSlideShaderSpeed}
+      activeSlideTextColor={activeSlideTextColor}
+      activeSlideTheme={activeSlideTheme}
+      addBlockToActiveSlide={studioCommands.addBlockToActiveSlide}
+      addSlide={studioCommands.addSlide}
+      addTextAtPosition={studioCommands.addTextAtPosition}
+      applyTemplate={studioCommands.applyTemplate}
+      beginBlockTransform={studioCommands.beginBlockTransform}
+      canvasSource={canvasSource}
+      clearBlockSelection={clearBlockSelection}
+      codeCursor={codeCursor}
+      codeScroll={codeScroll}
+      commitMdxSource={(value) => {
+        setSource(value);
+        markProjectDirty();
+      }}
+      copySource={copySource}
+      deleteBlock={studioCommands.deleteBlock}
+      deleteSlide={studioCommands.deleteSlide}
+      draggedBlockIndex={draggedBlockIndex}
+      dragOverBlockIndex={dragOverBlockIndex}
+      exportHtmlFile={exportHtmlFile}
+      exportMdxFile={exportMdxFile}
+      exportMenuRef={exportMenuRef}
+      goToNextSlide={studioCommands.goToNextSlide}
+      goToPreviousSlide={studioCommands.goToPreviousSlide}
+      insertSnippet={studioCommands.insertSnippet}
+      isCanvasGridVisible={isCanvasGridVisible}
+      isCodeEditorOpen={isCodeEditorOpen}
+      isExportMenuOpen={isExportMenuOpen}
+      isMobileInspectorOpen={isMobileInspectorOpen}
+      isMobileSidebarOpen={isMobileSidebarOpen}
+      isProjectDirty={isProjectDirty}
+      isTauri={isTauri}
+      isTemplateModalOpen={isTemplateModalOpen}
+      moveBlock={studioCommands.moveBlock}
+      newProject={newProject}
+      notice={notice}
+      openProject={openProject}
+      projectName={projectName}
+      pushUndoSnapshot={pushUndoSnapshot}
+      reorderBlock={studioCommands.reorderBlock}
+      replayNonce={replayNonce}
+      saveProject={saveProject}
+      scenes={sliderDocument.scenes}
+      selectBlock={selectBlock}
+      selectBlockFromLayer={studioCommands.selectBlockFromLayer}
+      selectBlocks={selectBlocks}
+      selectedBlockIndex={selectedBlockIndex}
+      selectedBlockIndices={selectedBlockIndices}
+      selectedTemplateId={selectedTemplateId}
+      selectionMdx={selectionMdx}
+      selectSingleBlock={selectSingleBlock}
+      setActiveSlideIndex={setActiveSlideIndex}
+      setCodeScroll={setCodeScroll}
+      setDraggedBlockIndex={setDraggedBlockIndex}
+      setDragOverBlockIndex={setDragOverBlockIndex}
+      setIsCanvasGridVisible={setIsCanvasGridVisible}
+      setIsCodeEditorOpen={setIsCodeEditorOpen}
+      setIsExportMenuOpen={setIsExportMenuOpen}
+      setIsMobileInspectorOpen={setIsMobileInspectorOpen}
+      setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+      setIsTemplateModalOpen={setIsTemplateModalOpen}
+      setReplayNonce={setReplayNonce}
+      slideRows={slideRows}
+      source={source}
+      totalDuration={stats.totalDuration}
+      undoLastChange={undoLastChange}
+      updateActiveSlideStyle={studioCommands.updateActiveSlideStyle}
+      updateAllSlidesStyle={studioCommands.updateAllSlidesStyle}
+      updateBlock={studioCommands.updateBlock}
+      updateBlockGroupFlow={studioCommands.updateBlockGroupFlow}
+      updateCodeCursor={updateCodeCursor}
+      updatePositionedBlockFrames={studioCommands.updatePositionedBlockFrames}
+      updateSelectionMdx={studioCommands.updateSelectionMdx}
+      uploadImageForBlock={studioCommands.uploadImageForBlock}
+    />
+  );
+}

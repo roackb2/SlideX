@@ -1,0 +1,119 @@
+"use client";
+
+import type { Dispatch, SetStateAction } from "react";
+import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
+import { easeSmooth, type DocsGroup, type DocsSectionLink } from "@/features/docs/ui/mdxDocsModel";
+
+export function DesktopDocsSidebar({ docsGroups }: { docsGroups: DocsGroup[] }) {
+  return (
+    <aside className="hidden border-r border-white/[0.08] lg:block">
+      <div className="sticky top-24 max-h-[calc(100dvh-7rem)] overflow-y-auto py-8 pr-5 xl:pr-6">
+        <nav className="divide-y divide-white/[0.08]">
+          {docsGroups.map((group) => (
+            <div className="py-5 first:pt-0" key={group.title}>
+              <p className="mb-3 px-1 text-sm font-semibold text-neutral-300">{group.title}</p>
+              <div className="space-y-1">
+                {group.links.map((item) => (
+                  <Link
+                    className={`group flex items-center justify-between gap-3 rounded-lg px-1 py-2 text-sm leading-6 transition ${
+                      item.active ? "text-white" : "text-neutral-400 hover:text-white"
+                    }`}
+                    href={item.href}
+                    key={`${group.title}-${item.href}`}
+                  >
+                    <span>{item.label}</span>
+                    <ChevronRight
+                      className={`h-3.5 w-3.5 shrink-0 transition ${
+                        item.active ? "text-[#8ea5ff]" : "text-neutral-600 group-hover:text-neutral-300"
+                      }`}
+                    />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+        </nav>
+      </div>
+    </aside>
+  );
+}
+
+export function MobileDocsNav({
+  currentSection,
+  docsGroups,
+  isMobileNavOpen,
+  setIsMobileNavOpen
+}: {
+  currentSection: DocsSectionLink;
+  docsGroups: DocsGroup[];
+  isMobileNavOpen: boolean;
+  setIsMobileNavOpen: Dispatch<SetStateAction<boolean>>;
+}) {
+  const CurrentIcon = currentSection.icon;
+
+  return (
+    <div className="mb-8 lg:hidden">
+      <button
+        aria-expanded={isMobileNavOpen}
+        className="flex w-full items-center justify-between rounded-2xl border border-white/[0.1] bg-white/[0.04] px-4 py-3.5 text-left shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur"
+        onClick={() => setIsMobileNavOpen((value) => !value)}
+        type="button"
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          <CurrentIcon className="h-4 w-4 shrink-0 text-neutral-400" />
+          <span className="truncate text-sm font-semibold text-neutral-200">{currentSection.label}</span>
+        </span>
+        {isMobileNavOpen ? (
+          <ChevronUp className="h-4 w-4 shrink-0 text-neutral-500" />
+        ) : (
+          <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500" />
+        )}
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isMobileNavOpen ? (
+          <motion.div
+            animate={{ height: "auto", opacity: 1, y: 0 }}
+            className="overflow-hidden"
+            exit={{ height: 0, opacity: 0, y: -8 }}
+            initial={{ height: 0, opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: easeSmooth }}
+          >
+            <nav className="mt-3 rounded-2xl border border-white/[0.1] bg-white/[0.035] p-4 shadow-[0_18px_45px_rgba(0,0,0,0.22)] backdrop-blur">
+              <div className="space-y-6">
+                {docsGroups.map((group) => (
+                  <div key={group.title}>
+                    <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-600">
+                      {group.title}
+                    </p>
+                    <div className="space-y-1">
+                      {group.links.map((item) => {
+                        const Icon = item.icon;
+
+                        return (
+                          <Link
+                            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+                              item.active ? "bg-white/[0.08] text-[#b9c6ff]" : "text-neutral-400 hover:bg-white/[0.055] hover:text-white"
+                            }`}
+                            href={item.href}
+                            key={`${group.title}-${item.href}`}
+                            onClick={() => setIsMobileNavOpen(false)}
+                          >
+                            <Icon className="h-4 w-4 shrink-0" />
+                            <span>{item.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </nav>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}

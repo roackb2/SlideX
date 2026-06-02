@@ -1,0 +1,151 @@
+"use client";
+
+import { useMemo } from "react";
+import type { CSSProperties } from "react";
+import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
+import {
+  alignXProp,
+  alignYProp,
+  groupFlowProp,
+  isPositionedBlock,
+  layoutProp,
+  numberProp,
+  stringProp,
+  textAlignProp
+} from "@/features/studio/application/previewProps";
+import { PreviewBlock, PreviewBlockList } from "@/features/studio/ui/preview/PreviewBlock";
+import { Scene, Text } from "@/features/studio/ui/preview/motion-blocks";
+
+type PreviewPaneProps = {
+  activeSlideIndex?: number;
+  autoHeight?: boolean;
+  hiddenBlockIndices?: number[];
+  replayNonce: number;
+  source: string;
+};
+
+export function PreviewPane({
+  activeSlideIndex = 0,
+  autoHeight = false,
+  hiddenBlockIndices = [],
+  replayNonce,
+  source
+}: PreviewPaneProps) {
+  const document = useMemo(() => parseMotionDoc(source), [source]);
+  const hiddenBlockIndexSet = useMemo(() => new Set(hiddenBlockIndices), [hiddenBlockIndices]);
+  const activeSlide = document.scenes[activeSlideIndex] ?? document.scenes[0];
+  const hasSlides = document.scenes.length > 0;
+
+  if (!hasSlides) {
+    return <PreviewCompileError />;
+  }
+
+  if (!activeSlide) {
+    return null;
+  }
+
+  const layout = layoutProp(activeSlide.props.layout);
+  const blockItems = activeSlide.blocks.map((block, originalIndex) => ({ block, originalIndex }));
+  const imageItems = blockItems.filter(({ block }) => block.type === "ImageBlock");
+  const contentItems = blockItems.filter(({ block }) => block.type !== "ImageBlock");
+  const hasPositionedBlocks = activeSlide.blocks.some(isPositionedBlock);
+  const shouldSplit = !hasPositionedBlocks && layout !== "default" && imageItems.length > 0;
+  const textOrder = layout === "split-left" ? 1 : 2;
+  const imageOrder = layout === "split-left" ? 2 : 1;
+  const cardFlow = groupFlowProp(activeSlide.props.cardFlow);
+  const metricFlow = groupFlowProp(activeSlide.props.metricFlow ?? activeSlide.props.cardFlow);
+  const chartFlow = groupFlowProp(activeSlide.props.chartFlow);
+
+  return (
+    <div key={replayNonce} style={autoHeight ? { minHeight: "100%", position: "relative" } : { inset: 0, position: "absolute" }}>
+      <Scene
+        accent={stringProp(activeSlide.props.accent)}
+        alignX={alignXProp(activeSlide.props.alignX)}
+        alignY={alignYProp(activeSlide.props.alignY)}
+        autoHeight={autoHeight}
+        background={stringProp(activeSlide.props.background)}
+        duration={activeSlide.duration}
+        freeform={hasPositionedBlocks}
+        key={`${replayNonce}-${activeSlideIndex}-${activeSlide.duration}`}
+        layout={shouldSplit ? layout : "default"}
+        mutedColor={stringProp(activeSlide.props.mutedColor)}
+        shader={stringProp(activeSlide.props.shader)}
+        shaderColor1={stringProp(activeSlide.props.shaderColor1)}
+        shaderColor2={stringProp(activeSlide.props.shaderColor2)}
+        shaderColor3={stringProp(activeSlide.props.shaderColor3)}
+        shaderDetail={numberProp(activeSlide.props.shaderDetail)}
+        shaderIntensity={numberProp(activeSlide.props.shaderIntensity)}
+        shaderScale={numberProp(activeSlide.props.shaderScale)}
+        shaderSoftness={numberProp(activeSlide.props.shaderSoftness)}
+        shaderSpeed={numberProp(activeSlide.props.shaderSpeed)}
+        textAlign={textAlignProp(activeSlide.props.textAlign)}
+        textColor={stringProp(activeSlide.props.textColor ?? activeSlide.props.foreground ?? activeSlide.props.color)}
+        theme={stringProp(activeSlide.props.theme)}
+      >
+        {shouldSplit ? (
+          <>
+            <div style={{ ...splitContentStyle, order: textOrder }}>
+              {contentItems.length > 0 ? (
+                <PreviewBlockList
+                  cardFlow={cardFlow}
+                  chartFlow={chartFlow}
+                  hiddenBlockIndices={hiddenBlockIndexSet}
+                  items={contentItems}
+                  metricFlow={metricFlow}
+                />
+              ) : (
+                <Text enter="fadeIn">Add a text layer for this side.</Text>
+              )}
+            </div>
+            <div style={{ ...splitImageStyle, order: imageOrder }}>
+              {imageItems
+                .filter(({ originalIndex }) => !hiddenBlockIndexSet.has(originalIndex))
+                .map(({ block, originalIndex }) => (
+                  <div key={`${block.type}-image-${originalIndex}`} style={{ width: "100%" }}>
+                    <PreviewBlock block={block} />
+                  </div>
+                ))}
+            </div>
+          </>
+        ) : activeSlide.blocks.length > 0 ? (
+          <PreviewBlockList
+            cardFlow={cardFlow}
+            chartFlow={chartFlow}
+            hiddenBlockIndices={hiddenBlockIndexSet}
+            items={blockItems}
+            metricFlow={metricFlow}
+          />
+        ) : null}
+      </Scene>
+    </div>
+  );
+}
+
+function PreviewCompileError() {
+  return (
+    <div style={{ alignItems: "center", display: "flex", inset: 0, justifyContent: "center", padding: 32, position: "absolute" }}>
+      <div style={{ background: "rgba(127,29,29,0.15)", border: "1px solid rgba(220,38,38,0.3)", borderRadius: 12, color: "#f87171", fontFamily: "monospace", fontSize: 13, maxWidth: 420, padding: 16 }}>
+        <p style={{ fontWeight: 600, marginBottom: 8 }}>Compile Error</p>
+        <p style={{ whiteSpace: "pre-wrap" }}>No &lt;Slide&gt; blocks found. Add a slide or load one of the presets.</p>
+      </div>
+    </div>
+  );
+}
+
+const splitContentStyle: CSSProperties = {
+  display: "flex",
+  flex: "1 1 0",
+  flexDirection: "column",
+  justifyContent: "center",
+  minHeight: 0,
+  minWidth: 0
+};
+
+const splitImageStyle: CSSProperties = {
+  alignItems: "center",
+  display: "flex",
+  flex: "1 1 0",
+  justifyContent: "center",
+  minHeight: 0,
+  minWidth: 0
+};

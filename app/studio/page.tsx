@@ -1,4 +1,4 @@
-import { MotionDocApp } from "@/components/MotionDocApp";
+import { MotionDocApp } from "@/features/studio";
 
 export default function StudioPage() {
   return <MotionDocApp />;

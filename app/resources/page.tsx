@@ -18,10 +18,9 @@ import {
   Layout,
   Type
 } from "lucide-react";
-import { useI18n } from "@/components/I18nProvider";
-import { SiteFooter } from "@/components/SiteFooter";
-import { SiteNav } from "@/components/SiteNav";
-import type { Dictionary } from "@/lib/i18n";
+import { useI18n } from "@/common/lib/I18nProvider";
+import { SiteFooter, SiteNav } from "@/common/ui";
+import type { Dictionary } from "@/common/lib/i18n";
 
 const easeSmooth = [0.22, 1, 0.36, 1] as const;
 
@@ -65,7 +64,7 @@ function ResourceHeroVisual({ copy }: { copy: Dictionary["resourcesPage"]["heroV
         </div>
 
         <div className="grid gap-4 p-5 md:p-6">
-          <div className="rounded-[24px] border border-white/[0.1] bg-black/35 p-4 font-mono text-xs leading-6 text-neutral-400">
+          <div className="overflow-x-auto rounded-[20px] border border-white/[0.1] bg-black/35 p-4 font-mono text-[11px] leading-6 text-neutral-400 sm:text-xs md:rounded-[24px]">
             <p className="text-neutral-600">{`<Scene duration={5}>`}</p>
             <p className="pl-4 text-white">{`<Title enter="fadeUp">`}</p>
             <p className="pl-8 text-[#8ea5ff]">{copy.codeTitle}</p>
@@ -78,7 +77,7 @@ function ResourceHeroVisual({ copy }: { copy: Dictionary["resourcesPage"]["heroV
 
           <div className="grid gap-3 sm:grid-cols-3">
             {copy.cards.map(([title, body]) => (
-              <div key={title} className="rounded-[20px] border border-white/[0.1] bg-white/[0.045] p-4">
+              <div key={title} className="rounded-[18px] border border-white/[0.1] bg-white/[0.045] p-4 md:rounded-[20px]">
                 <p className="text-sm font-semibold text-white">{title}</p>
                 <p className="mt-1 text-xs text-neutral-500">{body}</p>
               </div>
@@ -120,14 +119,14 @@ export default function ResourcesPage() {
             <motion.h1
               variants={fadeInUp}
               custom={1}
-              className="text-[2.65rem] font-semibold leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
+              className="text-[2.35rem] font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
             >
               {t.resourcesPage.hero.title}
             </motion.h1>
             <motion.p
               variants={fadeInUp}
               custom={2}
-              className="mt-6 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg"
+              className="mt-5 max-w-xl text-[15px] leading-7 text-neutral-400 sm:text-base md:mt-6 md:text-lg"
             >
               {t.resourcesPage.hero.body}
             </motion.p>
@@ -162,7 +161,7 @@ export default function ResourcesPage() {
               viewport={{ once: true }}
               transition={{ delay: index * 0.04, duration: 0.45, ease: easeSmooth }}
               href={item.href}
-              className="group rounded-[24px] border border-white/[0.1] bg-white/[0.04] p-4 transition hover:border-[#8ea5ff]/[0.3] hover:bg-white/[0.07]"
+              className="group rounded-[20px] border border-white/[0.1] bg-white/[0.04] p-4 transition hover:border-[#8ea5ff]/[0.3] hover:bg-white/[0.07] md:rounded-[24px]"
             >
               <div className="mb-4 flex items-center justify-between">
                 <span className="rounded-full border border-white/[0.1] px-3 py-1 text-xs text-neutral-400">
@@ -196,7 +195,7 @@ export default function ResourcesPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ delay: index * 0.06, duration: 0.55, ease: easeSmooth }}
-                className="flex min-h-[300px] flex-col rounded-[24px] border border-white/[0.1] bg-white/[0.045] p-5 md:min-h-[340px] md:rounded-[28px] md:p-6"
+                className="flex flex-col rounded-[24px] border border-white/[0.1] bg-white/[0.045] p-5 md:min-h-[320px] md:rounded-[28px] md:p-6"
               >
                 <div className="mb-8 flex items-center justify-between">
                   <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
@@ -239,7 +238,7 @@ export default function ResourcesPage() {
               </p>
               <p className="mt-6 text-sm leading-relaxed text-neutral-500">
                 {t.resourcesPage.components.notePrefix}{" "}
-                <span className="rounded-full border border-white/[0.1] bg-white/[0.05] px-3 py-1 font-mono text-xs text-neutral-300">
+                <span className="mt-2 inline-flex max-w-full overflow-x-auto rounded-full border border-white/[0.1] bg-white/[0.05] px-3 py-1 align-middle font-mono text-xs text-neutral-300 sm:mt-0">
                   {t.resourcesPage.components.docPath}
                 </span>
               </p>
@@ -253,7 +252,7 @@ export default function ResourcesPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.04, duration: 0.45, ease: easeSmooth }}
-                  className="group rounded-[24px] border border-white/[0.1] bg-white/[0.04] p-4 transition hover:bg-white/[0.07]"
+                  className="group rounded-[20px] border border-white/[0.1] bg-white/[0.04] p-4 transition hover:bg-white/[0.07] md:rounded-[24px]"
                 >
                   <div className="mb-5 flex items-center justify-between">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.07] text-neutral-400 transition group-hover:text-[#8ea5ff]">

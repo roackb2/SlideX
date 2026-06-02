@@ -1,0 +1,4 @@
+interface:
+  display_name: "SlideX Architecture"
+  short_description: "DDD boundaries for SlideX refactors"
+  default_prompt: "Use $slidex-architecture to refactor or add files in the SlideX project while preserving its DDD layers and boundaries."

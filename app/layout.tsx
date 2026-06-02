@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { I18nProvider } from "@/components/I18nProvider";
-import { defaultLocale, dictionaries } from "@/lib/i18n";
+import { I18nProvider } from "@/common/lib/I18nProvider";
+import { defaultLocale, dictionaries } from "@/common/lib/i18n";
 import "./globals.css";
 
 const defaultMetadata = dictionaries[defaultLocale].metadata;

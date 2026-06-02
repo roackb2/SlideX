@@ -7,12 +7,17 @@
     "dev": "npm run clean && (ulimit -n 1048575 || true) && WATCHPACK_POLLING=true NEXT_DIST_DIR=.next-turbo next dev --turbopack",
     "dev:no-clean": "(ulimit -n 1048575 || true) && WATCHPACK_POLLING=true NEXT_DIST_DIR=.next-turbo next dev --turbopack",
     "dev:reset": "npm run dev",
-    "build": "next build --turbopack",
+    "build": "next build --webpack",
     "build:clean": "npm run clean && npm run build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "icons:tauri": "node scripts/generate-tauri-icons.mjs",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.11.0",
     "framer-motion": "11.18.2",
     "lucide-react": "1.16.0",
     "next": "16.2.6",
@@ -23,11 +28,13 @@
   "devDependencies": {
     "@eslint/eslintrc": "3.3.5",
     "@tailwindcss/postcss": "4.3.0",
+    "@tauri-apps/cli": "^2.11.2",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.6",
+    "eslint-plugin-boundaries": "^6.0.2",
     "postcss": "8.5.14",
     "tailwindcss": "4.3.0",
     "typescript": "5.9.3"

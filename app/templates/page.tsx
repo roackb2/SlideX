@@ -11,12 +11,11 @@ import {
   Play,
   Sparkles
 } from "lucide-react";
-import { useI18n } from "@/components/I18nProvider";
-import { SiteFooter } from "@/components/SiteFooter";
-import { SiteNav } from "@/components/SiteNav";
-import { StyleThumbnail } from "@/components/StyleThumbnail";
-import { localizeTemplates, type Dictionary } from "@/lib/i18n";
-import { motionTemplates, type MotionTemplate } from "@/lib/templates";
+import { useI18n } from "@/common/lib/I18nProvider";
+import { SiteFooter, SiteNav } from "@/common/ui";
+import { StyleThumbnail } from "@/features/marketing";
+import { localizeTemplates, type Dictionary } from "@/common/lib/i18n";
+import { motionTemplates, type MotionTemplate } from "@/core/motion-doc/presets/templates";
 
 const easeSmooth = [0.22, 1, 0.36, 1] as const;
 
@@ -53,9 +52,9 @@ function TemplateCard({
     >
       <Link
         href="/studio"
-        className="group flex h-full flex-col overflow-hidden rounded-[28px] border border-white/[0.1] bg-white/[0.045] transition hover:border-[#8ea5ff]/[0.35] hover:bg-white/[0.07] active:scale-[0.99]"
+        className="group flex h-full flex-col overflow-hidden rounded-[24px] border border-white/[0.1] bg-white/[0.045] transition hover:border-[#8ea5ff]/[0.35] hover:bg-white/[0.07] active:scale-[0.99] md:rounded-[28px]"
       >
-        <div className="relative h-52 overflow-hidden bg-[#0c0f17]">
+        <div className="relative h-44 overflow-hidden bg-[#0c0f17] sm:h-52">
           <StyleThumbnail
             className="h-full w-full transition duration-700 group-hover:scale-[1.03]"
             label={template.category}
@@ -108,7 +107,7 @@ function FeaturedPreset({
       <div className="absolute -inset-6 rounded-[2rem] bg-[radial-gradient(circle_at_72%_12%,rgba(142,165,255,0.18),transparent_44%)] blur-2xl" />
       <Link
         href="/studio"
-        className="group relative block overflow-hidden rounded-[32px] border border-white/[0.12] bg-[#0d1018] shadow-2xl shadow-black/50"
+        className="group relative block overflow-hidden rounded-[24px] border border-white/[0.12] bg-[#0d1018] shadow-2xl shadow-black/50 md:rounded-[32px]"
       >
         <div className="relative aspect-[1.16] min-h-[320px] overflow-hidden sm:min-h-[390px]">
           <StyleThumbnail
@@ -169,7 +168,7 @@ export default function TemplatesPage() {
           <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:72px_72px]" />
         </div>
 
-        <div className="mx-auto grid max-w-7xl gap-8 pb-14 sm:pb-16 md:pb-20 lg:grid-cols-[0.86fr_1.14fr] lg:items-center lg:gap-10">
+        <div className="mx-auto grid max-w-7xl gap-8 pb-14 sm:pb-16 md:pb-20 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:gap-10">
           <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="max-w-2xl">
             <motion.div
               variants={fadeInUp}
@@ -181,14 +180,14 @@ export default function TemplatesPage() {
             <motion.h1
               variants={fadeInUp}
               custom={1}
-              className="text-[2.65rem] font-semibold leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
+              className="text-[2.35rem] font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
             >
               {t.templatesPage.hero.title}
             </motion.h1>
             <motion.p
               variants={fadeInUp}
               custom={2}
-              className="mt-6 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg"
+              className="mt-5 max-w-xl text-[15px] leading-7 text-neutral-400 sm:text-base md:mt-6 md:text-lg"
             >
               {t.templatesPage.hero.body}
             </motion.p>
@@ -237,7 +236,7 @@ export default function TemplatesPage() {
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               {t.templatesPage.gallery.steps.map(([step, label]) => (
-                <div key={step} className="rounded-[24px] border border-white/[0.1] bg-white/[0.04] p-4">
+                <div key={step} className="rounded-[20px] border border-white/[0.1] bg-white/[0.04] p-4 md:rounded-[24px]">
                   <p className="font-mono text-xs text-[#8ea5ff]">{step}</p>
                   <p className="mt-2 text-sm font-medium text-white">{label}</p>
                 </div>
@@ -260,7 +259,7 @@ export default function TemplatesPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: easeSmooth }}
-            className="grid gap-8 rounded-[32px] border border-white/[0.1] bg-[#0d1018] p-6 md:p-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center"
+            className="grid gap-8 rounded-[24px] border border-white/[0.1] bg-[#0d1018] p-5 sm:p-6 md:rounded-[32px] md:p-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center"
           >
             <div>
               <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
@@ -278,7 +277,7 @@ export default function TemplatesPage() {
               {t.templatesPage.startingPoint.items.map(([title, body]) => (
                 <div
                   key={title}
-                  className="grid gap-4 rounded-[24px] border border-white/[0.09] bg-black/20 p-4 sm:grid-cols-[40px_1fr] sm:items-center"
+                  className="grid gap-4 rounded-[20px] border border-white/[0.09] bg-black/20 p-4 sm:grid-cols-[40px_1fr] sm:items-center md:rounded-[24px]"
                 >
                   <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.08] text-[#8ea5ff]">
                     <Check className="h-4 w-4" />

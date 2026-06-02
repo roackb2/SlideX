@@ -11,9 +11,8 @@ import {
   ShieldCheck,
   Sparkles
 } from "lucide-react";
-import { useI18n } from "@/components/I18nProvider";
-import { SiteFooter } from "@/components/SiteFooter";
-import { SiteNav } from "@/components/SiteNav";
+import { useI18n } from "@/common/lib/I18nProvider";
+import { SiteFooter, SiteNav } from "@/common/ui";
 
 const easeSmooth = [0.22, 1, 0.36, 1] as const;
 
@@ -59,14 +58,14 @@ export default function DownloadPage() {
             <motion.h1
               variants={fadeInUp}
               custom={1}
-              className="text-[2.65rem] font-semibold leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
+              className="text-[2.35rem] font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
             >
               {t.downloadPage.hero.title}
             </motion.h1>
             <motion.p
               variants={fadeInUp}
               custom={2}
-              className="mt-6 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg"
+              className="mt-5 max-w-xl text-[15px] leading-7 text-neutral-400 sm:text-base md:mt-6 md:text-lg"
             >
               {t.downloadPage.hero.body}
             </motion.p>
@@ -95,17 +94,17 @@ export default function DownloadPage() {
           >
             <div className="absolute -inset-6 rounded-[2rem] bg-[radial-gradient(circle_at_74%_10%,rgba(142,165,255,0.18),transparent_44%)] blur-2xl" />
             <div className="relative overflow-hidden rounded-[24px] border border-white/[0.12] bg-[#0d1018] p-5 shadow-2xl shadow-black/50 md:rounded-[32px] md:p-7">
-              <div className="mb-6 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
                   <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.08] text-[#8ea5ff]">
                     <Laptop className="h-5 w-5" />
                   </span>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm font-semibold text-white">{t.downloadPage.packageCard.title}</p>
                     <p className="mt-1 text-xs text-neutral-500">{t.downloadPage.packageCard.subtitle}</p>
                   </div>
                 </div>
-                <span className="rounded-full border border-white/[0.1] px-3 py-1 text-xs text-neutral-500">
+                <span className="w-fit rounded-full border border-white/[0.1] px-3 py-1 text-xs text-neutral-500">
                   {t.downloadPage.packageCard.status}
                 </span>
               </div>
@@ -117,8 +116,8 @@ export default function DownloadPage() {
                 </div>
                 <div className="space-y-3">
                   {t.downloadPage.packageCard.items.map((item) => (
-                    <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/[0.06] px-4 py-3 text-sm text-neutral-300">
-                      <Check className="h-4 w-4 text-[#8ea5ff]" />
+                    <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/[0.06] px-4 py-3 text-sm leading-6 text-neutral-300">
+                      <Check className="h-4 w-4 shrink-0 text-[#8ea5ff]" />
                       {item}
                     </div>
                   ))}

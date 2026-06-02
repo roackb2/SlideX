@@ -53,6 +53,60 @@ Open:
 
 For detailed instructions, see [docs/USAGE.zh-TW.md](docs/USAGE.zh-TW.md).
 
+## Mac Desktop App
+
+The project includes a Tauri shell for the offline Mac editor build. The desktop
+app opens the Studio route by default and uses the static Next.js export from
+`out/`.
+
+```bash
+npm run tauri:dev
+npm run tauri:build
+```
+
+Build outputs:
+
+- `.app`: `src-tauri/target/release/bundle/macos/SlideX.app`
+- `.dmg`: `src-tauri/target/release/bundle/dmg/SlideX_0.1.0_aarch64.dmg`
+
+Production builds use `next build --webpack` because the current Next/Turbopack
+build hits a local process/port limitation in this environment.
+
+The Mac app shows a desktop start screen before entering the editor. Native File
+menu actions are wired to the editor:
+
+- New Project
+- Open Project
+- Save
+- Export HTML
+- Export MDX
+
+Saved or opened projects are stored in the desktop recent-project list and are
+shown on the start screen on the next launch.
+
+App and project icons are generated from source SVGs with:
+
+```bash
+npm run icons:tauri
+```
+
+The icon set intentionally does not reuse the website logo. It generates the
+desktop app icon plus a separate `.slidex` project icon.
+
+Local projects are saved as `.slidex` folders:
+
+```text
+My Deck.slidex/
+├── manifest.json
+├── document.mdx
+├── assets/
+└── exports/
+```
+
+The first desktop implementation stores the editable deck source in
+`document.mdx`; `assets/` and `exports/` are reserved for the upcoming local
+asset library and export outputs.
+
 ## What Is Included
 
 - Next.js, React, TypeScript, and Tailwind CSS
