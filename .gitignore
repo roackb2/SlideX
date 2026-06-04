@@ -34,3 +34,6 @@ yarn-error.log*
 
 # DMG installer binaries (hosted on GitHub Releases)
 public/downloads/*.dmg
+
+# local homebrew tap workspace
+homebrew-slidex/

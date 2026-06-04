@@ -38,9 +38,6 @@ const fadeInUp = {
   })
 };
 
-const macDownloadHref = "https://github.com/zz41354899/Animark/releases/tag/v0.1.0";
-const macDownloadFileName = "SlideX_0.1.0_aarch64.dmg";
-
 function InstallGuide({ title, body, command, step1, step2Label }: { title: string; body: string; command: string; step1: string; step2Label: string }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = () => {
@@ -50,21 +47,17 @@ function InstallGuide({ title, body, command, step1, step2Label }: { title: stri
     });
   };
   return (
-    <div className="mt-4 rounded-[24px] border border-amber-500/[0.25] bg-amber-500/[0.06] p-4">
-      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-300">
-        <AlertTriangle className="h-4 w-4" />
+    <div className="mt-4 rounded-[24px] border border-[#8ea5ff]/[0.25] bg-[#8ea5ff]/[0.04] p-4">
+      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
+        <Terminal className="h-4 w-4 text-[#8ea5ff]" />
         {title}
       </div>
       <p className="mb-4 text-sm leading-relaxed text-neutral-400">{body}</p>
 
       <div className="space-y-3">
-        <div className="flex items-start gap-3 rounded-2xl bg-white/[0.05] px-4 py-3">
-          <MousePointerClick className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-          <div className="text-sm leading-6 text-neutral-300">{step1}</div>
-        </div>
-        <div className="rounded-2xl bg-white/[0.05] px-4 py-3">
+        <div className="rounded-2xl bg-white/[0.04] px-4 py-3">
           <div className="mb-2 flex items-center gap-2">
-            <Terminal className="h-4 w-4 shrink-0 text-amber-400" />
+            <Terminal className="h-4 w-4 shrink-0 text-[#8ea5ff]" />
             <span className="text-sm font-medium text-white">{step2Label}</span>
           </div>
           <div className="flex items-center gap-2 rounded-xl bg-black/40 px-3 py-2">
@@ -79,6 +72,11 @@ function InstallGuide({ title, body, command, step1, step2Label }: { title: stri
             </button>
           </div>
         </div>
+
+        <div className="flex items-start gap-3 rounded-2xl bg-white/[0.04] px-4 py-3">
+          <MousePointerClick className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400" />
+          <div className="text-sm leading-6 text-neutral-400">{step1}</div>
+        </div>
       </div>
     </div>
   );
@@ -86,6 +84,14 @@ function InstallGuide({ title, body, command, step1, step2Label }: { title: stri
 
 export default function DownloadPage() {
   const { t } = useI18n();
+  const [heroCopied, setHeroCopied] = useState(false);
+
+  const handleCopyHero = () => {
+    navigator.clipboard.writeText(t.downloadPage.packageCard.installCommand).then(() => {
+      setHeroCopied(true);
+      setTimeout(() => setHeroCopied(false), 2000);
+    });
+  };
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#080a0f] text-neutral-200">
@@ -121,15 +127,23 @@ export default function DownloadPage() {
               {t.downloadPage.hero.body}
             </motion.p>
             <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <a
-                href={macDownloadHref}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={handleCopyHero}
                 className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
               >
-                <Download className="h-4 w-4" />
-                {t.downloadPage.hero.primary}
-              </a>
+                {heroCopied ? (
+                  <>
+                    <Check className="h-4 w-4 text-emerald-600" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Terminal className="h-4 w-4 text-[#8ea5ff]" />
+                    {t.downloadPage.hero.primary}
+                  </>
+                )}
+              </button>
               <Link
                 href="/studio"
                 className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95 sm:w-auto"

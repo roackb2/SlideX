@@ -469,33 +469,33 @@ export const enDictionary = {
     },
     downloadPage: {
       hero: {
-        eyebrow: "Tauri Beta 0.1.0",
-        title: "SlideX for Mac Beta is ready to share.",
-        body: "The first Tauri desktop beta is now packaged as a DMG for early users. This build focuses on the native Mac shell, Web Studio scene compatibility, and the foundation for future export workflows.",
-        primary: "Download Mac Beta 0.1.0",
+        eyebrow: "Homebrew Cask",
+        title: "SlideX for Mac is ready to install.",
+        body: "The first Tauri desktop beta is now distributed via Homebrew Cask for macOS. This allows safe, seamless installation by automatically bypassing macOS Gatekeeper and security settings.",
+        primary: "Copy Homebrew Command",
         secondary: "Open Web Studio"
       },
       packageCard: {
         title: "macOS app",
         subtitle: "Tauri desktop build",
         status: "Available now",
-        heading: "First DMG",
+        heading: "Homebrew Cask Package",
         fileMeta: [
-          ["File", "SlideX_0.1.0_aarch64.dmg"],
+          ["Source", "Homebrew Tap"],
           ["Platform", "macOS Apple Silicon"],
-          ["Size", "8.4 MB"]
+          ["Cask Name", "slidex"]
         ],
-        items: ["Tauri desktop Beta 0.1.0", "Public DMG installer", "Same MDX scene model as Web Studio", "2026.06.04 beta release notes"],
-        localTitle: "First Tauri update",
-        localBody: "This release brings the Mac desktop experience, project-opening flow, and Studio preview into a beta version the team can test from the same DMG while collecting early feedback.",
-        installTitle: "macOS security note",
-        installBody: "This beta is not yet Apple-notarized. After installing, right-click the app and choose \"Open\", or run the terminal command below to allow it.",
-        installCommand: "xattr -cr /Applications/SlideX.app",
-        installStep1: "Right-click (ctrl+click) SlideX.app → Open → Click \"Open\"",
-        installStep2Label: "Terminal command"
+        items: ["Tauri desktop Beta 0.1.0", "Automated Gatekeeper security bypass", "Same MDX scene model as Web Studio", "2026.06.04 beta release notes"],
+        localTitle: "Homebrew Distribution",
+        localBody: "This release brings the Mac desktop experience, project-opening flow, and Studio preview into an easily installable Homebrew Cask that is updated directly from GitHub Releases.",
+        installTitle: "Installation Guide",
+        installBody: "To install, copy the command below and execute it in your Mac Terminal application:",
+        installCommand: "brew install --cask zz41354899/slidex/slidex",
+        installStep1: "Once the installation completes, you can open SlideX directly from your Applications folder or launchpad.",
+        installStep2Label: "Run Cask Command"
       },
       stats: [
-        ["Tauri Beta 0.1.0", "The first Mac beta DMG ready to share today."],
+        ["Homebrew Tap", "The official Cask tap for SlideX, bypassing security warnings seamlessly."],
         ["Mac projects", "A foundation for desktop files and private presentation workflows."],
         ["Web Studio compatible", "Uses the same MDX scene model before export and playback workflows land."]
       ],

@@ -44,6 +44,16 @@ npm run lint
 
 SlideX 內建 Tauri desktop shell。桌面版預設開啟 `/studio/`，使用 Next static output。
 
+### 安裝方式 (macOS)
+
+推薦使用 Homebrew 安裝（自動處理 Gatekeeper 安全性限制，安裝後可直接開啟）：
+
+```bash
+brew install --cask zz41354899/slidex/slidex
+```
+
+### 開發與建置
+
 ```bash
 npm run tauri:dev
 npm run tauri:build
