@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Copy } from "lucide-react";
+import CodeMirror from "@uiw/react-codemirror";
+import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import { javascript } from "@codemirror/lang-javascript";
+import { html } from "@codemirror/lang-html";
+import { bracketMatching } from "@codemirror/language";
+import { EditorView, highlightActiveLine, highlightActiveLineGutter, keymap } from "@codemirror/view";
+import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
+import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
 import { snippetTemplates } from "@/core/motion-doc/presets/templates";
-
-type CodeCursor = {
-  line: number;
-  column: number;
-};
-
-type CodeScroll = {
-  left: number;
-  top: number;
-};
+import { slidexDarkTheme, slidexHighlight } from "@/features/studio/ui/editor/codeMirrorTheme";
 
 export function MdxEditorPane({
   source,
@@ -21,10 +21,6 @@ export function MdxEditorPane({
   onSelectionSourceChange,
   sceneCount,
   selectionLabel,
-  codeScroll,
-  setCodeScroll,
-  codeCursor,
-  updateCodeCursor,
   copySource,
   insertSnippet
 }: {
@@ -34,25 +30,95 @@ export function MdxEditorPane({
   onSelectionSourceChange: (value: string) => void;
   sceneCount: number;
   selectionLabel: string;
-  codeScroll: CodeScroll;
-  setCodeScroll: (value: CodeScroll) => void;
-  codeCursor: CodeCursor;
-  updateCodeCursor: (selectionStart: number, cursorSource?: string) => void;
   copySource: () => Promise<void>;
   insertSnippet: (code: string) => void;
 }) {
   const [editorScope, setEditorScope] = useState<"selection" | "deck">("selection");
   const [localSource, setLocalSource] = useState("");
-  const [hasSelectionDraft, setHasSelectionDraft] = useState(false);
+  const [cursorInfo, setCursorInfo] = useState({ line: 1, column: 1 });
+  const editorViewRef = useRef<EditorView | null>(null);
 
   useEffect(() => {
-    setLocalSource(editorScope === "selection" ? selectionSource : source);
-    setHasSelectionDraft(false);
-    updateCodeCursor(0, editorScope === "selection" ? selectionSource : source);
-  }, [editorScope, selectionLabel, source, selectionSource, updateCodeCursor]);
+    const next = editorScope === "selection" ? selectionSource : source;
+    setLocalSource(next);
+    setCursorInfo({ line: 1, column: 1 });
+  }, [editorScope, selectionLabel, source, selectionSource]);
 
-  const activeLineNumbers = useMemo(() => localSource.split("\n").map((_, index) => index + 1), [localSource]);
-  const canApplySelection = editorScope === "selection" && hasSelectionDraft;
+  const lineCount = useMemo(() => localSource.split("\n").length, [localSource]);
+
+  const extensions = useMemo(
+    () => [
+      markdown({
+        base: markdownLanguage,
+        codeLanguages: [],
+        extensions: []
+      }),
+      javascript({ jsx: true }),
+      html(),
+      EditorView.lineWrapping,
+      bracketMatching(),
+      closeBrackets(),
+      highlightActiveLine(),
+      highlightActiveLineGutter(),
+      highlightSelectionMatches(),
+      history(),
+      keymap.of([
+        ...defaultKeymap,
+        ...historyKeymap,
+        ...closeBracketsKeymap,
+        ...searchKeymap,
+        indentWithTab
+      ]),
+      slidexDarkTheme,
+      slidexHighlight
+    ],
+    []
+  );
+
+  const handleChange = useCallback(
+    (value: string) => {
+      setLocalSource(value);
+      if (editorScope === "selection") {
+        onSelectionSourceChange(value);
+      } else {
+        onSourceChange(value);
+      }
+    },
+    [editorScope, onSourceChange, onSelectionSourceChange]
+  );
+
+  const handleEditorUpdate = useCallback((viewUpdate: { state: { selection: { main: { head: number } }; doc: { lineAt: (pos: number) => { number: number; from: number } } } }) => {
+    const pos = viewUpdate.state.selection.main.head;
+    const line = viewUpdate.state.doc.lineAt(pos);
+    setCursorInfo({
+      line: line.number,
+      column: pos - line.from + 1
+    });
+  }, []);
+
+  const handleInsertSnippet = useCallback(
+    (code: string) => {
+      if (editorScope === "selection") {
+        const updated = `${localSource.trimEnd()}\n\n${code}`;
+        setLocalSource(updated);
+        onSelectionSourceChange(updated);
+      } else {
+        insertSnippet(code);
+      }
+
+      // Also insert at cursor if we have a view reference (deck mode)
+      if (editorScope === "deck" && editorViewRef.current) {
+        const view = editorViewRef.current;
+        const pos = view.state.selection.main.head;
+        const insert = `\n\n${code}`;
+        view.dispatch({
+          changes: { from: pos, insert },
+          selection: { anchor: pos + insert.length }
+        });
+      }
+    },
+    [editorScope, insertSnippet]
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -61,7 +127,7 @@ export function MdxEditorPane({
           <span className="rounded-md border border-neutral-800 bg-black px-2 py-1 font-mono text-[10px] uppercase tracking-wide text-neutral-400">
             {editorScope === "selection" ? selectionLabel : "deck.mdx"}
           </span>
-          <span className="text-[10px] text-neutral-400">{activeLineNumbers.length} lines</span>
+          <span className="text-[10px] text-neutral-400">{lineCount} lines</span>
           <span className="text-[10px] text-neutral-400">/</span>
           <span className="text-[10px] text-neutral-400">{sceneCount} scenes</span>
         </div>
@@ -84,34 +150,13 @@ export function MdxEditorPane({
                   : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200"
               }`}
               key={scope}
-              onClick={() => {
-                setEditorScope(scope);
-                setCodeScroll({ left: 0, top: 0 });
-              }}
+              onClick={() => setEditorScope(scope)}
               type="button"
             >
               {scope === "selection" ? "Selection" : "Deck"}
             </button>
           ))}
         </div>
-        {editorScope === "selection" ? (
-          <button
-            className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[10px] font-medium transition-colors ${
-              canApplySelection
-                ? "border-neutral-600 bg-neutral-100 text-black hover:bg-white"
-                : "border-neutral-800 text-neutral-400"
-            }`}
-            disabled={!canApplySelection}
-            onClick={() => {
-              onSelectionSourceChange(localSource);
-              setHasSelectionDraft(false);
-            }}
-            type="button"
-          >
-            <Check size={11} />
-            Apply
-          </button>
-        ) : null}
       </div>
       <div className="border-b border-neutral-800 bg-[#0a0a0a] px-2 py-2">
         <div className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-400">Insert Blocks</div>
@@ -120,14 +165,7 @@ export function MdxEditorPane({
             <button
               className="rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[10px] font-medium text-neutral-400 transition-all hover:bg-neutral-900 hover:text-white"
               key={snippet.id}
-              onClick={() => {
-                if (editorScope === "selection") {
-                  setLocalSource((current) => `${current.trimEnd()}\n\n${snippet.code}`);
-                  setHasSelectionDraft(true);
-                } else {
-                  insertSnippet(snippet.code);
-                }
-              }}
+              onClick={() => handleInsertSnippet(snippet.code)}
               type="button"
             >
               + {snippet.label}
@@ -136,64 +174,24 @@ export function MdxEditorPane({
         </div>
       </div>
       <div className="relative flex-1 overflow-hidden bg-[#050505]">
-        <div
-          className="pointer-events-none absolute left-11 right-0 z-0 border-y border-sky-500/10 bg-sky-500/6"
-          style={{
-            height: 28,
-            top: 16 + (codeCursor.line - 1) * 28 - codeScroll.top
+        <CodeMirror
+          basicSetup={false}
+          extensions={extensions}
+          height="100%"
+          onChange={handleChange}
+          onCreateEditor={(view) => {
+            editorViewRef.current = view;
           }}
-        />
-        <div className="pointer-events-none absolute bottom-0 left-0 top-0 w-11 border-r border-neutral-900 bg-[#080808]">
-          <div
-            className="py-4 font-mono text-[11px] leading-7 text-neutral-500"
-            style={{ transform: `translateY(-${codeScroll.top}px)` }}
-          >
-            {activeLineNumbers.map((line) => (
-              <div className={`h-7 pr-3 text-right ${codeCursor.line === line ? "text-neutral-400" : ""}`} key={line}>
-                {line}
-              </div>
-            ))}
-          </div>
-        </div>
-        <textarea
-          aria-label="MDX Code Editor"
-          className="absolute inset-0 resize-none bg-[#050505] py-4 pl-14 pr-5 font-mono text-[12px] leading-7 text-neutral-200 caret-white outline-none selection:bg-sky-500/30 focus:ring-1 focus:ring-inset focus:ring-neutral-700 custom-scrollbar"
-          onChange={(event) => {
-            const newValue = event.target.value;
-            setLocalSource(newValue);
-            if (editorScope === "selection") {
-              setHasSelectionDraft(true);
-            } else {
-              onSourceChange(newValue);
-            }
-            updateCodeCursor(event.currentTarget.selectionStart, newValue);
-          }}
-          onClick={(event) => updateCodeCursor(event.currentTarget.selectionStart, localSource)}
-          onKeyUp={(event) => updateCodeCursor(event.currentTarget.selectionStart, localSource)}
-          onScroll={(event) =>
-            setCodeScroll({
-              left: event.currentTarget.scrollLeft,
-              top: event.currentTarget.scrollTop
-            })
-          }
-          onSelect={(event) => updateCodeCursor(event.currentTarget.selectionStart, localSource)}
-          spellCheck={false}
+          onUpdate={handleEditorUpdate}
+          style={{ height: "100%", overflow: "auto" }}
+          theme="none"
           value={localSource}
         />
       </div>
       <div className="flex items-center justify-between border-t border-neutral-800 bg-[#0a0a0a] px-3 py-2 font-mono text-[10px] text-neutral-400">
-        <span>Ln {codeCursor.line}, Col {codeCursor.column}</span>
+        <span>Ln {cursorInfo.line}, Col {cursorInfo.column}</span>
         <span>{editorScope === "selection" ? "Selection MDX" : "Full MDX"}</span>
       </div>
     </div>
   );
-}
-
-export function getCodeCursor(source: string, selectionStart: number) {
-  const textBeforeCursor = source.slice(0, selectionStart);
-  const lines = textBeforeCursor.split("\n");
-  const line = lines.length;
-  const column = (lines.at(-1)?.length ?? 0) + 1;
-
-  return { line, column };
 }

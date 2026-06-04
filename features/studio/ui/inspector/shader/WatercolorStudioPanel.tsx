@@ -109,65 +109,82 @@ export function WatercolorStudioPanel({
         </div>
       </Field>
 
-      <div className="p-3.5 rounded-2xl border border-white/[0.04] bg-white/[0.015] backdrop-blur-md flex flex-col gap-3">
-        <div className="flex items-center justify-between border-b border-white/[0.04] pb-1.5">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-            <Palette size={11} className="text-[#8ea5ff]" />
-            Curated Pigments
-          </span>
-          <span className="text-[8px] font-mono text-neutral-500 uppercase tracking-widest">One-Click Apply</span>
-        </div>
+      <div className="p-1.5 rounded-[1.25rem] border border-white/[0.03] bg-[#0A0A0C]/50 shadow-[0_4px_24px_rgba(0,0,0,0.15)] backdrop-blur-xl">
+        <div className="rounded-[1rem] border border-white/[0.03] bg-black/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden">
+          <div className="flex items-center justify-between border-b border-white/[0.03] px-3.5 py-3 bg-white/[0.01]">
+            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-400 flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#8ea5ff]/10 text-[#8ea5ff] border border-[#8ea5ff]/20 shadow-[0_0_10px_rgba(142,165,255,0.1)]">
+                <Palette size={10} />
+              </span>
+              Curated Pigments
+            </span>
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[9px] font-mono tracking-wider text-neutral-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+              PRESET
+            </span>
+          </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          {watercolorPalettes.map((palette) => (
-            <button
-              className="flex items-center justify-between rounded-xl border border-white/[0.05] bg-black/30 p-2 hover:border-white/[0.12] hover:bg-neutral-900/60 transition-all text-left group cursor-pointer active:scale-98"
-              key={palette.name}
-              onClick={() => {
-                updateActiveSlideStyle({
-                  shaderColor1: palette.colors[0],
-                  shaderColor2: palette.colors[1],
-                  shaderColor3: palette.colors[2]
-                });
-              }}
-              type="button"
-            >
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[9px] font-bold text-neutral-200 group-hover:text-white truncate">
-                  {palette.name}
-                </span>
-                <span className="text-[7.5px] text-neutral-500 font-medium">{palette.label}</span>
-              </div>
-              <div className="flex -space-x-1.5 shrink-0 ml-2">
-                {palette.colors.map((color) => (
-                  <span
-                    className="h-4.5 w-4.5 rounded-full border border-black/40 shadow-md"
-                    key={color}
-                    style={{ background: color }}
-                  />
-                ))}
-              </div>
-            </button>
-          ))}
+          <div className="p-3.5">
+
+            <div className="grid grid-cols-2 gap-2">
+              {watercolorPalettes.map((palette) => (
+                <button
+                  className="flex items-center justify-between rounded-[1rem] border border-white/[0.03] bg-white/[0.015] p-2 hover:border-white/[0.08] hover:bg-white/[0.03] hover:shadow-[0_4px_12px_rgba(0,0,0,0.2)] transition-all duration-300 text-left group cursor-pointer active:scale-95"
+                  key={palette.name}
+                  onClick={() => {
+                    updateActiveSlideStyle({
+                      shaderColor1: palette.colors[0],
+                      shaderColor2: palette.colors[1],
+                      shaderColor3: palette.colors[2]
+                    });
+                  }}
+                  type="button"
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9.5px] font-bold text-neutral-300 group-hover:text-white truncate">
+                      {palette.name}
+                    </span>
+                    <span className="text-[7.5px] text-neutral-500 font-medium">{palette.label}</span>
+                  </div>
+                  <div className="flex -space-x-1.5 shrink-0 ml-2">
+                    {palette.colors.map((color) => (
+                      <span
+                        className="h-4.5 w-4.5 rounded-full border border-black/40 shadow-[0_2px_4px_rgba(0,0,0,0.3)] transition-transform duration-300 group-hover:scale-110"
+                        key={color}
+                        style={{ background: color }}
+                      />
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="p-3.5 rounded-2xl border border-white/[0.04] bg-white/[0.015] backdrop-blur-md flex flex-col gap-3">
-        <div className="flex items-center justify-between border-b border-white/[0.04] pb-1.5">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-            <Sliders size={11} className="text-[#8ea5ff]" />
-            Spectrum Tuning
-          </span>
-          <span className="text-[8px] font-mono text-neutral-500 uppercase tracking-widest">Manual Override</span>
+      <div className="p-1.5 rounded-[1.25rem] border border-white/[0.03] bg-[#0A0A0C]/50 shadow-[0_4px_24px_rgba(0,0,0,0.15)] backdrop-blur-xl">
+        <div className="rounded-[1rem] border border-white/[0.03] bg-black/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden">
+          <div className="flex items-center justify-between border-b border-white/[0.03] px-3.5 py-3 bg-white/[0.01]">
+            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-400 flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#8ea5ff]/10 text-[#8ea5ff] border border-[#8ea5ff]/20 shadow-[0_0_10px_rgba(142,165,255,0.1)]">
+                <Sliders size={10} />
+              </span>
+              Spectrum Tuning
+            </span>
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[9px] font-mono tracking-wider text-neutral-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+              MANUAL
+            </span>
+          </div>
+          <div className="p-3.5">
+            <WatercolorColorInputs
+              accent={accent}
+              background={background}
+              shaderColor1={shaderColor1}
+              shaderColor2={shaderColor2}
+              shaderColor3={shaderColor3}
+              updateActiveSlideStyle={updateActiveSlideStyle}
+            />
+          </div>
         </div>
-        <WatercolorColorInputs
-          accent={accent}
-          background={background}
-          shaderColor1={shaderColor1}
-          shaderColor2={shaderColor2}
-          shaderColor3={shaderColor3}
-          updateActiveSlideStyle={updateActiveSlideStyle}
-        />
       </div>
 
       <div className="grid grid-cols-1 gap-2.5">

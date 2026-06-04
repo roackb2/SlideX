@@ -1,4 +1,3 @@
-import { defaultTemplate } from "@/core/motion-doc/presets/templates";
-import { materializeFreeformSource } from "@/core/motion-doc/application/motionDocFreeform";
+import { blankDocumentMdx } from "@/core/motion-doc/presets/themeGallery";
 
-export const defaultMdx = materializeFreeformSource(defaultTemplate.source);
+export const defaultMdx = blankDocumentMdx;

@@ -23,6 +23,7 @@ type WorkspaceInspectorPanelProps = Pick<
   | "activeSlideShaderColor2"
   | "activeSlideShaderColor3"
   | "activeSlideShaderDetail"
+  | "activeSlideShaderEngine"
   | "activeSlideShaderIntensity"
   | "activeSlideShaderScale"
   | "activeSlideShaderSoftness"
@@ -101,6 +102,7 @@ function StudioInspectorContent({
   activeSlideShaderColor2,
   activeSlideShaderColor3,
   activeSlideShaderDetail,
+  activeSlideShaderEngine,
   activeSlideShaderIntensity,
   activeSlideShaderScale,
   activeSlideShaderSoftness,
@@ -140,6 +142,7 @@ function StudioInspectorContent({
       activeSlideShaderColor2={activeSlideShaderColor2}
       activeSlideShaderColor3={activeSlideShaderColor3}
       activeSlideShaderDetail={activeSlideShaderDetail}
+      activeSlideShaderEngine={activeSlideShaderEngine}
       activeSlideShaderIntensity={activeSlideShaderIntensity}
       activeSlideShaderScale={activeSlideShaderScale}
       activeSlideShaderSoftness={activeSlideShaderSoftness}

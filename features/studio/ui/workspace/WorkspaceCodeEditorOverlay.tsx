@@ -6,26 +6,20 @@ import type { StudioWorkspaceProps } from "@/features/studio/ui/workspace/Studio
 
 type WorkspaceCodeEditorOverlayProps = Pick<
   StudioWorkspaceProps,
-  | "codeCursor"
-  | "codeScroll"
   | "commitMdxSource"
   | "copySource"
   | "insertSnippet"
   | "isCodeEditorOpen"
   | "pushUndoSnapshot"
   | "selectionMdx"
-  | "setCodeScroll"
   | "setIsCodeEditorOpen"
   | "source"
-  | "updateCodeCursor"
   | "updateSelectionMdx"
 > & {
   sceneCount: number;
 };
 
 export function WorkspaceCodeEditorOverlay({
-  codeCursor,
-  codeScroll,
   commitMdxSource,
   copySource,
   insertSnippet,
@@ -33,10 +27,8 @@ export function WorkspaceCodeEditorOverlay({
   pushUndoSnapshot,
   sceneCount,
   selectionMdx,
-  setCodeScroll,
   setIsCodeEditorOpen,
   source,
-  updateCodeCursor,
   updateSelectionMdx
 }: WorkspaceCodeEditorOverlayProps) {
   if (!isCodeEditorOpen) {
@@ -64,8 +56,6 @@ export function WorkspaceCodeEditorOverlay({
           </button>
         </div>
         <MdxEditorPane
-          codeCursor={codeCursor}
-          codeScroll={codeScroll}
           copySource={copySource}
           insertSnippet={insertSnippet}
           onSelectionSourceChange={updateSelectionMdx}
@@ -76,9 +66,7 @@ export function WorkspaceCodeEditorOverlay({
           sceneCount={sceneCount}
           selectionLabel={selectionMdx.label}
           selectionSource={selectionMdx.source}
-          setCodeScroll={setCodeScroll}
           source={source}
-          updateCodeCursor={updateCodeCursor}
         />
       </div>
     </div>

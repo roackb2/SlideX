@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DesktopWelcome } from "@/features/studio/ui/DesktopWelcome";
-import { getCodeCursor } from "@/features/studio/ui/MdxEditorPane";
+
 import { StudioWorkspace } from "@/features/studio/ui/StudioWorkspace";
 import { defaultMdx } from "@/core/motion-doc/presets/defaultMdx";
 import { getSelectionMdx } from "@/core/motion-doc/application/motionDocSerialize";
@@ -10,7 +10,7 @@ import { useLayerSelection } from "@/features/studio/ui/hooks/useLayerSelection"
 import { useMotionDocDocument } from "@/features/studio/ui/hooks/useMotionDocDocument";
 import { useStudioCommands } from "@/features/studio/ui/hooks/useStudioCommands";
 import { useStudioExport } from "@/features/studio/ui/hooks/useStudioExport";
-import { useStudioProject } from "@/features/studio/ui/hooks/useStudioProject";
+import { useStudioProject, type NewStudioProjectOptions } from "@/features/studio/ui/hooks/useStudioProject";
 import { useStudioShortcuts } from "@/features/studio/ui/hooks/useStudioShortcuts";
 import { useStudioUndo } from "@/features/studio/ui/hooks/useStudioUndo";
 import { defaultTemplate } from "@/core/motion-doc/presets/templates";
@@ -27,8 +27,6 @@ export function MotionDocApp() {
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [isCanvasGridVisible, setIsCanvasGridVisible] = useState(false);
-  const [codeScroll, setCodeScroll] = useState({ left: 0, top: 0 });
-  const [codeCursor, setCodeCursor] = useState({ line: 1, column: 1 });
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
   const undoStackRef = useRef<string[]>([]);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -53,6 +51,7 @@ export function MotionDocApp() {
     activeSlideShaderColor2,
     activeSlideShaderColor3,
     activeSlideShaderDetail,
+    activeSlideShaderEngine,
     activeSlideShaderIntensity,
     activeSlideShaderScale,
     activeSlideShaderSoftness,
@@ -164,6 +163,14 @@ export function MotionDocApp() {
     return () => window.removeEventListener("mousedown", handlePointerDown);
   }, [isExportMenuOpen]);
 
+  const startNewProject = useCallback(
+    (options?: NewStudioProjectOptions) => {
+      setSelectedTemplateId(options?.templateId ?? defaultTemplate.id);
+      newProject(options);
+    },
+    [newProject]
+  );
+
   useStudioShortcuts({
     activeSlideIndex,
     closeCodeEditor: () => setIsCodeEditorOpen(false),
@@ -184,7 +191,7 @@ export function MotionDocApp() {
     isMobileSidebarOpen,
     isTauri,
     isTemplateModalOpen,
-    newProject,
+    newProject: startNewProject,
     nudgeSelectedBlocks: studioCommands.nudgeSelectedBlocks,
     openProject,
     pasteCopiedBlock: studioCommands.pasteCopiedBlock,
@@ -194,13 +201,6 @@ export function MotionDocApp() {
     undoLastChange
   });
 
-  const updateCodeCursor = useCallback(
-    (selectionStart: number, cursorSource = source) => {
-      setCodeCursor(getCodeCursor(cursorSource, selectionStart));
-    },
-    [source]
-  );
-
   if (!isRuntimeChecked) {
     return <main className="h-screen bg-[#0f1017]" />;
   }
@@ -208,7 +208,7 @@ export function MotionDocApp() {
   if (isTauri && !hasEnteredStudio) {
     return (
       <DesktopWelcome
-        newProject={newProject}
+        newProject={startNewProject}
         openProject={openProject}
         openRecentProject={openRecentProject}
         recentProjects={recentProjects}
@@ -237,6 +237,7 @@ export function MotionDocApp() {
       activeSlideShaderColor2={activeSlideShaderColor2}
       activeSlideShaderColor3={activeSlideShaderColor3}
       activeSlideShaderDetail={activeSlideShaderDetail}
+      activeSlideShaderEngine={activeSlideShaderEngine}
       activeSlideShaderIntensity={activeSlideShaderIntensity}
       activeSlideShaderScale={activeSlideShaderScale}
       activeSlideShaderSoftness={activeSlideShaderSoftness}
@@ -250,8 +251,6 @@ export function MotionDocApp() {
       beginBlockTransform={studioCommands.beginBlockTransform}
       canvasSource={canvasSource}
       clearBlockSelection={clearBlockSelection}
-      codeCursor={codeCursor}
-      codeScroll={codeScroll}
       commitMdxSource={(value) => {
         setSource(value);
         markProjectDirty();
@@ -276,7 +275,7 @@ export function MotionDocApp() {
       isTauri={isTauri}
       isTemplateModalOpen={isTemplateModalOpen}
       moveBlock={studioCommands.moveBlock}
-      newProject={newProject}
+      newProject={startNewProject}
       notice={notice}
       openProject={openProject}
       projectName={projectName}
@@ -294,7 +293,6 @@ export function MotionDocApp() {
       selectionMdx={selectionMdx}
       selectSingleBlock={selectSingleBlock}
       setActiveSlideIndex={setActiveSlideIndex}
-      setCodeScroll={setCodeScroll}
       setDraggedBlockIndex={setDraggedBlockIndex}
       setDragOverBlockIndex={setDragOverBlockIndex}
       setIsCanvasGridVisible={setIsCanvasGridVisible}
@@ -312,7 +310,6 @@ export function MotionDocApp() {
       updateAllSlidesStyle={studioCommands.updateAllSlidesStyle}
       updateBlock={studioCommands.updateBlock}
       updateBlockGroupFlow={studioCommands.updateBlockGroupFlow}
-      updateCodeCursor={updateCodeCursor}
       updatePositionedBlockFrames={studioCommands.updatePositionedBlockFrames}
       updateSelectionMdx={studioCommands.updateSelectionMdx}
       uploadImageForBlock={studioCommands.uploadImageForBlock}

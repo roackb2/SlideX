@@ -74,6 +74,7 @@ export function PreviewPane({
         shaderColor2={stringProp(activeSlide.props.shaderColor2)}
         shaderColor3={stringProp(activeSlide.props.shaderColor3)}
         shaderDetail={numberProp(activeSlide.props.shaderDetail)}
+        shaderEngine={stringProp(activeSlide.props.shaderEngine)}
         shaderIntensity={numberProp(activeSlide.props.shaderIntensity)}
         shaderScale={numberProp(activeSlide.props.shaderScale)}
         shaderSoftness={numberProp(activeSlide.props.shaderSoftness)}

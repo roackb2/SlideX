@@ -75,11 +75,11 @@ export function LayerSidebar({
   }
 
   return (
-    <div id="sidebar-v4" className="flex w-[265px] shrink-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c0e18]/60 backdrop-blur-xl shadow-2xl m-3 mr-1.5 shadow-black/50 select-none animate-[bubble-appear_0.2s_ease-out]">
+    <div id="sidebar-v4" className="premium-glass-panel flex w-[265px] shrink-0 flex-col overflow-hidden rounded-2xl m-3 mr-1.5 shadow-black/80 select-none animate-[bubble-appear_0.2s_ease-out]">
       {/* Sidebar Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-white/[0.04] px-4 py-3.5">
-        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-400">Layers</span>
-        <span className="font-mono text-[9px] font-bold text-neutral-500 uppercase tracking-widest bg-white/[0.03] px-2 py-0.5 rounded-full border border-white/[0.04]">
+      <div className="flex shrink-0 items-center justify-between border-b border-white/[0.04] px-4 py-3.5 bg-white/[0.01]">
+        <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-neutral-400">Layers</span>
+        <span className="font-mono text-[9px] font-bold text-neutral-500 uppercase tracking-widest bg-white/[0.03] px-2.5 py-0.5 rounded-full border border-white/[0.04]">
           {scenes.length} scenes
         </span>
       </div>
@@ -89,10 +89,10 @@ export function LayerSidebar({
           
           {/* New Slide Button */}
           <button
-            className={`mb-4.5 flex items-center justify-between rounded-xl border p-3 text-left transition-all duration-200 cursor-pointer ${
+            className={`mb-4.5 flex items-center justify-between rounded-xl border p-3 text-left transition-all duration-300 cursor-pointer hover:shadow-lg active:scale-[0.98] ${
               isTemplateModalOpen
-                ? "border-white/[0.14] bg-white/[0.04] text-white"
-                : "border-white/[0.06] bg-white/[0.015] text-neutral-300 hover:border-white/[0.12] hover:bg-white/[0.03]"
+                ? "border-white/[0.16] bg-white/[0.08] text-white shadow-inner"
+                : "border-white/[0.06] bg-white/[0.02] text-neutral-300 hover:border-white/[0.15] hover:bg-white/[0.05] hover:text-white"
             }`}
             onClick={onOpenTemplates}
             type="button"
@@ -111,8 +111,8 @@ export function LayerSidebar({
 
           {/* Section Indicator */}
           <div className="mb-2 flex items-center justify-between px-1.5">
-            <span className="text-[9.5px] font-bold uppercase tracking-[0.16em] text-neutral-600">Scenes</span>
-            <span className="font-mono text-[9px] font-bold text-neutral-600">{scenes.length}</span>
+            <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-neutral-500">Scenes</span>
+            <span className="font-mono text-[9px] font-bold text-neutral-500">{scenes.length}</span>
           </div>
 
           {/* Slides List Grid */}
@@ -126,10 +126,10 @@ export function LayerSidebar({
                   
                   {/* Scene Row item */}
                   <div
-                    className={`group/item flex cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 transition-all duration-200 ${
+                    className={`group/item flex cursor-pointer items-center justify-between rounded-lg px-2.5 py-2.5 transition-all duration-300 active:scale-[0.98] relative ${
                       isActive
-                        ? "bg-white/[0.06] text-white shadow-sm ring-1 ring-white/10"
-                        : "text-neutral-400 hover:bg-white/[0.02] hover:text-neutral-200"
+                        ? "bg-gradient-to-r from-[#8ea5ff]/12 via-[#8ea5ff]/4 to-transparent text-white border-l-2 border-[#8ea5ff] pl-2 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)]"
+                        : "text-neutral-400 hover:bg-white/[0.03] hover:text-neutral-200 border-l-2 border-transparent pl-2"
                     }`}
                     onClick={() => onSelectSlide(slide.index)}
                   >
