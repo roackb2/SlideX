@@ -149,7 +149,7 @@ export default async function OpenGraphImage() {
             </div>
 
             {/* Description */}
-            <div style={{ fontSize: "18px", lineHeight: "1.45", color: "#9aa3b2", fontWeight: 400 }}>
+            <div style={{ display: "flex", fontSize: "18px", lineHeight: "1.45", color: "#9aa3b2", fontWeight: 400 }}>
               Compose cinematic presentation scenes with MDX. Fine-tune timings on an interactive timeline, and export editable slides or high-quality video.
             </div>
           </div>
@@ -172,11 +172,11 @@ export default async function OpenGraphImage() {
               >
                 Mac Beta 0.1.0
               </div>
-              <div style={{ fontSize: "13px", color: "#7f8795", fontWeight: 500 }}>
+              <div style={{ display: "flex", fontSize: "13px", color: "#7f8795", fontWeight: 500 }}>
                 Apple Silicon build available
               </div>
             </div>
-            <div style={{ fontSize: "13px", color: "#4f5666", fontFamily: "JetBrains Mono" }}>
+            <div style={{ display: "flex", fontSize: "13px", color: "#4f5666", fontFamily: "JetBrains Mono" }}>
               slide-x-psi.vercel.app
             </div>
           </div>
@@ -249,7 +249,7 @@ export default async function OpenGraphImage() {
                   <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#8ea5ff" }} />
                   <span>Editor.mdx</span>
                 </div>
-                <div style={{ fontSize: "11px", color: "#4f5666", fontFamily: "JetBrains Mono" }}>
+                <div style={{ display: "flex", fontSize: "11px", color: "#4f5666", fontFamily: "JetBrains Mono" }}>
                   UTF-8
                 </div>
               </div>
@@ -322,10 +322,10 @@ export default async function OpenGraphImage() {
                         backgroundImage: "radial-gradient(circle at 90% 90%, rgba(142, 165, 255, 0.08), transparent 70%)"
                       }}
                     />
-                    <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", zIndex: 1 }}>
+                    <div style={{ display: "flex", fontSize: "14px", fontWeight: 700, color: "#ffffff", zIndex: 1 }}>
                       Growth Metrics
                     </div>
-                    <div style={{ fontSize: "11px", color: "#7f8795", marginTop: "2px", zIndex: 1 }}>
+                    <div style={{ display: "flex", fontSize: "11px", color: "#7f8795", marginTop: "2px", zIndex: 1 }}>
                       Quarterly active users
                     </div>
 
@@ -367,7 +367,7 @@ export default async function OpenGraphImage() {
 
                     {/* Title Track */}
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <div style={{ width: "36px", fontSize: "10px", color: "#8b94a5", fontWeight: 500 }}>Title</div>
+                      <div style={{ display: "flex", width: "36px", fontSize: "10px", color: "#8b94a5", fontWeight: 500 }}>Title</div>
                       <div style={{ flex: 1, height: "6px", background: "rgba(255, 255, 255, 0.04)", borderRadius: "3px", position: "relative" }}>
                         <div style={{ position: "absolute", left: "0%", width: "70%", height: "100%", background: "#a9c0ff", borderRadius: "3px", opacity: 0.8 }} />
                       </div>
@@ -375,7 +375,7 @@ export default async function OpenGraphImage() {
 
                     {/* Chart Track */}
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <div style={{ width: "36px", fontSize: "10px", color: "#8b94a5", fontWeight: 500 }}>Chart</div>
+                      <div style={{ display: "flex", width: "36px", fontSize: "10px", color: "#8b94a5", fontWeight: 500 }}>Chart</div>
                       <div style={{ flex: 1, height: "6px", background: "rgba(255, 255, 255, 0.04)", borderRadius: "3px", position: "relative" }}>
                         <div style={{ position: "absolute", left: "20%", width: "80%", height: "100%", background: "#8ea5ff", borderRadius: "3px" }} />
                       </div>
@@ -383,7 +383,7 @@ export default async function OpenGraphImage() {
 
                     {/* Export Track */}
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <div style={{ width: "36px", fontSize: "10px", color: "#8b94a5", fontWeight: 500 }}>Export</div>
+                      <div style={{ display: "flex", width: "36px", fontSize: "10px", color: "#8b94a5", fontWeight: 500 }}>Export</div>
                       <div style={{ flex: 1, height: "6px", background: "rgba(255, 255, 255, 0.04)", borderRadius: "3px", position: "relative" }}>
                         <div style={{ position: "absolute", left: "60%", width: "40%", height: "100%", background: "#dfe6ff", borderRadius: "3px", opacity: 0.6 }} />
                       </div>
