@@ -483,11 +483,16 @@ export const zhTwDictionary = {
         fileMeta: [
           ["檔案", "SlideX_0.1.0_aarch64.dmg"],
           ["平台", "macOS Apple Silicon"],
-          ["大小", "3.9 MB"]
+          ["大小", "8.4 MB"]
         ],
         items: ["Tauri 桌面 Beta 0.1.0", "可公開下載的 DMG 安裝檔", "延續 Web Studio 的 MDX 場景模型", "2026.06.04 beta 版本資訊"],
         localTitle: "第一版 Tauri 更新",
-        localBody: "這一版先把 Mac 桌面體驗、專案開啟流程與 Studio 預覽整合到可對外測試的 beta 版本，讓團隊可以用同一個 DMG 同步測試與回饋。"
+        localBody: "這一版先把 Mac 桌面體驗、專案開啟流程與 Studio 預覽整合到可對外測試的 beta 版本，讓團隊可以用同一個 DMG 同步測試與回饋。",
+        installTitle: "macOS 安全性提示",
+        installBody: "此 Beta 版尚未經過 Apple 公證。安裝後請右鍵點擊 App 選擇「打開」，或在終端機執行以下指令。",
+        installCommand: "xattr -cr /Applications/SlideX.app",
+        installStep1: "右鍵點擊（ctrl+click）SlideX.app → 打開 → 點擊「打開」",
+        installStep2Label: "終端機指令"
       },
       stats: [
         ["Tauri Beta 0.1.0", "今天可先對外分享的第一個 Mac beta DMG。"],

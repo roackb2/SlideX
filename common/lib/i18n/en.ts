@@ -483,11 +483,16 @@ export const enDictionary = {
         fileMeta: [
           ["File", "SlideX_0.1.0_aarch64.dmg"],
           ["Platform", "macOS Apple Silicon"],
-          ["Size", "3.9 MB"]
+          ["Size", "8.4 MB"]
         ],
         items: ["Tauri desktop Beta 0.1.0", "Public DMG installer", "Same MDX scene model as Web Studio", "2026.06.04 beta release notes"],
         localTitle: "First Tauri update",
-        localBody: "This release brings the Mac desktop experience, project-opening flow, and Studio preview into a beta version the team can test from the same DMG while collecting early feedback."
+        localBody: "This release brings the Mac desktop experience, project-opening flow, and Studio preview into a beta version the team can test from the same DMG while collecting early feedback.",
+        installTitle: "macOS security note",
+        installBody: "This beta is not yet Apple-notarized. After installing, right-click the app and choose \"Open\", or run the terminal command below to allow it.",
+        installCommand: "xattr -cr /Applications/SlideX.app",
+        installStep1: "Right-click (ctrl+click) SlideX.app → Open → Click \"Open\"",
+        installStep2Label: "Terminal command"
       },
       stats: [
         ["Tauri Beta 0.1.0", "The first Mac beta DMG ready to share today."],

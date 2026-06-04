@@ -31,3 +31,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# DMG installer binaries (hosted on GitHub Releases)
+public/downloads/*.dmg

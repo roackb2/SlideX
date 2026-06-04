@@ -3,14 +3,19 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
+  AlertTriangle,
   ArrowRight,
   Check,
+  Copy,
   Download,
   FileCode2,
   Laptop,
+  MousePointerClick,
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  Terminal
 } from "lucide-react";
+import { useState } from "react";
 import { useI18n } from "@/common/lib/I18nProvider";
 import { SiteFooter, SiteNav } from "@/common/ui";
 
@@ -33,8 +38,51 @@ const fadeInUp = {
   })
 };
 
-const macDownloadHref = "/downloads/SlideX_0.1.0_aarch64.dmg";
+const macDownloadHref = "https://github.com/zz41354899/Animark/releases/tag/v0.1.0";
 const macDownloadFileName = "SlideX_0.1.0_aarch64.dmg";
+
+function InstallGuide({ title, body, command, step1, step2Label }: { title: string; body: string; command: string; step1: string; step2Label: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(command).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <div className="mt-4 rounded-[24px] border border-amber-500/[0.25] bg-amber-500/[0.06] p-4">
+      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-300">
+        <AlertTriangle className="h-4 w-4" />
+        {title}
+      </div>
+      <p className="mb-4 text-sm leading-relaxed text-neutral-400">{body}</p>
+
+      <div className="space-y-3">
+        <div className="flex items-start gap-3 rounded-2xl bg-white/[0.05] px-4 py-3">
+          <MousePointerClick className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+          <div className="text-sm leading-6 text-neutral-300">{step1}</div>
+        </div>
+        <div className="rounded-2xl bg-white/[0.05] px-4 py-3">
+          <div className="mb-2 flex items-center gap-2">
+            <Terminal className="h-4 w-4 shrink-0 text-amber-400" />
+            <span className="text-sm font-medium text-white">{step2Label}</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-xl bg-black/40 px-3 py-2">
+            <code className="flex-1 overflow-x-auto text-xs text-emerald-400">{command}</code>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="shrink-0 rounded-lg p-1.5 text-neutral-500 transition hover:bg-white/[0.08] hover:text-white"
+              aria-label="Copy command"
+            >
+              {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function DownloadPage() {
   const { t } = useI18n();
@@ -73,14 +121,15 @@ export default function DownloadPage() {
               {t.downloadPage.hero.body}
             </motion.p>
             <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <Link
+              <a
                 href={macDownloadHref}
-                download={macDownloadFileName}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
               >
                 <Download className="h-4 w-4" />
                 {t.downloadPage.hero.primary}
-              </Link>
+              </a>
               <Link
                 href="/studio"
                 className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95 sm:w-auto"
@@ -145,6 +194,14 @@ export default function DownloadPage() {
                   {t.downloadPage.packageCard.localBody}
                 </p>
               </div>
+
+              <InstallGuide
+                title={t.downloadPage.packageCard.installTitle}
+                body={t.downloadPage.packageCard.installBody}
+                command={t.downloadPage.packageCard.installCommand}
+                step1={t.downloadPage.packageCard.installStep1}
+                step2Label={t.downloadPage.packageCard.installStep2Label}
+              />
             </div>
           </motion.div>
         </div>
