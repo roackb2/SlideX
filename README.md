@@ -52,6 +52,8 @@ SlideX 內建 Tauri desktop shell。桌面版預設開啟 `/studio/`，使用 Ne
 brew install --cask zz41354899/slidex/slidex
 ```
 
+詳細 Homebrew Cask 設定與源碼請參考 [homebrew-slidex 倉庫](https://github.com/zz41354899/homebrew-slidex)。
+
 ### 開發與建置
 
 ```bash

@@ -185,7 +185,20 @@ export default function DownloadPage() {
                   {t.downloadPage.packageCard.fileMeta.map(([label, value]) => (
                     <div key={label}>
                       <p className="text-xs font-medium text-neutral-500">{label}</p>
-                      <p className="mt-1 break-words text-sm font-medium leading-5 text-neutral-200">{value}</p>
+                      <p className="mt-1 break-words text-sm font-medium leading-5 text-neutral-200">
+                        {label === "Source" || label === "來源" ? (
+                          <a
+                            href="https://github.com/zz41354899/homebrew-slidex"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#8ea5ff] hover:underline"
+                          >
+                            {value}
+                          </a>
+                        ) : (
+                          value
+                        )}
+                      </p>
                     </div>
                   ))}
                 </div>
