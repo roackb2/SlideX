@@ -469,33 +469,33 @@ export const zhTwDictionary = {
     },
     downloadPage: {
       hero: {
-        eyebrow: "Tauri Beta 0.1.0",
-        title: "SlideX for Mac Beta 已可對外發佈。",
-        body: "第一版 Tauri 桌面 beta 已整理好 DMG，可先分享給早期使用者。這一版聚焦 Mac 原生殼層、Web Studio 場景相容，以及後續匯出流程的基礎。",
-        primary: "下載 Mac Beta 0.1.0",
+        eyebrow: "Homebrew Cask",
+        title: "SlideX for Mac 已可進行安裝。",
+        body: "第一版 Tauri 桌面 beta 目前透過 macOS 的 Homebrew Cask 發佈。這能自動繞過 macOS Gatekeeper 權限檢查，提供安全且順暢的安裝體驗。",
+        primary: "複製 Homebrew 指令",
         secondary: "開啟 Web Studio"
       },
       packageCard: {
         title: "macOS App",
         subtitle: "Tauri 桌面版本",
         status: "已可下載",
-        heading: "第一版 DMG",
+        heading: "Homebrew Cask 套件",
         fileMeta: [
-          ["檔案", "SlideX_0.1.0_aarch64.dmg"],
+          ["來源", "Homebrew Tap"],
           ["平台", "macOS Apple Silicon"],
-          ["大小", "8.4 MB"]
+          ["Cask 名稱", "slidex"]
         ],
-        items: ["Tauri 桌面 Beta 0.1.0", "可公開下載的 DMG 安裝檔", "延續 Web Studio 的 MDX 場景模型", "2026.06.04 beta 版本資訊"],
-        localTitle: "第一版 Tauri 更新",
-        localBody: "這一版先把 Mac 桌面體驗、專案開啟流程與 Studio 預覽整合到可對外測試的 beta 版本，讓團隊可以用同一個 DMG 同步測試與回饋。",
-        installTitle: "macOS 安全性提示",
-        installBody: "此 Beta 版尚未經過 Apple 公證。安裝後請右鍵點擊 App 選擇「打開」，或在終端機執行以下指令。",
-        installCommand: "xattr -cr /Applications/SlideX.app",
-        installStep1: "右鍵點擊（ctrl+click）SlideX.app → 打開 → 點擊「打開」",
-        installStep2Label: "終端機指令"
+        items: ["Tauri 桌面 Beta 0.1.0", "自動繞過 Gatekeeper 安全檢查", "延續 Web Studio 的 MDX 場景模型", "2026.06.04 beta 版本資訊"],
+        localTitle: "Homebrew 發佈管道",
+        localBody: "這一版把 Mac 桌面體驗、專案開啟流程與 Studio 預覽整合到可直接透過 Homebrew 安裝的 beta 版本，並由 GitHub Releases 提供直接更新服務。",
+        installTitle: "安裝指引",
+        installBody: "如要安裝，請複製下方指令並在您的 Mac 終端機 (Terminal) 中執行：",
+        installCommand: "brew install --cask zz41354899/slidex/slidex",
+        installStep1: "安裝完成後，您就可以直接在應用程式資料夾或啟動台中開啟 SlideX，不需要再處理安全性限制。",
+        installStep2Label: "執行 Cask 指令"
       },
       stats: [
-        ["Tauri Beta 0.1.0", "今天可先對外分享的第一個 Mac beta DMG。"],
+        ["Homebrew Tap", "SlideX 官方 Cask 套件庫，自動繞過 Gatekeeper 安全阻擋。"],
         ["Mac 專案", "為桌面檔案與私密簡報流程鋪好基礎。"],
         ["Web Studio 相容", "沿用 MDX 場景模型，方便之後接上匯出與播放流程。"]
       ],
