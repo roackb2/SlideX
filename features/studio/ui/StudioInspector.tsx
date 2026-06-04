@@ -25,13 +25,13 @@ function AccordionSection({
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
-    <div className="border border-white/[0.05] bg-white/[0.015] rounded-xl overflow-hidden transition-all duration-300 shadow-sm">
+    <div className="border border-white/[0.05] bg-[#090a0f]/40 rounded-xl overflow-hidden transition-all duration-300 shadow-sm hover:border-white/[0.1]">
       <button
         type="button"
-        className="flex w-full items-center justify-between px-3.5 py-3 bg-white/[0.02] hover:bg-white/[0.04] text-left transition-colors cursor-pointer select-none"
+        className="flex w-full items-center justify-between px-3.5 py-3 bg-white/[0.015] hover:bg-white/[0.035] text-left transition-all duration-200 cursor-pointer select-none active:scale-[0.99]"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="flex items-center gap-2.5 text-[9.5px] font-bold uppercase tracking-[0.14em] text-neutral-300">
+        <span className="flex items-center gap-2.5 text-[9px] font-bold uppercase tracking-[0.14em] text-neutral-300">
           {icon}
           {title}
         </span>
@@ -42,7 +42,7 @@ function AccordionSection({
         )}
       </button>
       {isOpen && (
-        <div className="p-4 flex flex-col gap-4.5 border-t border-white/[0.04] bg-black/25 animate-[bubble-appear_0.15s_ease-out]">
+        <div className="p-4 flex flex-col gap-4.5 border-t border-white/[0.04] bg-black/20 animate-[bubble-appear_0.15s_ease-out]">
           {children}
         </div>
       )}
@@ -69,6 +69,7 @@ export function StudioInspector({
   activeSlideShaderColor2,
   activeSlideShaderColor3,
   activeSlideShaderIntensity,
+  activeSlideShaderEngine,
   activeSlideShaderSpeed,
   activeSlideShaderSoftness,
   activeSlideShaderScale,
@@ -103,6 +104,7 @@ export function StudioInspector({
   activeSlideShaderColor1: string;
   activeSlideShaderColor2: string;
   activeSlideShaderColor3: string;
+  activeSlideShaderEngine: string;
   activeSlideShaderIntensity: number;
   activeSlideShaderSpeed: number;
   activeSlideShaderSoftness: number;
@@ -122,17 +124,17 @@ export function StudioInspector({
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
 }) {
   return (
-    <div id="inspector-v4" className="flex w-full sm:w-[280px] md:w-[290px] shrink-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c0e18]/60 backdrop-blur-xl shadow-2xl m-3 ml-1.5 shadow-black/80 select-none animate-[bubble-appear_0.2s_ease-out]">
+    <div id="inspector-v4" className="premium-glass-panel flex w-full sm:w-[290px] md:w-[315px] shrink-0 flex-col overflow-hidden rounded-2xl m-3 ml-1.5 shadow-black/90 select-none animate-[bubble-appear_0.2s_ease-out]">
       
       {/* Inspector Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-white/[0.04] px-4 py-3.5">
-        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-400">Properties</span>
+      <div className="flex shrink-0 items-center justify-between border-b border-white/[0.04] px-4 py-3.5 bg-white/[0.01]">
+        <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-neutral-400">Properties</span>
         <button
-          className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.015] px-2.5 text-[10px] font-bold text-neutral-300 transition-all hover:border-white/[0.12] hover:bg-white/[0.04] hover:text-white cursor-pointer active:scale-95 duration-200"
+          className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-[#8ea5ff]/20 bg-[#8ea5ff]/10 hover:bg-[#8ea5ff]/25 text-[#8ea5ff] hover:text-white px-2.5 text-[9px] font-bold tracking-wider uppercase transition-all cursor-pointer active:scale-95 duration-250 shadow-sm"
           onClick={onOpenMdxEditor}
           type="button"
         >
-          <Code2 size={11} className="text-[#8ea5ff]" />
+          <Code2 size={11} />
           MDX Editor
         </button>
       </div>
@@ -154,6 +156,7 @@ export function StudioInspector({
               shaderColor1={activeSlideShaderColor1}
               shaderColor2={activeSlideShaderColor2}
               shaderColor3={activeSlideShaderColor3}
+              shaderEngine={activeSlideShaderEngine}
               shaderIntensity={activeSlideShaderIntensity}
               shaderSpeed={activeSlideShaderSpeed}
               shaderSoftness={activeSlideShaderSoftness}

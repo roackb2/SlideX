@@ -42,7 +42,7 @@ export function StudioHeader({
   setIsExportMenuOpen: (updater: (current: boolean) => boolean) => void;
 }) {
   return (
-    <header className="z-50 flex shrink-0 items-center justify-between border-b border-white/[0.04] bg-[#07080b]/90 backdrop-blur-md px-4 py-2.5 sm:px-6 md:py-3.5">
+    <header className="z-50 flex shrink-0 items-center justify-between border-b border-white/[0.04] bg-[#07080b]/75 backdrop-blur-xl px-4 py-2.5 sm:px-6 md:py-3 shadow-md">
       
       {/* Left side actions */}
       <div className="flex shrink-0 items-center gap-3">
@@ -81,9 +81,9 @@ export function StudioHeader({
 
         {/* Tauri project actions in sleek unified capsule */}
         {isTauri && (
-          <div className="hidden items-center gap-0.5 rounded-full border border-white/[0.06] bg-white/[0.02] p-0.5 sm:flex">
+          <div className="hidden items-center gap-0.5 rounded-full border border-white/[0.05] bg-white/[0.015] p-0.5 sm:flex shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]">
             <button
-              className="flex items-center justify-center rounded-full h-8 w-8 text-neutral-400 transition-all hover:bg-white/[0.05] hover:text-white cursor-pointer"
+              className="flex items-center justify-center rounded-full h-8 w-8 text-neutral-400 transition-all hover:bg-white/[0.05] hover:text-white cursor-pointer active:scale-90"
               onClick={onNewProject}
               type="button"
               title="New Project"
@@ -91,7 +91,7 @@ export function StudioHeader({
               <FilePlus2 size={13.5} />
             </button>
             <button
-              className="flex items-center justify-center rounded-full h-8 w-8 text-neutral-400 transition-all hover:bg-white/[0.05] hover:text-white cursor-pointer"
+              className="flex items-center justify-center rounded-full h-8 w-8 text-neutral-400 transition-all hover:bg-white/[0.05] hover:text-white cursor-pointer active:scale-90"
               onClick={onOpenProject}
               type="button"
               title="Open Project"
@@ -99,7 +99,7 @@ export function StudioHeader({
               <FolderOpen size={13.5} />
             </button>
             <button
-              className="flex items-center justify-center gap-1 rounded-full h-8 px-3 text-xs font-semibold text-neutral-400 transition-all hover:bg-white/[0.05] hover:text-white cursor-pointer"
+              className="flex items-center justify-center gap-1 rounded-full h-8 px-3 text-xs font-semibold text-neutral-400 transition-all hover:bg-white/[0.05] hover:text-white cursor-pointer active:scale-90"
               onClick={onSaveProject}
               type="button"
               title="Save Project"

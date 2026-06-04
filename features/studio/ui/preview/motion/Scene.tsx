@@ -1,8 +1,9 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { ShaderCanvas } from "@/features/studio/ui/preview/ShaderCanvas";
-import { alignXToFlex, alignYToFlex, cssColor } from "@/features/studio/ui/preview/motion/blockStyles";
+import { resolveSlideThemeColors } from "@/core/motion-doc/application/slideTheme";
+import { ThreeShaderCanvas } from "@/features/studio/ui/preview/ThreeShaderCanvas";
+import { alignXToFlex, alignYToFlex } from "@/features/studio/ui/preview/motion/blockStyles";
 
 type SceneProps = {
   accent?: string;
@@ -20,6 +21,7 @@ type SceneProps = {
   shaderColor2?: string;
   shaderColor3?: string;
   shaderDetail?: number;
+  shaderEngine?: string;
   shaderIntensity?: number;
   shaderScale?: number;
   shaderSoftness?: number;
@@ -45,6 +47,7 @@ export function Scene({
   shaderColor2,
   shaderColor3,
   shaderDetail,
+  shaderEngine,
   shaderIntensity,
   shaderScale,
   shaderSoftness,
@@ -53,29 +56,39 @@ export function Scene({
   textColor,
   theme = "dark"
 }: SceneProps) {
-  const isLight = theme === "light" || theme === "paper";
-  const slideBackground = background ?? defaultSlideBackground(theme);
-  const foreground = isLight ? "#111827" : "#ffffff";
-  const muted = cssColor(mutedColor) ?? (isLight ? "#475569" : "#cbd5e1");
-  const textForeground = cssColor(textColor) ?? foreground;
-  const cardBackground = isLight ? "rgba(255,255,255,0.72)" : "rgba(255,255,255,0.075)";
-  const borderColor = isLight ? "rgba(15,23,42,0.12)" : "rgba(255,255,255,0.12)";
+  const themeColors = resolveSlideThemeColors(
+    {
+      accent,
+      background,
+      mutedColor,
+      shader,
+      shaderColor1,
+      shaderColor2,
+      shaderColor3,
+      shaderEngine,
+      shaderIntensity,
+      textColor,
+      theme
+    },
+    { accentFallback: accent }
+  );
 
   return (
     <section
       data-duration={duration}
       data-motion-scene
+      data-theme-tone={themeColors.tone}
       style={
         {
-          "--slide-accent": accent,
-          "--slide-bg": slideBackground,
-          "--slide-border": borderColor,
-          "--slide-card": cardBackground,
-          "--slide-fg": textForeground,
-          "--slide-muted": muted,
+          "--slide-accent": themeColors.accent,
+          "--slide-bg": themeColors.background,
+          "--slide-border": themeColors.borderColor,
+          "--slide-card": themeColors.cardBackground,
+          "--slide-fg": themeColors.foreground,
+          "--slide-muted": themeColors.muted,
           "--slide-text-align": textAlign,
-          background: slideBackground,
-          border: `1px solid ${borderColor}`,
+          background: themeColors.background,
+          border: `1px solid ${themeColors.borderColor}`,
           borderRadius: 20,
           display: "flex",
           flexDirection: "column",
@@ -89,10 +102,10 @@ export function Scene({
       }
     >
       {shader ? (
-        <ShaderCanvas
-          color1={shaderColor1 ?? accent}
-          color2={shaderColor2 ?? slideBackground}
-          color3={shaderColor3 ?? (isLight ? "#64748b" : "#06b6d4")}
+        <ThreeShaderCanvas
+          color1={themeColors.shaderColor1}
+          color2={themeColors.shaderColor2}
+          color3={themeColors.shaderColor3}
           detail={shaderDetail ?? 0.5}
           intensity={shaderIntensity ?? 0.5}
           presetId={shader}
@@ -104,7 +117,7 @@ export function Scene({
       ) : null}
       <div
         style={{
-          background: `radial-gradient(circle at 20% 10%, ${accent}38, transparent 28rem), radial-gradient(circle at 90% 70%, ${accent}24, transparent 24rem)`,
+          background: `radial-gradient(circle at 20% 10%, ${themeColors.accent}38, transparent 28rem), radial-gradient(circle at 90% 70%, ${themeColors.accent}24, transparent 24rem)`,
           inset: 0,
           opacity: shader ? 0.3 : 0.7,
           pointerEvents: "none",
@@ -132,12 +145,4 @@ export function Scene({
       </div>
     </section>
   );
-}
-
-function defaultSlideBackground(theme: string) {
-  if (theme === "light") return "#f8fafc";
-  if (theme === "paper") return "#f3eadf";
-  if (theme === "blue") return "#0b1f3a";
-
-  return "#0f172a";
 }

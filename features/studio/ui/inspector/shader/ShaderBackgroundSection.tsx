@@ -1,6 +1,6 @@
 "use client";
 
-import { Droplets, EyeOff, Gauge, Layers, Maximize2, Palette, Sparkles, Zap } from "lucide-react";
+import { Cpu, Droplets, EyeOff, Gauge, Layers, Maximize2, Palette, Sparkles, Zap } from "lucide-react";
 import type { PropRecord } from "@/features/studio/application/themeColors";
 import { shaderPresets } from "@/core/motion-doc/presets/shaderPresets";
 import { Field } from "@/features/studio/ui/inspector/InspectorControls";
@@ -16,6 +16,7 @@ type ShaderBackgroundSectionProps = {
   shaderColor2: string;
   shaderColor3: string;
   shaderDetail: number;
+  shaderEngine: string;
   shaderIntensity: number;
   shaderScale: number;
   shaderSoftness: number;
@@ -25,6 +26,112 @@ type ShaderBackgroundSectionProps = {
 
 const shaderColorKeys = ["shaderColor1", "shaderColor2", "shaderColor3"] as const;
 const shaderColorNames = ["Primary", "Flow", "Highlight"] as const;
+const shaderPresetDefaults: Record<string, PropRecord> = {
+  aurora: {
+    background: "#120f17",
+    mutedColor: "auto",
+    shaderColor1: "#57d68d",
+    shaderColor2: "#120f17",
+    shaderColor3: "#5227ff",
+    shaderDetail: 0.7,
+    shaderIntensity: 0.95,
+    shaderScale: 0.7,
+    shaderSoftness: 0.62,
+    shaderSpeed: 0.55,
+    textColor: "auto"
+  },
+  "geometric-grid": {
+    background: "#06111f",
+    mutedColor: "auto",
+    shaderColor1: "#38bdf8",
+    shaderColor2: "#06111f",
+    shaderColor3: "#0f766e",
+    shaderDetail: 0.8,
+    shaderIntensity: 0.78,
+    shaderScale: 0.65,
+    shaderSoftness: 0.45,
+    shaderSpeed: 0.75,
+    textColor: "auto"
+  },
+  "mesh-gradient": {
+    background: "#e8eef2",
+    mutedColor: "auto",
+    shaderColor1: "#eef7f8",
+    shaderColor2: "#cfd8dc",
+    shaderColor3: "#f2b6c4",
+    shaderDetail: 0.58,
+    shaderIntensity: 0.82,
+    shaderScale: 0.52,
+    shaderSoftness: 0.88,
+    shaderSpeed: 0.45,
+    textColor: "auto"
+  },
+  "noise-fog": {
+    background: "#07120f",
+    mutedColor: "auto",
+    shaderColor1: "#4ade80",
+    shaderColor2: "#07120f",
+    shaderColor3: "#7dd3fc",
+    shaderDetail: 0.82,
+    shaderIntensity: 0.82,
+    shaderScale: 0.7,
+    shaderSoftness: 0.74,
+    shaderSpeed: 0.55,
+    textColor: "auto"
+  },
+  "particle-field": {
+    background: "#080706",
+    mutedColor: "auto",
+    shaderColor1: "#fbbf24",
+    shaderColor2: "#080706",
+    shaderColor3: "#a16207",
+    shaderDetail: 0.85,
+    shaderIntensity: 0.72,
+    shaderScale: 0.76,
+    shaderSoftness: 0.48,
+    shaderSpeed: 0.65,
+    textColor: "auto"
+  },
+  "reaction-diffusion": {
+    background: "#0d0205",
+    mutedColor: "auto",
+    shaderColor1: "#DE443B",
+    shaderColor2: "#006BB4",
+    shaderColor3: "#162325",
+    shaderDetail: 0.8,
+    shaderIntensity: 0.9,
+    shaderScale: 1.1,
+    shaderSoftness: 0.5,
+    shaderSpeed: 0.5,
+    textColor: "auto"
+  },
+  "silk-gradient": {
+    background: "#f2e7f4",
+    mutedColor: "auto",
+    shaderColor1: "#c7d2fe",
+    shaderColor2: "#f8eef7",
+    shaderColor3: "#d8b4fe",
+    shaderDetail: 0.72,
+    shaderIntensity: 0.84,
+    shaderScale: 0.58,
+    shaderSoftness: 0.86,
+    shaderSpeed: 0.48,
+    textColor: "auto"
+  },
+  "wave-distortion": {
+    background: "#0c1118",
+    mutedColor: "auto",
+    shaderColor1: "#111827",
+    shaderColor2: "#94a3b8",
+    shaderColor3: "#f8fafc",
+    shaderDetail: 0.88,
+    shaderIntensity: 0.86,
+    shaderScale: 0.72,
+    shaderSoftness: 0.56,
+    shaderSpeed: 0.7,
+    textColor: "auto"
+  }
+};
 
 export function ShaderBackgroundSection({
   accent,
@@ -49,8 +156,8 @@ export function ShaderBackgroundSection({
           <button
             className={`group relative overflow-hidden rounded-xl border aspect-[16/10] flex flex-col items-center justify-center transition-all duration-300 cursor-pointer active:scale-95 ${
               !shader
-                ? "border-[#8ea5ff]/50 bg-white/[0.03] text-white ring-1 ring-[#8ea5ff]/20 shadow-[0_0_15px_rgba(142,165,255,0.08)]"
-                : "border-white/[0.05] bg-black/40 text-neutral-500 hover:border-white/[0.12] hover:text-neutral-300"
+                ? "border-[#a855f7]/70 bg-[#a855f7]/10 text-white ring-1 ring-[#a855f7]/25 shadow-[0_0_18px_rgba(168,85,247,0.14)]"
+                : "border-white/[0.06] bg-[#0a090d] text-neutral-500 hover:border-white/[0.14] hover:text-neutral-300"
             }`}
             onClick={() => updateActiveSlideStyle(emptyShaderUpdates())}
             type="button"
@@ -66,11 +173,11 @@ export function ShaderBackgroundSection({
               <button
                 className={`group relative overflow-hidden rounded-xl border aspect-[16/10] text-left transition-all duration-300 cursor-pointer active:scale-95 ${
                   isActive
-                    ? "border-[#8ea5ff]/50 ring-1 ring-[#8ea5ff]/20 shadow-[0_0_15px_rgba(142,165,255,0.12)]"
-                    : "border-white/[0.05] hover:border-white/[0.12]"
+                    ? "border-[#a855f7]/75 ring-1 ring-[#a855f7]/30 shadow-[0_0_22px_rgba(168,85,247,0.20)]"
+                    : "border-white/[0.06] hover:border-white/[0.14]"
                 }`}
                 key={preset.id}
-                onClick={() => updateActiveSlideStyle({ shader: preset.id })}
+                onClick={() => updateActiveSlideStyle(shaderPresetUpdates(preset.id))}
                 type="button"
               >
                 <div
@@ -80,12 +187,12 @@ export function ShaderBackgroundSection({
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/20 opacity-80 group-hover:opacity-70 transition-opacity duration-300" />
 
                 {isActive ? (
-                  <div className="absolute top-2 right-2 p-0.5 rounded-full bg-[#8ea5ff] text-black shadow-[0_0_8px_#8ea5ff]">
+                  <div className="absolute top-2 right-2 p-0.5 rounded-full bg-[#a855f7] text-white shadow-[0_0_10px_rgba(168,85,247,0.75)]">
                     <Sparkles size={8} />
                   </div>
                 ) : null}
 
-                <div className="absolute top-2 left-2 px-1 py-0.5 rounded bg-black/60 backdrop-blur-md border border-white/[0.06] text-[7.5px] font-mono font-bold uppercase tracking-wider text-neutral-400">
+                <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/55 backdrop-blur-md border border-white/[0.08] text-[7.5px] font-mono font-bold uppercase tracking-wider text-neutral-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                   {preset.category}
                 </div>
                 <div className="absolute bottom-2 left-2.5 right-2.5 flex flex-col gap-0.5">
@@ -100,36 +207,38 @@ export function ShaderBackgroundSection({
       </Field>
 
       {shader ? (
-        shader.startsWith("watercolor-") ? (
-          <WatercolorStudioPanel
-            accent={accent}
-            background={background}
-            shader={shader}
-            shaderColor1={shaderColor1}
-            shaderColor2={shaderColor2}
-            shaderColor3={shaderColor3}
-            shaderDetail={shaderDetail}
-            shaderIntensity={shaderIntensity}
-            shaderScale={shaderScale}
-            shaderSoftness={shaderSoftness}
-            shaderSpeed={shaderSpeed}
-            updateActiveSlideStyle={updateActiveSlideStyle}
-          />
-        ) : (
-          <StandardShaderControls
-            accent={accent}
-            background={background}
-            shaderColor1={shaderColor1}
-            shaderColor2={shaderColor2}
-            shaderColor3={shaderColor3}
-            shaderDetail={shaderDetail}
-            shaderIntensity={shaderIntensity}
-            shaderScale={shaderScale}
-            shaderSoftness={shaderSoftness}
-            shaderSpeed={shaderSpeed}
-            updateActiveSlideStyle={updateActiveSlideStyle}
-          />
-        )
+        <>
+          {shader.startsWith("watercolor-") ? (
+            <WatercolorStudioPanel
+              accent={accent}
+              background={background}
+              shader={shader}
+              shaderColor1={shaderColor1}
+              shaderColor2={shaderColor2}
+              shaderColor3={shaderColor3}
+              shaderDetail={shaderDetail}
+              shaderIntensity={shaderIntensity}
+              shaderScale={shaderScale}
+              shaderSoftness={shaderSoftness}
+              shaderSpeed={shaderSpeed}
+              updateActiveSlideStyle={updateActiveSlideStyle}
+            />
+          ) : (
+            <StandardShaderControls
+              accent={accent}
+              background={background}
+              shaderColor1={shaderColor1}
+              shaderColor2={shaderColor2}
+              shaderColor3={shaderColor3}
+              shaderDetail={shaderDetail}
+              shaderIntensity={shaderIntensity}
+              shaderScale={shaderScale}
+              shaderSoftness={shaderSoftness}
+              shaderSpeed={shaderSpeed}
+              updateActiveSlideStyle={updateActiveSlideStyle}
+            />
+          )}
+        </>
       ) : null}
     </AccordionSection>
   );
@@ -137,21 +246,24 @@ export function ShaderBackgroundSection({
 
 function ShaderEngineIntro() {
   return (
-    <div className="p-3.5 rounded-xl border border-white/[0.04] bg-neutral-950/40 backdrop-blur-md flex items-start gap-3 relative overflow-hidden group">
-      <div className="absolute inset-0 bg-gradient-to-r from-[#8ea5ff]/5 to-transparent opacity-30" />
-      <div className="p-2 rounded-lg bg-[#8ea5ff]/10 text-[#8ea5ff] relative z-10 shrink-0">
-        <Sparkles size={14} className="animate-pulse" />
-      </div>
-      <div className="flex flex-col gap-0.5 relative z-10">
-        <span className="text-[10px] font-bold text-neutral-200 uppercase tracking-wider flex items-center gap-2">
-          GPU Fluid Engine
-          <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[7px] font-mono lowercase tracking-normal">
-            active
+    <div className="p-1.5 rounded-[1.25rem] border border-white/[0.03] bg-[#0A0A0C]/50 shadow-[0_4px_24px_rgba(0,0,0,0.15)] backdrop-blur-xl group relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-[#8ea5ff]/5 to-transparent opacity-50" />
+      <div className="p-3.5 rounded-[1rem] bg-black/40 border border-white/[0.03] flex items-start gap-3.5 relative z-10 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#8ea5ff]/10 text-[#8ea5ff] border border-[#8ea5ff]/20 shadow-[0_0_12px_rgba(142,165,255,0.15)]">
+          <Sparkles size={12} className="animate-pulse" />
+        </div>
+        <div className="flex flex-col gap-1.5 pt-0.5">
+          <span className="text-[10px] font-bold text-neutral-200 uppercase tracking-[0.16em] flex items-center gap-2">
+            GPU Engine
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[8px] font-mono tracking-wider">
+              <Cpu size={8} />
+              THREE.JS
+            </span>
           </span>
-        </span>
-        <span className="text-[9px] text-neutral-400 leading-relaxed">
-          GPU-driven dynamic motion presets inspired by shaders.com. Generates ambient fluid textures in real-time.
-        </span>
+          <span className="text-[9.5px] text-neutral-400/90 leading-relaxed font-medium">
+            Refined Three.js shader presets export to interactive WebGL canvases.
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -169,57 +281,60 @@ function StandardShaderControls({
   shaderSoftness,
   shaderSpeed,
   updateActiveSlideStyle
-}: Omit<ShaderBackgroundSectionProps, "shader">) {
+}: Omit<ShaderBackgroundSectionProps, "shader" | "shaderEngine">) {
   return (
     <>
-      <div className="p-3.5 rounded-xl border border-white/[0.04] bg-neutral-950/40 backdrop-blur-md flex flex-col gap-3">
-        <div className="flex items-center justify-between border-b border-white/[0.03] pb-1.5">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-            <Palette size={12} className="text-[#8ea5ff]" />
-            Spectrum Tuning
-          </span>
-          <span className="text-[8px] font-mono text-neutral-500 uppercase tracking-widest">Override active</span>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {shaderColorKeys.map((key, index) => {
-            const value = key === "shaderColor1" ? shaderColor1 : key === "shaderColor2" ? shaderColor2 : shaderColor3;
-            const fallback = key === "shaderColor1" ? (accent || "#7c3aed") : key === "shaderColor2" ? (background || "#0a0a1a") : "#06b6d4";
-            const displayValue = value || fallback;
-            const hexValue = /^#[0-9a-fA-F]{3,6}$/.test(displayValue) ? displayValue : "#7c3aed";
+      <div className="p-1.5 rounded-[1.25rem] border border-white/[0.03] bg-[#0A0A0C]/50 shadow-[0_4px_24px_rgba(0,0,0,0.15)] backdrop-blur-xl">
+        <div className="rounded-[1rem] border border-white/[0.03] bg-black/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden">
+          <div className="flex items-center justify-between border-b border-white/[0.03] px-3.5 py-3 bg-white/[0.01]">
+            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-400 flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#a855f7]/10 text-[#a855f7] border border-[#a855f7]/20 shadow-[0_0_10px_rgba(168,85,247,0.1)]">
+                <Palette size={10} />
+              </span>
+              Background Studio
+            </span>
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[9px] font-mono tracking-wider text-neutral-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+              THREE
+            </span>
+          </div>
 
-            return (
-              <label className="group flex flex-col items-center gap-1.5 cursor-pointer relative" key={key}>
-                <span className="text-[8.5px] font-bold text-neutral-500 group-hover:text-neutral-400 transition-colors uppercase tracking-wider text-center w-full truncate">
-                  {shaderColorNames[index]}
-                </span>
-                <span
-                  className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] shadow-lg transition-all duration-300 group-hover:border-white/[0.2] group-hover:scale-105 group-active:scale-95 overflow-hidden"
-                  style={{ background: displayValue }}
-                >
-                  <span className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-transparent opacity-60" />
-                  <input
-                    aria-label={`Shader color ${index + 1}`}
-                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                    onChange={(event) => updateActiveSlideStyle({ [key]: event.target.value })}
-                    type="color"
-                    value={hexValue}
+          <div className="flex flex-col gap-4 px-3.5 py-4">
+            <ColorRow
+              fallback="#120f17"
+              label="Canvas BG"
+              onChange={(value) => updateActiveSlideStyle({ background: value })}
+              value={background}
+            />
+
+            <div className="flex flex-col gap-2.5">
+              <div className="pb-1">
+                <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-neutral-500">Color Stops</span>
+              </div>
+              {shaderColorKeys.map((key, index) => {
+                const value = key === "shaderColor1" ? shaderColor1 : key === "shaderColor2" ? shaderColor2 : shaderColor3;
+                const fallback = key === "shaderColor1" ? (accent || "#7c3aed") : key === "shaderColor2" ? (background || "#120f17") : "#06b6d4";
+
+                return (
+                  <ColorRow
+                    fallback={fallback}
+                    key={key}
+                    label={shaderColorNames[index]}
+                    onChange={(color) => updateActiveSlideStyle({ [key]: color })}
+                    value={value}
                   />
-                </span>
-                <span className="text-[8.5px] font-mono text-neutral-400 bg-white/[0.03] border border-white/[0.05] px-1.5 py-0.5 rounded uppercase group-hover:text-neutral-200 transition-colors">
-                  {displayValue.slice(0, 7)}
-                </span>
-              </label>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-2.5">
         <ShaderRangeControl
           ariaLabel="Shader intensity"
-          badge={`${(shaderIntensity * 100).toFixed(0)}%`}
+          badge={shaderIntensity.toFixed(2)}
           icon={Zap}
-          label="Emission Glow"
+          label="Amplitude"
           max="1"
           min="0.05"
           onChange={(value) => updateActiveSlideStyle({ shaderIntensity: value })}
@@ -227,21 +342,10 @@ function StandardShaderControls({
           value={shaderIntensity}
         />
         <ShaderRangeControl
-          ariaLabel="Shader speed"
-          badge={`${shaderSpeed.toFixed(1)}x`}
-          icon={Gauge}
-          label="Simulation Speed"
-          max="3"
-          min="0.1"
-          onChange={(value) => updateActiveSlideStyle({ shaderSpeed: value })}
-          step="0.1"
-          value={shaderSpeed}
-        />
-        <ShaderRangeControl
           ariaLabel="Shader softness"
-          badge={`${(shaderSoftness * 100).toFixed(0)}%`}
+          badge={shaderSoftness.toFixed(2)}
           icon={Droplets}
-          label="Softness"
+          label="Blend"
           max="1"
           min="0"
           onChange={(value) => updateActiveSlideStyle({ shaderSoftness: value })}
@@ -249,10 +353,21 @@ function StandardShaderControls({
           value={shaderSoftness}
         />
         <ShaderRangeControl
+          ariaLabel="Shader speed"
+          badge={shaderSpeed.toFixed(2)}
+          icon={Gauge}
+          label="Drift"
+          max="3"
+          min="0.1"
+          onChange={(value) => updateActiveSlideStyle({ shaderSpeed: value })}
+          step="0.1"
+          value={shaderSpeed}
+        />
+        <ShaderRangeControl
           ariaLabel="Shader scale"
           badge={shaderScale.toFixed(2)}
           icon={Maximize2}
-          label="Scale"
+          label="Spread"
           max="2"
           min="0.1"
           onChange={(value) => updateActiveSlideStyle({ shaderScale: value })}
@@ -261,9 +376,9 @@ function StandardShaderControls({
         />
         <ShaderRangeControl
           ariaLabel="Shader detail"
-          badge={`${(shaderDetail * 100).toFixed(0)}%`}
+          badge={shaderDetail.toFixed(2)}
           icon={Layers}
-          label="Detail"
+          label="Texture"
           max="1"
           min="0.1"
           onChange={(value) => updateActiveSlideStyle({ shaderDetail: value })}
@@ -275,6 +390,70 @@ function StandardShaderControls({
   );
 }
 
+function ColorRow({
+  fallback,
+  label,
+  onChange,
+  value
+}: {
+  fallback: string;
+  label: string;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  const displayValue = value || fallback;
+  const hexValue = hexColorValue(displayValue, fallback);
+
+  return (
+    <label className="group flex h-10 cursor-pointer items-center justify-between gap-2.5 rounded-xl border border-white/[0.03] bg-white/[0.015] px-3.5 text-left transition-all duration-300 hover:border-white/[0.08] hover:bg-white/[0.03]">
+      <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 transition-colors group-hover:text-neutral-200 shrink-0 w-18 truncate">
+        {label}
+      </span>
+      <div className="flex items-center gap-2">
+        <span
+          className="relative h-5 w-5 shrink-0 overflow-hidden rounded-full border border-white/[0.15] shadow-md transition-transform duration-300 group-hover:scale-110"
+          style={{ background: displayValue }}
+        >
+          <input
+            aria-label={`${label} color`}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            onChange={(event) => onChange(event.target.value)}
+            type="color"
+            value={hexValue}
+          />
+        </span>
+        <span className="w-16 shrink-0 rounded-lg border border-white/[0.04] bg-black/40 py-0.5 text-center font-mono text-[9px] font-semibold tracking-wider text-neutral-400 transition-colors group-hover:border-white/[0.1] group-hover:text-neutral-200">
+          {hexValue}
+        </span>
+      </div>
+    </label>
+  );
+}
+
+function hexColorValue(value: string, fallback: string) {
+  if (/^#[0-9a-fA-F]{6}$/.test(value)) {
+    return value;
+  }
+
+  if (/^#[0-9a-fA-F]{3}$/.test(value)) {
+    return `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`;
+  }
+
+  if (/^#[0-9a-fA-F]{6}$/.test(fallback)) {
+    return fallback;
+  }
+
+  return "#7c3aed";
+}
+
+function shaderPresetUpdates(presetId: string): PropRecord {
+  return {
+    ...(shaderPresetDefaults[presetId] ?? {}),
+    shader: presetId,
+    shaderEngine: "three"
+  };
+}
+
 function emptyShaderUpdates(): PropRecord {
   return {
     shader: "",
@@ -282,6 +461,7 @@ function emptyShaderUpdates(): PropRecord {
     shaderColor2: "",
     shaderColor3: "",
     shaderDetail: "",
+    shaderEngine: "",
     shaderIntensity: "",
     shaderScale: "",
     shaderSoftness: "",

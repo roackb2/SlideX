@@ -1,16 +1,27 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+}
+
 :root {
   color-scheme: dark;
-  background: #080a0f;
+  background: #05060a;
 
   --linear-accent: #8ea5ff;
   --linear-accent-light: #b9c6ff;
   --linear-accent-glow: rgba(142, 165, 255, 0.28);
-  --linear-surface: #0d1018;
-  --linear-surface-raised: #121723;
-  --linear-border: rgba(255, 255, 255, 0.10);
-  --linear-border-hover: rgba(255, 255, 255, 0.16);
+  --linear-surface: #0a0c14;
+  --linear-surface-raised: #111420;
+  --linear-border: rgba(255, 255, 255, 0.07);
+  --linear-border-hover: rgba(255, 255, 255, 0.12);
+  
+  /* Premium Glassmorphism variables */
+  --glass-bg: rgba(10, 12, 22, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-glow: rgba(142, 165, 255, 0.15);
+  --glass-inner-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
 * {
@@ -25,15 +36,38 @@ body {
 body {
   margin: 0;
   color: #f7f8f8;
-  background-color: #080a0f;
+  background-color: #05060a;
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(142, 165, 255, 0.12), transparent),
-    radial-gradient(ellipse 60% 40% at 80% 50%, rgba(142, 165, 255, 0.06), transparent);
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(142, 165, 255, 0.14), transparent),
+    radial-gradient(ellipse 60% 40% at 85% 45%, rgba(142, 165, 255, 0.07), transparent);
   background-size: 100% 100%, 100% 100%;
   background-position: center top, center right;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Premium panel glass styling */
+.premium-glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 
+    var(--glass-inner-shadow),
+    0 4px 30px rgba(0, 0, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.premium-glass-panel-glow {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border-glow);
+  box-shadow: 
+    var(--glass-inner-shadow),
+    0 0 15px rgba(142, 165, 255, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 /* ─── Linear-style gradient text ─── */

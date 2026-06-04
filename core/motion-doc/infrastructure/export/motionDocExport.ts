@@ -1,6 +1,8 @@
 import { parseMotionDoc, type MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
 import { isSlideXIconName, lucideIconPaths } from "@/core/motion-doc/domain/lucideIconRegistry";
 import { materializeFreeformScene } from "@/core/motion-doc/application/motionDocFreeform";
+import { shaderVariantForId } from "@/core/motion-doc/application/shaders/premiumShaderBodies";
+import { resolveSlideThemeColors } from "@/core/motion-doc/application/slideTheme";
 import { motionDocExportRuntime } from "@/core/motion-doc/infrastructure/export/motionDocExportRuntime";
 import { motionDocExportStyles } from "@/core/motion-doc/infrastructure/export/motionDocExportStyles";
 
@@ -52,29 +54,23 @@ function renderSceneHtml(
 ) {
   const { blocks, duration, props } = scene;
   const theme = typeof props.theme === "string" ? props.theme : "dark";
-  const isLight = theme === "light" || theme === "paper";
-  const background =
-    typeof props.background === "string"
-      ? props.background
-      : isLight
-        ? "#ffffff"
-        : "#050505";
-  const accent = typeof props.accent === "string" ? props.accent : isLight ? "#111111" : "#ffffff";
-  const borderColor = isLight ? "rgba(15,23,42,0.12)" : "rgba(255,255,255,0.12)";
-  const cardBackground = isLight ? "rgba(255,255,255,0.72)" : "rgba(255,255,255,0.075)";
-  const foreground = stringProp(props.textColor ?? props.foreground ?? props.color) ?? (isLight ? "#111827" : "#ffffff");
-  const muted = stringProp(props.mutedColor) ?? (isLight ? "#475569" : "#cbd5e1");
-
+  const declaredLight = theme === "light" || theme === "paper";
+  const themeColors = resolveSlideThemeColors(props, {
+    accentFallback: declaredLight ? "#111111" : "#ffffff",
+    backgroundFallback: declaredLight ? "#ffffff" : "#050505",
+    themeFallback: theme
+  });
   const shader = stringProp(props.shader);
-  const shaderHtml = shader ? `<canvas class="shader-bg" data-shader="${escapeAttribute(shader)}" data-shader-color1="${escapeAttribute(stringProp(props.shaderColor1) ?? accent)}" data-shader-color2="${escapeAttribute(stringProp(props.shaderColor2) ?? background)}" data-shader-color3="${escapeAttribute(stringProp(props.shaderColor3) ?? (isLight ? '#64748b' : '#06b6d4'))}" data-shader-intensity="${numberProp(props.shaderIntensity, 0.5)}" data-shader-speed="${numberProp(props.shaderSpeed, 1)}" data-shader-softness="${numberProp(props.shaderSoftness, 0.5)}" data-shader-scale="${numberProp(props.shaderScale, 0.5)}" data-shader-detail="${numberProp(props.shaderDetail, 0.5)}"></canvas>` : '';
+  const shaderHtml = shader ? `<canvas class="shader-bg" data-shader="${escapeAttribute(shader)}" data-shader-engine="${escapeAttribute(themeColors.shaderEngine)}" data-shader-variant="${shaderVariantForId(shader)}" data-shader-color1="${escapeAttribute(themeColors.shaderColor1)}" data-shader-color2="${escapeAttribute(themeColors.shaderColor2)}" data-shader-color3="${escapeAttribute(themeColors.shaderColor3)}" data-shader-intensity="${numberProp(props.shaderIntensity, 0.5)}" data-shader-speed="${numberProp(props.shaderSpeed, 1)}" data-shader-softness="${numberProp(props.shaderSoftness, 0.5)}" data-shader-scale="${numberProp(props.shaderScale, 0.5)}" data-shader-detail="${numberProp(props.shaderDetail, 0.5)}"></canvas>` : '';
 
-  return `<section class="slide" data-duration="${Math.max(duration, 1)}" style="${escapeAttribute(inlineCss({
-    "--slide-accent": accent,
-    "--slide-bg": background,
-    "--slide-border": borderColor,
-    "--slide-card": cardBackground,
-    "--slide-fg": foreground,
-    "--slide-muted": muted
+  return `<section class="slide" data-duration="${Math.max(duration, 1)}" data-has-shader="${shader ? "true" : "false"}" data-theme-tone="${themeColors.tone}" style="${escapeAttribute(inlineCss({
+    "--slide-accent": themeColors.accent,
+    "--slide-bg": themeColors.background,
+    "--slide-border": themeColors.borderColor,
+    "--slide-card": themeColors.cardBackground,
+    "--slide-fg": themeColors.foreground,
+    "--slide-muted": themeColors.muted,
+    "--slide-overlay-opacity": shader ? "0.3" : "0.72"
   }))}">
     ${shaderHtml}
     ${blocks.map((block) => renderBlock(block)).join("")}

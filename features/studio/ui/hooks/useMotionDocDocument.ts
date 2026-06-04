@@ -35,6 +35,7 @@ export function useMotionDocDocument({
   const activeSlideShaderColor1 = stringValue(activeSlide?.props.shaderColor1) ?? "";
   const activeSlideShaderColor2 = stringValue(activeSlide?.props.shaderColor2) ?? "";
   const activeSlideShaderColor3 = stringValue(activeSlide?.props.shaderColor3) ?? "";
+  const activeSlideShaderEngine = stringValue(activeSlide?.props.shaderEngine) ?? "three";
   const activeSlideShaderIntensity = numberValue(activeSlide?.props.shaderIntensity) ?? 0.5;
   const activeSlideShaderSpeed = numberValue(activeSlide?.props.shaderSpeed) ?? 1;
   const activeSlideShaderSoftness = numberValue(activeSlide?.props.shaderSoftness) ?? 0.5;
@@ -70,6 +71,7 @@ export function useMotionDocDocument({
     activeSlideShaderColor2,
     activeSlideShaderColor3,
     activeSlideShaderDetail,
+    activeSlideShaderEngine,
     activeSlideShaderIntensity,
     activeSlideShaderScale,
     activeSlideShaderSoftness,

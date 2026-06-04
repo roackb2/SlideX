@@ -56,18 +56,18 @@ export function LayerRow({
   const isSelected = selectedBlockIndices.includes(index) || selectedBlockIndex === index;
   const isDragged = draggedBlockIndex === index;
   const isDragOver = dragOverBlockIndex === index && !isDragged;
-  let itemClass = "group flex items-center justify-between p-1.5 rounded-md transition-all cursor-pointer border ";
+  let itemClass = "group flex items-center justify-between p-2 rounded-xl transition-all duration-300 cursor-pointer border active:scale-[0.98] ";
 
   if (isSelected) {
-    itemClass += "bg-neutral-800 text-white border-neutral-700 ";
+    itemClass += "bg-gradient-to-r from-neutral-800/90 via-neutral-800/60 to-neutral-800/30 text-white border-white/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.35)] ";
   } else {
-    itemClass += "text-neutral-400 border-transparent hover:bg-neutral-900 ";
+    itemClass += "text-neutral-400 border-transparent hover:bg-white/[0.03] hover:text-neutral-200 ";
   }
 
   if (isDragged) {
-    itemClass += "opacity-30 border-dashed !border-neutral-700 ";
+    itemClass += "opacity-30 border-dashed !border-white/[0.08] ";
   } else if (isDragOver) {
-    itemClass += "!border-t-white !border-t-2 bg-neutral-900/80 shadow-lg scale-[1.02] z-10 relative ";
+    itemClass += "!border-t-[#8ea5ff] !border-t-2 bg-neutral-900/80 shadow-lg scale-[1.02] z-10 relative ";
   }
 
   return (
@@ -140,10 +140,10 @@ export function GroupLayerRow({
 }) {
   return (
     <div
-      className={`group flex cursor-pointer items-center justify-between rounded-md border p-1.5 transition-all ${
+      className={`group flex cursor-pointer items-center justify-between rounded-xl border p-2 transition-all duration-300 active:scale-[0.98] ${
         isSelected
-          ? "border-neutral-700 bg-neutral-800 text-white"
-          : "border-neutral-800 bg-neutral-950 text-neutral-400 hover:bg-neutral-900"
+          ? "border-white/[0.08] bg-gradient-to-r from-neutral-800/90 to-neutral-800/40 text-white shadow-md"
+          : "border-white/[0.04] bg-[#090a0f]/60 text-neutral-400 hover:border-white/[0.12] hover:bg-white/[0.03]"
       }`}
       onClick={(event) => onSelectBlocks(indices, { additive: event.metaKey || event.ctrlKey || event.shiftKey })}
       onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {

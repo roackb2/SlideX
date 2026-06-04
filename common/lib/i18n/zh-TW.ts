@@ -165,12 +165,12 @@ export const zhTwDictionary = {
         body: "範本是完整場景系統，不是空白主題。選一個、改寫故事，保留動效。"
       },
       downloadTeaser: {
-        title: "Mac 下載版是下一步。",
-        body: "我們正在準備未來的 macOS 版本，會把 Mac 專案、版本資訊與安裝流程集中在這裡。",
-        cta: "查看下載頁",
+        title: "Mac Beta 已可下載。",
+        body: "SlideX Tauri Beta 0.1.0 已放上 macOS Apple Silicon DMG，可先分享給早期使用者測試桌面版流程。",
+        cta: "下載 Mac Beta",
         cardTitle: "SlideX for macOS",
-        status: "即將推出",
-        items: ["通用 App", "Mac 專案", "匯出流程"]
+        status: "Beta 0.1.0",
+        items: ["Apple Silicon DMG", "Mac 專案基礎", "Web Studio 相容"]
       }
     },
     templatesPage: {
@@ -469,29 +469,34 @@ export const zhTwDictionary = {
     },
     downloadPage: {
       hero: {
-        eyebrow: "下載",
-        title: "SlideX for Mac 正在路上。",
-        body: "原生 Mac App 正在準備中，未來會支援為 Mac 量身打造的簡報專案、更順暢的預覽，以及可匯出的簡報流程。",
-        disabledButton: "Mac App 即將推出",
+        eyebrow: "Tauri Beta 0.1.0",
+        title: "SlideX for Mac Beta 已可對外發佈。",
+        body: "第一版 Tauri 桌面 beta 已整理好 DMG，可先分享給早期使用者。這一版聚焦 Mac 原生殼層、Web Studio 場景相容，以及後續匯出流程的基礎。",
+        primary: "下載 Mac Beta 0.1.0",
         secondary: "開啟 Web Studio"
       },
       packageCard: {
         title: "macOS App",
-        subtitle: "原生桌面版本",
-        status: "即將推出",
-        heading: "我們正在準備",
-        items: ["已簽署 Mac 安裝程式", "Mac 專案工作流", "預覽與匯出流程", "版本資訊"],
-        localTitle: "為 Mac 量身打造",
-        localBody: "Mac 版本會延續 Web Studio 的 MDX 場景模型，並針對桌面工作流、專案管理與簡報輸出做更完整的整合。"
+        subtitle: "Tauri 桌面版本",
+        status: "已可下載",
+        heading: "第一版 DMG",
+        fileMeta: [
+          ["檔案", "SlideX_0.1.0_aarch64.dmg"],
+          ["平台", "macOS Apple Silicon"],
+          ["大小", "3.9 MB"]
+        ],
+        items: ["Tauri 桌面 Beta 0.1.0", "可公開下載的 DMG 安裝檔", "延續 Web Studio 的 MDX 場景模型", "2026.06.04 beta 版本資訊"],
+        localTitle: "第一版 Tauri 更新",
+        localBody: "這一版先把 Mac 桌面體驗、專案開啟流程與 Studio 預覽整合到可對外測試的 beta 版本，讓團隊可以用同一個 DMG 同步測試與回饋。"
       },
       stats: [
-        ["原生 Mac App", "桌面版本將支援日常簡報工作。"],
-        ["Mac 專案", "為桌面檔案與機密簡報流程而設計。"],
-        ["可匯出", "準備支援檢討、播放與擷取流程。"]
+        ["Tauri Beta 0.1.0", "今天可先對外分享的第一個 Mac beta DMG。"],
+        ["Mac 專案", "為桌面檔案與私密簡報流程鋪好基礎。"],
+        ["Web Studio 相容", "沿用 MDX 場景模型，方便之後接上匯出與播放流程。"]
       ],
       webStudio: {
-        title: "目前先使用 Web Studio。",
-        body: "瀏覽器版本現在就能組合場景、測試動效與準備簡報，Mac App 則持續開發中。",
+        title: "Web Studio 與 Mac Beta 同步前進。",
+        body: "瀏覽器版本現在就能組合場景、測試動效與準備簡報；Mac beta 則作為桌面版第一個公開節點，讓團隊開始收集真實使用回饋。",
         button: "開啟 Studio"
       }
     }

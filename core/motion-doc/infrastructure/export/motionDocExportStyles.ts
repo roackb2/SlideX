@@ -98,7 +98,7 @@ export const motionDocExportStyles = `      :root {
         background:
           radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--slide-accent) 28%, transparent), transparent 28rem),
           radial-gradient(circle at 90% 70%, color-mix(in srgb, var(--slide-accent) 18%, transparent), transparent 24rem);
-        opacity: 0.72;
+        opacity: var(--slide-overlay-opacity, 0.72);
         pointer-events: none;
       }
       .shader-bg {

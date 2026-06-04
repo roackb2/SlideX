@@ -4,8 +4,6 @@ import type { FrameUpdate } from "@/features/studio/application/motionDocCommand
 import type { SlideRow } from "@/features/studio/ui/LayerSidebar";
 import type { AddBlockType } from "@/features/studio/ui/studioOptions";
 
-export type CodeCursor = { column: number; line: number };
-export type CodeScroll = { left: number; top: number };
 export type SelectionMdx = { label: string; source: string };
 
 export type StudioWorkspaceProps = {
@@ -28,6 +26,7 @@ export type StudioWorkspaceProps = {
   activeSlideShaderColor2: string;
   activeSlideShaderColor3: string;
   activeSlideShaderDetail: number;
+  activeSlideShaderEngine: string;
   activeSlideShaderIntensity: number;
   activeSlideShaderScale: number;
   activeSlideShaderSoftness: number;
@@ -41,8 +40,6 @@ export type StudioWorkspaceProps = {
   beginBlockTransform: () => void;
   canvasSource: string;
   clearBlockSelection: () => void;
-  codeCursor: CodeCursor;
-  codeScroll: CodeScroll;
   commitMdxSource: (value: string) => void;
   copySource: () => Promise<void>;
   deleteBlock: (blockIndex: number) => void;
@@ -82,7 +79,6 @@ export type StudioWorkspaceProps = {
   selectionMdx: SelectionMdx;
   selectSingleBlock: (index: number | null) => void;
   setActiveSlideIndex: Dispatch<SetStateAction<number>>;
-  setCodeScroll: Dispatch<SetStateAction<CodeScroll>>;
   setDraggedBlockIndex: Dispatch<SetStateAction<number | null>>;
   setDragOverBlockIndex: Dispatch<SetStateAction<number | null>>;
   setIsCanvasGridVisible: Dispatch<SetStateAction<boolean>>;
@@ -100,7 +96,6 @@ export type StudioWorkspaceProps = {
   updateAllSlidesStyle: (updates: Record<string, string | number>) => void;
   updateBlock: (blockIndex: number, newProps: Record<string, string | number>, newText?: string) => void;
   updateBlockGroupFlow: (blockType: "Card" | "Chart" | "Metric", flow: string, gap?: number) => void;
-  updateCodeCursor: (selectionStart: number, cursorSource?: string) => void;
   updatePositionedBlockFrames: (updates: FrameUpdate[], commit?: boolean) => void;
   updateSelectionMdx: (value: string) => void;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;

@@ -10,6 +10,13 @@ import {
   type SlidexRecentProject
 } from "@/features/studio/infrastructure/tauriProject";
 
+export type NewStudioProjectOptions = {
+  name?: string;
+  notice?: string;
+  source?: string;
+  templateId?: string;
+};
+
 type UseStudioProjectArgs = {
   canvasSource: string;
   documentTitle: string;
@@ -68,9 +75,9 @@ export function useStudioProject({
     setNotice(`${project.name} ${noticeSuffix}`);
   }
 
-  function newProject() {
-    setSource(defaultMdx);
-    setProjectName("Untitled");
+  function newProject(options: NewStudioProjectOptions = {}) {
+    setSource(options.source ?? defaultMdx);
+    setProjectName(options.name ?? "Untitled");
     setProjectPath(null);
     setIsProjectDirty(false);
     setHasEnteredStudio(true);
@@ -78,7 +85,7 @@ export function useStudioProject({
     setActiveSlideIndex(0);
     resetSelection();
     setReplayNonce((value) => value + 1);
-    setNotice("New project");
+    setNotice(options.notice ?? "New project");
   }
 
   async function openProject() {

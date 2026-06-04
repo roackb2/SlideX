@@ -178,6 +178,45 @@ void main() {
   fragColor = vec4(col * u_intensity, 1.0);
 }`;
 
+export const silkGradientBody = `
+void main() {
+  vec2 uv = vUv;
+  float t = u_time * u_speed * 0.08;
+  float scl = 0.65 + u_scale * 1.35;
+  float det = clamp(u_detail, 0.1, 1.0);
+  float soft = 0.35 + u_softness * 0.65;
+
+  vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
+  vec2 p = (uv - 0.5) * aspect;
+
+  vec2 q = vec2(
+    fbm(uv * (1.2 * scl) + vec2(t * 0.25, -t * 0.08)),
+    fbm(uv * (1.6 * scl) - vec2(t * 0.10, t * 0.22))
+  );
+  vec2 r = vec2(
+    fbm(uv * (2.1 * scl) + q * (1.6 * det) + vec2(t * 0.14)),
+    fbm(uv * (1.9 * scl) - q * (1.2 * det) - vec2(t * 0.09))
+  );
+
+  vec2 warped = uv + (r - 0.5) * (0.28 * soft);
+  float diagonal = warped.x * 0.74 + warped.y * 0.58;
+  float veil = smoothstep(0.08, 0.98, diagonal + 0.12 * sin(t + warped.y * 3.0));
+  float bloomA = 1.0 - smoothstep(0.0, 0.62 + soft * 0.28, length(warped - vec2(0.22, 0.24)));
+  float bloomB = 1.0 - smoothstep(0.0, 0.72 + soft * 0.24, length(warped - vec2(0.82, 0.74)));
+  float satin = pow(abs(sin((warped.x - warped.y) * 9.0 + q.x * 2.8 + t * 1.2)), 10.0);
+
+  vec3 col = mix(u_color2, u_color1, veil);
+  col = mix(col, u_color3, bloomA * 0.48 + bloomB * 0.36);
+  vec3 pearl = vec3(0.96, 0.98, 1.0) * (0.12 + 0.28 * satin * det);
+  col += pearl;
+
+  float grain = hash(uv * 980.0 + vec2(t * 7.0));
+  col += (grain - 0.5) * 0.025;
+  col *= 0.78 + 0.22 * smoothstep(1.1, 0.22, length(p));
+
+  fragColor = vec4(col * (0.55 + u_intensity * 0.85), 1.0);
+}`;
+
 export const noiseFogBody = `
 void main() {
   vec2 uv = vUv;

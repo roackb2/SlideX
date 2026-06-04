@@ -266,7 +266,7 @@ export function PreviewCanvas({
 
   return (
     <div
-      className="relative m-3 flex min-w-0 flex-1 animate-[bubble-appear_0.25s_ease-out] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c0e18]/45 shadow-2xl shadow-black/30 backdrop-blur-md"
+      className="premium-glass-panel relative m-3 flex min-w-0 flex-1 animate-[bubble-appear_0.25s_ease-out] flex-col overflow-hidden rounded-2xl shadow-black/40"
       id="canvas-v4"
     >
       <CanvasSlideNav

@@ -33,6 +33,9 @@ const fadeInUp = {
   })
 };
 
+const macDownloadHref = "/downloads/SlideX_0.1.0_aarch64.dmg";
+const macDownloadFileName = "SlideX_0.1.0_aarch64.dmg";
+
 export default function DownloadPage() {
   const { t } = useI18n();
 
@@ -70,13 +73,14 @@ export default function DownloadPage() {
               {t.downloadPage.hero.body}
             </motion.p>
             <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <button
-                className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white/60 px-6 py-3 text-sm font-semibold text-black sm:w-auto"
-                disabled
-                type="button"
+              <Link
+                href={macDownloadHref}
+                download={macDownloadFileName}
+                className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
               >
-                {t.downloadPage.hero.disabledButton}
-              </button>
+                <Download className="h-4 w-4" />
+                {t.downloadPage.hero.primary}
+              </Link>
               <Link
                 href="/studio"
                 className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95 sm:w-auto"
@@ -113,6 +117,14 @@ export default function DownloadPage() {
                 <div className="mb-4 flex items-center gap-2 text-sm font-medium text-white">
                   <FileCode2 className="h-4 w-4 text-[#8ea5ff]" />
                   {t.downloadPage.packageCard.heading}
+                </div>
+                <div className="mb-4 grid gap-4 border-b border-white/[0.08] pb-4 sm:grid-cols-3">
+                  {t.downloadPage.packageCard.fileMeta.map(([label, value]) => (
+                    <div key={label}>
+                      <p className="text-xs font-medium text-neutral-500">{label}</p>
+                      <p className="mt-1 break-words text-sm font-medium leading-5 text-neutral-200">{value}</p>
+                    </div>
+                  ))}
                 </div>
                 <div className="space-y-3">
                   {t.downloadPage.packageCard.items.map((item) => (

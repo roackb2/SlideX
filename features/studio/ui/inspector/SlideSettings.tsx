@@ -21,6 +21,7 @@ type SlideSettingsProps = {
   shaderColor2: string;
   shaderColor3: string;
   shaderDetail: number;
+  shaderEngine: string;
   shaderIntensity: number;
   shaderScale: number;
   shaderSoftness: number;
@@ -46,6 +47,7 @@ export function SlideSettings({
   shaderColor2,
   shaderColor3,
   shaderDetail,
+  shaderEngine,
   shaderIntensity,
   shaderScale,
   shaderSoftness,
@@ -86,6 +88,7 @@ export function SlideSettings({
         shaderColor2={shaderColor2}
         shaderColor3={shaderColor3}
         shaderDetail={shaderDetail}
+        shaderEngine={shaderEngine}
         shaderIntensity={shaderIntensity}
         shaderScale={shaderScale}
         shaderSoftness={shaderSoftness}
