@@ -1,0 +1,31 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "headers": [
+    {
+      "source": "/opengraph-image",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "image/png"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "inline; filename=\"opengraph-image.png\""
+        }
+      ]
+    },
+    {
+      "source": "/opengraph-image/:path*",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "image/png"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "inline; filename=\"opengraph-image.png\""
+        }
+      ]
+    }
+  ]
+}
