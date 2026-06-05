@@ -17,6 +17,7 @@ export const zhTwDictionary = {
       mobileDescription: "設計可動畫的 MDX 場景簡報。",
       openMenu: "開啟選單",
       closeMenu: "關閉選單",
+      githubLabel: "開啟 GitHub 倉庫",
       languageLabel: "切換語言",
       localeShortLabel: "繁中"
     },

@@ -17,6 +17,7 @@ export const enDictionary = {
       mobileDescription: "Design animated MDX scene decks.",
       openMenu: "Open menu",
       closeMenu: "Close menu",
+      githubLabel: "Open GitHub repository",
       languageLabel: "Switch language",
       localeShortLabel: "EN"
     },

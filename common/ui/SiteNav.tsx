@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Download, Languages, Menu, X } from "lucide-react";
 import { useI18n } from "@/common/lib/I18nProvider";
 
+const GITHUB_REPOSITORY_URL = "https://github.com/zz41354899/Animark";
 const easeSmooth = [0.22, 1, 0.36, 1] as const;
 
 const menuVariants = {
@@ -35,6 +36,19 @@ const itemVariants = {
     transition: { delay: 0.1 + i * 0.06, duration: 0.35, ease: easeSmooth }
   })
 };
+
+function GithubMark({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.04-.02-2.04-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5.99.11-.78.42-1.3.76-1.6-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23.96-.27 1.98-.4 3-.4s2.04.14 3 .4c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.28 0 .32.22.7.83.58C20.56 22.3 24 17.8 24 12.5 24 5.87 18.63.5 12 .5Z" />
+    </svg>
+  );
+}
 
 export function SiteNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -108,6 +122,22 @@ export function SiteNav() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-3">
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="shrink-0"
+            >
+              <a
+                href={GITHUB_REPOSITORY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t.nav.githubLabel}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.04] text-neutral-300 transition-colors hover:border-white/[0.2] hover:bg-white/[0.08] hover:text-white"
+              >
+                <GithubMark className="h-4 w-4" />
+              </a>
+            </motion.div>
+
             <button
               className="hidden h-9 items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-3 text-xs font-semibold text-neutral-300 transition hover:border-white/[0.22] hover:bg-white/[0.08] hover:text-white sm:inline-flex"
               type="button"
