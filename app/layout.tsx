@@ -23,7 +23,8 @@ const siteUrl = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://slide-x-psi
 const ogImage = {
   alt: "SlideX motion deck editor preview",
   height: 630,
-  url: "/opengraph-image",
+  type: "image/png",
+  url: "/og-image.png",
   width: 1200
 };
 
@@ -49,7 +50,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: defaultMetadata.title,
     description: defaultMetadata.description,
-    images: [ogImage.url]
+    images: [
+      {
+        alt: ogImage.alt,
+        url: ogImage.url
+      }
+    ]
   },
   other: {
     google: "notranslate"
