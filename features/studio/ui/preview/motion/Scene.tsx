@@ -88,7 +88,6 @@ export function Scene({
           "--slide-muted": themeColors.muted,
           "--slide-text-align": textAlign,
           background: themeColors.background,
-          border: `1px solid ${themeColors.borderColor}`,
           borderRadius: 20,
           display: "flex",
           flexDirection: "column",

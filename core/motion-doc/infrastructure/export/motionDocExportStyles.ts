@@ -63,7 +63,6 @@ export const motionDocExportStyles = `      :root {
         aspect-ratio: 16 / 9;
         overflow: hidden;
         border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.14);
         background: #0a0a0a;
         box-shadow: 0 28px 90px rgba(0,0,0,0.58);
       }
@@ -523,6 +522,12 @@ export const motionDocExportStyles = `      :root {
       .motion-block--full .block-video video {
         height: 100%;
         aspect-ratio: auto;
+      }
+      .motion-block--positioned > * {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        margin: 0;
       }
       .controls {
         display: grid;

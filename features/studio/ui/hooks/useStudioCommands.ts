@@ -314,7 +314,7 @@ export function useStudioCommands({
     setNotice("Block updated");
   }
 
-  function uploadImageForBlock(blockIndex: number, file: File | undefined) {
+  async function uploadImageForBlock(blockIndex: number, file: File | undefined) {
     if (!activeSlide || !file) {
       return;
     }
@@ -330,17 +330,24 @@ export function useStudioCommands({
       return;
     }
 
-    const url = URL.createObjectURL(file);
-    updateBlock(blockIndex, {
-      ...block.props,
-      alt: stringValue(block.props.alt) || file.name,
-      fit: stringValue(block.props.fit) || "cover",
-      src: url
-    });
-    setNotice("Local image loaded");
+    try {
+      const url = URL.createObjectURL(file);
+      (window as any).__slidexLocalFiles = (window as any).__slidexLocalFiles || new Map();
+      (window as any).__slidexLocalFiles.set(url, file);
+      
+      updateBlock(blockIndex, {
+        ...block.props,
+        alt: stringValue(block.props.alt) || file.name,
+        fit: stringValue(block.props.fit) || "cover",
+        src: url
+      });
+      setNotice("Local image loaded");
+    } catch (e) {
+      setNotice("Failed to load local image");
+    }
   }
 
-  function uploadVideoForBlock(blockIndex: number, file: File | undefined) {
+  async function uploadVideoForBlock(blockIndex: number, file: File | undefined) {
     if (!activeSlide || !file) {
       return;
     }
@@ -356,14 +363,22 @@ export function useStudioCommands({
       return;
     }
 
-    const url = URL.createObjectURL(file);
-    updateBlock(blockIndex, {
-      ...block.props,
-      controls: stringValue(block.props.controls) || "true",
-      fit: stringValue(block.props.fit) || "cover",
-      src: url
-    });
-    setNotice("Local video loaded");
+    try {
+      setNotice("Loading video...");
+      const url = URL.createObjectURL(file);
+      (window as any).__slidexLocalFiles = (window as any).__slidexLocalFiles || new Map();
+      (window as any).__slidexLocalFiles.set(url, file);
+      
+      updateBlock(blockIndex, {
+        ...block.props,
+        controls: stringValue(block.props.controls) || "true",
+        fit: stringValue(block.props.fit) || "cover",
+        src: url
+      });
+      setNotice("Local video loaded");
+    } catch (e) {
+      setNotice("Failed to load local video");
+    }
   }
 
   function goToPreviousSlide() {

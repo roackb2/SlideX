@@ -20,6 +20,34 @@ export function useStudioExport({
   setIsExportMenuOpen,
   setNotice
 }: UseStudioExportArgs) {
+  const embedLocalFiles = async (sourceText: string) => {
+    const localFiles = (window as any).__slidexLocalFiles as Map<string, File> | undefined;
+    if (!localFiles) return sourceText;
+    
+    let result = sourceText;
+    const blobRegex = /src="(blob:[^"]+)"/g;
+    const matches = [...sourceText.matchAll(blobRegex)];
+    
+    for (const match of matches) {
+      const url = match[1];
+      const file = localFiles.get(url);
+      if (file) {
+        try {
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          result = result.replace(url, base64);
+        } catch (e) {
+          console.warn("Failed to embed local file", url, e);
+        }
+      }
+    }
+    return result;
+  };
+
   const copySource = useCallback(async () => {
     if (!navigator.clipboard) {
       setNotice("Clipboard unavailable");
@@ -35,9 +63,12 @@ export function useStudioExport({
     const defaultFilename = `${slugifyFilename(title)}.mdx`;
 
     try {
+      setNotice("Preparing export...");
+      const finalSource = await embedLocalFiles(canvasSource);
+
       if (isTauri) {
         const path = await exportSlidexFile({
-          content: canvasSource,
+          content: finalSource,
           defaultFilename,
           extension: "mdx"
         });
@@ -47,7 +78,7 @@ export function useStudioExport({
         return;
       }
 
-      downloadFile(defaultFilename, canvasSource, "text/markdown;charset=utf-8");
+      downloadFile(defaultFilename, finalSource, "text/markdown;charset=utf-8");
       setIsExportMenuOpen(false);
       setNotice("MDX exported");
     } catch (error) {
@@ -58,9 +89,12 @@ export function useStudioExport({
   const exportHtmlFile = useCallback(async () => {
     const title = documentTitle || "slidesx-deck";
     const defaultFilename = `${slugifyFilename(title)}.html`;
-    const html = buildMotionDocHtml(canvasSource);
 
     try {
+      setNotice("Preparing export...");
+      const finalSource = await embedLocalFiles(canvasSource);
+      const html = buildMotionDocHtml(finalSource);
+
       if (isTauri) {
         const path = await exportSlidexFile({
           content: html,
@@ -87,3 +121,4 @@ export function useStudioExport({
     exportMdxFile
   };
 }
+
