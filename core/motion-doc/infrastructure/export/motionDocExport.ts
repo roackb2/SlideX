@@ -79,11 +79,11 @@ function renderSceneHtml(
 
 function renderBlock(block: MotionDocBlock, blockIndex: number) {
   if (block.type === "Title") {
-    return renderMotionBlock(block, `<h1 class="block-title">${escapeHtml(block.text)}</h1>`);
+    return renderMotionBlock(block, `<h1 class="block-title">${renderTextLines(String(block.text ?? ""), block.props?.listType)}</h1>`);
   }
 
   if (block.type === "Text" || block.type === "heading") {
-    return renderMotionBlock(block, `<p class="block-text">${escapeHtml(block.text)}</p>`);
+    return renderMotionBlock(block, `<p class="block-text">${renderTextLines(String(block.text ?? ""), block.props?.listType)}</p>`);
   }
 
   if (block.type === "Card") {
@@ -209,8 +209,37 @@ function renderMotionBlock(block: MotionDocBlock, content: string) {
     ...positionVars(props),
     ...radiusVars(props),
     ...colorVars(props),
-    ...textAlignVars(props)
+    ...textAlignVars(props),
+    ...flexAlignVars(props)
   }))}">${content}</div>`;
+}
+
+function renderTextLines(text: string, listType?: string | unknown) {
+  if (!text) return "";
+  
+  return text.split('\n').map(line => {
+    const isBullet = listType === "bullet";
+    const className = isBullet ? "block-line block-line--bullet" : "block-line";
+    const content = line === "" ? "&#8203;" : escapeHtml(line);
+    return `<span class="${className}">${content}</span>`;
+  }).join("");
+}
+
+function flexAlignVars(props: Record<string, string | number>): Record<string, string> {
+  const value = props.textVerticalAlign;
+  if (!value) return {};
+
+  const justifyContent = value === "bottom"
+    ? "flex-end"
+    : value === "middle" || value === "center"
+      ? "center"
+      : "flex-start";
+
+  return {
+    "display": "flex",
+    "flex-direction": "column",
+    "justify-content": justifyContent
+  };
 }
 
 function animationClass(value: string | number | undefined) {

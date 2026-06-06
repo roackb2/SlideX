@@ -53,6 +53,7 @@ export function BackgroundSettingsSection({
     <AccordionSection title="Background" icon={<Layers size={13} className="text-[#8ea5ff]" />} defaultOpen>
       <div className="mb-2">
         <IconSegmentedControl
+          label="Background Type"
           onChange={(value) => setActiveTab(value as "standard" | "dynamic")}
           options={[
             { icon: <Palette size={14} />, label: "Standard", value: "standard" },

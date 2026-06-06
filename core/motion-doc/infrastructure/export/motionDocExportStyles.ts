@@ -176,6 +176,14 @@ export const motionDocExportStyles = `      :root {
         color: var(--motion-fg, var(--slide-muted));
         text-align: var(--motion-text-align, inherit);
       }
+      .block-line {
+        display: block;
+        white-space: pre-wrap;
+      }
+      .block-line--bullet {
+        padding-left: 1.2em;
+        text-indent: -1.2em;
+      }
       .block-card {
         display: flex;
         flex-direction: column;
