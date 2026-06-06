@@ -266,7 +266,7 @@ function editableTextStyle(block: EditableTextBlock, canvasScale: number): CSSPr
     alignItems: "stretch",
     display: "flex",
     flexDirection: "column",
-    fontFamily: fontFamily ? `"${fontFamily}", var(--font-sans-custom), sans-serif` : "inherit",
+    fontFamily: fontFamily ? `"${fontFamily}", var(--font-geist-sans, sans-serif)` : "inherit",
     fontSize: `${fontSize * canvasScale}px`,
     fontWeight,
     height: "100%",

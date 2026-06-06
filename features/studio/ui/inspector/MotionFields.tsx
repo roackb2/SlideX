@@ -121,7 +121,6 @@ export function MotionFields({
                   { label: "Poppins", value: "Poppins" },
                   { label: "PT Serif", value: "PT Serif" },
                   { label: "Raleway", value: "Raleway" },
-                  { label: "Roboto", value: "Roboto" },
                   { label: "Rubik", value: "Rubik" },
                   { label: "Space Grotesk", value: "Space Grotesk" },
                   { label: "Ubuntu", value: "Ubuntu" },

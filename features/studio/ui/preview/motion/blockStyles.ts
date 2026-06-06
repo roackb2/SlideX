@@ -14,7 +14,7 @@ export function textStyle(
   textAlign: ColorProps["textAlign"]
 ): CSSProperties {
   return {
-    ...(fontFamily === undefined || fontFamily === "" ? {} : { fontFamily: `"${fontFamily}", var(--font-sans-custom), sans-serif` }),
+    ...(fontFamily === undefined || fontFamily === "" ? {} : { fontFamily: `"${fontFamily}", var(--font-geist-sans, sans-serif)` }),
     ...(fontSize === undefined || fontSize === "" ? {} : { fontSize: typeof fontSize === "number" ? `${fontSize}px` : fontSize }),
     ...(fontWeight === undefined || fontWeight === "" ? {} : { fontWeight }),
     lineHeight: lineHeight === undefined || lineHeight === "" ? defaultLineHeight : lineHeight,
