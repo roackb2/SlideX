@@ -167,10 +167,10 @@ export const enDictionary = {
       },
       downloadTeaser: {
         title: "Mac Beta is ready to download.",
-        body: "SlideX Tauri 2.0.2 is now available as a macOS Apple Silicon DMG for early desktop workflow testing.",
+        body: "SlideX Tauri 2.0.3 is now available as a macOS Apple Silicon DMG for early desktop workflow testing.",
         cta: "Download Mac Beta",
         cardTitle: "SlideX for macOS",
-        status: "Version 2.0.2",
+        status: "Version 2.0.3",
         items: ["Apple Silicon DMG", "Mac project foundation", "Web Studio compatible"]
       }
     },
@@ -486,7 +486,7 @@ export const enDictionary = {
           ["Platform", "macOS Apple Silicon"],
           ["Cask Name", "slidex"]
         ],
-        items: ["Tauri desktop 2.0.2", "Automated Gatekeeper security bypass", "Same MDX scene model as Web Studio", "2026.06.06 release notes"],
+        items: ["Tauri desktop 2.0.3", "Automated Gatekeeper security bypass", "Same MDX scene model as Web Studio", "2026.06.06 release notes"],
         localTitle: "Homebrew Distribution",
         localBody: "This release brings the Mac desktop experience, project-opening flow, and Studio preview into an easily installable Homebrew Cask that is updated directly from GitHub Releases.",
         installTitle: "Installation Guide",
