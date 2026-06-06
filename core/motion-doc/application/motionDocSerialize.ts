@@ -16,27 +16,6 @@ export function replaceSlideOpeningTag(source: string, slideIndex: number, props
   return source;
 }
 
-export function explicitGroupFlowProps(slide: MotionDocScene, props: Record<string, string | number> = slide.props) {
-  const nextProps = { ...props };
-  const hasCard = slide.blocks.some((block) => block.type === "Card");
-  const hasMetric = slide.blocks.some((block) => block.type === "Metric");
-  const hasChart = slide.blocks.some((block) => block.type === "Chart");
-
-  if (hasCard && nextProps.cardFlow === undefined) {
-    nextProps.cardFlow = "stack";
-  }
-
-  if (hasMetric && nextProps.metricFlow === undefined) {
-    nextProps.metricFlow = stringProp(nextProps.cardFlow) ?? "stack";
-  }
-
-  if (hasChart && nextProps.chartFlow === undefined) {
-    nextProps.chartFlow = "stack";
-  }
-
-  return nextProps;
-}
-
 export function cloneBlock(block: MotionDocBlock): MotionDocBlock {
   if ("props" in block) {
     return {
@@ -63,24 +42,13 @@ export function replaceSlideContent(source: string, slideIndex: number, newSlide
 }
 
 export function generateSlideString(slide: MotionDocScene) {
-  const tag = formatSlideTag(explicitGroupFlowProps(slide));
+  const tag = formatSlideTag(slide.props);
   const blockStrings = slide.blocks.map((block) => `  ${generateBlockString(block)}`);
   return `${tag}\n${blockStrings.join("\n")}\n</Slide>`;
 }
 
 export function generateBlockString(block: MotionDocBlock) {
   return generateBlockStringWithProps(block, "props" in block ? block.props : undefined);
-}
-
-export function generateLayerBlockString(block: MotionDocBlock, slide: MotionDocScene) {
-  if (!("props" in block) || !isGroupableType(block.type)) {
-    return generateBlockString(block);
-  }
-
-  return generateBlockStringWithProps(block, {
-    ...block.props,
-    flow: groupFlowForBlock(slide, block.type)
-  });
 }
 
 function generateBlockStringWithProps(block: MotionDocBlock, overrideProps: Record<string, string | number> | undefined) {
@@ -117,7 +85,7 @@ export function getSelectionMdx(slide: MotionDocScene | undefined, selectedBlock
 
   return {
     label: block ? `${block.type.toLowerCase()}-${selectedBlockIndex + 1}.mdx` : "layer.mdx",
-    source: block ? generateLayerBlockString(block, slide) : ""
+    source: block ? generateBlockString(block) : ""
   };
 }
 
@@ -138,7 +106,15 @@ export function getSlideTitle(blocks: MotionDocBlock[], fallbackIndex: number) {
 }
 
 function formatProps(props: Record<string, string | number>) {
-  const entries = Object.entries(props).filter(([key, value]) => key !== "duration" && key !== "mb" && key !== "marginBottom" && value !== undefined && value !== "");
+  const entries = Object.entries(props).filter(
+    ([key, value]) =>
+      key !== "duration" &&
+      key !== "mb" &&
+      key !== "marginBottom" &&
+      !removedGroupPropKeys.has(key) &&
+      value !== undefined &&
+      value !== ""
+  );
   return entries
     .map(([key, value]) => (typeof value === "number" ? `${key}={${value}}` : `${key}="${value}"`))
     .join(" ");
@@ -150,26 +126,26 @@ function formatSlideTag(props: Record<string, string | number>) {
   return `<Slide duration={${duration}}${rest ? ` ${rest}` : ""}>`;
 }
 
-function stringProp(value: string | number | undefined) {
-  return typeof value === "string" && value.trim() ? value : undefined;
-}
-
-function isGroupableType(type: MotionDocBlock["type"]) {
-  return type === "Card" || type === "Metric" || type === "Chart";
-}
-
-function groupFlowForBlock(slide: MotionDocScene, type: MotionDocBlock["type"]) {
-  if (type === "Card") {
-    return stringProp(slide.props.cardFlow) ?? "stack";
-  }
-
-  if (type === "Metric") {
-    return stringProp(slide.props.metricFlow ?? slide.props.cardFlow) ?? "stack";
-  }
-
-  if (type === "Chart") {
-    return stringProp(slide.props.chartFlow) ?? "stack";
-  }
-
-  return "stack";
-}
+const removedGroupPropKeys = new Set([
+  "cardFlow",
+  "cardGap",
+  "chartFlow",
+  "chartGap",
+  "flow",
+  "groupFlow",
+  "metricFlow",
+  "metricGap",
+  "stackAlign",
+  "stackBackground",
+  "stackClipContent",
+  "stackColor",
+  "stackDirection",
+  "stackGap",
+  "stackGroup",
+  "stackPaddingBottom",
+  "stackPaddingLeft",
+  "stackPaddingRight",
+  "stackPaddingTop",
+  "stackPaddingX",
+  "stackPaddingY"
+]);

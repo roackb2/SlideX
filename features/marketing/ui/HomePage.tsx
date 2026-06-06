@@ -9,7 +9,7 @@ import { localizeTemplates } from "@/common/lib/i18n";
 import { SiteFooter, SiteNav } from "@/common/ui";
 import { motionTemplates } from "@/core/motion-doc/presets/templates";
 import { HeroStudio } from "@/features/marketing/ui/home/HeroStudio";
-import { easeSmooth, fadeInUp, staggerContainer } from "@/features/marketing/ui/home/homeMotion";
+import { springTransition, fadeInUp, staggerContainer } from "@/features/marketing/ui/home/homeMotion";
 import { StyleThumbnail } from "@/features/marketing/ui/StyleThumbnail";
 
 function Reveal({
@@ -34,7 +34,7 @@ function Reveal({
         visible: {
           opacity: 1,
           y: 0,
-          transition: { duration: 0.7, delay, ease: easeSmooth }
+          transition: { delay, ...springTransition }
         }
       }}
       className={className}
@@ -60,19 +60,11 @@ export function HomePage() {
 
       <section className="relative px-4 pt-24 sm:px-6">
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute left-1/2 top-0 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-[#8ea5ff]/[0.1] blur-3xl" />
           <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:72px_72px]" />
         </div>
 
         <div className="mx-auto grid max-w-7xl gap-8 pb-14 sm:pb-16 md:pb-20 lg:min-h-[calc(100dvh-6rem)] lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:gap-10">
           <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="max-w-2xl">
-            <motion.div
-              variants={fadeInUp}
-              className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.05] px-3 py-1.5 text-sm font-medium text-neutral-300"
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-[#8ea5ff]" />
-              {t.home.hero.eyebrow}
-            </motion.div>
             <motion.h1
               variants={fadeInUp}
               custom={1}
@@ -106,7 +98,7 @@ export function HomePage() {
             <motion.div variants={fadeInUp} custom={4} className="mt-8 grid max-w-lg gap-3 sm:grid-cols-3">
               {t.home.hero.checkpoints.map((item) => (
                 <div key={item} className="flex items-center gap-2 text-sm text-neutral-500">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0070f3]/[0.14] text-[#0070f3]">
                     <Check className="h-3 w-3" />
                   </span>
                   {item}
@@ -143,14 +135,14 @@ export function HomePage() {
 
           <div className="mt-12 grid gap-4 lg:grid-cols-12">
             <Reveal className="rounded-[24px] border border-white/[0.1] bg-white/[0.045] p-5 md:rounded-[28px] md:p-7 lg:col-span-7">
-              <div className="mb-5 flex items-center gap-2 text-sm font-medium text-[#8ea5ff]">
+              <div className="mb-5 flex items-center gap-2 text-sm font-medium text-[#0070f3]">
                 <Code2 className="h-4 w-4" />
                 {t.home.compose.sourceLabel}
               </div>
               <div className="overflow-x-auto rounded-[20px] border border-white/[0.1] bg-black p-4 font-mono text-xs leading-6 shadow-xl shadow-black/30 md:rounded-[22px]">
                 <p className="text-neutral-600">{`<Slide duration={5} theme="dark">`}</p>
                 <p className="pl-4 text-white">{`<Title enter="fadeUp">`}</p>
-                <p className="pl-8 text-[#8ea5ff]">{t.home.compose.codeTitle}</p>
+                <p className="pl-8 text-[#0070f3]">{t.home.compose.codeTitle}</p>
                 <p className="pl-4 text-white">{`</Title>`}</p>
                 <p className="pl-4 text-white">{`<Chart values="42,58,72,92" />`}</p>
                 <p className="text-neutral-600">{`</Slide>`}</p>
@@ -161,11 +153,11 @@ export function HomePage() {
               delay={0.05}
               className="relative overflow-hidden rounded-[24px] border border-white/[0.1] bg-[#10131d] p-5 md:rounded-[28px] md:p-7 lg:col-span-5"
             >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_15%,rgba(142,165,255,0.18),transparent_36%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_15%,rgba(0,112,243,0.12),transparent_36%)]" />
               <div className="relative">
                 <div className="mb-6 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm font-medium text-white">
-                    <Play className="h-4 w-4 text-[#8ea5ff]" />
+                    <Play className="h-4 w-4 text-[#0070f3]" />
                     {t.home.compose.timelineLabel}
                   </div>
                   <span className="rounded-full border border-white/[0.1] px-3 py-1 font-mono text-xs text-neutral-400">
@@ -181,8 +173,8 @@ export function HomePage() {
                           initial={{ width: 0 }}
                           whileInView={{ width: `${76 - index * 12}%` }}
                           viewport={{ once: true }}
-                          transition={{ delay: 0.2 + index * 0.12, duration: 0.65, ease: easeSmooth }}
-                          className="block h-full rounded-full bg-[#8ea5ff]"
+                          transition={{ delay: 0.2 + index * 0.12, ...springTransition }}
+                          className="block h-full rounded-full bg-[#0070f3]"
                         />
                       </span>
                     </div>
@@ -208,7 +200,7 @@ export function HomePage() {
             </Reveal>
 
             <Reveal delay={0.05} className="rounded-[24px] border border-white/[0.1] bg-white/[0.045] p-5 md:rounded-[28px] md:p-7 lg:col-span-4">
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-[#0070f3]/[0.14] text-[#0070f3]">
                 <Palette className="h-5 w-5" />
               </div>
               <h3 className="text-xl font-semibold tracking-tight text-white">{t.home.compose.blockTitle}</h3>
@@ -217,7 +209,7 @@ export function HomePage() {
               </p>
             </Reveal>
 
-            <Reveal delay={0.1} className="rounded-[24px] border border-[#8ea5ff]/[0.25] bg-[#8ea5ff]/[0.1] p-5 md:rounded-[28px] md:p-7 lg:col-span-4">
+            <Reveal delay={0.1} className="rounded-[24px] border border-[#0070f3]/[0.25] bg-[#0070f3]/[0.1] p-5 md:rounded-[28px] md:p-7 lg:col-span-4">
               <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-white text-black">
                 <Sparkles className="h-5 w-5" />
               </div>
@@ -249,7 +241,7 @@ export function HomePage() {
                     key={item.title}
                     className="grid gap-4 rounded-[20px] border border-white/[0.09] bg-black/20 p-4 sm:grid-cols-[48px_1fr_auto] sm:items-center md:rounded-[24px]"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.08] text-[#8ea5ff]">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.08] text-[#0070f3]">
                       <item.icon className="h-5 w-5" />
                     </div>
                     <div>
@@ -285,11 +277,11 @@ export function HomePage() {
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
-                transition={{ delay: index * 0.06, duration: 0.55, ease: easeSmooth }}
+                transition={{ delay: index * 0.06, ...springTransition }}
               >
                 <Link
                   href="/studio"
-                  className="group flex h-full flex-col overflow-hidden rounded-[24px] border border-white/[0.1] bg-white/[0.045] transition hover:border-[#8ea5ff]/[0.35] hover:bg-white/[0.07] active:scale-[0.99] md:rounded-[28px]"
+                  className="group flex h-full flex-col overflow-hidden rounded-[24px] border border-white/[0.1] bg-white/[0.045] transition hover:border-[#0070f3]/[0.35] hover:bg-white/[0.07] active:scale-[0.99] md:rounded-[28px]"
                 >
                   <StyleThumbnail
                     className="h-44 w-full transition duration-500 group-hover:scale-[1.03]"
@@ -313,7 +305,7 @@ export function HomePage() {
         <div className="mx-auto max-w-7xl">
           <Reveal className="grid gap-8 overflow-hidden rounded-[24px] border border-white/[0.1] bg-white/[0.045] p-5 sm:p-6 md:rounded-[32px] md:p-10 lg:grid-cols-[1fr_0.8fr] lg:items-center">
             <div>
-              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-[#0070f3]/[0.14] text-[#0070f3]">
                 <Download className="h-6 w-6" />
               </div>
               <h2 className="max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
@@ -342,7 +334,7 @@ export function HomePage() {
               <div className="space-y-3">
                 {t.home.downloadTeaser.items.map((item) => (
                   <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/[0.06] px-4 py-3 text-sm leading-6 text-neutral-300">
-                    <Check className="h-4 w-4 text-[#8ea5ff]" />
+                    <Check className="h-4 w-4 text-[#0070f3]" />
                     {item}
                   </div>
                 ))}

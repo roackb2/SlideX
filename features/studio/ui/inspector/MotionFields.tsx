@@ -1,62 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { AlignCenter, AlignLeft, AlignRight, Sliders, Wind } from "lucide-react";
 import { ColorControl, Field, IconSegmentedControl, NativeSelect, NumberInput, type BlockFieldProps, type PropRecord } from "@/features/studio/ui/inspector/InspectorControls";
-
-function AccordionSection({
-  title,
-  icon,
-  children,
-  defaultOpen = true
-}: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  return (
-    <div className="border border-white/[0.05] bg-white/[0.015] rounded-xl overflow-hidden transition-all duration-300 shadow-sm">
-      <button
-        type="button"
-        className="flex w-full items-center justify-between px-3.5 py-3 bg-white/[0.02] hover:bg-white/[0.04] text-left transition-colors cursor-pointer select-none"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <span className="flex items-center gap-2.5 text-[9.5px] font-bold uppercase tracking-[0.14em] text-neutral-300">
-          {icon}
-          {title}
-        </span>
-        {isOpen ? (
-          <ChevronDown size={13} className="text-neutral-500 transition-transform duration-200" />
-        ) : (
-          <ChevronRight size={13} className="text-neutral-500 transition-transform duration-200" />
-        )}
-      </button>
-      {isOpen && (
-        <div className="p-4 flex flex-col gap-4.5 border-t border-white/[0.04] bg-black/25 animate-[bubble-appear_0.15s_ease-out]">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ChevronDown({ size, className }: { size: number; className?: string }) {
-  return (
-    <svg className={className} fill="none" height={size} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width={size}>
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
-function ChevronRight({ size, className }: { size: number; className?: string }) {
-  return (
-    <svg className={className} fill="none" height={size} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width={size}>
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
-}
+import { AccordionSection } from "@/features/studio/ui/inspector/controls/AccordionSection";
 
 export function MotionFields({
   block,
@@ -151,6 +97,39 @@ export function MotionFields({
         
         {isTextType && (
           <div className="flex flex-col gap-3">
+            <Field label="Font family">
+              <NativeSelect
+                onChange={(value) => updateProps({ ...block.props, fontFamily: value === "" ? "" : value })}
+                options={[
+                  { label: "Default", value: "" },
+                  { label: "Noto Sans TC", value: "Noto Sans TC" },
+                  { label: "Noto Serif TC", value: "Noto Serif TC" },
+                  { label: "Barlow", value: "Barlow" },
+                  { label: "Fira Sans", value: "Fira Sans" },
+                  { label: "Fraunces", value: "Fraunces" },
+                  { label: "Inter", value: "Inter" },
+                  { label: "Lato", value: "Lato" },
+                  { label: "Lora", value: "Lora" },
+                  { label: "Merriweather", value: "Merriweather" },
+                  { label: "Montserrat", value: "Montserrat" },
+                  { label: "Nunito", value: "Nunito" },
+                  { label: "Open Sans", value: "Open Sans" },
+                  { label: "Oswald", value: "Oswald" },
+                  { label: "Outfit", value: "Outfit" },
+                  { label: "Playfair Display", value: "Playfair Display" },
+                  { label: "Plus Jakarta Sans", value: "Plus Jakarta Sans" },
+                  { label: "Poppins", value: "Poppins" },
+                  { label: "PT Serif", value: "PT Serif" },
+                  { label: "Raleway", value: "Raleway" },
+                  { label: "Roboto", value: "Roboto" },
+                  { label: "Rubik", value: "Rubik" },
+                  { label: "Space Grotesk", value: "Space Grotesk" },
+                  { label: "Ubuntu", value: "Ubuntu" },
+                  { label: "Work Sans", value: "Work Sans" }
+                ]}
+                value={String(block.props.fontFamily ?? "")}
+              />
+            </Field>
             <IconSegmentedControl
               label="Text align"
               onChange={(value) => updateProps({ ...block.props, textAlign: value })}
@@ -194,18 +173,26 @@ export function MotionFields({
           <NativeSelect
             onChange={(value) => updateProps({ ...block.props, enter: value })}
             options={[
-              { label: "None", value: "" },
+              { label: "None", value: "none" },
               { label: "Fade Up", value: "fadeUp" },
               { label: "Fade In", value: "fadeIn" },
               { label: "Zoom In", value: "zoomIn" },
               { label: "Slide Left", value: "slideLeft" }
             ]}
-            value={String(block.props.enter ?? "")}
+            value={animationValue(block.props.enter)}
           />
         </Field>
       </AccordionSection>
     </div>
   );
+}
+
+function animationValue(value: string | number | undefined) {
+  if (value === "fadeUp" || value === "fadeIn" || value === "zoomIn" || value === "slideLeft") {
+    return value;
+  }
+
+  return "none";
 }
 
 const textAlignOptions = [

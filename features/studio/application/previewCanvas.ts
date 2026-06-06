@@ -12,8 +12,8 @@ import type { MotionDocBlock, MotionDocScene } from "@/core/motion-doc/domain/mo
 export const CANVAS_WIDTH = 1024;
 export const CANVAS_HEIGHT = 576;
 
-const MIN_FRAME_WIDTH = 8;
-const MIN_FRAME_HEIGHT = 6;
+const MIN_FRAME_WIDTH = 2;
+const MIN_FRAME_HEIGHT = 2;
 const GUIDE_THRESHOLD = 0.7;
 
 export type ResizeHandle = "n" | "e" | "s" | "w" | "nw" | "ne" | "sw" | "se";
@@ -100,19 +100,6 @@ export function blockFrame(block: MotionDocScene["blocks"][number] | undefined):
     x: percentFrameValue(block.props.x, 9),
     y: percentFrameValue(block.props.y, defaultBlockY(block.type))
   };
-}
-
-export function groupedMoveIndices(slide: MotionDocScene | undefined, blockIndex: number) {
-  const block = slide?.blocks[blockIndex];
-
-  if (!slide || !block || !isMovableBlock(block) || !isRowGroupedBlock(slide, block)) {
-    return [blockIndex];
-  }
-
-  return slide.blocks
-    .map((item, index) => ({ item, index }))
-    .filter(({ item }) => item.type === block.type && isMovableBlock(item))
-    .map(({ index }) => index);
 }
 
 export function interactionFrameUpdates(interaction: CanvasInteraction, pointer: CanvasPoint): FrameUpdate[] {
@@ -227,22 +214,6 @@ export function gridLineColor(slide: MotionDocScene | undefined) {
 
 export function stringValue(value: string | number | undefined, fallback: string) {
   return typeof value === "string" && value.trim() ? value : fallback;
-}
-
-function isRowGroupedBlock(slide: MotionDocScene, block: MotionDocScene["blocks"][number]) {
-  if (block.type === "Card") {
-    return slide.props.cardFlow === "row";
-  }
-
-  if (block.type === "Metric") {
-    return (slide.props.metricFlow ?? slide.props.cardFlow) === "row";
-  }
-
-  if (block.type === "Chart") {
-    return slide.props.chartFlow === "row";
-  }
-
-  return false;
 }
 
 function intersectsRect(frame: Frame, rect: Frame) {

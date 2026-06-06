@@ -1,11 +1,11 @@
-export const easeSmooth = [0.22, 1, 0.36, 1] as const;
+export const springTransition = { type: "spring", stiffness: 100, damping: 20 } as const;
 
 export const fadeInUp = {
   hidden: { opacity: 0, y: 28 },
   visible: (i: number = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.08, duration: 0.7, ease: easeSmooth }
+    transition: { delay: i * 0.08, ...springTransition }
   })
 };
 

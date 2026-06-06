@@ -7,16 +7,11 @@ type WorkspaceInspectorPanelProps = Pick<
   StudioWorkspaceProps,
   | "activeSlide"
   | "activeSlideAccent"
+  | "addSlideWithLayout"
   | "activeSlideAlignX"
   | "activeSlideAlignY"
   | "activeSlideBackground"
-  | "activeSlideCardFlow"
-  | "activeSlideCardGap"
-  | "activeSlideChartFlow"
-  | "activeSlideChartGap"
   | "activeSlideLayout"
-  | "activeSlideMetricFlow"
-  | "activeSlideMetricGap"
   | "activeSlideMutedColor"
   | "activeSlideShader"
   | "activeSlideShaderColor1"
@@ -34,14 +29,15 @@ type WorkspaceInspectorPanelProps = Pick<
   | "isMobileInspectorOpen"
   | "selectSingleBlock"
   | "selectedBlockIndex"
+  | "selectedBlockIndices"
   | "setIsCanvasGridVisible"
   | "setIsCodeEditorOpen"
   | "setIsMobileInspectorOpen"
   | "updateActiveSlideStyle"
   | "updateAllSlidesStyle"
   | "updateBlock"
-  | "updateBlockGroupFlow"
   | "uploadImageForBlock"
+  | "uploadVideoForBlock"
 >;
 
 export function WorkspaceInspectorPanel(props: WorkspaceInspectorPanelProps) {
@@ -89,13 +85,8 @@ function StudioInspectorContent({
   activeSlideAlignX,
   activeSlideAlignY,
   activeSlideBackground,
-  activeSlideCardFlow,
-  activeSlideCardGap,
-  activeSlideChartFlow,
-  activeSlideChartGap,
   activeSlideLayout,
-  activeSlideMetricFlow,
-  activeSlideMetricGap,
+  addSlideWithLayout,
   activeSlideMutedColor,
   activeSlideShader,
   activeSlideShaderColor1,
@@ -113,14 +104,15 @@ function StudioInspectorContent({
   onOpenMdxEditor,
   selectSingleBlock,
   selectedBlockIndex,
+  selectedBlockIndices,
   setIsCanvasGridVisible,
   setIsCodeEditorOpen,
   setSelectedBlockIndex,
   updateActiveSlideStyle,
   updateAllSlidesStyle,
   updateBlock,
-  updateBlockGroupFlow,
-  uploadImageForBlock
+  uploadImageForBlock,
+  uploadVideoForBlock
 }: StudioInspectorContentProps) {
   return (
     <StudioInspector
@@ -129,13 +121,8 @@ function StudioInspectorContent({
       activeSlideAlignX={activeSlideAlignX}
       activeSlideAlignY={activeSlideAlignY}
       activeSlideBackground={activeSlideBackground}
-      activeSlideCardFlow={activeSlideCardFlow}
-      activeSlideCardGap={activeSlideCardGap}
-      activeSlideChartFlow={activeSlideChartFlow}
-      activeSlideChartGap={activeSlideChartGap}
       activeSlideLayout={activeSlideLayout}
-      activeSlideMetricFlow={activeSlideMetricFlow}
-      activeSlideMetricGap={activeSlideMetricGap}
+      addSlideWithLayout={addSlideWithLayout}
       activeSlideMutedColor={activeSlideMutedColor}
       activeSlideShader={activeSlideShader}
       activeSlideShaderColor1={activeSlideShaderColor1}
@@ -152,13 +139,14 @@ function StudioInspectorContent({
       isGridVisible={isCanvasGridVisible}
       onOpenMdxEditor={onOpenMdxEditor ?? (() => setIsCodeEditorOpen(true))}
       selectedBlockIndex={selectedBlockIndex}
+      selectedBlockIndices={selectedBlockIndices}
       setIsGridVisible={setIsCanvasGridVisible}
       setSelectedBlockIndex={setSelectedBlockIndex ?? selectSingleBlock}
       updateActiveSlideStyle={updateActiveSlideStyle}
       updateAllSlidesStyle={updateAllSlidesStyle}
       updateBlock={updateBlock}
-      updateBlockGroupFlow={updateBlockGroupFlow}
       uploadImageForBlock={uploadImageForBlock}
+      uploadVideoForBlock={uploadVideoForBlock}
     />
   );
 }

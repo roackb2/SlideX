@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { hexColorValue, uniqueColors } from "@/features/studio/application/colorPalettes";
 import { Field, type PropValue } from "@/features/studio/ui/inspector/controls/BaseControls";
 import { colorSwatchStyle } from "@/features/studio/ui/inspector/color/colorSwatchStyle";
@@ -25,7 +26,9 @@ export function ColorControl({
   value
 }: ColorControlProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [popoverStyle, setPopoverStyle] = useState<CSSProperties>({});
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const { customSwatches } = useCustomSwatches();
   const colorValue = String(value ?? "");
   const resolvedValue = colorValue || displayValue || placeholder;
@@ -38,8 +41,33 @@ export function ColorControl({
       return;
     }
 
+    function updatePopoverPosition() {
+      const rect = buttonRef.current?.getBoundingClientRect();
+
+      if (!rect) {
+        return;
+      }
+
+      const width = 260;
+      const margin = 12;
+      const left = Math.min(Math.max(rect.right - width, margin), Math.max(window.innerWidth - width - margin, margin));
+      const top = window.innerHeight - rect.bottom < 330
+        ? Math.max(margin, rect.top - 334)
+        : rect.bottom + 8;
+
+      setPopoverStyle({
+        left,
+        position: "fixed",
+        top,
+        width,
+        zIndex: 1000
+      });
+    }
+
     function handlePointerDown(event: MouseEvent) {
-      if (popoverRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      if (buttonRef.current?.contains(target) || panelRef.current?.contains(target)) {
         return;
       }
 
@@ -52,9 +80,14 @@ export function ColorControl({
       }
     }
 
+    updatePopoverPosition();
+    window.addEventListener("resize", updatePopoverPosition);
+    window.addEventListener("scroll", updatePopoverPosition, true);
     window.addEventListener("mousedown", handlePointerDown);
     window.addEventListener("keydown", handleKeyDown);
     return () => {
+      window.removeEventListener("resize", updatePopoverPosition);
+      window.removeEventListener("scroll", updatePopoverPosition, true);
       window.removeEventListener("mousedown", handlePointerDown);
       window.removeEventListener("keydown", handleKeyDown);
     };
@@ -62,26 +95,31 @@ export function ColorControl({
 
   return (
     <Field label={label}>
-      <div className="relative" ref={popoverRef}>
+      <div>
         <button
           aria-expanded={isOpen}
-          className="flex w-full items-center justify-between rounded-md border border-neutral-800 bg-black/30 px-2.5 py-2 text-left transition-colors hover:border-neutral-600 hover:bg-neutral-900/70"
+          className="flex w-full items-center justify-between rounded-xl border border-neutral-800 bg-black/30 px-3.5 py-2.5 text-left transition-colors hover:border-neutral-600 hover:bg-neutral-900/70"
           onClick={() => setIsOpen((current) => !current)}
+          ref={buttonRef}
           type="button"
         >
           <span className="flex min-w-0 items-center gap-2">
             <span className="h-5 w-5 shrink-0 rounded border border-white/20 shadow-inner" style={swatchStyle} />
-            <span className="truncate font-mono text-[11px] text-neutral-200">{colorValue || displayValue || "Default"}</span>
+            <span className="truncate font-mono text-xs text-neutral-200">{colorValue || displayValue || "Default"}</span>
           </span>
-          <span className="text-[10px] text-neutral-500">{isOpen ? "Close" : "Edit"}</span>
+          <span className="text-xs text-neutral-500">{isOpen ? "Close" : "Edit"}</span>
         </button>
 
-        {isOpen ? (
-          <div className="absolute right-0 top-full z-50 mt-2 w-[260px] rounded-lg border border-neutral-700 bg-[#111111] p-3 shadow-2xl shadow-black/60">
+        {isOpen && typeof document !== "undefined" ? createPortal(
+          <div
+            className="rounded-xl border border-neutral-700 bg-[#111111] p-3.5 shadow-2xl shadow-black/60"
+            ref={panelRef}
+            style={popoverStyle}
+          >
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">{label}</span>
+              <span className="text-xs font-semibold text-neutral-300">{label}</span>
               <button
-                className="rounded border border-neutral-800 px-2 py-1 text-[10px] text-neutral-400 transition-colors hover:border-neutral-600 hover:text-white"
+                className="rounded border border-neutral-800 px-2.5 py-1 text-xs text-neutral-400 transition-colors hover:border-neutral-600 hover:text-white"
                 onClick={() => onChange("")}
                 type="button"
               >
@@ -91,21 +129,21 @@ export function ColorControl({
             <div className="flex items-center gap-2">
               <span className="h-9 w-9 shrink-0 rounded-md border border-white/15 shadow-inner" style={swatchStyle} />
               <div className="min-w-0 flex-1">
-                <label className="mb-1 block text-[9px] uppercase tracking-widest text-neutral-500">CSS color</label>
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-neutral-500">CSS Color</label>
                 <input
-                  className="w-full rounded border border-neutral-800 bg-black px-2 py-1.5 font-mono text-[11px] text-neutral-200 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-500"
+                  className="w-full rounded border border-neutral-800 bg-black px-2 py-1.5 font-mono text-xs text-neutral-200 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-500"
                   onChange={(event) => onChange(event.target.value)}
                   placeholder={placeholder}
                   type="text"
                   value={colorValue}
                 />
                 {!colorValue && displayValue ? (
-                  <p className="mt-1 truncate text-[9px] text-neutral-500">Current: {displayValue}</p>
+                  <p className="mt-1 truncate text-[11px] text-neutral-500">Current: {displayValue}</p>
                 ) : null}
               </div>
             </div>
-            <div className="mt-3">
-              <label className="mb-1 block text-[9px] uppercase tracking-widest text-neutral-500">Picker</label>
+            <div className="mt-3.5">
+              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Picker</label>
               <div className="flex items-center gap-2">
                 <input
                   aria-label={`${label} picker`}
@@ -114,12 +152,24 @@ export function ColorControl({
                   type="color"
                   value={pickerValue}
                 />
-                <span className="font-mono text-[10px] text-neutral-500">{pickerValue.toUpperCase()}</span>
+                <span className="font-mono text-xs text-neutral-500">{pickerValue.toUpperCase()}</span>
               </div>
             </div>
-            <div className="mt-3">
-              <label className="mb-1 block text-[9px] uppercase tracking-widest text-neutral-500">Presets</label>
+            <div className="mt-3.5">
+              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Presets</label>
               <div className="grid grid-cols-8 gap-1">
+                <button
+                  aria-label="Use transparent"
+                  className={`relative flex h-6 items-center justify-center overflow-hidden rounded border transition-transform hover:scale-110 ${
+                    colorValue === "transparent" ? "border-white" : "border-neutral-700 bg-neutral-900"
+                  }`}
+                  onClick={() => onChange("transparent")}
+                  title="Transparent"
+                  type="button"
+                >
+                  <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiM0NCIvPjxyZWN0IHg9IjQiIHk9IjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiM0NCIvPjwvc3ZnPg==')] opacity-50" />
+                  <div className="absolute inset-0 m-auto h-[2px] w-[140%] -rotate-45 bg-red-500/80" />
+                </button>
                 {resolvedPresets.map((preset) => (
                   <button
                     aria-label={`Use ${preset}`}
@@ -134,7 +184,8 @@ export function ColorControl({
                 ))}
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         ) : null}
       </div>
     </Field>

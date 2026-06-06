@@ -5,10 +5,7 @@ import type { StudioWorkspaceProps } from "@/features/studio/ui/workspace/Studio
 
 type WorkspaceLayerSidebarProps = Pick<
   StudioWorkspaceProps,
-  | "activeSlideCardFlow"
-  | "activeSlideChartFlow"
   | "activeSlideIndex"
-  | "activeSlideMetricFlow"
   | "deleteBlock"
   | "deleteSlide"
   | "draggedBlockIndex"
@@ -17,9 +14,9 @@ type WorkspaceLayerSidebarProps = Pick<
   | "isTemplateModalOpen"
   | "moveBlock"
   | "reorderBlock"
+  | "reorderSlide"
   | "scenes"
   | "selectBlockFromLayer"
-  | "selectBlocks"
   | "selectedBlockIndex"
   | "selectedBlockIndices"
   | "setDraggedBlockIndex"
@@ -60,10 +57,7 @@ export function WorkspaceLayerSidebar(props: WorkspaceLayerSidebarProps) {
 }
 
 function LayerSidebarContent({
-  activeSlideCardFlow,
-  activeSlideChartFlow,
   activeSlideIndex,
-  activeSlideMetricFlow,
   deleteBlock,
   deleteSlide,
   draggedBlockIndex,
@@ -72,9 +66,9 @@ function LayerSidebarContent({
   moveBlock,
   onSelectSlide,
   reorderBlock,
+  reorderSlide,
   scenes,
   selectBlockFromLayer,
-  selectBlocks,
   selectedBlockIndex,
   selectedBlockIndices,
   setDraggedBlockIndex,
@@ -84,10 +78,7 @@ function LayerSidebarContent({
 }: WorkspaceLayerSidebarProps) {
   return (
     <LayerSidebar
-      activeSlideCardFlow={activeSlideCardFlow}
-      activeSlideChartFlow={activeSlideChartFlow}
       activeSlideIndex={activeSlideIndex}
-      activeSlideMetricFlow={activeSlideMetricFlow}
       deleteBlock={deleteBlock}
       deleteSlide={deleteSlide}
       draggedBlockIndex={draggedBlockIndex}
@@ -96,9 +87,9 @@ function LayerSidebarContent({
       moveBlock={moveBlock}
       onOpenTemplates={() => setIsTemplateModalOpen(true)}
       onSelectBlock={selectBlockFromLayer}
-      onSelectBlocks={selectBlocks}
       onSelectSlide={onSelectSlide}
       reorderBlock={reorderBlock}
+      reorderSlide={reorderSlide}
       scenes={scenes}
       selectedBlockIndex={selectedBlockIndex}
       selectedBlockIndices={selectedBlockIndices}

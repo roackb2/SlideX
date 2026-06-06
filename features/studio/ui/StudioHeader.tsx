@@ -42,13 +42,13 @@ export function StudioHeader({
   setIsExportMenuOpen: (updater: (current: boolean) => boolean) => void;
 }) {
   return (
-    <header className="z-50 flex shrink-0 items-center justify-between border-b border-white/[0.04] bg-[#07080b]/75 backdrop-blur-xl px-4 py-2.5 sm:px-6 md:py-3 shadow-md">
+    <header className="z-50 mx-4 mt-4 mb-2 flex shrink-0 items-center justify-between rounded-[2rem] border border-white/[0.06] bg-[#050505]/45 backdrop-blur-[32px] px-4 py-2.5 sm:px-6 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.15),0_20px_40px_-10px_rgba(0,0,0,0.8)] select-none transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]">
       
       {/* Left side actions */}
       <div className="flex shrink-0 items-center gap-3">
         {/* Mobile sidebar toggle */}
         <button
-          className={`md:hidden flex h-8.5 w-8.5 items-center justify-center rounded-lg transition-colors ${isMobileSidebarOpen ? "bg-white/[0.08] text-white" : "text-neutral-400 hover:bg-white/[0.05] hover:text-white"}`}
+          className={`md:hidden flex h-8.5 w-8.5 items-center justify-center rounded-xl transition-all active:scale-95 ${isMobileSidebarOpen ? "bg-white/[0.08] text-white" : "text-neutral-400 hover:bg-white/[0.05] hover:text-white"}`}
           onClick={onToggleSidebar}
           type="button"
           aria-label="Toggle layers"
@@ -70,41 +70,41 @@ export function StudioHeader({
           </Link>
         )}
         <div className="hidden h-3.5 w-[1px] bg-white/[0.08] sm:block mx-1" />
-        <span className="hidden max-w-[180px] truncate whitespace-nowrap rounded-md bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-neutral-400 sm:block border border-white/[0.04]">
+        <span className="hidden max-w-[180px] truncate whitespace-nowrap rounded-xl bg-neutral-900/40 px-3 py-1 text-sm font-semibold tracking-wide text-neutral-300 sm:block border border-white/[0.04] shadow-inner">
           {projectName}
         </span>
       </div>
 
       {/* Right side actions */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-3.5">
-        <span className="hidden sm:block font-mono text-[10px] text-neutral-500 font-semibold tracking-wider">{notice}</span>
+        <span className="hidden sm:block font-mono text-sm text-neutral-400/80 font-medium">{notice}</span>
 
         {/* Tauri project actions in sleek unified capsule */}
         {isTauri && (
-          <div className="hidden items-center gap-0.5 rounded-full border border-white/[0.05] bg-white/[0.015] p-0.5 sm:flex shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]">
+          <div className="hidden items-center gap-1.5 rounded-xl border border-white/[0.04] bg-neutral-950/40 p-1 sm:flex shadow-inner">
             <button
-              className="flex items-center justify-center rounded-full h-8 w-8 text-neutral-400 transition-all hover:bg-white/[0.05] hover:text-white cursor-pointer active:scale-90"
+              className="flex items-center justify-center rounded-lg h-7.5 w-7.5 text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-neutral-900/60 hover:text-white hover:scale-[1.04] cursor-pointer active:scale-[0.94]"
               onClick={onNewProject}
               type="button"
               title="New Project"
             >
-              <FilePlus2 size={13.5} />
+              <FilePlus2 size={14} />
             </button>
             <button
-              className="flex items-center justify-center rounded-full h-8 w-8 text-neutral-400 transition-all hover:bg-white/[0.05] hover:text-white cursor-pointer active:scale-90"
+              className="flex items-center justify-center rounded-lg h-7.5 w-7.5 text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-neutral-900/60 hover:text-white hover:scale-[1.04] cursor-pointer active:scale-[0.94]"
               onClick={onOpenProject}
               type="button"
               title="Open Project"
             >
-              <FolderOpen size={13.5} />
+              <FolderOpen size={14} />
             </button>
             <button
-              className="flex items-center justify-center gap-1 rounded-full h-8 px-3 text-xs font-semibold text-neutral-400 transition-all hover:bg-white/[0.05] hover:text-white cursor-pointer active:scale-90"
+              className="flex items-center justify-center gap-1.5 rounded-lg h-7.5 px-3 text-sm font-semibold text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-neutral-900/60 hover:text-white hover:scale-[1.04] cursor-pointer active:scale-[0.94]"
               onClick={onSaveProject}
               type="button"
               title="Save Project"
             >
-              <Save size={13.5} />
+              <Save size={14} />
               <span className="hidden lg:inline">Save</span>
             </button>
           </div>
@@ -112,52 +112,52 @@ export function StudioHeader({
 
         {/* Undo action button */}
         <button
-          className="flex h-8 px-2.5 sm:px-3 items-center justify-center gap-1 rounded-lg text-xs font-semibold text-neutral-400 transition-all hover:bg-white/[0.04] hover:text-white cursor-pointer"
+          className="flex h-8.5 px-3 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-neutral-900/50 hover:text-neutral-200 hover:scale-[1.02] cursor-pointer active:scale-[0.96]"
           onClick={onUndo}
           type="button"
           title="Undo"
         >
-          <Undo2 size={13.5} />
+          <Undo2 size={14} />
           <span className="hidden sm:inline">Undo</span>
         </button>
 
         {/* Replay action button */}
         <button
-          className="flex h-8 px-2.5 sm:px-3 items-center justify-center gap-1 rounded-lg text-xs font-semibold text-neutral-400 transition-all hover:bg-white/[0.04] hover:text-white cursor-pointer"
+          className="flex h-8.5 px-3 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-neutral-900/50 hover:text-neutral-200 hover:scale-[1.02] cursor-pointer active:scale-[0.96]"
           onClick={onReplay}
           type="button"
           title="Replay"
         >
-          <RotateCcw size={13.5} />
+          <RotateCcw size={14} />
           <span className="hidden sm:inline">Replay</span>
         </button>
 
         {/* Export visual white pill */}
         <div className="relative" ref={exportMenuRef}>
           <button
-            className="flex h-8 items-center justify-center gap-1.5 rounded-full bg-white px-3.5 text-xs font-bold text-black transition-all hover:bg-neutral-200 active:scale-95 duration-200 cursor-pointer shadow-md"
+            className="flex h-8.5 items-center justify-center gap-1.5 rounded-xl bg-white px-4 text-sm font-bold text-black transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-neutral-100 hover:scale-[1.02] active:scale-[0.96] cursor-pointer shadow-md shadow-white/[0.01]"
             onClick={() => setIsExportMenuOpen((current) => !current)}
             type="button"
           >
-            <Download size={13} className="text-black" />
+            <Download size={14} className="text-black" />
             <span className="hidden sm:inline">Export</span>
           </button>
           {isExportMenuOpen && (
-            <div className="absolute right-0 top-[calc(100%+8px)] z-50 min-w-[160px] sm:min-w-[180px] rounded-xl border border-white/[0.08] bg-[#0c0e14]/90 backdrop-blur-md p-1.5 shadow-2xl shadow-black/80 animate-[bubble-appear_0.2s_ease-out]">
+            <div className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[160px] sm:min-w-[180px] rounded-2xl border border-white/[0.04] bg-neutral-950/90 backdrop-blur-xl p-[5px] shadow-2xl shadow-black/60 animate-[bubble-appear_0.2s_cubic-bezier(0.16,1,0.3,1)]">
               <button
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[11.5px] font-semibold text-neutral-300 transition-colors hover:bg-white/[0.04] hover:text-white cursor-pointer"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-neutral-300 transition-colors hover:bg-white/[0.04] hover:text-white cursor-pointer duration-150"
                 onClick={onExportMdx}
                 type="button"
               >
-                <FileCode2 size={13} className="text-neutral-400" />
+                <FileCode2 size={14} className="text-neutral-400" />
                 Export `.mdx`
               </button>
               <button
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[11.5px] font-semibold text-neutral-300 transition-colors hover:bg-white/[0.04] hover:text-white cursor-pointer"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-neutral-300 transition-colors hover:bg-white/[0.04] hover:text-white cursor-pointer duration-150"
                 onClick={onExportHtml}
                 type="button"
               >
-                <FileText size={13} className="text-neutral-400" />
+                <FileText size={14} className="text-neutral-400" />
                 Export `.html`
               </button>
             </div>
@@ -166,7 +166,7 @@ export function StudioHeader({
 
         {/* Mobile inspector toggle */}
         <button
-          className={`md:hidden flex h-8.5 w-8.5 items-center justify-center rounded-lg transition-colors ${isMobileInspectorOpen ? "bg-white/[0.08] text-white" : "text-neutral-400 hover:bg-white/[0.05] hover:text-white"}`}
+          className={`md:hidden flex h-8.5 w-8.5 items-center justify-center rounded-xl transition-all active:scale-95 ${isMobileInspectorOpen ? "bg-white/[0.08] text-white" : "text-neutral-400 hover:bg-white/[0.05] hover:text-white"}`}
           onClick={onToggleInspector}
           type="button"
           aria-label="Toggle properties"

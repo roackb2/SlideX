@@ -13,9 +13,9 @@ const config: Config = {
         panel: "#0c0b10",
         ink: "#f7f8f8",
         accent: {
-          DEFAULT: "#5e6ad2",
-          light: "#8b95e0",
-          glow: "rgba(94, 106, 210, 0.35)"
+          DEFAULT: "#0070f3",
+          light: "#3b82f6",
+          glow: "rgba(0, 112, 243, 0.35)"
         },
         surface: {
           DEFAULT: "#0c0b10",

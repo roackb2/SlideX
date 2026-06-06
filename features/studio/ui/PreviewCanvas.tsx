@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent, type PointerEvent } from "react";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 import {
   CANVAS_HEIGHT,
@@ -9,7 +9,6 @@ import {
   canvasPointFromRect,
   findAlignmentGuides,
   gridLineColor,
-  groupedMoveIndices,
   hiddenEditablePreviewBlockIndices,
   interactionFrameUpdates,
   marqueeRect,
@@ -20,6 +19,7 @@ import {
   type MarqueeSelection,
   type ResizeHandle
 } from "@/features/studio/application/previewCanvas";
+import type { AddBlockOptions } from "@/features/studio/application/motionDocCommands";
 import type { SlideRow } from "@/features/studio/ui/LayerSidebar";
 import { CanvasBlockDock, CanvasSlideNav, CanvasTimeline } from "@/features/studio/ui/preview/CanvasChrome";
 import { CanvasSelectionLayer } from "@/features/studio/ui/preview/CanvasSelectionLayer";
@@ -32,7 +32,7 @@ type PreviewCanvasProps = {
   activeSlide: MotionDocScene | undefined;
   activeSlideIndex: number;
   isGridVisible: boolean;
-  onAddBlock: (type: AddBlockType) => void;
+  onAddBlock: (type: AddBlockType, options?: AddBlockOptions) => void;
   onAddTextAtPosition: (position: { x: number; y: number }) => void;
   onBeginBlockTransform: () => void;
   onClearSelection: () => void;
@@ -119,29 +119,48 @@ export function PreviewCanvas({
     onAddTextAtPosition(getCanvasPosition(event));
   }
 
+  function handleToolDragOver(event: DragEvent<HTMLDivElement>) {
+    if (event.dataTransfer.types.includes("application/x-slidex-tool")) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+    }
+  }
+
+  function handleToolDrop(event: DragEvent<HTMLDivElement>) {
+    const payload = event.dataTransfer.getData("application/x-slidex-tool");
+    if (!payload) {
+      return;
+    }
+
+    event.preventDefault();
+    try {
+      const tool = JSON.parse(payload) as { props?: Record<string, string | number>; type?: AddBlockType };
+      if (tool.type) {
+        onAddBlock(tool.type, { position: getCanvasPosition(event), props: tool.props });
+      }
+    } catch {
+      // Ignore malformed drag payloads from outside the app.
+    }
+  }
+
   function startMove(event: PointerEvent<HTMLDivElement>, blockIndex: number, frame: Frame) {
     event.preventDefault();
     const additive = event.metaKey || event.ctrlKey;
     const range = event.shiftKey;
-    const groupIndices = groupedMoveIndices(activeSlide, blockIndex);
 
     if (additive || range) {
       onSelectBlock(blockIndex, { additive, range });
       return;
     }
 
-    if (groupIndices.length > 1) {
-      onSelectBlocks(groupIndices);
-    } else if (!selectedBlockIndices.includes(blockIndex)) {
+    if (!selectedBlockIndices.includes(blockIndex)) {
       onSelectBlock(blockIndex);
     }
 
     event.currentTarget.setPointerCapture(event.pointerId);
-    const moveIndices = groupIndices.length > 1
-      ? groupIndices
-      : selectedBlockIndices.includes(blockIndex)
-        ? selectedBlockIndices
-        : [blockIndex];
+    
+    const moveIndices = selectedBlockIndices.includes(blockIndex) ? selectedBlockIndices : [blockIndex];
+
     interactionRef.current = {
       blockIndex,
       mode: "move",
@@ -266,7 +285,7 @@ export function PreviewCanvas({
 
   return (
     <div
-      className="premium-glass-panel relative m-3 flex min-w-0 flex-1 animate-[bubble-appear_0.25s_ease-out] flex-col overflow-hidden rounded-2xl shadow-black/40"
+      className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-[#070709]"
       id="canvas-v4"
     >
       <CanvasSlideNav
@@ -277,7 +296,7 @@ export function PreviewCanvas({
       />
 
       <div
-        className="custom-scrollbar relative z-0 flex min-h-0 flex-1 items-start justify-center overflow-y-auto p-3 pb-14 pt-9 sm:p-4 sm:pb-20 sm:pt-12 md:p-8 md:pb-24 md:pt-16"
+        className="custom-scrollbar relative z-0 flex min-h-0 flex-1 items-start justify-center overflow-y-auto p-3 pb-14 pt-9 sm:p-4 sm:pb-20 sm:pt-12 md:p-8 md:pb-24 md:pt-16 bg-[#070709] bg-[radial-gradient(#ffffff04_1px,transparent_1px)] [background-size:16px_16px]"
         onPointerDown={(event) => {
           if (event.target === event.currentTarget) {
             onClearSelection();
@@ -288,6 +307,8 @@ export function PreviewCanvas({
           aria-label={`16:9 canvas ${CANVAS_WIDTH} by ${CANVAS_HEIGHT}`}
           className="group relative aspect-video w-full max-w-[64rem] overflow-hidden bg-black shadow-xl ring-1 ring-neutral-800"
           onDoubleClick={handleCanvasDoubleClick}
+          onDragOver={handleToolDragOver}
+          onDrop={handleToolDrop}
           ref={canvasRef}
         >
           <div

@@ -23,12 +23,6 @@ export function useMotionDocDocument({
   const activeSlideLayout = stringValue(activeSlide?.props.layout) ?? "default";
   const activeSlideAlignX = stringValue(activeSlide?.props.alignX) ?? "left";
   const activeSlideAlignY = stringValue(activeSlide?.props.alignY) ?? "center";
-  const activeSlideCardFlow = stringValue(activeSlide?.props.cardFlow) ?? "stack";
-  const activeSlideMetricFlow = stringValue(activeSlide?.props.metricFlow ?? activeSlide?.props.cardFlow) ?? "stack";
-  const activeSlideChartFlow = stringValue(activeSlide?.props.chartFlow) ?? "stack";
-  const activeSlideCardGap = numberValue(activeSlide?.props.cardGap) ?? 3;
-  const activeSlideChartGap = numberValue(activeSlide?.props.chartGap) ?? 3;
-  const activeSlideMetricGap = numberValue(activeSlide?.props.metricGap) ?? 3;
   const activeSlideTextColor = stringValue(activeSlide?.props.textColor ?? activeSlide?.props.foreground ?? activeSlide?.props.color) ?? "";
   const activeSlideMutedColor = stringValue(activeSlide?.props.mutedColor) ?? "";
   const activeSlideShader = stringValue(activeSlide?.props.shader) ?? "";
@@ -58,13 +52,7 @@ export function useMotionDocDocument({
     activeSlideAlignX,
     activeSlideAlignY,
     activeSlideBackground,
-    activeSlideCardFlow,
-    activeSlideCardGap,
-    activeSlideChartFlow,
-    activeSlideChartGap,
     activeSlideLayout,
-    activeSlideMetricFlow,
-    activeSlideMetricGap,
     activeSlideMutedColor,
     activeSlideShader,
     activeSlideShaderColor1,

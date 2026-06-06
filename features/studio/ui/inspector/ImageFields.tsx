@@ -1,6 +1,6 @@
 "use client";
 
-import { Image as ImageIcon } from "lucide-react";
+import { Image as ImageIcon, Link2, Upload } from "lucide-react";
 import { Field, NativeSelect, OptionButtons, TextInput, type BlockFieldProps } from "@/features/studio/ui/inspector/InspectorControls";
 import { imageFitOptions, imageModeOptions } from "@/features/studio/ui/studioOptions";
 
@@ -14,12 +14,14 @@ export function ImageFields({
 }) {
   return (
     <>
-      <label className="flex cursor-pointer flex-col gap-2 rounded-md border border-dashed border-neutral-700 bg-neutral-900/40 px-3 py-3 text-[11px] text-neutral-300 transition-colors hover:border-neutral-500 hover:bg-neutral-900">
-        <span className="flex items-center gap-2 font-medium text-white">
-          <ImageIcon size={13} />
-          Upload local image
+      <label className="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#8b5cf6]/30 bg-[#090713]/70 px-3 py-3 text-left transition hover:border-[#a78bfa]/55 hover:bg-[#120d24]">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-black/40 text-[#c4b5fd]">
+          <Upload size={16} />
         </span>
-        <span className="text-[10px] leading-relaxed text-neutral-400">Stored inside this local MDX document.</span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs font-semibold text-white">Import image file</span>
+          <span className="block truncate text-[10px] text-neutral-500">Stored inside this local MDX document</span>
+        </span>
         <input
           accept="image/*"
           className="sr-only"
@@ -30,8 +32,18 @@ export function ImageFields({
           type="file"
         />
       </label>
-      <TextInput label="Image URL" placeholder="https://..." value={block.props.src ?? ""} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, src: value })} />
-      <TextInput label="Alt Text" placeholder="Image description" value={block.props.alt ?? ""} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, alt: value })} />
+      <div className="grid grid-cols-[34px_1fr] items-end gap-2">
+        <span className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-black/35 text-[#c4b5fd]">
+          <Link2 size={15} />
+        </span>
+        <TextInput label="Image URL" placeholder="https://..." value={block.props.src ?? ""} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, src: value })} />
+      </div>
+      <div className="grid grid-cols-[34px_1fr] items-end gap-2">
+        <span className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-black/35 text-[#c4b5fd]">
+          <ImageIcon size={15} />
+        </span>
+        <TextInput label="Alt Text" placeholder="Image description" value={block.props.alt ?? ""} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, alt: value })} />
+      </div>
       <Field label="Image fit">
         <NativeSelect options={imageFitOptions.map((fit) => ({ label: fit, value: fit }))} value={String(block.props.fit ?? "cover")} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, fit: value })} />
       </Field>

@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
 import {
   blockWidthProp,
@@ -9,17 +9,15 @@ import {
   cardWidthProp,
   enterProp,
   fitProp,
-  flowBlockType,
   isPositionedBlock,
   numberProp,
   optionalTextAlignProp,
-  percentProp,
   sizeNumberProp,
   spacingProp,
-  stringProp,
-  type CardFlow
+  stringProp
 } from "@/features/studio/application/previewProps";
-import { Card, Chart, ImageBlock, Metric, Text, Title } from "@/features/studio/ui/preview/motion-blocks";
+import { blockFrame } from "@/features/studio/application/previewCanvas";
+import { Card, Chart, IconBlock, ImageBlock, Metric, ShapeBlock, StackBlock, Text, Title, VideoBlock } from "@/features/studio/ui/preview/motion-blocks";
 
 export type PreviewBlockItem = {
   block: MotionDocBlock;
@@ -27,80 +25,25 @@ export type PreviewBlockItem = {
 };
 
 type PreviewBlockListProps = {
-  cardFlow: CardFlow;
-  chartFlow: CardFlow;
   hiddenBlockIndices: Set<number>;
   items: PreviewBlockItem[];
-  metricFlow: CardFlow;
 };
 
 export function PreviewBlockList({
-  cardFlow,
-  chartFlow,
   hiddenBlockIndices,
-  items,
-  metricFlow
+  items
 }: PreviewBlockListProps) {
-  const rendered: ReactNode[] = [];
   const visibleItems = items.filter(({ originalIndex }) => !hiddenBlockIndices.has(originalIndex));
   const flowBlocks = visibleItems.filter(({ block }) => !isPositionedBlock(block));
   const positionedBlocks = visibleItems.filter(({ block }) => isPositionedBlock(block));
-  let index = 0;
-
-  while (index < flowBlocks.length) {
-    const { block, originalIndex } = flowBlocks[index];
-    const flowType = flowBlockType(block);
-    const flow = flowType === "Card" ? cardFlow : flowType === "Metric" ? metricFlow : flowType === "Chart" ? chartFlow : "stack";
-
-    if (flowType && flow !== "stack") {
-      const cards: PreviewBlockItem[] = [];
-      const groupStartIndex = originalIndex;
-      let cursor = index;
-
-      while (cursor < flowBlocks.length && flowBlocks[cursor].block.type === flowType) {
-        cards.push(flowBlocks[cursor]);
-        cursor += 1;
-      }
-
-      rendered.push(
-        <div
-          key={`${flowType.toLowerCase()}-group-${groupStartIndex}`}
-          style={{
-            alignItems: "stretch",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 16,
-            width: "100%"
-          }}
-        >
-          {cards.map(({ block: card, originalIndex: cardOriginalIndex }) => (
-            <div
-              key={`card-${groupStartIndex}-${cardOriginalIndex}`}
-              style={{
-                flex: flow === "grid" ? "1 1 min(240px, 100%)" : "0 1 auto",
-                minWidth: 0
-              }}
-            >
-              <PreviewBlock block={card} />
-            </div>
-          ))}
-        </div>
-      );
-      index = cursor;
-      continue;
-    }
-
-    rendered.push(
-      <div key={`${block.type}-${originalIndex}`}>
-        <PreviewBlock block={block} />
-      </div>
-    );
-    index += 1;
-  }
 
   return (
     <>
-      {rendered}
+      {flowBlocks.map(({ block, originalIndex }) => (
+        <div key={`${block.type}-${originalIndex}`}>
+          <PreviewBlock block={block} />
+        </div>
+      ))}
       {positionedBlocks.map(({ block, originalIndex }) => (
         <div
           className="motion-positioned-block"
@@ -131,12 +74,14 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
         fillFrame={fillFrame}
+        fontFamily={stringProp(block.props.fontFamily)}
         fontSize={sizeNumberProp(block.props.fontSize, undefined)}
         fontWeight={spacingProp(block.props.fontWeight)}
         lineHeight={spacingProp(block.props.lineHeight)}
         radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
         textAlign={optionalTextAlignProp(block.props.textAlign)}
         textColor={stringProp(block.props.color ?? block.props.textColor)}
+        textVerticalAlign={stringProp(block.props.textVerticalAlign)}
       >
         {block.text}
       </Title>
@@ -151,12 +96,14 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
         fillFrame={fillFrame}
+        fontFamily={stringProp(block.props.fontFamily)}
         fontSize={sizeNumberProp(block.props.fontSize, undefined)}
         fontWeight={spacingProp(block.props.fontWeight)}
         lineHeight={spacingProp(block.props.lineHeight)}
         radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
         textAlign={optionalTextAlignProp(block.props.textAlign)}
         textColor={stringProp(block.props.color ?? block.props.textColor)}
+        textVerticalAlign={stringProp(block.props.textVerticalAlign)}
       >
         {block.text}
       </Text>
@@ -200,6 +147,26 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
     );
   }
 
+  if (block.type === "VideoBlock") {
+    return (
+      <VideoBlock
+        background={stringProp(block.props.background ?? block.props.backgroundColor ?? block.props.bg)}
+        controls={booleanProp(block.props.controls ?? "true")}
+        delay={numberProp(block.props.delay)}
+        duration={numberProp(block.props.duration)}
+        enter={enterProp(block.props.enter)}
+        fillFrame={fillFrame}
+        fit={fitProp(block.props.fit)}
+        full={booleanProp(block.props.full)}
+        loop={booleanProp(block.props.loop ?? "true")}
+        muted={booleanProp(block.props.muted ?? "true")}
+        poster={stringProp(block.props.poster)}
+        radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
+        src={String(block.props.src ?? "")}
+      />
+    );
+  }
+
   if (block.type === "Metric") {
     return (
       <Metric
@@ -223,6 +190,7 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
     return (
       <Chart
         background={stringProp(block.props.background ?? block.props.backgroundColor ?? block.props.bg)}
+        chartType={stringProp(block.props.chartType ?? block.props.type)}
         color={stringProp(block.props.color ?? block.props.textColor)}
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
@@ -239,22 +207,79 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
     );
   }
 
+  if (block.type === "Icon") {
+    return (
+      <IconBlock
+        background={stringProp(block.props.background ?? block.props.backgroundColor ?? block.props.bg)}
+        color={stringProp(block.props.color ?? block.props.textColor)}
+        delay={numberProp(block.props.delay)}
+        duration={numberProp(block.props.duration)}
+        enter={enterProp(block.props.enter)}
+        fillFrame={fillFrame}
+        icon={stringProp(block.props.icon)}
+        mutedColor={stringProp(block.props.mutedColor)}
+        radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
+        size={sizeNumberProp(block.props.size, 96)}
+        strokeWidth={spacingProp(block.props.strokeWidth)}
+      />
+    );
+  }
+
+  if (block.type === "Shape") {
+    return (
+      <ShapeBlock
+        delay={numberProp(block.props.delay)}
+        duration={numberProp(block.props.duration)}
+        enter={enterProp(block.props.enter)}
+        fill={stringProp(block.props.fill)}
+        fillFrame={fillFrame}
+        mask={stringProp(block.props.mask)}
+        operation={stringProp(block.props.operation)}
+        opacity={spacingProp(block.props.opacity)}
+        points={spacingProp(block.props.points)}
+        radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
+        shape={stringProp(block.props.shape)}
+        sides={spacingProp(block.props.sides)}
+        stroke={stringProp(block.props.stroke)}
+        strokeWidth={spacingProp(block.props.strokeWidth)}
+      />
+    );
+  }
+
+  if (block.type === "Stack") {
+    return (
+      <StackBlock
+        align={stringProp(block.props.align)}
+        background={stringProp(block.props.background ?? block.props.backgroundColor ?? block.props.bg)}
+        color={stringProp(block.props.color ?? block.props.textColor)}
+        delay={numberProp(block.props.delay)}
+        duration={numberProp(block.props.duration)}
+        enter={enterProp(block.props.enter)}
+        fillFrame={fillFrame}
+        gap={spacingProp(block.props.gap)}
+        items={stringProp(block.props.items)}
+        layout={stringProp(block.props.layout)}
+        mutedColor={stringProp(block.props.mutedColor)}
+        padding={spacingProp(block.props.padding)}
+        radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
+        stroke={stringProp(block.props.stroke)}
+      />
+    );
+  }
+
   return null;
 }
 
 function positionedBlockStyle(block: MotionDocBlock, index: number): CSSProperties {
-  const props = "props" in block ? block.props : {};
-  const x = percentProp(props.x, 8);
-  const y = percentProp(props.y, 12);
-  const w = percentProp(props.w, block.type === "Title" ? 52 : 42);
-  const h = percentProp(props.h);
+  const frame = blockFrame(block);
+  const h = "props" in block ? block.props.h : undefined;
 
   return {
-    left: `${x}%`,
+    left: `${frame.x}%`,
     position: "absolute",
-    top: `${y}%`,
-    width: `${w}%`,
-    ...(h === undefined ? {} : { height: `${h}%` }),
+    top: `${frame.y}%`,
+    width: `${frame.w}%`,
+    ...(h === undefined ? {} : { height: `${frame.h}%` }),
     zIndex: 20 + index
   };
 }

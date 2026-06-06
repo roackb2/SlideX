@@ -133,7 +133,15 @@ const shaderPresetDefaults: Record<string, PropRecord> = {
   }
 };
 
-export function ShaderBackgroundSection({
+export function ShaderBackgroundSection(props: ShaderBackgroundSectionProps) {
+  return (
+    <AccordionSection title="Shader Background" icon={<Sparkles size={13} className="text-[#8ea5ff]" />} defaultOpen>
+      <ShaderBackgroundSectionContent {...props} />
+    </AccordionSection>
+  );
+}
+
+export function ShaderBackgroundSectionContent({
   accent,
   background,
   shader,
@@ -148,8 +156,8 @@ export function ShaderBackgroundSection({
   updateActiveSlideStyle
 }: ShaderBackgroundSectionProps) {
   return (
-    <AccordionSection title="Shader Background" icon={<Sparkles size={13} className="text-[#8ea5ff]" />} defaultOpen>
-      <ShaderEngineIntro />
+    <div className="flex flex-col gap-4">
+
 
       <Field label="Shader Preset">
         <div className="grid grid-cols-2 gap-2">
@@ -164,7 +172,7 @@ export function ShaderBackgroundSection({
           >
             <div className="absolute inset-0 bg-[radial-gradient(#ffffff03_1px,transparent_1px)] [background-size:8px_8px] opacity-60" />
             <EyeOff size={15} className={`mb-1 transition-transform group-hover:scale-110 duration-300 ${!shader ? "text-[#8ea5ff]" : "text-neutral-500"}`} />
-            <span className="text-[9px] font-bold tracking-wider uppercase">Disable Effect</span>
+            <span className="text-xs font-semibold">Disable Effect</span>
           </button>
 
           {shaderPresets.map((preset) => {
@@ -192,7 +200,7 @@ export function ShaderBackgroundSection({
                   </div>
                 ) : null}
 
-                <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/55 backdrop-blur-md border border-white/[0.08] text-[7.5px] font-mono font-bold uppercase tracking-wider text-neutral-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/55 backdrop-blur-md border border-white/[0.08] text-[9.5px] font-mono font-semibold text-neutral-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                   {preset.category}
                 </div>
                 <div className="absolute bottom-2 left-2.5 right-2.5 flex flex-col gap-0.5">
@@ -240,31 +248,6 @@ export function ShaderBackgroundSection({
           )}
         </>
       ) : null}
-    </AccordionSection>
-  );
-}
-
-function ShaderEngineIntro() {
-  return (
-    <div className="p-1.5 rounded-[1.25rem] border border-white/[0.03] bg-[#0A0A0C]/50 shadow-[0_4px_24px_rgba(0,0,0,0.15)] backdrop-blur-xl group relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-[#8ea5ff]/5 to-transparent opacity-50" />
-      <div className="p-3.5 rounded-[1rem] bg-black/40 border border-white/[0.03] flex items-start gap-3.5 relative z-10 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#8ea5ff]/10 text-[#8ea5ff] border border-[#8ea5ff]/20 shadow-[0_0_12px_rgba(142,165,255,0.15)]">
-          <Sparkles size={12} className="animate-pulse" />
-        </div>
-        <div className="flex flex-col gap-1.5 pt-0.5">
-          <span className="text-[10px] font-bold text-neutral-200 uppercase tracking-[0.16em] flex items-center gap-2">
-            GPU Engine
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[8px] font-mono tracking-wider">
-              <Cpu size={8} />
-              THREE.JS
-            </span>
-          </span>
-          <span className="text-[9.5px] text-neutral-400/90 leading-relaxed font-medium">
-            Refined Three.js shader presets export to interactive WebGL canvases.
-          </span>
-        </div>
-      </div>
     </div>
   );
 }
@@ -287,14 +270,14 @@ function StandardShaderControls({
       <div className="p-1.5 rounded-[1.25rem] border border-white/[0.03] bg-[#0A0A0C]/50 shadow-[0_4px_24px_rgba(0,0,0,0.15)] backdrop-blur-xl">
         <div className="rounded-[1rem] border border-white/[0.03] bg-black/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden">
           <div className="flex items-center justify-between border-b border-white/[0.03] px-3.5 py-3 bg-white/[0.01]">
-            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-400 flex items-center gap-2">
+            <span className="text-xs font-semibold text-neutral-300 flex items-center gap-2">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#a855f7]/10 text-[#a855f7] border border-[#a855f7]/20 shadow-[0_0_10px_rgba(168,85,247,0.1)]">
                 <Palette size={10} />
               </span>
               Background Studio
             </span>
-            <span className="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[9px] font-mono tracking-wider text-neutral-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-              THREE
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-xs font-mono tracking-wide text-neutral-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+              Three
             </span>
           </div>
 
@@ -308,7 +291,7 @@ function StandardShaderControls({
 
             <div className="flex flex-col gap-2.5">
               <div className="pb-1">
-                <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-neutral-500">Color Stops</span>
+                <span className="text-xs font-semibold text-neutral-500">Color Stops</span>
               </div>
               {shaderColorKeys.map((key, index) => {
                 const value = key === "shaderColor1" ? shaderColor1 : key === "shaderColor2" ? shaderColor2 : shaderColor3;
@@ -406,7 +389,7 @@ function ColorRow({
 
   return (
     <label className="group flex h-10 cursor-pointer items-center justify-between gap-2.5 rounded-xl border border-white/[0.03] bg-white/[0.015] px-3.5 text-left transition-all duration-300 hover:border-white/[0.08] hover:bg-white/[0.03]">
-      <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 transition-colors group-hover:text-neutral-200 shrink-0 w-18 truncate">
+      <span className="text-xs font-semibold text-neutral-400 transition-colors group-hover:text-neutral-200 shrink-0 w-18 truncate">
         {label}
       </span>
       <div className="flex items-center gap-2">
@@ -422,7 +405,7 @@ function ColorRow({
             value={hexValue}
           />
         </span>
-        <span className="w-16 shrink-0 rounded-lg border border-white/[0.04] bg-black/40 py-0.5 text-center font-mono text-[9px] font-semibold tracking-wider text-neutral-400 transition-colors group-hover:border-white/[0.1] group-hover:text-neutral-200">
+        <span className="w-16 shrink-0 rounded-lg border border-white/[0.04] bg-black/40 py-0.5 text-center font-mono text-xs font-medium text-neutral-400 transition-colors group-hover:border-white/[0.1] group-hover:text-neutral-200">
           {hexValue}
         </span>
       </div>

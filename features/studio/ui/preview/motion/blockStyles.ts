@@ -2,21 +2,24 @@ import type { CSSProperties } from "react";
 import type { ColorProps } from "@/features/studio/ui/preview/motion/MotionBlock";
 
 type TextStyleProps = {
+  fontFamily?: string;
   fontSize?: number | string;
   fontWeight?: number | string;
   lineHeight?: number | string;
 };
 
 export function textStyle(
-  { fontSize, fontWeight, lineHeight }: TextStyleProps,
+  { fontFamily, fontSize, fontWeight, lineHeight }: TextStyleProps,
   defaultLineHeight: number,
   textAlign: ColorProps["textAlign"]
 ): CSSProperties {
   return {
+    ...(fontFamily === undefined || fontFamily === "" ? {} : { fontFamily: `"${fontFamily}", var(--font-sans-custom), sans-serif` }),
     ...(fontSize === undefined || fontSize === "" ? {} : { fontSize: typeof fontSize === "number" ? `${fontSize}px` : fontSize }),
     ...(fontWeight === undefined || fontWeight === "" ? {} : { fontWeight }),
     lineHeight: lineHeight === undefined || lineHeight === "" ? defaultLineHeight : lineHeight,
-    ...(textAlign ? { textAlign } : {})
+    ...(textAlign ? { textAlign } : {}),
+    whiteSpace: "pre-wrap"
   };
 }
 

@@ -12,7 +12,7 @@ type StyleThumbnailProps = {
 };
 
 const palettes = [
-  { accent: "#8ea5ff", base: "#0b0f1b", mid: "#18213a", soft: "rgba(142, 165, 255, 0.18)" },
+  { accent: "#0070f3", base: "#0b0f1b", mid: "#18213a", soft: "rgba(0, 112, 243, 0.18)" },
   { accent: "#7dd3a8", base: "#07120f", mid: "#10251d", soft: "rgba(125, 211, 168, 0.18)" },
   { accent: "#f2c572", base: "#151108", mid: "#2b2110", soft: "rgba(242, 197, 114, 0.16)" },
   { accent: "#ff8ea3", base: "#170a10", mid: "#2a111b", soft: "rgba(255, 142, 163, 0.16)" },

@@ -1,16 +1,81 @@
 import type { ReactNode } from "react";
-import { BarChart3, CreditCard, Gauge, Image as ImageIcon } from "lucide-react";
+import {
+  ArrowUpRight,
+  BarChart3,
+  ChartArea,
+  ChartLine,
+  ChartPie,
+  Circle,
+  Image as ImageIcon,
+  Minus,
+  Shapes,
+  Sparkles,
+  Square,
+  Star,
+  Triangle,
+  Type,
+  Video
+} from "lucide-react";
 import type { AddBlockType } from "@/core/motion-doc/application/motionDocBlockFactory";
 
 export type { AddBlockType };
 
-export const blockTools: Array<{ icon: ReactNode; label: string; type: AddBlockType }> = [
-  { icon: <span className="font-serif text-[18px] font-bold leading-none">H</span>, label: "Title", type: "Title" },
-  { icon: <span className="font-serif text-[17px] font-semibold leading-none">T</span>, label: "Text", type: "Text" },
-  { icon: <CreditCard size={16} className="transition-all duration-200" />, label: "Card", type: "Card" },
-  { icon: <Gauge size={16} className="transition-all duration-200" />, label: "Metric", type: "Metric" },
-  { icon: <BarChart3 size={16} className="transition-all duration-200" />, label: "Chart", type: "Chart" },
-  { icon: <ImageIcon size={16} className="transition-all duration-200" />, label: "Image", type: "Image" }
+export type StudioToolGroupId = "chart" | "icon" | "media" | "text";
+
+export type StudioBlockTool = {
+  description?: string;
+  icon: ReactNode;
+  label: string;
+  shortcut?: string;
+  type: AddBlockType;
+};
+
+export type StudioToolGroup = {
+  id: StudioToolGroupId;
+  icon: ReactNode;
+  label: string;
+  modal?: boolean;
+  tools: StudioBlockTool[];
+};
+
+export const textPresetTools = [
+  { description: "Text layer with role and size controls in Properties", icon: <Type size={16} />, label: "Text", type: "Text" }
+] satisfies StudioBlockTool[];
+
+export const mediaTools = [
+  { icon: <ImageIcon size={16} />, label: "Image", type: "Image" },
+  { icon: <Video size={16} />, label: "Video", type: "Video" }
+] satisfies StudioBlockTool[];
+
+export const chartTools = [
+  { icon: <BarChart3 size={16} />, label: "Bar", type: "ChartBar" },
+  { icon: <ChartLine size={16} />, label: "Line", type: "ChartLine" },
+  { icon: <ChartArea size={16} />, label: "Area", type: "ChartArea" },
+  { icon: <ChartPie size={16} />, label: "Pie", type: "ChartPie" },
+  { icon: <Circle size={16} />, label: "Donut", type: "ChartDonut" }
+] satisfies StudioBlockTool[];
+
+// shapeTools removed as requested
+
+export const iconTool: StudioBlockTool = {
+  description: "Lucide symbol layer",
+  icon: <Sparkles size={16} />,
+  label: "Icon",
+  type: "Icon"
+};
+
+export const toolGroups: StudioToolGroup[] = [
+  { icon: <Type size={17} />, id: "text", label: "Text", tools: textPresetTools },
+  { icon: <ImageIcon size={17} />, id: "media", label: "Media", tools: mediaTools },
+  { icon: <BarChart3 size={17} />, id: "chart", label: "Chart", tools: chartTools },
+  { icon: <Sparkles size={17} />, id: "icon", label: "Icon", tools: [iconTool] }
+];
+
+export const blockTools: StudioBlockTool[] = [
+  ...textPresetTools,
+  ...mediaTools,
+  ...chartTools,
+  iconTool
 ];
 
 export const imageFitOptions = ["cover", "contain", "fill", "scale-down"] as const;

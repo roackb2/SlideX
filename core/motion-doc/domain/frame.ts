@@ -7,14 +7,15 @@ export type MotionDocFrame = {
   y: number;
 };
 
-export type GroupableBlockType = Extract<MotionDocBlock["type"], "Card" | "Chart" | "Metric">;
-
 export function defaultBlockWidth(type: MotionDocBlock["type"]) {
   if (type === "Title") return 52;
   if (type === "Text") return 42;
+  if (type === "Icon") return 16;
   if (type === "Metric") return 32;
   if (type === "Chart") return 70;
-  if (type === "ImageBlock") return 80;
+  if (type === "Shape") return 28;
+  if (type === "Stack") return 80;
+  if (type === "ImageBlock" || type === "VideoBlock") return 80;
 
   return 40;
 }
@@ -22,15 +23,20 @@ export function defaultBlockWidth(type: MotionDocBlock["type"]) {
 export function defaultBlockHeight(type: MotionDocBlock["type"]) {
   if (type === "Title") return 18;
   if (type === "Text") return 16;
+  if (type === "Icon") return 28;
   if (type === "Metric") return 36;
   if (type === "Chart") return 42;
-  if (type === "ImageBlock") return 54;
+  if (type === "Shape") return 28;
+  if (type === "Stack") return 20;
+  if (type === "ImageBlock" || type === "VideoBlock") return 54;
 
   return 32;
 }
 
 export function defaultBlockX(type: MotionDocBlock["type"]) {
-  if (type === "ImageBlock" || type === "Chart") return 10;
+  if (type === "Icon") return 42;
+  if (type === "ImageBlock" || type === "VideoBlock" || type === "Chart" || type === "Stack") return 10;
+  if (type === "Shape") return 34;
 
   return 8;
 }
@@ -38,7 +44,9 @@ export function defaultBlockX(type: MotionDocBlock["type"]) {
 export function defaultBlockY(type: MotionDocBlock["type"]) {
   if (type === "Title") return 18;
   if (type === "Chart") return 36;
-  if (type === "ImageBlock") return 20;
+  if (type === "Icon" || type === "Shape") return 30;
+  if (type === "Stack") return 64;
+  if (type === "ImageBlock" || type === "VideoBlock") return 20;
 
   return 38;
 }
@@ -69,41 +77,4 @@ export function roundFrameValue(value: number) {
 
 export function clampPercent(value: number) {
   return roundFrameValue(value);
-}
-
-export function groupFrameFor(
-  type: GroupableBlockType,
-  flow: string,
-  gap: number,
-  index: number,
-  count: number,
-  props: Record<string, string | number>
-) {
-  const defaultW = defaultBlockWidth(type);
-  const defaultH = defaultBlockHeight(type);
-  const currentW = percentFrameValue(props.w, defaultW);
-  const currentH = percentFrameValue(props.h, defaultH);
-
-  if (flow === "row") {
-    const normalizedGap = Math.min(Math.max(gap, 0), 16);
-    const width = Math.max((84 - normalizedGap * Math.max(count - 1, 0)) / Math.max(count, 1), 8);
-    const groupWidth = Math.min(width * count + normalizedGap * Math.max(count - 1, 0), 96);
-
-    return {
-      h: roundFrameValue(currentH),
-      w: roundFrameValue(width),
-      x: roundFrameValue((100 - groupWidth) / 2 + index * (width + normalizedGap)),
-      y: type === "Chart" ? 34 : 38
-    };
-  }
-
-  const stackWidth = type === "Chart" ? Math.max(currentW, 64) : Math.max(currentW, defaultW);
-  const stackHeight = Math.min(currentH, type === "Chart" ? 42 : defaultH);
-
-  return {
-    h: roundFrameValue(stackHeight),
-    w: roundFrameValue(stackWidth),
-    x: type === "Chart" ? 10 : 8,
-    y: clampFramePosition((type === "Chart" ? 28 : 30) + index * (stackHeight + 4), stackHeight)
-  };
 }

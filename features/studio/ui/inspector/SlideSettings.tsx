@@ -1,9 +1,8 @@
 "use client";
 
 import type { PropRecord } from "@/features/studio/application/themeColors";
-import { ShaderBackgroundSection } from "@/features/studio/ui/inspector/shader/ShaderBackgroundSection";
+import { BackgroundSettingsSection } from "@/features/studio/ui/inspector/BackgroundSettingsSection";
 import { SlideLayoutSection } from "@/features/studio/ui/inspector/slide/SlideLayoutSection";
-import { SlideThemeSection } from "@/features/studio/ui/inspector/slide/SlideThemeSection";
 import { SlideTimelineSection } from "@/features/studio/ui/inspector/slide/SlideTimelineSection";
 
 type SlideSettingsProps = {
@@ -59,10 +58,20 @@ export function SlideSettings({
 }: SlideSettingsProps) {
   return (
     <div className="flex flex-col gap-4 animate-[bubble-appear_0.2s_ease-out]">
-      <SlideThemeSection
+      <BackgroundSettingsSection
         accent={accent}
         background={background}
         mutedColor={mutedColor}
+        shader={shader}
+        shaderColor1={shaderColor1}
+        shaderColor2={shaderColor2}
+        shaderColor3={shaderColor3}
+        shaderDetail={shaderDetail}
+        shaderEngine={shaderEngine}
+        shaderIntensity={shaderIntensity}
+        shaderScale={shaderScale}
+        shaderSoftness={shaderSoftness}
+        shaderSpeed={shaderSpeed}
         textColor={textColor}
         theme={theme}
         updateActiveSlideStyle={updateActiveSlideStyle}
@@ -79,22 +88,6 @@ export function SlideSettings({
       />
 
       <SlideTimelineSection duration={duration} updateActiveSlideStyle={updateActiveSlideStyle} />
-
-      <ShaderBackgroundSection
-        accent={accent}
-        background={background}
-        shader={shader}
-        shaderColor1={shaderColor1}
-        shaderColor2={shaderColor2}
-        shaderColor3={shaderColor3}
-        shaderDetail={shaderDetail}
-        shaderEngine={shaderEngine}
-        shaderIntensity={shaderIntensity}
-        shaderScale={shaderScale}
-        shaderSoftness={shaderSoftness}
-        shaderSpeed={shaderSpeed}
-        updateActiveSlideStyle={updateActiveSlideStyle}
-      />
     </div>
   );
 }

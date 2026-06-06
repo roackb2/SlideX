@@ -83,7 +83,7 @@ export function ColorSetControl({ items, label, onApplyPalette }: ColorSetContro
               title={palette.name}
               type="button"
             >
-              <span className="truncate text-[11px] text-neutral-200">{palette.name}</span>
+              <span className="truncate text-xs font-medium text-neutral-200">{palette.name}</span>
               <span className="flex -space-x-1">
                 {Object.values(palette.colors).map((color) => (
                   <span
@@ -97,7 +97,7 @@ export function ColorSetControl({ items, label, onApplyPalette }: ColorSetContro
             </button>
             <button
               aria-label={`Use ${palette.name} theme on all slides`}
-              className="mr-1 rounded border border-neutral-800 px-1.5 py-1 text-[9px] font-medium text-neutral-400 transition-colors hover:border-neutral-600 hover:text-white"
+              className="mr-1 rounded border border-neutral-800 px-2 py-1 text-xs font-semibold text-neutral-400 transition-colors hover:border-neutral-600 hover:text-white"
               onClick={() => applyPalette(palette.colors, "deck")}
               type="button"
             >
@@ -109,12 +109,12 @@ export function ColorSetControl({ items, label, onApplyPalette }: ColorSetContro
 
       <div className="mt-2 rounded-md border border-neutral-800 bg-black/30">
         <button
-          className="flex w-full items-center justify-between px-2.5 py-2 text-left text-[11px] text-neutral-300 transition-colors hover:bg-neutral-900"
+          className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-xs text-neutral-300 transition-colors hover:bg-neutral-900"
           onClick={() => setIsFineTuneOpen((current) => !current)}
           type="button"
         >
           <span>Theme colors</span>
-          <span className="text-[10px] text-neutral-500">{isFineTuneOpen ? "Hide" : "Show"}</span>
+          <span className="text-xs text-neutral-500">{isFineTuneOpen ? "Hide" : "Show"}</span>
         </button>
         {isFineTuneOpen ? (
           <div className="grid gap-1 border-t border-neutral-800 p-2">
@@ -126,7 +126,7 @@ export function ColorSetControl({ items, label, onApplyPalette }: ColorSetContro
                 <div className="grid grid-cols-[1fr_auto] items-center gap-2 rounded border border-neutral-800 bg-black/40 px-2 py-1.5" key={item.id}>
                   <span className="flex min-w-0 items-center gap-2">
                     <span className="h-4 w-4 rounded border border-white/20 shadow-inner" style={colorSwatchStyle(colorValue)} />
-                    <span className="truncate text-[10px] text-neutral-300">{item.label}</span>
+                    <span className="truncate text-xs text-neutral-300">{item.label}</span>
                   </span>
                   <input
                     aria-label={`${item.label} picker`}
@@ -144,18 +144,18 @@ export function ColorSetControl({ items, label, onApplyPalette }: ColorSetContro
 
       <div className="mt-2 rounded-md border border-neutral-800 bg-black/30">
         <button
-          className="flex w-full items-center justify-between px-2.5 py-2 text-left text-[11px] text-neutral-300 transition-colors hover:bg-neutral-900"
+          className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-xs text-neutral-300 transition-colors hover:bg-neutral-900"
           onClick={() => setIsSwatchesOpen((current) => !current)}
           type="button"
         >
           <span>Saved swatches</span>
-          <span className="text-[10px] text-neutral-500">{isSwatchesOpen ? "Hide" : "Show"}</span>
+          <span className="text-xs text-neutral-500">{isSwatchesOpen ? "Hide" : "Show"}</span>
         </button>
         {isSwatchesOpen ? (
           <div className="border-t border-neutral-800 p-2">
             <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
               <input
-                className="min-w-0 rounded border border-neutral-800 bg-black px-2 py-1.5 font-mono text-[11px] text-neutral-200 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-500"
+                className="min-w-0 rounded border border-neutral-800 bg-black px-2 py-1.5 font-mono text-xs text-neutral-200 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-500"
                 onChange={(event) => setSwatchValue(event.target.value)}
                 placeholder="#ffffff"
                 type="text"
@@ -169,7 +169,7 @@ export function ColorSetControl({ items, label, onApplyPalette }: ColorSetContro
                 value={hexColorValue(swatchValue) ?? "#ffffff"}
               />
               <button
-                className="rounded border border-neutral-800 px-2 py-1.5 text-[10px] text-neutral-300 transition-colors hover:border-neutral-600 hover:text-white"
+                className="rounded border border-neutral-800 px-2.5 py-1.5 text-xs text-neutral-300 transition-colors hover:border-neutral-600 hover:text-white"
                 onClick={() => addSwatch()}
                 type="button"
               >
@@ -177,7 +177,7 @@ export function ColorSetControl({ items, label, onApplyPalette }: ColorSetContro
               </button>
             </div>
             <button
-              className="mt-2 w-full rounded border border-neutral-800 px-2 py-1.5 text-[10px] text-neutral-400 transition-colors hover:border-neutral-600 hover:bg-neutral-900 hover:text-white"
+              className="mt-2 w-full rounded border border-neutral-800 px-2.5 py-1.5 text-xs text-neutral-400 transition-colors hover:border-neutral-600 hover:bg-neutral-900 hover:text-white"
               onClick={addCurrentThemeSwatches}
               type="button"
             >
@@ -195,12 +195,12 @@ export function ColorSetControl({ items, label, onApplyPalette }: ColorSetContro
                     title={`${swatch} - click to remove`}
                     type="button"
                   >
-                    <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-[9px] font-semibold text-white group-hover:flex">×</span>
+                    <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-semibold text-white group-hover:flex">×</span>
                   </button>
                 ))}
               </div>
             ) : (
-              <p className="mt-3 rounded border border-dashed border-neutral-800 px-2 py-2 text-[10px] text-neutral-500">No saved swatches yet.</p>
+              <p className="mt-3 rounded border border-dashed border-neutral-800 px-2.5 py-2 text-xs text-neutral-500">No saved swatches yet.</p>
             )}
           </div>
         ) : null}

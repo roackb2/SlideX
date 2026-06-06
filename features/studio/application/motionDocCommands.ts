@@ -1,8 +1,7 @@
 import { createMotionDocBlock, type AddBlockType } from "@/core/motion-doc/application/motionDocBlockFactory";
-import { cloneBlock, explicitGroupFlowProps, generateSlideString, replaceSlideContent, replaceSlideOpeningTag } from "@/core/motion-doc/application/motionDocSerialize";
-import { clampFramePosition, defaultBlockHeight, defaultBlockWidth, defaultBlockX, defaultBlockY, groupFrameFor, numberValue, percentFrameValue } from "@/core/motion-doc/domain/frame";
+import { cloneBlock, generateSlideString, replaceSlideContent, replaceSlideOpeningTag } from "@/core/motion-doc/application/motionDocSerialize";
+import { clampFramePosition, defaultBlockHeight, defaultBlockWidth, defaultBlockX, defaultBlockY, percentFrameValue } from "@/core/motion-doc/domain/frame";
 import { parseMotionDoc, type MotionDocBlock, type MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
-import { normalizeLayerFlowProps } from "@/features/studio/application/layerFlow";
 
 export type FrameUpdate = {
   blockIndex: number;
@@ -19,6 +18,11 @@ export type PositionDelta = {
   y: number;
 };
 
+export type AddBlockOptions = {
+  position?: { x: number; y: number };
+  props?: Record<string, string | number>;
+};
+
 type ApplySelectionMdxResult =
   | {
       error: string;
@@ -28,15 +32,66 @@ type ApplySelectionMdxResult =
       source: string;
     };
 
-export function appendBlankSlideSource(
-  source: string,
-  style: {
-    accent: string;
-    background: string;
-    theme: string;
+export function appendBlankSlideSource(source: string, slideIndex: number) {
+  const pattern = /<(Slide|Scene)\b([^>]*)>([\s\S]*?)<\/\1>/g;
+  let currentIndex = 0;
+  let theme = "dark";
+  let bg = "#050505";
+  let acc = "#ffffff";
+  let txt = "";
+
+  for (const match of source.matchAll(pattern)) {
+    if (currentIndex === slideIndex && match.index !== undefined) {
+      const attrsStr = match[2];
+      const getAttr = (name: string) => {
+        const m = attrsStr.match(new RegExp(`\\b${name}="([^"]*)"`));
+        return m ? m[1] : null;
+      };
+      theme = getAttr("theme") ?? theme;
+      bg = getAttr("background") ?? bg;
+      acc = getAttr("accent") ?? acc;
+      txt = getAttr("textColor") ?? txt;
+      break;
+    }
+    currentIndex += 1;
   }
-) {
-  return `${source.trimEnd()}\n\n<Slide duration={5} theme="${style.theme}" background="${style.background}" accent="${style.accent}">\n</Slide>`;
+
+  const txtAttr = txt ? ` textColor="${txt}"` : "";
+  const startTag = `<Slide duration={5} theme="${theme}" background="${bg}" accent="${acc}"${txtAttr}>`;
+  const endTag = '</Slide>';
+
+  return `${source.trimEnd()}\n\n${startTag}\n${endTag}`;
+}
+
+export function appendLayoutSlideSource(source: string, slideIndex: number, layoutSource: string) {
+  const pattern = /<(Slide|Scene)\b([^>]*)>([\s\S]*?)<\/\1>/g;
+  let currentIndex = 0;
+  let theme = "dark";
+  let bg = "#050505";
+  let acc = "#ffffff";
+  let txt = "";
+
+  for (const match of source.matchAll(pattern)) {
+    if (currentIndex === slideIndex && match.index !== undefined) {
+      const attrsStr = match[2];
+      const getAttr = (name: string) => {
+        const m = attrsStr.match(new RegExp(`\\b${name}="([^"]*)"`));
+        return m ? m[1] : null;
+      };
+      theme = getAttr("theme") ?? theme;
+      bg = getAttr("background") ?? bg;
+      acc = getAttr("accent") ?? acc;
+      txt = getAttr("textColor") ?? txt;
+      break;
+    }
+    currentIndex += 1;
+  }
+
+  const txtAttr = txt ? ` textColor="${txt}"` : "";
+  const startTag = `<Slide duration={5} theme="${theme}" background="${bg}" accent="${acc}"${txtAttr}>`;
+  const endTag = '</Slide>';
+
+  return `${source.trimEnd()}\n\n${startTag}\n${layoutSource}\n${endTag}`;
 }
 
 export function deleteSlideSource(source: string, slideIndex: number) {
@@ -57,6 +112,28 @@ export function deleteSlideSource(source: string, slideIndex: number) {
 
 export function replaceSlideSource(source: string, slideIndex: number, slide: MotionDocScene) {
   return replaceSlideContent(source, slideIndex, generateSlideString(slide));
+}
+
+export function reorderSlideSource(source: string, fromIndex: number, toIndex: number) {
+  if (fromIndex === toIndex) return source;
+
+  const pattern = /<(Slide|Scene)\b[^>]*>([\s\S]*?)<\/\1>/g;
+  const matches = [...source.matchAll(pattern)];
+
+  if (fromIndex < 0 || fromIndex >= matches.length || toIndex < 0 || toIndex >= matches.length) {
+    return source;
+  }
+
+  const slideStrings = matches.map((m) => m[0]);
+  const [movedSlide] = slideStrings.splice(fromIndex, 1);
+  slideStrings.splice(toIndex, 0, movedSlide);
+
+  let currentIndex = 0;
+  return source.replace(pattern, () => {
+    const replacement = slideStrings[currentIndex];
+    currentIndex += 1;
+    return replacement;
+  });
 }
 
 export function selectedLayerIndices(selectedBlockIndices: number[], selectedBlockIndex: number | null, sort: "asc" | "desc" = "asc") {
@@ -123,9 +200,9 @@ export function reorderBlocks(slide: MotionDocScene, fromIndex: number, toIndex:
   return { ...slide, blocks };
 }
 
-export function appendBlockToSlide(slide: MotionDocScene, type: AddBlockType) {
+export function appendBlockToSlide(slide: MotionDocScene, type: AddBlockType, options: AddBlockOptions = {}) {
   const blocks = [...slide.blocks];
-  const block = createMotionDocBlock(type);
+  const block = blockWithOptions(createMotionDocBlock(type), options);
 
   blocks.push(block);
 
@@ -133,6 +210,21 @@ export function appendBlockToSlide(slide: MotionDocScene, type: AddBlockType) {
     blockIndex: blocks.length - 1,
     slide: { ...slide, blocks }
   };
+}
+
+function blockWithOptions(block: MotionDocBlock, options: AddBlockOptions): MotionDocBlock {
+  if (!("props" in block)) {
+    return block;
+  }
+
+  return {
+    ...block,
+    props: {
+      ...block.props,
+      ...options.props,
+      ...(options.position ? { x: Math.min(Math.max(options.position.x, 0), 92), y: Math.min(Math.max(options.position.y, 0), 92) } : {})
+    }
+  } as MotionDocBlock;
 }
 
 export function appendTextBlockAtPosition(slide: MotionDocScene, position: { x: number; y: number }) {
@@ -224,38 +316,11 @@ export function applySlideStyleSource(source: string, slide: MotionDocScene, sli
     ...updates
   };
 
-  return replaceSlideOpeningTag(source, slideIndex, explicitGroupFlowProps(slide, nextProps));
+  return replaceSlideOpeningTag(source, slideIndex, nextProps);
 }
 
 export function applyAllSlidesStyleSource(source: string, slides: MotionDocScene[], updates: Record<string, string | number>) {
   return slides.reduce((nextSource, slide, index) => applySlideStyleSource(nextSource, slide, index, updates), source);
-}
-
-export function updateBlockGroupFlow(slide: MotionDocScene, blockType: "Card" | "Chart" | "Metric", flow: string, gap?: number) {
-  const flowProp = blockType === "Card" ? "cardFlow" : blockType === "Chart" ? "chartFlow" : "metricFlow";
-  const gapProp = blockType === "Card" ? "cardGap" : blockType === "Chart" ? "chartGap" : "metricGap";
-  const resolvedGap = gap ?? numberValue(slide.props[gapProp]) ?? 3;
-  const blocksWithLayout = slide.blocks
-    .map((block, index) => ({ block, index }))
-    .filter(({ block }) => block.type === blockType && "props" in block);
-  const blocks = [...slide.blocks];
-  const props = { ...slide.props, [flowProp]: flow, [gapProp]: resolvedGap };
-
-  blocksWithLayout.forEach(({ block, index }, order) => {
-    if (!("props" in block)) {
-      return;
-    }
-
-    blocks[index] = {
-      ...block,
-      props: {
-        ...block.props,
-        ...groupFrameFor(blockType, flow, resolvedGap, order, blocksWithLayout.length, block.props)
-      }
-    } as MotionDocBlock;
-  });
-
-  return { ...slide, blocks, props };
 }
 
 export function updateBlockInSlide(
@@ -324,16 +389,14 @@ export function applySelectionMdxSource({
     return { error: "Selection MDX needs one layer" };
   }
 
-  const { block: normalizedBlock, flowUpdates } = normalizeLayerFlowProps(nextBlock);
   const blocks = [...activeSlide.blocks];
-  blocks[selectedBlockIndex] = normalizedBlock;
+  blocks[selectedBlockIndex] = nextBlock;
 
   return {
     notice: "Layer MDX updated",
     source: replaceSlideSource(source, activeSlideIndex, {
       ...activeSlide,
-      blocks,
-      props: { ...activeSlide.props, ...flowUpdates }
+      blocks
     })
   };
 }

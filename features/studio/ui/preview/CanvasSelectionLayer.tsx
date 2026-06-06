@@ -77,10 +77,10 @@ export function CanvasSelectionLayer({
         return (
           <div
             aria-label={`Move ${block.type} layer ${blockIndex + 1}`}
-            className={`absolute cursor-move border bg-transparent text-left outline-none transition-colors ${
+            className={`absolute touch-none select-none cursor-move border bg-transparent text-left outline-none transition-colors ${
               isSelected
-                ? "border-white/90 shadow-[0_0_0_1px_rgba(0,0,0,0.55)]"
-                : "border-white/0 hover:border-white/45"
+                ? "border-[#c4b5fd] shadow-[0_0_0_1px_rgba(17,7,31,0.8),0_0_18px_rgba(139,92,246,0.34)]"
+                : "border-white/0 hover:border-[#a78bfa]/70"
             }`}
             data-frame-control
             key={`${block.type}-control-${blockIndex}`}
@@ -95,7 +95,8 @@ export function CanvasSelectionLayer({
             style={{
               height: `${frame.h}%`,
               left: `${frame.x}%`,
-              minHeight: 36,
+              minHeight: block.type === "Shape" ? 18 : 36,
+              minWidth: block.type === "Shape" ? 18 : 40,
               top: `${frame.y}%`,
               width: `${frame.w}%`
             }}
@@ -159,23 +160,23 @@ function MarqueeOverlay({ marqueeSelection }: { marqueeSelection: MarqueeSelecti
 function SelectedFrameControls({
   frame,
   isTextBlock,
+  label,
   onStartResize
 }: {
   frame: Frame;
   isTextBlock: boolean;
+  label?: string;
   onStartResize: (event: PointerEvent<HTMLSpanElement>, handle: ResizeHandle) => void;
 }) {
   return (
     <>
-      {!isTextBlock ? (
-        <span className="pointer-events-none absolute -left-px -top-5 rounded-sm bg-white px-1.5 py-0.5 font-mono text-[9px] font-semibold text-black">
-          x {Math.round(frame.x)} y {Math.round(frame.y)} w {Math.round(frame.w)} h {Math.round(frame.h)}
-        </span>
-      ) : null}
+      <span className="pointer-events-none absolute -left-px -top-5 rounded-sm bg-white px-1.5 py-0.5 font-mono text-[9px] font-semibold text-black">
+        {label ?? (isTextBlock ? "drag frame" : `x ${Math.round(frame.x)} y ${Math.round(frame.y)} w ${Math.round(frame.w)} h ${Math.round(frame.h)}`)}
+      </span>
       {resizeHandles.map((handle) => (
         <span
           aria-hidden="true"
-          className={`absolute border border-black bg-white shadow-sm ${resizeHandleClass(handle)}`}
+          className={`absolute border border-[#13091f] bg-[#f5f3ff] shadow-[0_0_0_1px_rgba(196,181,253,0.5)] ${resizeHandleClass(handle)}`}
           key={handle}
           onPointerDown={(event) => onStartResize(event, handle)}
         />
@@ -185,13 +186,13 @@ function SelectedFrameControls({
 }
 
 function resizeHandleClass(handle: ResizeHandle) {
-  if (handle === "n") return "-top-1.5 left-1/2 h-3 w-8 -translate-x-1/2 cursor-ns-resize rounded-sm";
-  if (handle === "e") return "-right-1.5 top-1/2 h-8 w-3 -translate-y-1/2 cursor-ew-resize rounded-sm";
-  if (handle === "s") return "-bottom-1.5 left-1/2 h-3 w-8 -translate-x-1/2 cursor-ns-resize rounded-sm";
-  if (handle === "w") return "-left-1.5 top-1/2 h-8 w-3 -translate-y-1/2 cursor-ew-resize rounded-sm";
-  if (handle === "nw") return "-left-1.5 -top-1.5 h-3 w-3 cursor-nwse-resize rounded-sm";
-  if (handle === "ne") return "-right-1.5 -top-1.5 h-3 w-3 cursor-nesw-resize rounded-sm";
-  if (handle === "sw") return "-bottom-1.5 -left-1.5 h-3 w-3 cursor-nesw-resize rounded-sm";
+  if (handle === "n") return "-top-2 left-1/2 h-4 w-9 -translate-x-1/2 cursor-ns-resize rounded";
+  if (handle === "e") return "-right-2 top-1/2 h-9 w-4 -translate-y-1/2 cursor-ew-resize rounded";
+  if (handle === "s") return "-bottom-2 left-1/2 h-4 w-9 -translate-x-1/2 cursor-ns-resize rounded";
+  if (handle === "w") return "-left-2 top-1/2 h-9 w-4 -translate-y-1/2 cursor-ew-resize rounded";
+  if (handle === "nw") return "-left-2 -top-2 h-4 w-4 cursor-nwse-resize rounded";
+  if (handle === "ne") return "-right-2 -top-2 h-4 w-4 cursor-nesw-resize rounded";
+  if (handle === "sw") return "-bottom-2 -left-2 h-4 w-4 cursor-nesw-resize rounded";
 
-  return "-bottom-1.5 -right-1.5 h-3 w-3 cursor-nwse-resize rounded-sm";
+  return "-bottom-2 -right-2 h-4 w-4 cursor-nwse-resize rounded";
 }

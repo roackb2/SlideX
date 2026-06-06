@@ -79,73 +79,73 @@ export function createBusinessTemplate(config: BusinessTemplateConfig): MotionTe
     source: `# ${escapeText(config.name)}
 
 ${slide(theme, config.background, config.accent, [
-  title(config.hero, { fontSize: 78, fontWeight: 800, h: 24, w: 84, x: 8, y: 20 }),
-  text(config.subtitle, { fontSize: 22, lineHeight: 1.5, h: 20, w: 64, x: 8, y: 48 })
+  text(config.hero, { fontSize: 78, fontWeight: 800, h: 24, w: 84, x: 8, y: 20 }),
+  text(config.subtitle, { fontSize: 22, lineHeight: 1.5, h: 20, w: 64, x: 8, y: 50 })
 ], coverOptions)}
 
 ${slide(theme, mutedBackground, config.accent, [
-  title("Executive snapshot", { fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
+  text("Executive snapshot", { enter: "slideLeft", fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
   metric(config.metrics[0], { h: 36, w: 26, x: 8, y: 32 }),
   metric(config.metrics[1], { h: 36, w: 26, x: 37, y: 32 }),
   metric(config.metrics[2], { h: 36, w: 26, x: 66, y: 32 })
 ])}
 
 ${slide(theme, deepBackground, config.accent, [
-  title("Strategic thesis", { fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
-  card({ ...config.thesis[0], layout: "vertical" }, { h: 42, w: 48, x: 8, y: 32 }),
-  card({ ...config.thesis[1], layout: "vertical" }, { h: 42, w: 32, x: 60, y: 32 })
+  text("Strategic thesis", { fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
+  card({ ...config.thesis[0], layout: "vertical" }, { h: 42, w: 40, x: 8, y: 32 }),
+  card({ ...config.thesis[1], layout: "vertical" }, { h: 42, w: 40, x: 50, y: 32 })
 ])}
 
 ${slide(theme, mutedBackground, config.accent, [
-  title("Momentum signal", { fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
+  text("Momentum signal", { enter: "slideLeft", fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
   chart(config.chart, { h: 52, w: 84, x: 8, y: 30, height: 180 })
 ])}
 
 ${slide(theme, deepBackground, config.accent, [
-  title("Customer evidence", { fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
-  card({ ...config.evidence[0], layout: "vertical" }, { h: 40, w: 46, x: 8, y: 32 }),
-  card({ ...config.evidence[1], layout: "vertical" }, { h: 40, w: 34, x: 58, y: 32 })
+  text("Customer evidence", { fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
+  card({ ...config.evidence[0], layout: "vertical" }, { h: 40, w: 40, x: 8, y: 32 }),
+  card({ ...config.evidence[1], layout: "vertical" }, { h: 40, w: 40, x: 50, y: 32 })
 ])}
 
 ${slide(theme, mutedBackground, config.accent, [
-  title("Strategic response", { fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
-  card({ ...config.strategy[0], layout: "vertical" }, { h: 44, w: 25, x: 8, y: 32 }),
-  card({ ...config.strategy[1], layout: "vertical" }, { h: 44, w: 28, x: 35, y: 32 }),
-  card({ ...config.strategy[2], layout: "vertical" }, { h: 44, w: 25, x: 65, y: 32 })
+  text("Strategic response", { enter: "slideLeft", fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
+  card({ ...config.strategy[0], layout: "vertical" }, { h: 44, w: 26, x: 8, y: 32 }),
+  card({ ...config.strategy[1], layout: "vertical" }, { h: 44, w: 26, x: 37, y: 32 }),
+  card({ ...config.strategy[2], layout: "vertical" }, { h: 44, w: 26, x: 66, y: 32 })
 ])}
 
 ${slide(theme, deepBackground, config.accent, [
-  image(config.image, { h: 70, w: 42, x: 8, y: 15 }),
+  image(config.image, { h: 60, w: 42, x: 8, y: 20 }),
   text(config.proofText, { fontSize: 24, lineHeight: 1.5, h: 52, w: 36, x: 56, y: 24 })
 ])}
 
 ${slide(theme, mutedBackground, config.accent, [
-  title("Economic impact", { fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
-  metric(config.economics[0], { h: 40, w: 36, x: 12, y: 32 }),
-  metric(config.economics[1], { h: 40, w: 36, x: 52, y: 32 })
+  text("Economic impact", { fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
+  metric(config.economics[0], { h: 40, w: 40, x: 8, y: 32 }),
+  metric(config.economics[1], { h: 40, w: 40, x: 50, y: 32 })
 ])}
 
 ${slide(theme, deepBackground, config.accent, [
-  title("Operating readiness", { fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
+  text("Operating readiness", { enter: "slideLeft", fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
   chart({ ...config.chart, title: "Readiness by function" }, { h: 52, w: 84, x: 8, y: 30, height: 180 })
 ])}
 
 ${slide(theme, mutedBackground, config.accent, [
-  title("Risks and controls", { fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
-  card({ ...config.risks[0], layout: "vertical" }, { h: 42, w: 34, x: 8, y: 32 }),
-  card({ ...config.risks[1], layout: "vertical" }, { h: 42, w: 46, x: 46, y: 32 })
+  text("Risks and controls", { fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
+  card({ ...config.risks[0], layout: "vertical" }, { h: 42, w: 40, x: 8, y: 32 }),
+  card({ ...config.risks[1], layout: "vertical" }, { h: 42, w: 40, x: 50, y: 32 })
 ])}
 
 ${slide(theme, deepBackground, config.accent, [
-  title("Execution plan", { fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
-  card({ icon: "Calendar", ...config.plan[0], layout: "vertical" }, { h: 44, w: 25, x: 8, y: 32 }),
-  card({ icon: "Settings", ...config.plan[1], layout: "vertical" }, { h: 44, w: 28, x: 35, y: 32 }),
-  card({ icon: "ArrowUpRight", ...config.plan[2], layout: "vertical" }, { h: 44, w: 25, x: 65, y: 32 })
+  text("Execution plan", { enter: "slideLeft", fontSize: 54, fontWeight: 700, h: 15, w: 84, x: 8, y: 10 }),
+  card({ icon: "Calendar", ...config.plan[0], layout: "vertical" }, { h: 44, w: 26, x: 8, y: 32 }),
+  card({ icon: "Settings", ...config.plan[1], layout: "vertical" }, { h: 44, w: 26, x: 37, y: 32 }),
+  card({ icon: "ArrowUpRight", ...config.plan[2], layout: "vertical" }, { h: 44, w: 26, x: 66, y: 32 })
 ])}
 
 ${slide(theme, config.background, config.accent, [
-  title("Decision requested", { enter: "zoomIn", fontSize: 72, fontWeight: 800, h: 20, w: 80, x: 10, y: 24, textAlign: "center" }),
-  text("Approve the focused plan, validate the operating impact, and scale the system through the next executive review cycle.", { fontSize: 24, lineHeight: 1.6, h: 24, w: 70, x: 15, y: 50, textAlign: "center" })
+  text("Decision requested", { enter: "zoomIn", fontSize: 72, fontWeight: 800, h: 20, w: 80, x: 10, y: 24, textAlign: "center" }),
+  text("Approve the focused plan, validate the operating impact, and scale the system through the next executive review cycle.", { fontSize: 24, lineHeight: 1.6, h: 24, w: 70, x: 15, y: 52, textAlign: "center" })
 ])}`
   };
 }
@@ -178,28 +178,48 @@ ${blocks.map((block) => `  ${block}`).join("\n")}
 </Slide>`;
 }
 
-function title(value: string, frame: Partial<Frame> & { fontWeight?: number; textAlign?: string } = {}) {
-  const next = { fontSize: 72, h: 18, w: 64, x: 8, y: 12, ...frame };
-  const fontAttr = frame.fontWeight ? ` fontWeight={${frame.fontWeight}}` : "";
-  const alignAttr = frame.textAlign ? ` textAlign="${frame.textAlign}"` : "";
-  return `<Title enter="${frame.enter ?? "fadeUp"}" fontSize={${next.fontSize}}${fontAttr}${alignAttr} radius={0} x={${next.x}} y={${next.y}} w={${next.w}} h={${next.h}}>${escapeText(value)}</Title>`;
-}
-
-function text(value: string, frame: Partial<Frame> & { lineHeight?: number; textAlign?: string } = {}) {
+function text(value: string, frame: Partial<Frame> & { fontWeight?: number; textAlign?: string; lineHeight?: number } = {}) {
   const next = { fontSize: 24, h: 16, w: 52, x: 8, y: 38, ...frame };
+  const fontAttr = frame.fontWeight ? ` fontWeight={${frame.fontWeight}}` : "";
   const lineAttr = frame.lineHeight ? ` lineHeight={${frame.lineHeight}}` : "";
   const alignAttr = frame.textAlign ? ` textAlign="${frame.textAlign}"` : "";
-  return `<Text enter="${frame.enter ?? "fadeUp"}" delay={0.2} fontSize={${next.fontSize}}${lineAttr}${alignAttr} radius={0} x={${next.x}} y={${next.y}} w={${next.w}} h={${next.h}}>${escapeText(value)}</Text>`;
+  return `<Text enter="${frame.enter ?? "fadeUp"}" delay={${frame.delay ?? 0.2}} fontSize={${next.fontSize}}${fontAttr}${lineAttr}${alignAttr} radius={0} x={${next.x}} y={${next.y}} w={${next.w}} h={${next.h}}>${escapeText(value)}</Text>`;
 }
 
-function card(item: { icon?: string; layout?: string; text: string; title: string }, frame: Frame) {
-  const layout = item.layout ?? "horizontal";
-  return `<Card icon="${item.icon ?? "Sparkles"}" layout="${layout}" width="full" title="${attr(item.title)}" text="${attr(item.text)}" enter="fadeUp" delay={0.16} radius={24} x={${frame.x}} y={${frame.y}} w={${frame.w}} h={${frame.h}} />`;
+function icon(name: string, frame: Partial<Frame> & { size?: number, strokeWidth?: number } = {}) {
+  const next = { h: 8, w: 5, x: 8, y: 38, ...frame };
+  const sizeAttr = ` size={${frame.size ?? 42}}`;
+  const strokeAttr = ` strokeWidth={${frame.strokeWidth ?? 1.5}}`;
+  return `<Icon icon="${attr(name)}" enter="zoomIn" delay={0.16} radius={0}${sizeAttr}${strokeAttr} x={${next.x}} y={${next.y}} w={${next.w}} h={${next.h}} />`;
+}
+
+function card(item: { icon?: string; layout?: string; text: string; title: string }, frame: Partial<Frame> = {}) {
+  const isVertical = item.layout !== "horizontal";
+  const x = frame.x ?? 8;
+  const y = frame.y ?? 38;
+  const w = frame.w ?? 40;
+  const contentWidth = Math.max(14, isVertical ? w : w - 9);
+  const contentX = isVertical ? x : x + 9;
+  const titleY = isVertical ? y + 12 : y;
+  const textY = isVertical ? y + 24 : y + 12;
+  
+  return [
+    icon(item.icon ?? "Sparkles", { x, y, w: 5, h: 8, size: 42 }),
+    text(item.title, { fontSize: 24, fontWeight: 700, x: contentX, y: titleY, w: contentWidth, h: 8 }),
+    text(item.text, { fontSize: 18, lineHeight: 1.5, x: contentX, y: textY, w: contentWidth, h: 18 })
+  ].join("\n  ");
 }
 
 function metric(item: { caption: string; label: string; value: string }, frame: Partial<Frame> = {}) {
-  const next = { h: 32, w: 26, x: 8, y: 38, ...frame };
-  return `<Metric label="${attr(item.label)}" value="${attr(item.value)}" caption="${attr(item.caption)}" width="full" enter="fadeUp" delay={0.16} radius={24} x={${next.x}} y={${next.y}} w={${next.w}} h={${next.h}} />`;
+  const x = frame.x ?? 8;
+  const y = frame.y ?? 38;
+  const w = frame.w ?? 32;
+
+  return [
+    text(item.value, { fontSize: 64, fontWeight: 800, x, y, w, h: 14 }),
+    text(item.label, { fontSize: 20, fontWeight: 600, x, y: y + 18, w, h: 8 }),
+    text(item.caption, { fontSize: 16, lineHeight: 1.4, x, y: y + 30, w, h: 14 })
+  ].join("\n  ");
 }
 
 function chart(item: { labels: string; title: string; values: string }, frame: Partial<Frame> & { height?: number } = {}) {
@@ -208,17 +228,19 @@ function chart(item: { labels: string; title: string; values: string }, frame: P
   return `<Chart title="${attr(item.title)}" labels="${attr(item.labels)}" values="${attr(item.values)}" width="full" height={${hVal}} enter="fadeUp" delay={0.18} radius={24} x={${next.x}} y={${next.y}} w={${next.w}} h={${next.h}} />`;
 }
 
-function image(item: { alt: string; src: string }, frame: Frame) {
-  return `<ImageBlock fit="cover" src="${attr(item.src)}" alt="${attr(item.alt)}" enter="fadeIn" delay={0.1} radius={24} x={${frame.x}} y={${frame.y}} w={${frame.w}} h={${frame.h}} />`;
+function image(item: { alt: string; src: string }, frame: Partial<Frame> = {}) {
+  const next = { h: 42, w: 40, x: 8, y: 32, ...frame };
+  return `<ImageBlock fit="cover" src="${attr(item.src)}" alt="${attr(item.alt)}" enter="fadeIn" delay={0.1} radius={24} x={${next.x}} y={${next.y}} w={${next.w}} h={${next.h}} />`;
 }
 
 type Frame = {
-  enter?: "fadeUp" | "zoomIn";
+  enter?: "fadeUp" | "zoomIn" | "slideLeft" | "fadeIn";
+  delay?: number;
   fontSize?: number;
   h: number;
   w: number;
-  x: number;
-  y: number;
+  x?: number;
+  y?: number;
 };
 
 function attr(value: string) {

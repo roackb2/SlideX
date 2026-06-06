@@ -1,12 +1,10 @@
 import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
 
-export type EnterAnimation = "fadeIn" | "fadeUp" | "zoomIn" | "slideLeft";
+export type EnterAnimation = "fadeIn" | "fadeUp" | "none" | "zoomIn" | "slideLeft";
 export type SlideLayout = "default" | "split-left" | "split-right";
 export type AlignX = "left" | "center" | "right" | "stretch";
 export type AlignY = "top" | "center" | "bottom";
 export type TextAlign = "left" | "center" | "right";
-export type CardFlow = "stack" | "row" | "grid";
-export type FlowBlockType = "Card" | "Metric" | "Chart";
 
 export function numberProp(value: string | number | undefined) {
   return typeof value === "number" ? value : undefined;
@@ -24,10 +22,15 @@ export function enterProp(value: string | number | undefined): EnterAnimation | 
   if (
     value === "fadeIn" ||
     value === "fadeUp" ||
+    value === "none" ||
     value === "zoomIn" ||
     value === "slideLeft"
   ) {
     return value;
+  }
+
+  if (value === "") {
+    return "none";
   }
 
   return undefined;
@@ -89,14 +92,6 @@ export function cardLayoutProp(value: string | number | undefined) {
   return value === "horizontal" ? "horizontal" : "vertical";
 }
 
-export function groupFlowProp(value: string | number | undefined): CardFlow {
-  if (value === "row" || value === "grid") {
-    return value;
-  }
-
-  return "stack";
-}
-
 export function cardWidthProp(value: string | number | undefined) {
   return blockWidthProp(value, "md");
 }
@@ -125,14 +120,6 @@ export function sizeNumberProp(value: string | number | undefined, fallback: num
   }
 
   return fallback;
-}
-
-export function flowBlockType(block: MotionDocBlock): FlowBlockType | null {
-  if (block.type === "Card" || block.type === "Metric" || block.type === "Chart") {
-    return block.type;
-  }
-
-  return null;
 }
 
 export function isPositionedBlock(block: MotionDocBlock) {

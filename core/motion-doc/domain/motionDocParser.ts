@@ -9,7 +9,7 @@ export type MotionDocBlock =
       text: string;
     }
   | {
-      type: "Card" | "ImageBlock" | "Metric" | "Chart";
+      type: "Card" | "Chart" | "Icon" | "ImageBlock" | "Metric" | "Shape" | "Stack" | "VideoBlock";
       props: Record<string, string | number>;
     };
 
@@ -51,7 +51,7 @@ export function parseMotionDoc(source: string): ParsedMotionDoc {
 function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
   const blocks: MotionDocBlock[] = [];
   const blockPattern =
-    /<(Title|Text)\b([^>]*)>([\s\S]*?)<\/\1>|<(Card|ImageBlock|Metric|Chart)\b([\s\S]*?)\/>/g;
+    /<(Title|Text)\b([^>]*)>([\s\S]*?)<\/\1>|<(Card|ImageBlock|VideoBlock|Metric|Chart|Icon|Shape|Stack)\b([\s\S]*?)\/>/g;
   let markdownSource = sceneSource;
 
   for (const match of sceneSource.matchAll(blockPattern)) {
@@ -60,8 +60,12 @@ function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
     const selfClosingType = match[4] as
       | "Card"
       | "Chart"
+      | "Icon"
       | "ImageBlock"
       | "Metric"
+      | "Shape"
+      | "Stack"
+      | "VideoBlock"
       | undefined;
 
     if (pairedType) {
@@ -137,5 +141,5 @@ function normalizeText(value: string) {
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
-    .join(" ");
+    .join("\n");
 }

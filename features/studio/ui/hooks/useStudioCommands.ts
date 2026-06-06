@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, type Dispatch, type MouseEvent as ReactMouseEvent, type SetStateAction } from "react";
-import { materializeFreeformSource } from "@/core/motion-doc/application/motionDocFreeform";
 import { cloneBlock } from "@/core/motion-doc/application/motionDocSerialize";
 import type { MotionDocBlock, MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 import { defaultTemplate, motionTemplates } from "@/core/motion-doc/presets/templates";
 import {
   appendBlankSlideSource,
+  appendLayoutSlideSource,
   appendBlockToSlide,
   appendTextBlockAtPosition,
   applyAllSlidesStyleSource,
@@ -19,11 +19,12 @@ import {
   nudgeBlocks,
   pasteBlockIntoSlide,
   reorderBlocks,
+  reorderSlideSource,
   replaceSlideSource,
   selectedLayerIndices,
-  updateBlockGroupFlow as buildBlockGroupFlowSlide,
   updateBlockInSlide,
   updatePositionedBlockFrames as buildPositionedBlockFramesSlide,
+  type AddBlockOptions,
   type FrameUpdate
 } from "@/features/studio/application/motionDocCommands";
 import { type AddBlockType } from "@/features/studio/ui/studioOptions";
@@ -31,10 +32,7 @@ import { stringValue } from "@/common/util/valueUtils";
 
 type UseStudioCommandsArgs = {
   activeSlide: MotionDocScene | undefined;
-  activeSlideAccent: string;
-  activeSlideBackground: string;
   activeSlideIndex: number;
-  activeSlideTheme: string;
   commitSource: (nextSource: string | ((current: string) => string)) => void;
   markProjectDirty: () => void;
   pushUndoSnapshot: () => void;
@@ -54,10 +52,7 @@ type UseStudioCommandsArgs = {
 
 export function useStudioCommands({
   activeSlide,
-  activeSlideAccent,
-  activeSlideBackground,
   activeSlideIndex,
-  activeSlideTheme,
   commitSource,
   markProjectDirty,
   pushUndoSnapshot,
@@ -90,12 +85,31 @@ export function useStudioCommands({
   function applyTemplate(templateId: string) {
     const template = motionTemplates.find((item) => item.id === templateId) ?? defaultTemplate;
     setSelectedTemplateId(template.id);
-    commitSource(materializeFreeformSource(template.source));
-    setActiveSlideIndex(0);
-    selectSingleBlock(null);
+    
+    // Extract properties from the first Slide tag
+    const match = template.source.match(/<(?:Slide|Scene)\b([^>]*)>/);
+    if (match) {
+      const attrsStr = match[1];
+      const attrRegex = /([a-zA-Z0-9]+)="([^"]*)"/g;
+      const updates: Record<string, string | number> = {};
+      let attrMatch;
+      while ((attrMatch = attrRegex.exec(attrsStr)) !== null) {
+        const key = attrMatch[1];
+        const val = attrMatch[2];
+        if (key !== "duration" && !key.startsWith("shader")) {
+          // Parse numbers if possible
+          const numVal = Number(val);
+          updates[key] = !isNaN(numVal) && val.trim() !== "" ? numVal : val;
+        }
+      }
+      updateAllSlidesStyle(updates);
+      
+      // Strip hardcoded colors from Title and Text blocks so the new theme takes effect properly
+      commitSource(src => src.replace(/<(Text|Title)([^>]*?)\s+color="[^"]*"/g, '<$1$2'));
+    }
+
     setIsTemplateModalOpen(false);
-    setReplayNonce((value) => value + 1);
-    setNotice(`${template.name} loaded`);
+    setNotice(`${template.name} theme applied`);
   }
 
   function insertSnippet(code: string) {
@@ -105,17 +119,19 @@ export function useStudioCommands({
   }
 
   function addSlide() {
-    commitSource((current) =>
-      appendBlankSlideSource(current, {
-        accent: activeSlideAccent,
-        background: activeSlideBackground,
-        theme: activeSlideTheme
-      })
-    );
+    commitSource((current) => appendBlankSlideSource(current, activeSlideIndex));
     setActiveSlideIndex(scenes.length);
     selectSingleBlock(null);
     setReplayNonce((value) => value + 1);
     setNotice("Blank slide added");
+  }
+
+  function addSlideWithLayout(layoutSource: string) {
+    commitSource((current) => appendLayoutSlideSource(current, activeSlideIndex, layoutSource));
+    setActiveSlideIndex(scenes.length);
+    selectSingleBlock(null);
+    setReplayNonce((value) => value + 1);
+    setNotice("Slide added with layout");
   }
 
   function deleteSlide(slideIndex: number) {
@@ -128,6 +144,20 @@ export function useStudioCommands({
     setActiveSlideIndex((current) => Math.min(current, scenes.length - 2));
     setReplayNonce((value) => value + 1);
     setNotice("Slide deleted");
+  }
+
+  function reorderSlide(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= scenes.length || toIndex >= scenes.length) return;
+
+    commitSource((current) => reorderSlideSource(current, fromIndex, toIndex));
+    
+    // Update active slide index to follow the moved slide, or adjust if affected by the move
+    setActiveSlideIndex((current) => {
+      if (current === fromIndex) return toIndex;
+      if (current > fromIndex && current <= toIndex) return current - 1;
+      if (current < fromIndex && current >= toIndex) return current + 1;
+      return current;
+    });
   }
 
   function deleteBlock(blockIndex: number) {
@@ -203,9 +233,9 @@ export function useStudioCommands({
     setNotice("Layer reordered");
   }
 
-  function addBlockToActiveSlide(type: AddBlockType) {
+  function addBlockToActiveSlide(type: AddBlockType, options?: AddBlockOptions) {
     if (!activeSlide) return;
-    const { blockIndex, slide } = appendBlockToSlide(activeSlide, type);
+    const { blockIndex, slide } = appendBlockToSlide(activeSlide, type, options);
 
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
     selectSingleBlock(blockIndex);
@@ -273,17 +303,6 @@ export function useStudioCommands({
     setNotice("Theme applied to all slides");
   }
 
-  function updateBlockGroupFlow(blockType: "Card" | "Chart" | "Metric", flow: string, gap?: number) {
-    if (!activeSlide) {
-      return;
-    }
-
-    const nextSlide = buildBlockGroupFlowSlide(activeSlide, blockType, flow, gap);
-    commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
-    setReplayNonce((value) => value + 1);
-    setNotice(flow === "stack" ? "Group stacked" : "Group arranged");
-  }
-
   function updateBlock(blockIndex: number, newProps: Record<string, string | number>, newText?: string) {
     if (!activeSlide) return;
 
@@ -311,23 +330,40 @@ export function useStudioCommands({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        setNotice("Image upload failed");
-        return;
-      }
+    const url = URL.createObjectURL(file);
+    updateBlock(blockIndex, {
+      ...block.props,
+      alt: stringValue(block.props.alt) || file.name,
+      fit: stringValue(block.props.fit) || "cover",
+      src: url
+    });
+    setNotice("Local image loaded");
+  }
 
-      updateBlock(blockIndex, {
-        ...block.props,
-        alt: stringValue(block.props.alt) || file.name,
-        fit: stringValue(block.props.fit) || "cover",
-        src: reader.result
-      });
-      setNotice("Local image loaded");
-    };
-    reader.onerror = () => setNotice("Image upload failed");
-    reader.readAsDataURL(file);
+  function uploadVideoForBlock(blockIndex: number, file: File | undefined) {
+    if (!activeSlide || !file) {
+      return;
+    }
+
+    const block = activeSlide.blocks[blockIndex];
+
+    if (!block || block.type !== "VideoBlock") {
+      return;
+    }
+
+    if (!file.type.startsWith("video/")) {
+      setNotice("Choose a video file");
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    updateBlock(blockIndex, {
+      ...block.props,
+      controls: stringValue(block.props.controls) || "true",
+      fit: stringValue(block.props.fit) || "cover",
+      src: url
+    });
+    setNotice("Local video loaded");
   }
 
   function goToPreviousSlide() {
@@ -366,6 +402,7 @@ export function useStudioCommands({
   return {
     addBlockToActiveSlide,
     addSlide,
+    addSlideWithLayout,
     addTextAtPosition,
     applyTemplate,
     beginBlockTransform,
@@ -380,13 +417,14 @@ export function useStudioCommands({
     nudgeSelectedBlocks,
     pasteCopiedBlock,
     reorderBlock,
+    reorderSlide,
     selectBlockFromLayer,
     updateActiveSlideStyle,
     updateAllSlidesStyle,
     updateBlock,
-    updateBlockGroupFlow,
     updatePositionedBlockFrames,
     updateSelectionMdx,
-    uploadImageForBlock
+    uploadImageForBlock,
+    uploadVideoForBlock
   };
 }

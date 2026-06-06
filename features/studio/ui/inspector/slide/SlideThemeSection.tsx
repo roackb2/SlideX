@@ -17,7 +17,15 @@ type SlideThemeSectionProps = {
   updateAllSlidesStyle: (updates: PropRecord) => void;
 };
 
-export function SlideThemeSection({
+export function SlideThemeSection(props: SlideThemeSectionProps) {
+  return (
+    <AccordionSection title="Slide Style & Theme" icon={<Palette size={13} className="text-[#8ea5ff]" />} defaultOpen>
+      <SlideThemeSectionContent {...props} />
+    </AccordionSection>
+  );
+}
+
+export function SlideThemeSectionContent({
   accent,
   background,
   mutedColor,
@@ -52,7 +60,7 @@ export function SlideThemeSection({
   }
 
   return (
-    <AccordionSection title="Slide Style & Theme" icon={<Palette size={13} className="text-[#8ea5ff]" />} defaultOpen>
+    <div className="flex flex-col gap-4">
       <ColorSetControl
         label="Color Presets"
         onApplyPalette={applyTheme}
@@ -158,6 +166,6 @@ export function SlideThemeSection({
           )}
         </div>
       </Field>
-    </AccordionSection>
+    </div>
   );
 }

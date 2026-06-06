@@ -38,13 +38,7 @@ export function MotionDocApp() {
     activeSlideAlignX,
     activeSlideAlignY,
     activeSlideBackground,
-    activeSlideCardFlow,
-    activeSlideCardGap,
-    activeSlideChartFlow,
-    activeSlideChartGap,
     activeSlideLayout,
-    activeSlideMetricFlow,
-    activeSlideMetricGap,
     activeSlideMutedColor,
     activeSlideShader,
     activeSlideShaderColor1,
@@ -118,10 +112,7 @@ export function MotionDocApp() {
   });
   const studioCommands = useStudioCommands({
     activeSlide,
-    activeSlideAccent,
-    activeSlideBackground,
     activeSlideIndex,
-    activeSlideTheme,
     commitSource,
     markProjectDirty,
     pushUndoSnapshot,
@@ -223,14 +214,8 @@ export function MotionDocApp() {
       activeSlideAlignX={activeSlideAlignX}
       activeSlideAlignY={activeSlideAlignY}
       activeSlideBackground={activeSlideBackground}
-      activeSlideCardFlow={activeSlideCardFlow}
-      activeSlideCardGap={activeSlideCardGap}
-      activeSlideChartFlow={activeSlideChartFlow}
-      activeSlideChartGap={activeSlideChartGap}
       activeSlideIndex={activeSlideIndex}
       activeSlideLayout={activeSlideLayout}
-      activeSlideMetricFlow={activeSlideMetricFlow}
-      activeSlideMetricGap={activeSlideMetricGap}
       activeSlideMutedColor={activeSlideMutedColor}
       activeSlideShader={activeSlideShader}
       activeSlideShaderColor1={activeSlideShaderColor1}
@@ -246,6 +231,7 @@ export function MotionDocApp() {
       activeSlideTheme={activeSlideTheme}
       addBlockToActiveSlide={studioCommands.addBlockToActiveSlide}
       addSlide={studioCommands.addSlide}
+      addSlideWithLayout={studioCommands.addSlideWithLayout}
       addTextAtPosition={studioCommands.addTextAtPosition}
       applyTemplate={studioCommands.applyTemplate}
       beginBlockTransform={studioCommands.beginBlockTransform}
@@ -281,6 +267,7 @@ export function MotionDocApp() {
       projectName={projectName}
       pushUndoSnapshot={pushUndoSnapshot}
       reorderBlock={studioCommands.reorderBlock}
+      reorderSlide={studioCommands.reorderSlide}
       replayNonce={replayNonce}
       saveProject={saveProject}
       scenes={sliderDocument.scenes}
@@ -309,10 +296,10 @@ export function MotionDocApp() {
       updateActiveSlideStyle={studioCommands.updateActiveSlideStyle}
       updateAllSlidesStyle={studioCommands.updateAllSlidesStyle}
       updateBlock={studioCommands.updateBlock}
-      updateBlockGroupFlow={studioCommands.updateBlockGroupFlow}
       updatePositionedBlockFrames={studioCommands.updatePositionedBlockFrames}
       updateSelectionMdx={studioCommands.updateSelectionMdx}
       uploadImageForBlock={studioCommands.uploadImageForBlock}
+      uploadVideoForBlock={studioCommands.uploadVideoForBlock}
     />
   );
 }

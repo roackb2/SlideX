@@ -73,11 +73,11 @@ function renderSceneHtml(
     "--slide-overlay-opacity": shader ? "0.3" : "0.72"
   }))}">
     ${shaderHtml}
-    ${blocks.map((block) => renderBlock(block)).join("")}
+    ${blocks.map((block, index) => renderBlock(block, index)).join("")}
   </section>`;
 }
 
-function renderBlock(block: MotionDocBlock) {
+function renderBlock(block: MotionDocBlock, blockIndex: number) {
   if (block.type === "Title") {
     return renderMotionBlock(block, `<h1 class="block-title">${escapeHtml(block.text)}</h1>`);
   }
@@ -108,6 +108,19 @@ function renderBlock(block: MotionDocBlock) {
     );
   }
 
+  if (block.type === "VideoBlock") {
+    const fit = fitProp(block.props.fit);
+    const controls = boolProp(block.props.controls, true) ? " controls" : "";
+    const loop = boolProp(block.props.loop, true) ? " loop" : "";
+    const muted = boolProp(block.props.muted, true) ? " muted autoplay playsinline" : "";
+    const poster = stringProp(block.props.poster) ? ` poster="${escapeAttribute(String(block.props.poster))}"` : "";
+
+    return renderMotionBlock(
+      block,
+      `<figure class="block-image block-video"><video src="${escapeAttribute(String(block.props.src ?? ""))}"${poster}${controls}${loop}${muted} style="${escapeAttribute(inlineCss({ "object-fit": fit }))}"></video></figure>`
+    );
+  }
+
   if (block.type === "Metric") {
     const metricWidthClass = metricWidthClassName(block.props.width);
 
@@ -123,13 +136,57 @@ function renderBlock(block: MotionDocBlock) {
     const maxValue = Math.max(...values, 1);
     const chartWidthClass = chartWidthClassName(block.props.width);
     const chartHeight = chartHeightProp(block.props.height);
-    const bars = values
-      .map((value, index) => `<div class="block-chart__bar-wrap"><div class="block-chart__track"><div class="block-chart__bar" style="${escapeAttribute(inlineCss({ height: `${Math.max((value / maxValue) * 100, 4)}%` }))}"></div></div><span class="block-chart__label">${escapeHtml(labels[index] ?? `D${index + 1}`)}</span></div>`)
+    const chartBody = renderChartBody({
+      chartHeight,
+      chartType: chartTypeProp(block.props.chartType ?? block.props.type),
+      labels,
+      maxValue,
+      values
+    });
+
+    return renderMotionBlock(
+      block,
+      `<article class="block-chart${chartWidthClass}" style="${escapeAttribute(inlineCss({ "--chart-height": `${chartHeight}px` }))}"><h3>${escapeHtml(String(block.props.title ?? "Chart"))}</h3>${chartBody}</article>`
+    );
+  }
+
+  if (block.type === "Icon") {
+    const strokeWidth = numberProp(block.props.strokeWidth, 2);
+    const size = numberProp(block.props.size, 96);
+
+    return renderMotionBlock(
+      block,
+      `<div class="block-icon" style="${escapeAttribute(inlineCss({ "--icon-size": `${size}px` }))}">${renderLucideIcon(String(block.props.icon ?? "Sparkles"), strokeWidth)}</div>`
+    );
+  }
+
+  if (block.type === "Shape") {
+    return renderMotionBlock(
+      block,
+      `<div class="block-shape">${renderShapeSvg(block.props, blockIndex)}</div>`
+    );
+  }
+
+  if (block.type === "Stack") {
+    const items = String(block.props.items ?? "Panel A|Panel B|Panel C")
+      .split("|")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const direction = block.props.layout === "column" ? "column" : "row";
+    const align = block.props.align === "center" ? "center" : block.props.align === "end" ? "flex-end" : "stretch";
+    const stackItems = (items.length > 0 ? items : ["Item 1", "Item 2"])
+      .map((item) => `<div class="block-stack__item">${escapeHtml(item)}</div>`)
       .join("");
 
     return renderMotionBlock(
       block,
-      `<article class="block-chart${chartWidthClass}" style="${escapeAttribute(inlineCss({ "--chart-height": `${chartHeight}px` }))}"><h3>${escapeHtml(String(block.props.title ?? "Chart"))}</h3><div class="block-chart__bars">${bars}</div></article>`
+      `<div class="block-stack" style="${escapeAttribute(inlineCss({
+        "--stack-align": align,
+        "--stack-direction": direction,
+        "--stack-gap": `${numberProp(block.props.gap, 16)}px`,
+        "--stack-padding": `${numberProp(block.props.padding, 20)}px`,
+        "--stack-stroke": stringProp(block.props.stroke) ?? "var(--slide-border)"
+      }))}">${stackItems}</div>`
     );
   }
 
@@ -165,7 +222,16 @@ function animationClass(value: string | number | undefined) {
 }
 
 function numberProp(value: string | number | undefined, fallback: number) {
-  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+  const parsed = typeof value === "number" ? value : Number(value);
+
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function boolProp(value: string | number | undefined, fallback: boolean) {
+  if (value === "false" || value === 0) return false;
+  if (value === "true" || value === 1) return true;
+
+  return fallback;
 }
 
 function isPositionedProps(props: Record<string, string | number>) {
@@ -276,6 +342,92 @@ function chartValues(value: string) {
   return values.length > 0 ? values : [24, 42, 68, 54];
 }
 
+function renderChartBody({
+  chartHeight,
+  chartType,
+  labels,
+  maxValue,
+  values
+}: {
+  chartHeight: number;
+  chartType: "area" | "bar" | "donut" | "line" | "pie";
+  labels: string[];
+  maxValue: number;
+  values: number[];
+}) {
+  if (chartType === "line" || chartType === "area") {
+    const width = 720;
+    const height = chartHeight;
+    const points = values.map((value, index) => {
+      const x = values.length === 1 ? width / 2 : (index / (values.length - 1)) * width;
+      const y = height - Math.max((value / maxValue) * height, 4);
+      return { x, y };
+    });
+    const pointString = points.map((point) => `${point.x},${point.y}`).join(" ");
+    const areaPath = points.length > 0
+      ? `M ${points[0].x} ${height} L ${points.map((point) => `${point.x} ${point.y}`).join(" L ")} L ${points[points.length - 1].x} ${height} Z`
+      : "";
+    const dots = points
+      .map((point) => `<circle cx="${point.x}" cy="${point.y}" r="8" />`)
+      .join("");
+    const labelHtml = values
+      .map((value, index) => `<span class="block-chart__label">${escapeHtml(labels[index] ?? `D${index + 1}`)}</span>`)
+      .join("");
+
+    return `<div class="block-chart__line"><svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">${
+      chartType === "area" ? `<path class="block-chart__area" d="${escapeAttribute(areaPath)}" />` : ""
+    }<polyline points="${escapeAttribute(pointString)}" />${dots}</svg><div class="block-chart__line-labels">${labelHtml}</div></div>`;
+  }
+
+  if (chartType === "pie" || chartType === "donut") {
+    const total = values.reduce((sum, value) => sum + value, 0) || 1;
+    const legend = values
+      .map((value, index) => `<div class="block-chart__legend-row"><span style="${escapeAttribute(inlineCss({ background: pieColor(index) }))}"></span><b>${escapeHtml(labels[index] ?? `D${index + 1}`)}</b><em>${Math.round((value / total) * 100)}%</em></div>`)
+      .join("");
+
+    return `<div class="block-chart__pie"><div class="block-chart__pie-graphic${chartType === "donut" ? " block-chart__pie-graphic--donut" : ""}" style="${escapeAttribute(inlineCss({ background: pieGradient(values) }))}"></div><div class="block-chart__legend">${legend}</div></div>`;
+  }
+
+  const bars = values
+    .map((value, index) => `<div class="block-chart__bar-wrap"><div class="block-chart__track"><div class="block-chart__bar" style="${escapeAttribute(inlineCss({ height: `${Math.max((value / maxValue) * 100, 4)}%` }))}"></div></div><span class="block-chart__label">${escapeHtml(labels[index] ?? `D${index + 1}`)}</span></div>`)
+    .join("");
+
+  return `<div class="block-chart__bars">${bars}</div>`;
+}
+
+function chartTypeProp(value: string | number | undefined): "area" | "bar" | "donut" | "line" | "pie" {
+  if (value === "line" || value === "area" || value === "pie" || value === "donut") {
+    return value;
+  }
+
+  return "bar";
+}
+
+function pieGradient(values: number[]) {
+  const total = values.reduce((sum, value) => sum + value, 0) || 1;
+  let cursor = 0;
+  const stops = values.map((value, index) => {
+    const start = cursor;
+    const end = cursor + (value / total) * 100;
+    cursor = end;
+    return `${pieColor(index)} ${start}% ${end}%`;
+  });
+
+  return `conic-gradient(${stops.join(", ")})`;
+}
+
+function pieColor(index: number) {
+  const colors = [
+    "var(--motion-fg, var(--slide-fg))",
+    "rgba(142,165,255,0.72)",
+    "rgba(94,234,212,0.68)",
+    "rgba(251,191,36,0.78)",
+    "rgba(244,114,182,0.76)"
+  ];
+
+  return colors[index % colors.length];
+}
+
 function cardWidthClassName(value: string | number | undefined) {
   if (value === "sm") return " block-card--sm";
   if (value === "lg") return " block-card--lg";
@@ -318,7 +470,88 @@ function fitProp(value: string | number | undefined) {
   return "cover";
 }
 
-function renderLucideIcon(name: string) {
+function renderShapeSvg(props: Record<string, string | number>, blockIndex: number) {
+  const fill = stringProp(props.fill) ?? "rgba(142,165,255,0.72)";
+  const mask = stringProp(props.mask) ?? "none";
+  const operation = stringProp(props.operation) ?? "none";
+  const shape = stringProp(props.shape) ?? "rectangle";
+  const stroke = stringProp(props.stroke) ?? "#ffffff";
+  const strokeWidth = numberProp(props.strokeWidth, shape === "arrow" || shape === "line" ? 4 : 2);
+  const opacity = Math.min(Math.max(numberProp(props.opacity, 1), 0), 1);
+  const sides = Math.min(Math.max(Math.round(numberProp(props.sides, 3)), 3), 12);
+  const points = Math.min(Math.max(Math.round(numberProp(props.points, 5)), 3), 12);
+  const maskId = `shape-mask-${blockIndex}-${String(shape).replace(/[^a-z0-9]+/gi, "-")}-${String(mask).replace(/[^a-z0-9]+/gi, "-")}`;
+  const maskDefs = mask === "alpha"
+    ? `<linearGradient id="${maskId}-fade" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0.15" /><stop offset="45%" stop-color="white" stop-opacity="1" /><stop offset="100%" stop-color="white" stop-opacity="0.2" /></linearGradient><mask id="${maskId}"><rect width="100" height="100" fill="url(#${maskId}-fade)" /></mask>`
+    : mask === "luma"
+      ? `<radialGradient id="${maskId}-radial" cx="50%" cy="45%" r="58%"><stop offset="0%" stop-color="white" stop-opacity="1" /><stop offset="100%" stop-color="white" stop-opacity="0.08" /></radialGradient><mask id="${maskId}"><rect width="100" height="100" fill="url(#${maskId}-radial)" /></mask>`
+      : mask === "clip"
+        ? `<mask id="${maskId}"><rect fill="white" height="72" rx="14" width="72" x="14" y="14" /></mask>`
+        : "";
+  const maskAttr = mask === "none" ? "" : ` mask="url(#${maskId})"`;
+  const booleanLayer = operation === "subtract"
+    ? `<circle cx="68" cy="34" fill="var(--slide-bg, #030303)" r="22" />`
+    : operation === "intersect"
+      ? `<circle cx="62" cy="44" fill="${escapeAttribute(fill)}" opacity="0.45" r="30" stroke="${escapeAttribute(stroke)}" stroke-width="${strokeWidth}" />`
+      : operation === "exclude"
+        ? `<circle cx="62" cy="44" fill="transparent" opacity="0.9" r="30" stroke="${escapeAttribute(stroke)}" stroke-dasharray="7 7" stroke-width="${strokeWidth}" />`
+        : "";
+
+  return `<svg aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 100 100" style="${escapeAttribute(inlineCss({ opacity: String(opacity) }))}"><defs>${maskDefs}</defs><g${maskAttr}>${shapeSvg(shape, fill, stroke, strokeWidth, sides, points)}${booleanLayer}</g></svg>`;
+}
+
+function shapeSvg(shape: string, fill: string, stroke: string, strokeWidth: number, sides: number, points: number) {
+  if (shape === "circle") {
+    return `<circle cx="50" cy="50" fill="${escapeAttribute(fill)}" r="38" stroke="${escapeAttribute(stroke)}" stroke-width="${strokeWidth}" />`;
+  }
+
+  if (shape === "triangle" || shape === "polygon") {
+    return `<path d="${escapeAttribute(generatePolygonPath(shape === "triangle" ? 3 : sides))}" fill="${escapeAttribute(fill)}" stroke="${escapeAttribute(stroke)}" stroke-linejoin="round" stroke-width="${strokeWidth}" />`;
+  }
+
+  if (shape === "line") {
+    return `<path d="M8 50 H92" fill="none" stroke="${escapeAttribute(stroke === "transparent" ? fill : stroke)}" stroke-linecap="round" stroke-width="${strokeWidth}" />`;
+  }
+
+  if (shape === "arrow") {
+    const arrowStroke = escapeAttribute(stroke === "transparent" ? fill : stroke);
+    return `<g fill="none" stroke="${arrowStroke}" stroke-linecap="round" stroke-linejoin="round" stroke-width="${strokeWidth}"><path d="M10 74 L88 18" /><path d="M56 18 H88 V50" /></g>`;
+  }
+
+  if (shape === "star") {
+    return `<path d="${escapeAttribute(generateStarPath(points))}" fill="${escapeAttribute(fill)}" stroke="${escapeAttribute(stroke)}" stroke-linejoin="round" stroke-width="${strokeWidth}" />`;
+  }
+
+  return `<rect fill="${escapeAttribute(fill)}" height="76" rx="14" stroke="${escapeAttribute(stroke)}" stroke-width="${strokeWidth}" width="76" x="12" y="12" />`;
+}
+
+function generatePolygonPath(sides: number, cx = 50, cy = 50, r = 40) {
+  const angleOffset = -Math.PI / 2;
+  const points: string[] = [];
+
+  for (let index = 0; index < sides; index += 1) {
+    const angle = angleOffset + (2 * Math.PI * index) / sides;
+    points.push(`${(cx + r * Math.cos(angle)).toFixed(1)},${(cy + r * Math.sin(angle)).toFixed(1)}`);
+  }
+
+  return `M${points.join(" L")} Z`;
+}
+
+function generateStarPath(points: number, cx = 50, cy = 50, outerR = 42) {
+  const innerR = outerR * 0.42;
+  const angleOffset = -Math.PI / 2;
+  const vertices: string[] = [];
+
+  for (let index = 0; index < points * 2; index += 1) {
+    const angle = angleOffset + (2 * Math.PI * index) / (points * 2);
+    const radius = index % 2 === 0 ? outerR : innerR;
+    vertices.push(`${(cx + radius * Math.cos(angle)).toFixed(1)},${(cy + radius * Math.sin(angle)).toFixed(1)}`);
+  }
+
+  return `M${vertices.join(" L")} Z`;
+}
+
+function renderLucideIcon(name: string, strokeWidth = 2) {
   if (!isSlideXIconName(name)) {
     return "";
   }
@@ -343,7 +576,7 @@ function renderLucideIcon(name: string) {
     })
     .join("");
 
-  return `<svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">${children}</svg>`;
+  return `<svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="${strokeWidth}" viewBox="0 0 24 24">${children}</svg>`;
 }
 
 function inlineCss(styles: Record<string, string>) {

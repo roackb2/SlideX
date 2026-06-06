@@ -51,7 +51,10 @@ export function defaultBlockFrame(block: MotionDocBlock): PositionProps {
   if (block.type === "Card") return { x: 8, y: 38, w: 40, h: 32 };
   if (block.type === "Metric") return { x: 8, y: 38, w: 32, h: 36 };
   if (block.type === "Chart") return { x: 8, y: 36, w: 70, h: 42 };
-  if (block.type === "ImageBlock") return { x: 8, y: 16, w: 72, h: 52 };
+  if (block.type === "Icon") return { x: 42, y: 28, w: 16, h: 28 };
+  if (block.type === "Shape") return { x: 34, y: 30, w: 28, h: 28 };
+  if (block.type === "Stack") return { x: 10, y: 64, w: 80, h: 20 };
+  if (block.type === "ImageBlock" || block.type === "VideoBlock") return { x: 8, y: 16, w: 72, h: 52 };
 
   return { x: 8, y: 12, w: 42, h: 18 };
 }
@@ -105,7 +108,7 @@ function layoutBlock(
 }
 
 function singleBlockFrame(block: MotionDocBlock, defaults: PositionProps): PositionProps {
-  if (block.type === "ImageBlock") {
+  if (block.type === "ImageBlock" || block.type === "VideoBlock") {
     return { x: 10, y: 20, w: 80, h: 54 };
   }
 
@@ -128,7 +131,7 @@ function defaultFontSize(block: MotionDocBlock) {
 }
 
 function defaultRadius(block: MotionDocBlock) {
-  if (block.type === "Card" || block.type === "Chart" || block.type === "ImageBlock" || block.type === "Metric") {
+  if (block.type === "Card" || block.type === "Chart" || block.type === "Icon" || block.type === "ImageBlock" || block.type === "Metric" || block.type === "Shape" || block.type === "Stack" || block.type === "VideoBlock") {
     return 16;
   }
 

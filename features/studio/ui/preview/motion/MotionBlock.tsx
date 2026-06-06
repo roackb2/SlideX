@@ -3,7 +3,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { motion, type MotionProps } from "framer-motion";
 
-export type EnterAnimation = "fadeIn" | "fadeUp" | "zoomIn" | "slideLeft";
+export type EnterAnimation = "fadeIn" | "fadeUp" | "none" | "zoomIn" | "slideLeft";
 
 export type AnimationProps = {
   delay?: number;
@@ -61,6 +61,10 @@ function getMotionProps({
   duration = 0.6,
   enter = "fadeUp"
 }: AnimationProps): MotionProps {
+  if (enter === "none") {
+    return { initial: false };
+  }
+
   const shared = {
     animate: { opacity: 1, scale: 1, x: 0, y: 0 },
     transition: { delay, duration, ease: [0.22, 1, 0.36, 1] }

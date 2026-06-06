@@ -20,7 +20,7 @@ export function AccordionSection({ children, defaultOpen = true, icon, title }: 
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
-        <span className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-300">
+        <span className="flex items-center gap-2.5 text-sm font-semibold text-neutral-200">
           {icon}
           {title}
         </span>

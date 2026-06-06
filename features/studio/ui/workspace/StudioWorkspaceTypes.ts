@@ -1,6 +1,6 @@
 import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction } from "react";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
-import type { FrameUpdate } from "@/features/studio/application/motionDocCommands";
+import type { AddBlockOptions, FrameUpdate } from "@/features/studio/application/motionDocCommands";
 import type { SlideRow } from "@/features/studio/ui/LayerSidebar";
 import type { AddBlockType } from "@/features/studio/ui/studioOptions";
 
@@ -12,14 +12,8 @@ export type StudioWorkspaceProps = {
   activeSlideAlignX: string;
   activeSlideAlignY: string;
   activeSlideBackground: string;
-  activeSlideCardFlow: string;
-  activeSlideCardGap: number;
-  activeSlideChartFlow: string;
-  activeSlideChartGap: number;
   activeSlideIndex: number;
   activeSlideLayout: string;
-  activeSlideMetricFlow: string;
-  activeSlideMetricGap: number;
   activeSlideMutedColor: string;
   activeSlideShader: string;
   activeSlideShaderColor1: string;
@@ -33,8 +27,9 @@ export type StudioWorkspaceProps = {
   activeSlideShaderSpeed: number;
   activeSlideTextColor: string;
   activeSlideTheme: string;
-  addBlockToActiveSlide: (type: AddBlockType) => void;
+  addBlockToActiveSlide: (type: AddBlockType, options?: AddBlockOptions) => void;
   addSlide: () => void;
+  addSlideWithLayout: (layoutSource: string) => void;
   addTextAtPosition: (position: { x: number; y: number }) => void;
   applyTemplate: (templateId: string) => void;
   beginBlockTransform: () => void;
@@ -67,6 +62,7 @@ export type StudioWorkspaceProps = {
   projectName: string;
   pushUndoSnapshot: () => void;
   reorderBlock: (fromIndex: number, toIndex: number) => void;
+  reorderSlide: (fromIndex: number, toIndex: number) => void;
   replayNonce: number;
   saveProject: () => void;
   scenes: MotionDocScene[];
@@ -92,11 +88,14 @@ export type StudioWorkspaceProps = {
   source: string;
   totalDuration: number;
   undoLastChange: () => void;
-  updateActiveSlideStyle: (updates: Record<string, string | number>) => void;
+  updateActiveSlideStyle: (updates: {
+    background?: string;
+    theme?: string;
+  }) => void;
   updateAllSlidesStyle: (updates: Record<string, string | number>) => void;
   updateBlock: (blockIndex: number, newProps: Record<string, string | number>, newText?: string) => void;
-  updateBlockGroupFlow: (blockType: "Card" | "Chart" | "Metric", flow: string, gap?: number) => void;
   updatePositionedBlockFrames: (updates: FrameUpdate[], commit?: boolean) => void;
   updateSelectionMdx: (value: string) => void;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
+  uploadVideoForBlock: (blockIndex: number, file: File | undefined) => void;
 };

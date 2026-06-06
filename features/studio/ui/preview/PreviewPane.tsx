@@ -6,7 +6,6 @@ import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
 import {
   alignXProp,
   alignYProp,
-  groupFlowProp,
   isPositionedBlock,
   layoutProp,
   numberProp,
@@ -52,9 +51,6 @@ export function PreviewPane({
   const shouldSplit = !hasPositionedBlocks && layout !== "default" && imageItems.length > 0;
   const textOrder = layout === "split-left" ? 1 : 2;
   const imageOrder = layout === "split-left" ? 2 : 1;
-  const cardFlow = groupFlowProp(activeSlide.props.cardFlow);
-  const metricFlow = groupFlowProp(activeSlide.props.metricFlow ?? activeSlide.props.cardFlow);
-  const chartFlow = groupFlowProp(activeSlide.props.chartFlow);
 
   return (
     <div key={replayNonce} style={autoHeight ? { minHeight: "100%", position: "relative" } : { inset: 0, position: "absolute" }}>
@@ -88,11 +84,8 @@ export function PreviewPane({
             <div style={{ ...splitContentStyle, order: textOrder }}>
               {contentItems.length > 0 ? (
                 <PreviewBlockList
-                  cardFlow={cardFlow}
-                  chartFlow={chartFlow}
                   hiddenBlockIndices={hiddenBlockIndexSet}
                   items={contentItems}
-                  metricFlow={metricFlow}
                 />
               ) : (
                 <Text enter="fadeIn">Add a text layer for this side.</Text>
@@ -110,11 +103,8 @@ export function PreviewPane({
           </>
         ) : activeSlide.blocks.length > 0 ? (
           <PreviewBlockList
-            cardFlow={cardFlow}
-            chartFlow={chartFlow}
             hiddenBlockIndices={hiddenBlockIndexSet}
             items={blockItems}
-            metricFlow={metricFlow}
           />
         ) : null}
       </Scene>

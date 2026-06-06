@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
 
@@ -18,8 +19,8 @@ export type BlockFieldProps<TBlock extends BlockWithProps = BlockWithProps> = {
 
 export function Field({ children, label }: { children: ReactNode; label: string }) {
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-neutral-500">{label}</span>
+    <div className="flex flex-col gap-2.5">
+      <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-500">{label}</span>
       {children}
     </div>
   );
@@ -38,15 +39,15 @@ export function OptionButtons<T extends string>({
 }) {
   return (
     <Field label={label}>
-      <div className={`grid gap-1 rounded-xl border border-white/[0.06] bg-black/40 p-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] ${optionGridClass(options.length)}`}>
+      <div className={`grid gap-1 rounded-[1rem] border border-white/[0.04] bg-white/[0.02] p-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)] ${optionGridClass(options.length)}`}>
         {options.map((option) => {
           const isSelected = value === option.value;
           return (
             <button
-              className={`rounded-lg py-1.5 text-[10px] font-semibold tracking-wide transition-all duration-200 cursor-pointer active:scale-95 ${
+              className={`rounded-lg py-1.5 text-xs font-bold tracking-wide transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer active:scale-[0.96] ${
                 isSelected
-                  ? "bg-neutral-800 text-white shadow-md border border-white/[0.05]"
-                  : "text-neutral-400 hover:bg-neutral-900/40 hover:text-neutral-200"
+                  ? "bg-white/[0.08] text-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] border border-white/[0.05]"
+                  : "text-neutral-400 hover:bg-white/[0.03] hover:text-neutral-200"
               }`}
               key={option.value}
               onClick={() => onChange(option.value)}
@@ -74,16 +75,16 @@ export function IconSegmentedControl<T extends string>({
 }) {
   return (
     <Field label={label}>
-      <div className={`grid gap-1 rounded-xl border border-white/[0.06] bg-black/40 p-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] ${optionGridClass(options.length)}`}>
+      <div className={`grid gap-1 rounded-[1rem] border border-white/[0.04] bg-white/[0.02] p-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)] ${optionGridClass(options.length)}`}>
         {options.map((option) => {
           const isSelected = value === option.value;
           return (
             <button
               aria-label={option.label}
-              className={`group relative flex h-8 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer active:scale-95 ${
+              className={`group relative flex h-8.5 items-center justify-center rounded-lg transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer active:scale-[0.96] ${
                 isSelected
-                  ? "bg-neutral-800 text-white shadow-md border border-white/[0.05]"
-                  : "text-neutral-400 hover:bg-neutral-900/40 hover:text-neutral-200"
+                  ? "bg-white/[0.08] text-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] border border-white/[0.05]"
+                  : "text-neutral-400 hover:bg-white/[0.03] hover:text-neutral-200"
               }`}
               key={option.value}
               onClick={() => onChange(option.value)}
@@ -110,9 +111,9 @@ export function NativeSelect<T extends string>({
   value: T;
 }) {
   return (
-    <div className="relative rounded-xl border border-white/[0.06] bg-[#090a0f]/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] transition-all hover:border-white/[0.14] focus-within:border-[#8ea5ff]/50 focus-within:ring-1 focus-within:ring-[#8ea5ff]/15">
+    <div className="relative rounded-[1rem] border border-white/[0.05] bg-[#020202] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.03)] transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.1] focus-within:border-white/[0.2] focus-within:ring-1 focus-within:ring-white/[0.1]">
       <select
-        className="w-full cursor-pointer appearance-none bg-transparent px-3 py-2 text-[11px] font-medium text-neutral-300 outline-none"
+        className="w-full cursor-pointer appearance-none bg-transparent pl-3.5 pr-8 py-2.5 text-sm font-semibold text-neutral-300 outline-none"
         onChange={(event) => {
           const selectedOption = options.find((option) => option.value === event.target.value);
 
@@ -123,7 +124,7 @@ export function NativeSelect<T extends string>({
         value={value}
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value} className="bg-[#0f1015] text-neutral-200">
+          <option key={option.value} value={option.value} className="bg-[#0e0e12] text-neutral-200">
             {option.label}
           </option>
         ))}
@@ -131,7 +132,7 @@ export function NativeSelect<T extends string>({
       <ChevronDown
         aria-hidden="true"
         className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400"
-        size={11}
+        size={12}
       />
     </div>
   );
@@ -151,7 +152,7 @@ export function TextInput({
   return (
     <Field label={label}>
       <input
-        className="w-full rounded-xl border border-white/[0.06] bg-[#090a0f]/60 px-3 py-2 text-[11px] font-medium text-neutral-300 outline-none transition-all placeholder:text-neutral-700 hover:border-white/[0.12] focus:border-[#8ea5ff]/50 focus:ring-1 focus:ring-[#8ea5ff]/15"
+        className="w-full rounded-[1rem] border border-white/[0.05] bg-[#020202] px-3.5 py-2.5 text-sm font-semibold text-neutral-300 outline-none transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] placeholder:text-neutral-700 hover:border-white/[0.1] focus:border-white/[0.2] focus:ring-1 focus:ring-white/[0.1] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.03)]"
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         type="text"
@@ -177,7 +178,7 @@ export function TextAreaField({
   return (
     <Field label={label}>
       <textarea
-        className="w-full resize-none rounded-xl border border-white/[0.06] bg-[#090a0f]/60 px-3 py-2.5 text-[11.5px] leading-relaxed text-neutral-300 outline-none transition-all placeholder-neutral-700 hover:border-white/[0.12] focus:border-[#8ea5ff]/50 focus:ring-1 focus:ring-[#8ea5ff]/15"
+        className="w-full resize-none rounded-[1rem] border border-white/[0.05] bg-[#020202] px-3.5 py-2.5 text-sm leading-relaxed text-neutral-300 outline-none transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] placeholder-neutral-700 hover:border-white/[0.1] focus:border-white/[0.2] focus:ring-1 focus:ring-white/[0.1] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.03)]"
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         rows={rows}
@@ -204,19 +205,38 @@ export function NumberInput({
   suffix?: string;
   value: PropValue;
 }) {
+  const [draftValue, setDraftValue] = useState(String(value ?? ""));
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    if (!isFocused) {
+      setDraftValue(String(value ?? ""));
+    }
+  }, [isFocused, value]);
+
   return (
-    <div className="flex items-center overflow-hidden rounded-xl border border-white/[0.06] bg-[#090a0f]/60 transition-all hover:border-white/[0.12] focus-within:border-[#8ea5ff]/50 focus-within:ring-1 focus-within:ring-[#8ea5ff]/15">
+    <div className="flex items-center overflow-hidden rounded-[1rem] border border-white/[0.05] bg-[#020202] transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.1] focus-within:border-white/[0.2] focus-within:ring-1 focus-within:ring-white/[0.1] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.03)]">
       <input
-        className="w-full bg-transparent px-3 py-2 font-mono text-[11px] text-neutral-300 outline-none"
+        className="w-full bg-transparent px-3.5 py-2.5 font-mono text-sm text-neutral-300 outline-none"
+        inputMode="decimal"
         max={max}
         min={min}
-        onChange={(event) => onChange(event.target.value === "" ? "" : parseFloat(event.target.value))}
+        onBlur={() => {
+          setIsFocused(false);
+          setDraftValue(String(value ?? ""));
+        }}
+        onChange={(event) => {
+          const nextValue = event.target.value;
+          setDraftValue(nextValue);
+          onChange(nextValue === "" ? "" : parseFloat(nextValue));
+        }}
+        onFocus={() => setIsFocused(true)}
         placeholder={placeholder}
         step={step}
-        type="number"
-        value={value}
+        type="text"
+        value={isFocused ? draftValue : value}
       />
-      {suffix ? <span className="pr-3 font-mono text-[9px] font-bold text-neutral-400">{suffix}</span> : null}
+      {suffix ? <span className="pr-3.5 font-mono text-sm font-semibold text-neutral-400">{suffix}</span> : null}
     </div>
   );
 }
@@ -231,10 +251,10 @@ export function ColorInput({
   value: string;
 }) {
   return (
-    <div className="flex flex-1 flex-col gap-2">
-      <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-neutral-500">{label}</span>
-      <div className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-[#090a0f]/60 p-1.5 transition-colors hover:border-white/[0.12] focus-within:border-[#8ea5ff]/50 focus-within:ring-1 focus-within:ring-[#8ea5ff]/15">
-        <span className="relative h-5.5 w-5.5 shrink-0 overflow-hidden rounded-full border border-white/[0.12] shadow-md hover:scale-105 transition-transform duration-200">
+    <div className="flex flex-1 flex-col gap-2.5">
+      <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-500">{label}</span>
+      <div className="flex items-center gap-2 rounded-[1rem] border border-white/[0.05] bg-[#020202] p-1.5 transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.1] focus-within:border-white/[0.2] focus-within:ring-1 focus-within:ring-white/[0.1] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.03)]">
+        <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full border border-white/[0.08] shadow-md hover:scale-105 transition-transform duration-400 ease-[cubic-bezier(0.32,0.72,0,1)]">
           <input
             className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             onChange={(event) => onChange(event.target.value)}
@@ -244,7 +264,7 @@ export function ColorInput({
           />
           <span className="block h-full w-full" style={{ backgroundColor: value }} />
         </span>
-        <span className="font-mono text-[10px] font-semibold uppercase text-neutral-300 tracking-wider pl-1">{value}</span>
+        <span className="font-mono text-sm font-semibold uppercase text-neutral-300 tracking-wider pl-1.5">{value}</span>
       </div>
     </div>
   );

@@ -36,19 +36,19 @@ export function WorkspaceCodeEditorOverlay({
   }
 
   return (
-    <div className="fixed inset-0 z-[90] bg-black/25 backdrop-blur-[1px]" onMouseDown={() => setIsCodeEditorOpen(false)}>
+    <div className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm transition-all" onMouseDown={() => setIsCodeEditorOpen(false)}>
       <div
-        className="absolute inset-y-0 right-0 flex w-full flex-col border-l border-neutral-800 bg-[#070707] shadow-2xl shadow-black/50 md:max-w-[820px]"
+        className="absolute inset-y-4 right-4 flex w-full flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0b0814]/90 shadow-[-20px_0_80px_rgba(0,0,0,0.6)] backdrop-blur-2xl md:max-w-[700px]"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-neutral-800 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <Code2 className="text-neutral-400" size={14} />
-            <span className="text-[12px] font-semibold text-white">MDX Editor</span>
+        <div className="flex items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-5 py-4">
+          <div className="flex items-center gap-2.5">
+            <Code2 className="text-[#a78bfa]" size={16} />
+            <span className="text-sm font-semibold tracking-wide text-white">MDX Editor</span>
           </div>
           <button
             aria-label="Close MDX editor"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition-all hover:bg-white/10 hover:text-white"
             onClick={() => setIsCodeEditorOpen(false)}
             type="button"
           >

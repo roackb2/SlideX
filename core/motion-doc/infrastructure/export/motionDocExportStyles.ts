@@ -337,6 +337,90 @@ export const motionDocExportStyles = `      :root {
         text-transform: uppercase;
         white-space: nowrap;
       }
+      .block-chart__line {
+        display: flex;
+        min-height: calc(var(--chart-height, 156px) + 54px);
+        flex-direction: column;
+        gap: 14px;
+        margin-top: 24px;
+      }
+      .block-chart__line svg {
+        width: 100%;
+        min-height: var(--chart-height, 156px);
+        overflow: visible;
+      }
+      .block-chart__line polyline {
+        fill: none;
+        stroke: var(--motion-fg, var(--slide-fg));
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 8px;
+      }
+      .block-chart__line circle {
+        fill: var(--slide-card);
+        stroke: var(--motion-fg, var(--slide-fg));
+        stroke-width: 5px;
+      }
+      .block-chart__area {
+        fill: color-mix(in srgb, var(--motion-fg, var(--slide-fg)) 28%, transparent);
+      }
+      .block-chart__line-labels {
+        display: grid;
+        grid-auto-columns: 1fr;
+        grid-auto-flow: column;
+        gap: 8px;
+      }
+      .block-chart__pie {
+        display: grid;
+        grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+        align-items: center;
+        gap: 28px;
+        min-height: calc(var(--chart-height, 156px) + 28px);
+        margin-top: 22px;
+      }
+      .block-chart__pie-graphic {
+        position: relative;
+        width: min(var(--chart-height, 156px), 220px);
+        aspect-ratio: 1;
+        margin: 0 auto;
+        border-radius: 999px;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+      }
+      .block-chart__pie-graphic--donut::after {
+        content: "";
+        position: absolute;
+        inset: 26%;
+        border-radius: inherit;
+        background: var(--slide-card);
+      }
+      .block-chart__legend {
+        display: grid;
+        gap: 10px;
+      }
+      .block-chart__legend-row {
+        display: grid;
+        grid-template-columns: 10px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        color: var(--motion-muted, var(--slide-muted));
+        font-size: 12px;
+      }
+      .block-chart__legend-row span {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+      }
+      .block-chart__legend-row b {
+        overflow: hidden;
+        font-weight: 500;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .block-chart__legend-row em {
+        color: var(--motion-fg, var(--slide-fg));
+        font: 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-style: normal;
+      }
       .block-image {
         margin: 0;
         width: 100%;
@@ -354,6 +438,66 @@ export const motionDocExportStyles = `      :root {
         aspect-ratio: auto;
         object-fit: cover;
       }
+      .block-video video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        aspect-ratio: auto;
+        object-fit: cover;
+      }
+      .block-icon {
+        display: grid;
+        width: 100%;
+        height: 100%;
+        place-items: center;
+        padding: 16px;
+        border-radius: var(--motion-radius, 16px);
+        border: 1px solid var(--slide-border);
+        background: var(--motion-bg, var(--slide-card));
+        color: var(--motion-fg, var(--slide-fg));
+        box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+        backdrop-filter: blur(16px);
+      }
+      .block-icon svg {
+        width: var(--icon-size, 96px);
+        height: var(--icon-size, 96px);
+      }
+      .block-shape,
+      .block-shape svg {
+        width: 100%;
+        height: 100%;
+      }
+      .block-stack {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        flex-direction: var(--stack-direction, row);
+        align-items: var(--stack-align, stretch);
+        gap: var(--stack-gap, 16px);
+        padding: var(--stack-padding, 20px);
+        border: 1px solid var(--stack-stroke, var(--slide-border));
+        border-radius: var(--motion-radius, 16px);
+        background: var(--motion-bg, var(--slide-card));
+        color: var(--motion-fg, var(--slide-fg));
+        box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+        backdrop-filter: blur(16px);
+      }
+      .block-stack__item {
+        display: grid;
+        min-width: 0;
+        min-height: 0;
+        flex: 1;
+        place-items: center;
+        overflow: hidden;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.06);
+        padding: 8px 12px;
+        color: inherit;
+        font-size: 12px;
+        font-weight: 650;
+        text-align: center;
+      }
       .motion-block--full {
         position: absolute;
         inset: 0;
@@ -367,7 +511,8 @@ export const motionDocExportStyles = `      :root {
         border: 0;
         border-radius: var(--motion-radius, 0);
       }
-      .motion-block--full .block-image img {
+      .motion-block--full .block-image img,
+      .motion-block--full .block-video video {
         height: 100%;
         aspect-ratio: auto;
       }

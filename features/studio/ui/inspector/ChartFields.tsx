@@ -1,10 +1,27 @@
 "use client";
 
-import { Field, NumberInput, TextInput, type BlockFieldProps } from "@/features/studio/ui/inspector/InspectorControls";
+import { Field, NativeSelect, NumberInput, TextInput, type BlockFieldProps } from "@/features/studio/ui/inspector/InspectorControls";
+
+const chartTypeOptions = [
+  { label: "Bar", value: "bar" },
+  { label: "Line", value: "line" },
+  { label: "Area", value: "area" },
+  { label: "Pie", value: "pie" },
+  { label: "Donut", value: "donut" }
+] as const;
 
 export function ChartFields({ block, selectedBlockIndex, updateBlock }: BlockFieldProps) {
+  const chartType = typeof block.props.chartType === "string" ? block.props.chartType : "bar";
+
   return (
     <>
+      <Field label="Chart type">
+        <NativeSelect
+          onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, chartType: value })}
+          options={chartTypeOptions}
+          value={chartType === "line" || chartType === "area" || chartType === "pie" || chartType === "donut" ? chartType : "bar"}
+        />
+      </Field>
       <Field label="Chart height">
         <NumberInput
           max="320"
