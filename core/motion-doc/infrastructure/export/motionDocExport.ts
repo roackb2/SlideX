@@ -83,7 +83,8 @@ function renderBlock(block: MotionDocBlock, blockIndex: number) {
   }
 
   if (block.type === "Text" || block.type === "heading") {
-    return renderMotionBlock(block, `<p class="block-text">${renderTextLines(String(block.text ?? ""), block.props?.listType)}</p>`);
+    const listType = "props" in block ? block.props?.listType : undefined;
+    return renderMotionBlock(block, `<p class="block-text">${renderTextLines(String(block.text ?? ""), listType)}</p>`);
   }
 
   if (block.type === "Card") {
