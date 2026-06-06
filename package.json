@@ -1,6 +1,6 @@
 {
   "name": "slidex",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "private": true,
   "scripts": {
     "clean": "node -e \"const fs=require('fs'); for (const p of ['.next','.next-turbo','tsconfig.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true})\"",

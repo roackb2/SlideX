@@ -20,7 +20,7 @@ export type BlockFieldProps<TBlock extends BlockWithProps = BlockWithProps> = {
 export function Field({ children, label }: { children: ReactNode; label: string }) {
   return (
     <div className="flex flex-col gap-2.5">
-      <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-500">{label}</span>
+      <span className="text-[10px] font-bold tracking-wide text-neutral-500">{label}</span>
       {children}
     </div>
   );
@@ -252,7 +252,7 @@ export function ColorInput({
 }) {
   return (
     <div className="flex flex-1 flex-col gap-2.5">
-      <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-500">{label}</span>
+      <span className="text-[10px] font-bold tracking-wide text-neutral-500">{label}</span>
       <div className="flex items-center gap-2 rounded-[1rem] border border-white/[0.05] bg-[#020202] p-1.5 transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.1] focus-within:border-white/[0.2] focus-within:ring-1 focus-within:ring-white/[0.1] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.03)]">
         <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full border border-white/[0.08] shadow-md hover:scale-105 transition-transform duration-400 ease-[cubic-bezier(0.32,0.72,0,1)]">
           <input

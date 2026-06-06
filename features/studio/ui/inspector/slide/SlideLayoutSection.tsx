@@ -45,43 +45,6 @@ export function SlideLayoutSection({
         </button>
       </Field>
 
-      <Field label="Layout Style">
-        <NativeSelect
-          onChange={(value) => updateActiveSlideStyle({ layout: value })}
-          options={[
-            { label: "Default (Centered)", value: "default" },
-            { label: "Split Left (Text Left, Image Right)", value: "split-left" },
-            { label: "Split Right (Image Left, Text Right)", value: "split-right" }
-          ]}
-          value={layout}
-        />
-      </Field>
-
-      <div className="grid grid-cols-2 gap-2">
-        <Field label="Horizontal align">
-          <NativeSelect
-            onChange={(value) => updateActiveSlideStyle({ alignX: value })}
-            options={[
-              { label: "Left", value: "left" },
-              { label: "Center", value: "center" },
-              { label: "Right", value: "right" },
-              { label: "Stretch", value: "stretch" }
-            ]}
-            value={alignX}
-          />
-        </Field>
-        <Field label="Vertical align">
-          <NativeSelect
-            onChange={(value) => updateActiveSlideStyle({ alignY: value })}
-            options={[
-              { label: "Top", value: "top" },
-              { label: "Center", value: "center" },
-              { label: "Bottom", value: "bottom" }
-            ]}
-            value={alignY}
-          />
-        </Field>
-      </div>
     </AccordionSection>
   );
 }

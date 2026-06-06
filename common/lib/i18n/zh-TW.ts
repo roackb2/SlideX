@@ -167,10 +167,10 @@ export const zhTwDictionary = {
       },
       downloadTeaser: {
         title: "Mac Beta 已可下載。",
-        body: "SlideX Tauri 2.0.3 已放上 macOS Apple Silicon DMG，可先分享給早期使用者測試桌面版流程。",
+        body: "SlideX Tauri 2.0.4 已放上 macOS Apple Silicon DMG，可先分享給早期使用者測試桌面版流程。",
         cta: "下載 Mac Beta",
         cardTitle: "SlideX for macOS",
-        status: "Version 2.0.3",
+        status: "Version 2.0.4",
         items: ["Apple Silicon DMG", "Mac 專案基礎", "Web Studio 相容"]
       }
     },
@@ -486,7 +486,7 @@ export const zhTwDictionary = {
           ["平台", "macOS Apple Silicon"],
           ["Cask 名稱", "slidex"]
         ],
-        items: ["Tauri 桌面 2.0.3", "自動繞過 Gatekeeper 安全檢查", "延續 Web Studio 的 MDX 場景模型", "2026.06.06 版本資訊"],
+        items: ["Tauri 桌面 2.0.4", "自動繞過 Gatekeeper 安全檢查", "延續 Web Studio 的 MDX 場景模型", "2026.06.06 版本資訊"],
         localTitle: "Homebrew 發佈管道",
         localBody: "這一版把 Mac 桌面體驗、專案開啟流程與 Studio 預覽整合到可直接透過 Homebrew 安裝的 beta 版本，並由 GitHub Releases 提供直接更新服務。",
         installTitle: "安裝指引",
