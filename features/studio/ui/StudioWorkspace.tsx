@@ -26,14 +26,10 @@ export function StudioWorkspace(props: StudioWorkspaceProps) {
         isExportMenuOpen={props.isExportMenuOpen}
         isMobileInspectorOpen={props.isMobileInspectorOpen}
         isMobileSidebarOpen={props.isMobileSidebarOpen}
-        isTauri={props.isTauri}
         notice={props.notice}
         onExportHtml={props.exportHtmlFile}
         onExportMdx={props.exportMdxFile}
-        onNewProject={props.newProject}
-        onOpenProject={props.openProject}
         onReplay={() => props.setReplayNonce((value) => value + 1)}
-        onSaveProject={props.saveProject}
         onToggleInspector={() => {
           props.setIsMobileInspectorOpen((value) => !value);
           props.setIsMobileSidebarOpen(false);

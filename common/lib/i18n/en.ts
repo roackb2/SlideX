@@ -6,14 +6,14 @@ export const enDictionary = {
     common: {
       productName: "SlideX",
       openStudio: "Open Studio",
-      download: "Download",
+      getStarted: "Get Started",
       viewPresets: "View Presets"
     },
     nav: {
       homeLabel: "SlideX home",
       resources: "Docs",
       templates: "Presets",
-      download: "Download",
+      getStarted: "Get Started",
       mobileDescription: "Design animated MDX scene decks.",
       openMenu: "Open menu",
       closeMenu: "Close menu",
@@ -27,7 +27,7 @@ export const enDictionary = {
       product: "Product",
       library: "Library",
       studio: "Studio",
-      download: "Download",
+      getStarted: "Get Started",
       presets: "Presets",
       docs: "Docs",
       rights: "© 2026 SlideX. All rights reserved.",
@@ -107,7 +107,7 @@ export const enDictionary = {
         eyebrow: "SlideX Studio",
         title: "Motion decks without the rebuild.",
         body: "Compose MDX scenes, tune timing, preview motion, and export the deck from one studio.",
-        primary: "Download",
+        primary: "Get Started",
         secondary: "View Presets",
         checkpoints: ["Author", "Preview", "Export"]
       },

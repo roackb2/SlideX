@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { arrowDelta, isArrowKey } from "@/features/studio/application/keyboard";
-import { listenToTauriMenu } from "@/features/studio/infrastructure/tauriProject";
 
 type UseStudioShortcutsArgs = {
   activeSlideIndex: number;
@@ -20,13 +19,10 @@ type UseStudioShortcutsArgs = {
   isExportMenuOpen: boolean;
   isMobileInspectorOpen: boolean;
   isMobileSidebarOpen: boolean;
-  isTauri: boolean;
   isTemplateModalOpen: boolean;
   newProject: () => void;
   nudgeSelectedBlocks: (delta: { x: number; y: number }) => void;
-  openProject: () => void;
   pasteCopiedBlock: () => void;
-  saveProject: () => void;
   selectedBlockIndex: number | null;
   selectedBlockIndices: number[];
   undoLastChange: () => void;
@@ -42,21 +38,15 @@ export function useStudioShortcuts({
   copySelectedBlock,
   deleteSelectedBlocks,
   deleteSlide,
-  exportHtmlFile,
-  exportMdxFile,
   goToNextSlide,
   goToPreviousSlide,
   isCodeEditorOpen,
   isExportMenuOpen,
   isMobileInspectorOpen,
   isMobileSidebarOpen,
-  isTauri,
   isTemplateModalOpen,
-  newProject,
   nudgeSelectedBlocks,
-  openProject,
   pasteCopiedBlock,
-  saveProject,
   selectedBlockIndex,
   selectedBlockIndices,
   undoLastChange
@@ -92,18 +82,6 @@ export function useStudioShortcuts({
           closeMobileInspector();
           return;
         }
-      }
-
-      if (isTauri && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
-        event.preventDefault();
-        saveProject();
-        return;
-      }
-
-      if (isTauri && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "o") {
-        event.preventDefault();
-        openProject();
-        return;
       }
 
       if (tagName === "TEXTAREA" || tagName === "INPUT" || tagName === "SELECT" || target?.isContentEditable) {
@@ -178,49 +156,11 @@ export function useStudioShortcuts({
     isExportMenuOpen,
     isMobileInspectorOpen,
     isMobileSidebarOpen,
-    isTauri,
     isTemplateModalOpen,
     nudgeSelectedBlocks,
-    openProject,
     pasteCopiedBlock,
-    saveProject,
     selectedBlockIndex,
     selectedBlockIndices,
     undoLastChange
   ]);
-
-  useEffect(() => {
-    if (!isTauri) {
-      return;
-    }
-
-    let unlisten: (() => void) | undefined;
-    listenToTauriMenu((action) => {
-      if (action === "new") {
-        newProject();
-        return;
-      }
-      if (action === "open") {
-        openProject();
-        return;
-      }
-      if (action === "save") {
-        saveProject();
-        return;
-      }
-      if (action === "export-html") {
-        exportHtmlFile();
-        return;
-      }
-      if (action === "export-mdx") {
-        exportMdxFile();
-      }
-    }).then((dispose) => {
-      unlisten = dispose;
-    });
-
-    return () => {
-      unlisten?.();
-    };
-  }, [exportHtmlFile, exportMdxFile, isTauri, newProject, openProject, saveProject]);
 }

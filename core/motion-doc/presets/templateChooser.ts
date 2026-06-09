@@ -187,7 +187,6 @@ export const defaultTemplateChooserItem = blankTemplateItems[0] ?? {
 
 export const templateChooserCategories = [
   { id: "all", label: "All Templates", source: "system" },
-  { id: "recent", label: "Recent", source: "system" },
   { id: "blank", label: "Blank Documents", source: "system" },
   ...uniqueTemplateTags().map((tag) => ({
     id: templateCategoryId(tag),
@@ -211,10 +210,6 @@ export function getTemplateChooserItem(itemId: string) {
 export function getTemplateChooserItemsForCategory(categoryId: TemplateChooserCategoryId) {
   if (categoryId === "all") {
     return templateChooserItems;
-  }
-
-  if (categoryId === "recent") {
-    return [];
   }
 
   if (categoryId === "blank") {

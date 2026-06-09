@@ -10,17 +10,12 @@
     "build": "next build --webpack",
     "build:clean": "npm run clean && npm run build",
     "start": "next start",
-    "lint": "eslint .",
-    "icons:tauri": "node scripts/generate-tauri-icons.mjs",
-    "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@codemirror/lang-html": "^6.4.11",
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lang-markdown": "^6.5.0",
-    "@tauri-apps/api": "^2.11.0",
     "@uiw/react-codemirror": "^4.25.10",
     "framer-motion": "11.18.2",
     "geist": "^1.7.2",
@@ -34,7 +29,6 @@
   "devDependencies": {
     "@eslint/eslintrc": "3.3.5",
     "@tailwindcss/postcss": "4.3.0",
-    "@tauri-apps/cli": "^2.11.2",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",

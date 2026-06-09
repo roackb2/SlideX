@@ -53,18 +53,15 @@ export type StudioWorkspaceProps = {
   isMobileInspectorOpen: boolean;
   isMobileSidebarOpen: boolean;
   isProjectDirty: boolean;
-  isTauri: boolean;
   isTemplateModalOpen: boolean;
   moveBlock: (blockIndex: number, direction: -1 | 1) => void;
   newProject: () => void;
   notice: string;
-  openProject: () => void;
   projectName: string;
   pushUndoSnapshot: () => void;
   reorderBlock: (fromIndex: number, toIndex: number) => void;
   reorderSlide: (fromIndex: number, toIndex: number) => void;
   replayNonce: number;
-  saveProject: () => void;
   scenes: MotionDocScene[];
   selectBlock: (index: number, options?: { additive?: boolean; range?: boolean }) => void;
   selectBlockFromLayer: (index: number, event: ReactMouseEvent<HTMLDivElement>) => void;

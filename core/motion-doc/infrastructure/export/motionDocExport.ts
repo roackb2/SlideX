@@ -9,8 +9,9 @@ import { motionDocExportStyles } from "@/core/motion-doc/infrastructure/export/m
 const FRAME_WIDTH = 1024;
 const FRAME_HEIGHT = 576;
 
-export function buildMotionDocHtml(source: string) {
+export function buildMotionDocHtml(source: string, customTitle?: string) {
   const document = parseMotionDoc(source);
+  const displayTitle = customTitle || document.title;
   const slidesHtml = document.scenes
     .map((scene) => renderSceneHtml(materializeFreeformScene(scene)))
     .join("\n");
@@ -20,7 +21,7 @@ export function buildMotionDocHtml(source: string) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${escapeHtml(document.title)}</title>
+    <title>${escapeHtml(displayTitle)}</title>
     <style>${motionDocExportStyles}</style>
   </head>
   <body>

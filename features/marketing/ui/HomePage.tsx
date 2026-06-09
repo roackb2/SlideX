@@ -60,7 +60,9 @@ export function HomePage() {
 
       <section className="relative px-4 pt-24 sm:px-6">
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:72px_72px]" />
+          <div className="absolute left-[-10%] top-[-10%] h-[600px] w-[800px] rounded-full bg-[#0070f3]/15 blur-[120px]" />
+          <div className="absolute right-[5%] top-[10%] h-[500px] w-[600px] rounded-full bg-violet-600/10 blur-[120px]" />
+          <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:64px_64px]" />
         </div>
 
         <div className="mx-auto grid max-w-7xl gap-8 pb-14 sm:pb-16 md:pb-20 lg:min-h-[calc(100dvh-6rem)] lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:gap-10">
@@ -68,7 +70,7 @@ export function HomePage() {
             <motion.h1
               variants={fadeInUp}
               custom={1}
-              className="text-[2.35rem] font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
+              className="text-[2.75rem] font-medium leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-[5.5rem]"
             >
               {t.home.hero.title}
             </motion.h1>
@@ -81,15 +83,15 @@ export function HomePage() {
             </motion.p>
             <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <Link
-                href="/download"
-                className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
+                href="/studio"
+                className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
               >
                 {t.home.hero.primary}
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="/templates"
-                className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.04] px-7 py-3.5 text-[15px] font-medium text-neutral-200 transition hover:border-white/[0.25] hover:bg-white/[0.08] active:scale-95 sm:w-auto"
               >
                 {t.home.hero.secondary}
               </Link>
@@ -301,48 +303,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6 md:py-24 lg:py-28">
-        <div className="mx-auto max-w-7xl">
-          <Reveal className="grid gap-8 overflow-hidden rounded-[24px] border border-white/[0.1] bg-white/[0.045] p-5 sm:p-6 md:rounded-[32px] md:p-10 lg:grid-cols-[1fr_0.8fr] lg:items-center">
-            <div>
-              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-[#0070f3]/[0.14] text-[#0070f3]">
-                <Download className="h-6 w-6" />
-              </div>
-              <h2 className="max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
-                {t.home.downloadTeaser.title}
-              </h2>
-              <p className="mt-5 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg">
-                {t.home.downloadTeaser.body}
-              </p>
-              <div className="mt-8">
-                <Link
-                  href="/download"
-                  className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
-                >
-                  {t.home.downloadTeaser.cta}
-                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-                </Link>
-              </div>
-            </div>
-            <div className="rounded-[22px] border border-white/[0.1] bg-black/30 p-4 sm:p-5 md:rounded-[28px]">
-              <div className="mb-5 flex items-center justify-between">
-                <span className="text-sm font-semibold text-white">{t.home.downloadTeaser.cardTitle}</span>
-                <span className="rounded-full border border-white/[0.1] px-3 py-1 text-xs text-neutral-500">
-                  {t.home.downloadTeaser.status}
-                </span>
-              </div>
-              <div className="space-y-3">
-                {t.home.downloadTeaser.items.map((item) => (
-                  <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/[0.06] px-4 py-3 text-sm leading-6 text-neutral-300">
-                    <Check className="h-4 w-4 text-[#0070f3]" />
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+
 
       <SiteFooter />
     </main>

@@ -3,12 +3,10 @@
 import { useCallback, type Dispatch, type SetStateAction } from "react";
 import { downloadFile } from "@/common/util/browserFile";
 import { buildMotionDocHtml, slugifyFilename } from "@/core/motion-doc/infrastructure/export/motionDocExport";
-import { exportSlidexFile } from "@/features/studio/infrastructure/tauriProject";
 
 type UseStudioExportArgs = {
   canvasSource: string;
   documentTitle: string;
-  isTauri: boolean;
   setIsExportMenuOpen: Dispatch<SetStateAction<boolean>>;
   setNotice: Dispatch<SetStateAction<string>>;
 };
@@ -16,7 +14,6 @@ type UseStudioExportArgs = {
 export function useStudioExport({
   canvasSource,
   documentTitle,
-  isTauri,
   setIsExportMenuOpen,
   setNotice
 }: UseStudioExportArgs) {
@@ -60,23 +57,18 @@ export function useStudioExport({
 
   const exportMdxFile = useCallback(async () => {
     const title = documentTitle || "slidesx-deck";
-    const defaultFilename = `${slugifyFilename(title)}.mdx`;
+    const userFilename = window.prompt("Enter export filename (without extension):", title);
+    if (userFilename === null) {
+      setIsExportMenuOpen(false);
+      return; // User cancelled
+    }
+    
+    const finalTitle = userFilename.trim() || title;
+    const defaultFilename = `${slugifyFilename(finalTitle)}.mdx`;
 
     try {
       setNotice("Preparing export...");
       const finalSource = await embedLocalFiles(canvasSource);
-
-      if (isTauri) {
-        const path = await exportSlidexFile({
-          content: finalSource,
-          defaultFilename,
-          extension: "mdx"
-        });
-
-        setIsExportMenuOpen(false);
-        setNotice(path ? "MDX exported" : "Export canceled");
-        return;
-      }
 
       downloadFile(defaultFilename, finalSource, "text/markdown;charset=utf-8");
       setIsExportMenuOpen(false);
@@ -84,28 +76,23 @@ export function useStudioExport({
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "MDX export failed");
     }
-  }, [canvasSource, documentTitle, isTauri, setIsExportMenuOpen, setNotice]);
+  }, [canvasSource, documentTitle, setIsExportMenuOpen, setNotice]);
 
   const exportHtmlFile = useCallback(async () => {
     const title = documentTitle || "slidesx-deck";
-    const defaultFilename = `${slugifyFilename(title)}.html`;
+    const userFilename = window.prompt("Enter export filename (without extension):", title);
+    if (userFilename === null) {
+      setIsExportMenuOpen(false);
+      return; // User cancelled
+    }
+    
+    const finalTitle = userFilename.trim() || title;
+    const defaultFilename = `${slugifyFilename(finalTitle)}.html`;
 
     try {
       setNotice("Preparing export...");
       const finalSource = await embedLocalFiles(canvasSource);
-      const html = buildMotionDocHtml(finalSource);
-
-      if (isTauri) {
-        const path = await exportSlidexFile({
-          content: html,
-          defaultFilename,
-          extension: "html"
-        });
-
-        setIsExportMenuOpen(false);
-        setNotice(path ? "HTML exported" : "Export canceled");
-        return;
-      }
+      const html = buildMotionDocHtml(finalSource, finalTitle);
 
       downloadFile(defaultFilename, html, "text/html;charset=utf-8");
       setIsExportMenuOpen(false);
@@ -113,7 +100,7 @@ export function useStudioExport({
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "HTML export failed");
     }
-  }, [canvasSource, documentTitle, isTauri, setIsExportMenuOpen, setNotice]);
+  }, [canvasSource, documentTitle, setIsExportMenuOpen, setNotice]);
 
   return {
     copySource,
@@ -121,4 +108,3 @@ export function useStudioExport({
     exportMdxFile
   };
 }
-

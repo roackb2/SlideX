@@ -2,22 +2,18 @@
 
 import Link from "next/link";
 import type { RefObject } from "react";
-import { Download, FileCode2, FilePlus2, FileText, FolderOpen, Layers, PanelRight, RotateCcw, Save, Undo2 } from "lucide-react";
+import { Download, FileCode2, FileText, Layers, PanelRight, RotateCcw, Undo2 } from "lucide-react";
 
 export function StudioHeader({
   exportMenuRef,
   isExportMenuOpen,
-  isTauri,
   isMobileInspectorOpen,
   isMobileSidebarOpen,
   notice,
   projectName,
   onExportHtml,
   onExportMdx,
-  onNewProject,
-  onOpenProject,
   onReplay,
-  onSaveProject,
   onUndo,
   onToggleInspector,
   onToggleSidebar,
@@ -25,17 +21,13 @@ export function StudioHeader({
 }: {
   exportMenuRef: RefObject<HTMLDivElement | null>;
   isExportMenuOpen: boolean;
-  isTauri: boolean;
   isMobileInspectorOpen: boolean;
   isMobileSidebarOpen: boolean;
   notice: string;
   projectName: string;
   onExportHtml: () => void;
   onExportMdx: () => void;
-  onNewProject: () => void;
-  onOpenProject: () => void;
   onReplay: () => void;
-  onSaveProject: () => void;
   onUndo: () => void;
   onToggleInspector: () => void;
   onToggleSidebar: () => void;
@@ -56,19 +48,13 @@ export function StudioHeader({
           <Layers size={15} />
         </button>
 
-        {isTauri ? (
-          <div className="flex items-center whitespace-nowrap text-sm font-semibold tracking-tight text-white">
-            <img src="/logo.png" alt="SlideX" className="h-auto w-[72px] rounded object-contain sm:w-[84px]" />
-          </div>
-        ) : (
-          <Link
-            aria-label="SlideX home"
-            className="flex items-center whitespace-nowrap text-sm font-semibold tracking-tight text-white transition-opacity hover:opacity-85 active:opacity-70"
-            href="/"
-          >
-            <img src="/logo.png" alt="SlideX" className="h-auto w-[72px] rounded object-contain sm:w-[84px]" />
-          </Link>
-        )}
+        <Link
+          aria-label="SlideX home"
+          className="flex items-center whitespace-nowrap text-sm font-semibold tracking-tight text-white transition-opacity hover:opacity-85 active:opacity-70"
+          href="/"
+        >
+          <img src="/logo.png" alt="SlideX" className="h-auto w-[72px] rounded object-contain sm:w-[84px]" />
+        </Link>
         <div className="hidden h-3.5 w-[1px] bg-white/[0.08] sm:block mx-1" />
         <span className="hidden max-w-[180px] truncate whitespace-nowrap rounded-xl bg-neutral-900/40 px-3 py-1 text-sm font-semibold tracking-wide text-neutral-300 sm:block border border-white/[0.04] shadow-inner">
           {projectName}
@@ -78,37 +64,6 @@ export function StudioHeader({
       {/* Right side actions */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-3.5">
         <span className="hidden sm:block font-mono text-sm text-neutral-400/80 font-medium">{notice}</span>
-
-        {/* Tauri project actions in sleek unified capsule */}
-        {isTauri && (
-          <div className="hidden items-center gap-1.5 rounded-xl border border-white/[0.04] bg-neutral-950/40 p-1 sm:flex shadow-inner">
-            <button
-              className="flex items-center justify-center rounded-lg h-7.5 w-7.5 text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-neutral-900/60 hover:text-white hover:scale-[1.04] cursor-pointer active:scale-[0.94]"
-              onClick={onNewProject}
-              type="button"
-              title="New Project"
-            >
-              <FilePlus2 size={14} />
-            </button>
-            <button
-              className="flex items-center justify-center rounded-lg h-7.5 w-7.5 text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-neutral-900/60 hover:text-white hover:scale-[1.04] cursor-pointer active:scale-[0.94]"
-              onClick={onOpenProject}
-              type="button"
-              title="Open Project"
-            >
-              <FolderOpen size={14} />
-            </button>
-            <button
-              className="flex items-center justify-center gap-1.5 rounded-lg h-7.5 px-3 text-sm font-semibold text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-neutral-900/60 hover:text-white hover:scale-[1.04] cursor-pointer active:scale-[0.94]"
-              onClick={onSaveProject}
-              type="button"
-              title="Save Project"
-            >
-              <Save size={14} />
-              <span className="hidden lg:inline">Save</span>
-            </button>
-          </div>
-        )}
 
         {/* Undo action button */}
         <button

@@ -73,17 +73,12 @@ export function MotionDocApp() {
     [activeSlide, activeSlideIndex, selectedBlockIndex]
   );
   const {
+    isMounted,
     hasEnteredStudio,
     isProjectDirty,
-    isRuntimeChecked,
-    isTauri,
     markProjectDirty,
     newProject,
-    openProject,
-    openRecentProject,
     projectName,
-    recentProjects,
-    saveProject
   } = useStudioProject({
     canvasSource,
     documentTitle: sliderDocument.title,
@@ -106,7 +101,6 @@ export function MotionDocApp() {
   const { copySource, exportHtmlFile, exportMdxFile } = useStudioExport({
     canvasSource,
     documentTitle: sliderDocument.title,
-    isTauri,
     setIsExportMenuOpen,
     setNotice
   });
@@ -180,29 +174,23 @@ export function MotionDocApp() {
     isExportMenuOpen,
     isMobileInspectorOpen,
     isMobileSidebarOpen,
-    isTauri,
     isTemplateModalOpen,
     newProject: startNewProject,
     nudgeSelectedBlocks: studioCommands.nudgeSelectedBlocks,
-    openProject,
     pasteCopiedBlock: studioCommands.pasteCopiedBlock,
-    saveProject,
     selectedBlockIndex,
     selectedBlockIndices,
     undoLastChange
   });
 
-  if (!isRuntimeChecked) {
-    return <main className="h-screen bg-[#0f1017]" />;
+  if (!isMounted) {
+    return <div className="flex h-screen w-full bg-[#050505]" />;
   }
 
-  if (isTauri && !hasEnteredStudio) {
+  if (!hasEnteredStudio) {
     return (
       <DesktopWelcome
         newProject={startNewProject}
-        openProject={openProject}
-        openRecentProject={openRecentProject}
-        recentProjects={recentProjects}
       />
     );
   }
@@ -258,18 +246,15 @@ export function MotionDocApp() {
       isMobileInspectorOpen={isMobileInspectorOpen}
       isMobileSidebarOpen={isMobileSidebarOpen}
       isProjectDirty={isProjectDirty}
-      isTauri={isTauri}
       isTemplateModalOpen={isTemplateModalOpen}
       moveBlock={studioCommands.moveBlock}
       newProject={startNewProject}
       notice={notice}
-      openProject={openProject}
       projectName={projectName}
       pushUndoSnapshot={pushUndoSnapshot}
       reorderBlock={studioCommands.reorderBlock}
       reorderSlide={studioCommands.reorderSlide}
       replayNonce={replayNonce}
-      saveProject={saveProject}
       scenes={sliderDocument.scenes}
       selectBlock={selectBlock}
       selectBlockFromLayer={studioCommands.selectBlockFromLayer}

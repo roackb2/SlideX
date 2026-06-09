@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Download, Languages, Menu, X } from "lucide-react";
 import { useI18n } from "@/common/lib/I18nProvider";
 
-const GITHUB_REPOSITORY_URL = "https://github.com/zz41354899/Animark";
+const GITHUB_REPOSITORY_URL = "https://github.com/zz41354899/SlideX";
 const easeSmooth = [0.22, 1, 0.36, 1] as const;
 
 const menuVariants = {
@@ -154,11 +154,10 @@ export function SiteNav() {
               className="hidden shrink-0 md:block"
             >
               <Link
-                href="/download"
+                href="/studio"
                 className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold text-black shadow-[0_0_0_1px_rgba(255,255,255,0.2)] transition-all hover:bg-neutral-200 hover:shadow-[0_0_22px_rgba(94,106,210,0.28)] md:px-5"
               >
-                <Download className="h-3.5 w-3.5" />
-                <span>{t.nav.download}</span>
+                <span>{t.nav.getStarted}</span>
               </Link>
             </motion.div>
 
@@ -285,12 +284,11 @@ export function SiteNav() {
                       {t.nav.localeShortLabel}
                     </button>
                     <Link
-                      href="/download"
+                      href="/studio"
                       onClick={() => setIsMenuOpen(false)}
                       className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3.5 text-sm font-semibold text-black transition-all hover:bg-neutral-200 active:scale-[0.98]"
                     >
-                      <Download className="h-4 w-4" />
-                      {t.nav.download}
+                      {t.nav.getStarted}
                     </Link>
                   </motion.div>
                 </div>

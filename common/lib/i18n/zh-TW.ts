@@ -6,14 +6,14 @@ export const zhTwDictionary = {
     common: {
       productName: "SlideX",
       openStudio: "開啟 Studio",
-      download: "下載",
+      getStarted: "開始使用",
       viewPresets: "查看範本"
     },
     nav: {
       homeLabel: "SlideX 首頁",
       resources: "文件",
       templates: "範本",
-      download: "下載",
+      getStarted: "開始使用",
       mobileDescription: "設計可動畫的 MDX 場景簡報。",
       openMenu: "開啟選單",
       closeMenu: "關閉選單",
@@ -27,7 +27,7 @@ export const zhTwDictionary = {
       product: "產品",
       library: "資源",
       studio: "Studio",
-      download: "下載",
+      getStarted: "開始使用",
       presets: "範本",
       docs: "文件",
       rights: "© 2026 SlideX. 保留所有權利。",
@@ -107,7 +107,7 @@ export const zhTwDictionary = {
         eyebrow: "SlideX Studio",
         title: "不用重做的動態簡報。",
         body: "用 MDX 組合場景、調整節奏、預覽動效，並在同一個 Studio 裡匯出簡報。",
-        primary: "下載",
+        primary: "開始使用",
         secondary: "查看範本",
         checkpoints: ["撰寫", "預覽", "匯出"]
       },

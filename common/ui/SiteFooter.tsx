@@ -10,8 +10,7 @@ export function SiteFooter() {
     {
       title: t.footer.product,
       links: [
-        { href: "/studio", label: t.footer.studio },
-        { href: "/download", label: t.footer.download }
+        { href: "/studio", label: t.footer.studio }
       ]
     },
     {
@@ -40,17 +39,10 @@ export function SiteFooter() {
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <Link
-                href="/download"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
-              >
-                <Download className="h-4 w-4" />
-                {t.footer.download}
-              </Link>
-              <Link
                 href="/studio"
-                className="group inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.05] px-4 py-2 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.08] active:scale-95 sm:w-auto"
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
               >
-                {t.footer.studio}
+                {t.nav.getStarted}
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </Link>
             </div>
