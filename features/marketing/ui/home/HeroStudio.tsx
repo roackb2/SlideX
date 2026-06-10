@@ -96,7 +96,7 @@ export function HeroStudio({ copy }: { copy: Dictionary["home"]["heroStudio"] })
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_38%_22%,rgba(0,112,243,0.12),transparent_32%)]" />
 
             <div className="relative z-10 flex items-center justify-center px-5 pb-16 pt-8 sm:px-8 md:px-10 md:pt-12">
-              <div className="aspect-video w-full max-w-[580px] overflow-hidden rounded-[22px] border border-white/[0.12] bg-black shadow-2xl shadow-black/70">
+              <div className="aspect-[4/3] sm:aspect-video w-full max-w-[580px] overflow-hidden rounded-[22px] border border-white/[0.12] bg-black shadow-2xl shadow-black/70">
                 <div className="relative flex h-full flex-col justify-center p-6 sm:p-8">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(0,112,243,0.12),transparent_42%)]" />
                   <div className="relative z-10 max-w-[320px]">
