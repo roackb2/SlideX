@@ -129,7 +129,7 @@ export function ColorControl({
             <div className="flex items-center gap-2">
               <span className="h-9 w-9 shrink-0 rounded-md border border-white/15 shadow-inner" style={swatchStyle} />
               <div className="min-w-0 flex-1">
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-neutral-500">CSS Color</label>
+                <label className="mb-1.5 block text-[11px] font-semibold tracking-wider text-neutral-500">CSS Color</label>
                 <input
                   className="w-full rounded border border-neutral-800 bg-black px-2 py-1.5 font-mono text-xs text-neutral-200 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-500"
                   onChange={(event) => onChange(event.target.value)}
@@ -143,7 +143,7 @@ export function ColorControl({
               </div>
             </div>
             <div className="mt-3.5">
-              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Picker</label>
+              <label className="mb-1.5 block text-[11px] font-semibold tracking-wider text-neutral-500">Picker</label>
               <div className="flex items-center gap-2">
                 <input
                   aria-label={`${label} picker`}
@@ -156,7 +156,7 @@ export function ColorControl({
               </div>
             </div>
             <div className="mt-3.5">
-              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Presets</label>
+              <label className="mb-1.5 block text-[11px] font-semibold tracking-wider text-neutral-500">Presets</label>
               <div className="grid grid-cols-8 gap-1">
                 <button
                   aria-label="Use transparent"

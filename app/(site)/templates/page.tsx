@@ -10,10 +10,12 @@ import {
   Folder,
   Layers,
   Play,
-  Sparkles
+  Sparkles,
+  MousePointer2,
+  Settings2,
+  Palette
 } from "lucide-react";
 import { useI18n } from "@/common/lib/I18nProvider";
-import { SiteFooter, SiteNav } from "@/common/ui";
 import { StyleThumbnail } from "@/features/marketing";
 import { localizeTemplates, type Dictionary } from "@/common/lib/i18n";
 import { motionTemplates, type MotionTemplate } from "@/core/motion-doc/presets/templates";
@@ -195,10 +197,7 @@ export default function TemplatesPage() {
           style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}
         />
       </div>
-
-      <SiteNav />
-
-      <section className="relative px-4 pt-40 pb-24 sm:px-6 md:pt-48 md:pb-32 lg:pb-40">
+      <section className="relative px-4 pt-40 pb-24 sm:px-6 md:pt-48 md:pb-32 lg:pb-40 overflow-hidden">
         <div className="mx-auto grid max-w-[1400px] gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <motion.div 
             initial={reduce ? false : { opacity: 0, filter: "blur(12px)", y: 40 }}
@@ -242,14 +241,26 @@ export default function TemplatesPage() {
         </div>
       </section>
 
-      {/* Stats Section - Macro Whitespace */}
-      <section className="py-24 md:py-32 border-y border-white/[0.04] bg-black/40 backdrop-blur-2xl">
+      {/* Seamless Feature Typography */}
+      <section className="pb-24 pt-8 md:pt-16 relative z-10">
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {t.templatesPage.stats.map(([title, body], i) => (
-              <Reveal key={title} delay={i * 0.15} y={24} className="flex flex-col relative before:absolute before:-left-6 before:top-0 before:bottom-0 before:w-px before:bg-gradient-to-b before:from-white/10 before:to-transparent">
-                <p className="text-base font-medium text-white">{title}</p>
-                <p className="mt-3 text-base leading-relaxed text-zinc-500 max-w-[32ch] font-light">{body}</p>
+              <Reveal key={title} delay={i * 0.15} y={16} className="h-full">
+                <BezelCard className="h-full transition-transform duration-500 hover:scale-[1.02]">
+                  <div className="flex flex-col p-8 md:p-10 relative overflow-hidden h-full">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 blur-[50px] rounded-full pointer-events-none" />
+                    
+                    <div className="mb-12 flex items-center justify-start relative z-10">
+                      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white">
+                        {i === 0 ? <MousePointer2 className="h-5 w-5 stroke-[1.5]" /> : i === 1 ? <Settings2 className="h-5 w-5 stroke-[1.5]" /> : <Palette className="h-5 w-5 stroke-[1.5]" />}
+                      </span>
+                    </div>
+                    
+                    <h3 className="text-2xl font-medium text-white relative z-10">{title}</h3>
+                    <p className="mt-4 text-base leading-relaxed text-zinc-400 font-light relative z-10">{body}</p>
+                  </div>
+                </BezelCard>
               </Reveal>
             ))}
           </div>
@@ -353,9 +364,6 @@ export default function TemplatesPage() {
             </div>
           </Reveal>
         </div>
-      </section>
-
-      <SiteFooter />
-    </main>
+      </section>    </main>
   );
 }

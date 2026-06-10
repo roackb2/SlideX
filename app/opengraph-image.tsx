@@ -138,7 +138,7 @@ export default async function OpenGraphImage() {
                 marginBottom: 16
               }}
             >
-              MDX Motion Studio
+              SlideX Studio
             </div>
 
             {/* Headline */}

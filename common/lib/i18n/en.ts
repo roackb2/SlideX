@@ -31,7 +31,7 @@ export const enDictionary = {
       presets: "Presets",
       docs: "Docs",
       rights: "© 2026 SlideX. All rights reserved.",
-      signature: "MDX Motion Studio"
+      signature: ""
     },
     thumbnail: {
       fallbackLabel: "Preset",
@@ -164,6 +164,11 @@ export const enDictionary = {
       presets: {
         title: "Start from a useful deck.",
         body: "Presets are complete scene systems, not blank themes. Pick one, rewrite the story, and keep the motion."
+      },
+      cta: {
+        title: "Ready to compose?",
+        body: "Open Studio and experience the new standard for motion presentations.",
+        button: "Get Started"
       }
     },
     templatesPage: {
@@ -445,13 +450,12 @@ export const enDictionary = {
         notePrefix: "Full maintenance notes remain in",
         docPath: "docs/USAGE.zh-TW.md",
         items: [
-          ["Scene", "Timed page container for one presentation moment."],
+          ["Slide", "Timed page container for one presentation moment."],
           ["Title", "Animated headline layer with enter and timing props."],
           ["Text", "Supporting copy with delay, duration, and layout controls."],
           ["Card", "Structured proof block for context and decisions."],
-          ["Metric", "Displays one key label, value, and caption."],
-          ["Chart", "Bar chart using comma-separated labels and values."],
-          ["ImageBlock", "Adds image URL, alt text, fit mode, and frame position."]
+          ["Image", "Adds image URL, alt text, fit mode, and frame position."],
+          ["CTA", "High-contrast button component to drive user action."]
         ]
       },
       cta: {

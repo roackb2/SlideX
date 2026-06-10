@@ -124,7 +124,7 @@ export function MdxEditorPane({
     <div className="flex min-h-0 flex-1 flex-col bg-transparent">
       <div className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.02] px-4 py-3">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="rounded-md border border-white/[0.08] bg-black/40 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-neutral-400">
+          <span className="rounded-md border border-white/[0.08] bg-black/40 px-2 py-1 font-mono text-[10px] tracking-wider text-neutral-400">
             {editorScope === "selection" ? selectionLabel : "deck.mdx"}
           </span>
           <span className="text-[11px] font-medium text-neutral-500">{lineCount} lines</span>
@@ -159,7 +159,7 @@ export function MdxEditorPane({
         </div>
       </div>
       <div className="border-b border-white/[0.06] bg-black/20 px-4 py-3">
-        <div className="mb-2.5 px-1 text-[10px] font-bold uppercase tracking-widest text-neutral-500">Insert Blocks</div>
+        <div className="mb-2.5 px-1 text-[10px] font-bold tracking-widest text-neutral-500">Insert Blocks</div>
         <div className="flex flex-wrap gap-2">
           {snippetTemplates.map((snippet) => (
             <button

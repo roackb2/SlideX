@@ -10,33 +10,6 @@ import { useI18n } from "@/common/lib/I18nProvider";
 const GITHUB_REPOSITORY_URL = "https://github.com/zz41354899/SlideX";
 const easeSmooth = [0.22, 1, 0.36, 1] as const;
 
-const menuVariants = {
-  hidden: { opacity: 0, y: -10, scale: 0.97, filter: "blur(8px)" },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    filter: "blur(0px)",
-    transition: { duration: 0.4, ease: easeSmooth }
-  },
-  exit: {
-    opacity: 0,
-    y: -8,
-    scale: 0.98,
-    filter: "blur(6px)",
-    transition: { duration: 0.25, ease: easeSmooth }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, x: -14 },
-  visible: (i: number) => ({
-    opacity: 1,
-    x: 0,
-    transition: { delay: 0.1 + i * 0.06, duration: 0.35, ease: easeSmooth }
-  })
-};
-
 function GithubMark({ className }: { className?: string }) {
   return (
     <svg
@@ -71,13 +44,20 @@ export function SiteNav() {
   }, [isMenuOpen]);
 
   return (
-    <div className="fixed inset-x-0 top-0 z-50 flex justify-center p-2.5 sm:p-3 md:p-4">
+    <div 
+      className="fixed inset-x-0 top-0 z-50 flex justify-center px-3 pb-3 md:px-4 md:pb-4"
+      style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}
+    >
       <div className="relative w-full max-w-5xl">
         <motion.nav
           initial={{ y: -24, opacity: 0, scale: 0.98 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, ease: easeSmooth }}
-          className="flex h-[56px] items-center justify-between gap-3 rounded-full border border-white/[0.11] bg-[#111118]/82 px-3 py-2 shadow-2xl shadow-black/35 backdrop-blur-2xl sm:h-[58px] sm:px-4"
+          className={`flex h-[56px] items-center justify-between gap-3 rounded-full border px-4 py-2 transition-all duration-500 sm:h-[58px] sm:px-5 ${
+            isMenuOpen 
+              ? "border-transparent bg-transparent shadow-none" 
+              : "border-white/[0.11] bg-[#111118]/82 shadow-2xl shadow-black/35 backdrop-blur-2xl"
+          }`}
         >
           <div className="flex min-w-0 items-center gap-3 md:gap-5">
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
@@ -240,96 +220,59 @@ export function SiteNav() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-[-1] md:hidden"
-              onClick={() => setIsMenuOpen(false)}
+              transition={{ duration: 0.5, ease: easeSmooth }}
+              className="fixed inset-0 z-[-1] flex flex-col justify-between bg-[#050505]/95 backdrop-blur-3xl md:hidden"
             >
-              <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div
-              variants={menuVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="absolute left-0 right-0 top-full z-10 pt-2 md:hidden"
-            >
-              <div className="mx-auto max-w-5xl">
-                <div className="overflow-hidden rounded-[24px] border border-white/[0.13] bg-[#111118]/96 shadow-2xl shadow-black/60 backdrop-blur-2xl sm:rounded-[2rem]">
-                  <div className="border-b border-white/[0.08] px-5 py-4">
-                    <p className="text-sm font-semibold text-white">{t.common.productName}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-neutral-500">
-                      {t.nav.mobileDescription}
-                    </p>
-                  </div>
-
-                  <div className="p-3">
-                    {navItems.map((item, idx) => {
-                      const isActive = pathname === item.href;
-
-                      return (
-                        <motion.div
-                          key={item.href}
-                          custom={idx}
-                          variants={itemVariants}
-                          initial="hidden"
-                          animate="visible"
-                          whileHover={{ x: 4 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <Link
-                            href={item.href}
-                            onClick={() => setIsMenuOpen(false)}
-                            className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-base font-medium transition-colors ${
-                              isActive
-                                ? "bg-white/[0.09] text-white"
-                                : "text-neutral-300 hover:bg-white/[0.07] hover:text-white"
-                            }`}
-                          >
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.09] bg-white/[0.06]">
-                              <span className="text-xs text-neutral-400">
-                                {String(idx + 1).padStart(2, "0")}
-                              </span>
-                            </div>
-                            <span>{item.label}</span>
-                            {isActive && (
-                              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#8b95e0]" />
-                            )}
-                          </Link>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-
+              <div className="h-[80px] shrink-0" />
+              
+              <div className="flex flex-1 flex-col justify-center px-8 sm:px-12">
+                {navItems.map((item, idx) => (
                   <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2, duration: 0.3, ease: easeSmooth }}
-                    className="border-t border-white/[0.08] p-3"
+                    key={item.href}
+                    initial={{ opacity: 0, y: 50, rotateX: 20 }}
+                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: 0.1 + idx * 0.08, duration: 0.6, ease: easeSmooth }}
+                    className="overflow-hidden py-3"
+                    style={{ perspective: 1000 }}
                   >
-                    <button
-                      className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/[0.1] bg-white/[0.06] px-4 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.2] hover:bg-white/[0.09]"
-                      type="button"
-                      aria-label={t.nav.languageLabel}
-                      onClick={() => setLocale(nextLocale)}
-                    >
-                      <Languages className="h-4 w-4" />
-                      {t.nav.localeShortLabel}
-                    </button>
                     <Link
-                      href="/studio"
+                      href={item.href}
                       onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3.5 text-sm font-semibold text-black transition-all hover:bg-neutral-200 active:scale-[0.98]"
+                      className="group flex items-center text-[2.75rem] font-black tracking-tighter text-neutral-500 transition-all duration-500 hover:translate-x-6 hover:text-white leading-none sm:text-6xl"
                     >
-                      {t.nav.getStarted}
+                      <span className="mr-5 text-xl font-bold text-neutral-800 transition-colors duration-500 group-hover:text-blue-500">
+                        0{idx + 1}
+                      </span>
+                      {item.label}
                     </Link>
                   </motion.div>
-                </div>
+                ))}
               </div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ delay: 0.3, duration: 0.5, ease: easeSmooth }}
+                className="flex flex-col gap-6 px-8 pb-10 sm:px-12"
+              >
+                <button
+                  className="flex w-max items-center gap-3 text-sm font-semibold text-neutral-400 transition hover:text-white"
+                  type="button"
+                  onClick={() => setLocale(nextLocale)}
+                >
+                  <Languages className="h-5 w-5" />
+                  {t.nav.languageLabel} ({nextLocale})
+                </button>
+                <Link
+                  href="/studio"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex h-14 w-full items-center justify-center rounded-full bg-white text-lg font-bold text-black transition-transform duration-300 hover:scale-[1.02] active:scale-95"
+                >
+                  {t.nav.getStarted}
+                </Link>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

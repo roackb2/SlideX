@@ -79,7 +79,7 @@ export function Metric({
       style={surfaceVars({ background, backgroundColor, color, mutedColor, textColor })}
       {...animation}
     >
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--slide-muted)]" style={{ color: "var(--block-muted, var(--slide-muted))" }}>
+      <p className="text-xs font-semibold tracking-[0.18em] text-[var(--slide-muted)]" style={{ color: "var(--block-muted, var(--slide-muted))" }}>
         {label}
       </p>
       <p className="mt-3 text-5xl font-semibold leading-none text-[var(--slide-fg)]" style={{ color: "var(--block-fg, var(--slide-fg))" }}>
@@ -183,7 +183,7 @@ function BarChartBody({
                   }}
                 />
               </div>
-              <span className="absolute -bottom-6 max-w-full truncate text-[10px] uppercase tracking-wide text-[var(--slide-muted)]" style={{ color: "var(--block-muted, var(--slide-muted))" }}>
+              <span className="absolute -bottom-6 max-w-full truncate text-[10px] tracking-wide text-[var(--slide-muted)]" style={{ color: "var(--block-muted, var(--slide-muted))" }}>
                 {labels[index] ?? `D${index + 1}`}
               </span>
             </div>
@@ -253,7 +253,7 @@ function LineChartBody({
       </svg>
       <div className="relative z-10 grid grid-flow-col auto-cols-fr gap-2 mt-1">
         {values.map((value, index) => (
-          <span className="truncate text-center text-[10px] uppercase tracking-wide text-[var(--slide-muted)]" key={`${value}-label-${index}`} style={{ color: "var(--block-muted, var(--slide-muted))" }}>
+          <span className="truncate text-center text-[10px] tracking-wide text-[var(--slide-muted)]" key={`${value}-label-${index}`} style={{ color: "var(--block-muted, var(--slide-muted))" }}>
             {labels[index] ?? `D${index + 1}`}
           </span>
         ))}
@@ -321,7 +321,7 @@ function PieChartBody({
         </svg>
         {mode === "donut" ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--slide-muted)] opacity-80" style={{ color: "var(--block-muted, var(--slide-muted))" }}>Total</span>
+            <span className="text-[10px] font-bold tracking-widest text-[var(--slide-muted)] opacity-80" style={{ color: "var(--block-muted, var(--slide-muted))" }}>Total</span>
             <span className="text-2xl font-semibold text-[var(--slide-fg)]" style={{ color: "var(--block-fg, var(--slide-fg))" }}>{total}</span>
           </div>
         ) : null}

@@ -254,7 +254,7 @@ function ToolModal({
         <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
           <div className="flex items-center gap-2 text-neutral-200">
             {group.icon}
-            <span className="text-xs font-bold uppercase tracking-[0.18em]">{group.label}</span>
+            <span className="text-xs font-bold tracking-[0.18em]">{group.label}</span>
           </div>
           <button aria-label="Close shape tools" className="rounded-lg p-1.5 text-neutral-500 transition hover:bg-white/[0.06] hover:text-white" onClick={onClose} type="button">
             <X size={14} />

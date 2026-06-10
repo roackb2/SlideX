@@ -1,17 +1,16 @@
 # SlideX
 
-SlideX 是一個以 MDX scene 為核心的動態簡報系統。它把簡報內容、版面、動畫節奏、預覽與桌面專案流程放在同一個可維護的程式碼結構裡。
+SlideX 是一個以 MDX scene 為核心的動態簡報系統。它把簡報內容、版面、動畫節奏、預覽與桌面專案流程放在同一個可維護的程式碼結構裡。全新升級的 Studio 介面採用 Double-Bezel 玻璃擬真（Glassmorphism）與高對比視覺美學，將開發工具的穩健與高階設計的質感完美融合。
 
 目前版本包含：
 
-- public website：產品首頁、文件、範本頁、下載頁
-- web Studio：MDX 編輯、圖層、Inspector、即時 preview、template/snippet
+- **Public Website**：採用高階美學設計的產品首頁、文件、範本頁、下載頁
+- **Web Studio**：包含 MDX 編輯覆蓋層 (`WorkspaceCodeEditorOverlay`)、圖層側邊欄 (`WorkspaceLayerSidebar`)、時間軸與屬性面板 (`WorkspaceInspectorPanel`)、頂部工作列 (`StudioHeader`) 以及即時預覽畫布 (`PreviewCanvas`)。
+- **MotionDoc Core**：MDX Parser、serializer、自由版面座標系統、預設範本
+- **Architecture**：以 `app/`、`common/`、`core/`、`features/` 為基礎的 Domain-Driven Layering
+- **Boundaries**：使用 `eslint-plugin-boundaries` 用 lint 嚴格固定 import 方向
 
-- MotionDoc core：parser、serializer、freeform frame rules、export runtime、presets
-- DDD/SOLID/DRY layer refactor：以 `app/`、`common/`、`core/`、`features/` 分層
-- `eslint-plugin-boundaries`：用 lint 固定 import direction
-
-這還不是完整影片剪輯器。現在沒有 auth、database、billing、雲端 rendering、audio editor、完整 MP4 export pipeline；目前重點是「可編輯、可預覽、可維護」的 motion document workflow。
+目前的重點是建立一個「可編輯、可預覽、可維護」且視覺頂尖的 MDX 動態簡報流程。
 
 ## Quick Start
 
@@ -42,23 +41,23 @@ npm run lint
 
 ## Architecture
 
-新版架構採用 domain-driven layering。不要再新增 root `components/` 或 root `lib/`。
+新版架構採用 Domain-Driven Layering。請遵守以下規則：
 
 ```text
 app/
-  Next route composition only.
+  Next route composition only. (不包含商業邏輯或 UI 實作)
 
 common/
-  lib/    Cross-feature libraries and providers.
-  ui/     Cross-feature reusable UI.
-  util/   Framework-light utilities.
+  lib/    跨 feature 的 libraries 和 providers (例如 i18n)。
+  ui/     跨 feature 共用的可重用高階 UI。
+  util/   輕量級 utility。
 
 core/
   motion-doc/
-    domain/          Domain types, parser, frame/value rules.
-    application/     Commands, serializers, factories, stats.
-    infrastructure/  Export/runtime adapters.
-    presets/         Default MDX, templates, shader presets.
+    domain/          Domain types, parser, frame/value rules。
+    application/     Commands, serializers, factories。
+    infrastructure/  Export/runtime adapters。
+    presets/         Default MDX, templates, shader presets。
 
 features/
   docs/
@@ -89,7 +88,7 @@ import { HomePage } from "@/features/marketing";
 
 ## Boundaries
 
-`eslint-plugin-boundaries` 在 [eslint.config.mjs](eslint.config.mjs) 中限制 import direction。
+`eslint-plugin-boundaries` 在 `eslint.config.mjs` 中限制 import direction。
 
 核心原則：
 
@@ -99,9 +98,9 @@ import { HomePage } from "@/features/marketing";
 - `features/*/application` 放非 UI 決策與 commands。
 - `features/*/infrastructure` 放 localStorage、Tauri、filesystem、browser adapter。
 - `features/*/ui` 放 React components、UI hooks、interaction state。
-- shared 邏輯先判斷 ownership，不把東西丟進 generic dumping ground。
+- Shared 邏輯先判斷 ownership，不把東西丟進 generic dumping ground。
 
-每次移動檔案、改 public API、或新增 feature 後都應跑：
+每次移動檔案、改 public API 或新增 feature 後都應跑：
 
 ```bash
 npm run lint
@@ -110,51 +109,47 @@ npm run build
 
 ## Studio Structure
 
-Studio 是目前最重要的 feature，拆成：
+Studio 是目前最重要的 feature，目前採用全新的高階視覺工作區架構：
 
 ```text
 features/studio/
 ├── application/
 │   ├── motionDocCommands.ts
-│   ├── previewCanvas.ts
 │   ├── previewProps.ts
-│   ├── colorPalettes.ts
-│   └── themeColors.ts
+│   └── colorPalettes.ts
 ├── infrastructure/
-│   ├── customSwatches.ts
 │   ├── customThemes.ts
-│   ├── recentProjects.ts
-│   └── tauriProject.ts
+│   └── recentProjects.ts
 └── ui/
     ├── MotionDocApp.tsx
     ├── StudioWorkspace.tsx
+    ├── StudioHeader.tsx
     ├── PreviewCanvas.tsx
-    ├── inspector/
-    ├── preview/
-    ├── hooks/
     └── workspace/
+        ├── WorkspaceCodeEditorOverlay.tsx
+        ├── WorkspaceLayerSidebar.tsx
+        ├── WorkspaceInspectorPanel.tsx
+        └── WorkspaceTemplateDialog.tsx
 ```
 
 設計方向：
 
-- `MotionDocApp.tsx`：整體 state orchestration。
-- `StudioWorkspace.tsx`：workspace composition。
-- `PreviewCanvas.tsx`：canvas interaction orchestration。
-- `inspector/InspectorControls.tsx`：小型 facade。
-- color/theme storage 放 `infrastructure`。
-- frame、selection、palette、preview prop normalization 放 `application`。
+- `MotionDocApp.tsx`：整體狀態協調。
+- `StudioWorkspace.tsx`：版面組合，整合 Toolbar、Sidebar、Panel 與 Editor Overlay。
+- `WorkspaceCodeEditorOverlay.tsx`：取代原本的單一編輯器，成為漂浮式的高階 MDX 編輯視窗。
+- Color/Theme storage 放 `infrastructure`。
+- Frame、selection、palette、preview prop normalization 放 `application`。
 
 ## MotionDoc Components
 
-目前 parser 支援的主要 scene/block：
+目前 parser 支援的主要 scene/block（已與最新版 Studio 對齊）：
 
-- `Slide` / `Scene`
+- `Slide` （取代舊版的 Scene）
 - `Title`
 - `Text`
 - `Card`
-- `Metric`
-- `Chart`
-- `ImageBlock`
+- `Image`
+- `CTA`
 
 常用 motion props：
 
@@ -180,17 +175,10 @@ core/motion-doc/presets/
 ├── templates.ts
 ├── templates/
 │   ├── commercialTemplates.ts
-│   ├── premiumBusinessTemplates.ts
-│   ├── snippetTemplates.ts
-│   ├── templateFactory.ts
-│   └── templateTypes.ts
+│   └── premiumBusinessTemplates.ts
 ├── shaderPresets.ts
 └── shaders/
-    ├── shaderPresetFactory.ts
-    ├── shaderCollections.ts
-    ├── atmosphericShaderBodies.ts
-    ├── motionShaderBodies.ts
-    └── watercolorShaderBodies.ts
+    └── shaderPresetFactory.ts
 ```
 
 `templates.ts` 與 `shaderPresets.ts` 是 public facade；新增 preset 時請放到對應子模組，不要把大型資料重新塞回 facade。
@@ -199,20 +187,20 @@ core/motion-doc/presets/
 
 新增功能時請先描述：
 
-- Goal：功能要解決什麼問題
-- Scope：這次做什麼、不做什麼
-- Owner：屬於 `core`、`common`、或哪個 `features/*`
-- Layer：domain / application / infrastructure / ui
-- Types：有限選項用 literal union、preset 用 `satisfies`
-- Validation：至少跑 `npm run lint`，移動 API 或觸 React/Tauri 邊界時跑 `npm run build`
+- **Goal**：功能要解決什麼問題
+- **Scope**：這次做什麼、不做什麼
+- **Owner**：屬於 `core`、`common`、或哪個 `features/*`
+- **Layer**：domain / application / infrastructure / ui
+- **Types**：有限選項用 literal union、preset 用 `satisfies`
+- **Validation**：至少跑 `npm run lint`，移動 API 或觸碰邊界時跑 `npm run build`
 
-檔案原則：
+檔案與介面設計原則：
 
+- **High-End UI First**：不要妥協於平庸的預設樣式。所有新介面必須嚴守 Double-Bezel（雙層邊框）、Glassmorphism（玻璃擬真）與平滑轉場 (`cubic-bezier(0.32, 0.72, 0, 1)`) 規範。
 - 儘量讓單一 `.ts/.tsx` 低於 500 行。
 - 大 React component 優先拆 section、panel、hook、pure helper。
-- browser/Tauri/localStorage 邏輯不要放 UI component 裡。
+- browser/localStorage 邏輯不要放 UI component 裡。
 - UI option value 不要隨便放寬成 `string`。
-- parser 邊界可以使用較寬的 record type；UI field 逐步收斂成更明確的型別。
 
 ## Useful Docs
 
@@ -230,16 +218,14 @@ npm run build        # Next production build with webpack
 npm run build:clean  # Clean then build
 npm run start        # Start production Next server
 npm run lint         # ESLint + boundaries
-
 ```
 
 ## Current Direction
 
-SlideX 的方向是先把 MDX scene deck 與 Studio editor 穩定下來。未來可延伸：
+SlideX 的方向是先把 MDX slide deck 與全新改版的 Studio editor 穩定下來。未來可延伸：
 
-- local asset library
-- richer export outputs
+- Local asset library
+- Richer export outputs
 - MP4/render pipeline
-- stronger block-specific typing
-- more motion presets and shader controls
-- project-level versioning and packaging
+- Stronger block-specific typing
+- Project-level versioning and packaging

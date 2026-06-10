@@ -31,7 +31,7 @@ export const zhTwDictionary = {
       presets: "範本",
       docs: "文件",
       rights: "© 2026 SlideX. 保留所有權利。",
-      signature: "MDX Motion Studio"
+      signature: ""
     },
     thumbnail: {
       fallbackLabel: "範本",
@@ -164,6 +164,11 @@ export const zhTwDictionary = {
       presets: {
         title: "從有用的簡報開始。",
         body: "範本是完整場景系統，不是空白主題。選一個、改寫故事，保留動效。"
+      },
+      cta: {
+        title: "準備好製作第一份簡報了嗎？",
+        body: "開啟 Studio，體驗全新的動態簡報標準。",
+        button: "立即開始"
       }
     },
     templatesPage: {
@@ -445,13 +450,12 @@ export const zhTwDictionary = {
         notePrefix: "完整維護筆記保留在",
         docPath: "docs/USAGE.zh-TW.md",
         items: [
-          ["Scene", "一個簡報時刻的計時頁面容器。"],
+          ["Slide", "一個簡報時刻的計時頁面容器。"],
           ["Title", "帶有進場與時間 props 的動態標題層。"],
           ["Text", "支援 delay、duration 與版面控制的輔助文字。"],
           ["Card", "用於脈絡與決策的結構化證據區塊。"],
-          ["Metric", "用於呈現關鍵指標、數值與短說明。"],
-          ["Chart", "用逗號分隔 labels 與 values 的長條圖。"],
-          ["ImageBlock", "可放入圖片 URL、alt、fit 與畫面位置。"]
+          ["Image", "可放入圖片 URL、alt、fit 與畫面位置。"],
+          ["CTA", "引導使用者行動的高對比按鈕元件。"]
         ]
       },
       cta: {

@@ -60,7 +60,7 @@ export function LabeledTemplateCard({
         </span>
       </div>
       <div
-        className={`mx-auto mt-2 max-w-full truncate rounded-lg px-2 py-0.5 text-center text-[10px] font-bold tracking-wide uppercase transition-all ${
+        className={`mx-auto mt-2 max-w-full truncate rounded-lg px-2 py-0.5 text-center text-[10px] font-bold tracking-wide transition-all ${
           selected ? "w-fit bg-[#8ea5ff] text-black shadow-sm" : "text-neutral-500 group-hover:text-neutral-300"
         }`}
       >

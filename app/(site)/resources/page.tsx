@@ -17,10 +17,14 @@ import {
   Image as ImageIcon,
   Layers,
   Layout,
-  Type
+  MousePointerClick,
+  Type,
+  Blocks,
+  Terminal,
+  Users,
+  X
 } from "lucide-react";
 import { useI18n } from "@/common/lib/I18nProvider";
-import { SiteFooter, SiteNav } from "@/common/ui";
 import type { Dictionary } from "@/common/lib/i18n";
 
 const customEase = [0.32, 0.72, 0, 1] as const;
@@ -61,7 +65,7 @@ function BezelCard({ children, className = "" }: { children: ReactNode; classNam
   );
 }
 
-const componentIcons = [Layers, Type, AlignLeft, Layout, Gauge, BarChart3, ImageIcon];
+const componentIcons = [Layers, Type, AlignLeft, Layout, ImageIcon, MousePointerClick];
 
 function ResourceHeroVisual({ copy }: { copy: Dictionary["resourcesPage"]["heroVisual"] }) {
   const reduce = useReducedMotion();
@@ -76,19 +80,19 @@ function ResourceHeroVisual({ copy }: { copy: Dictionary["resourcesPage"]["heroV
       <div className="absolute -inset-10 rounded-[3rem] bg-[radial-gradient(circle_at_50%_50%,rgba(142,165,255,0.1),transparent_50%)] blur-3xl mix-blend-screen pointer-events-none" />
       <BezelCard>
         <div className="flex flex-col h-full min-h-[400px]">
-          <div className="flex items-center justify-between border-b border-white/[0.04] bg-white/[0.02] px-6 py-5">
-            <div className="flex items-center gap-3 text-[13px] font-medium text-white tracking-wide">
-              <BookOpen className="h-4 w-4 text-white" />
-              {copy.label}
+          <div className="flex items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-6 py-5">
+            <div className="flex items-center gap-2.5">
+              <Code2 className="text-[#a78bfa]" size={18} />
+              <span className="text-[15px] font-semibold tracking-wide text-white">{copy.label}</span>
             </div>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-[11px] text-zinc-400">
-              MDX
-            </span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 bg-white/5 transition-colors hover:text-white">
+              <X size={14} />
+            </div>
           </div>
 
-          <div className="grid gap-6 p-8 md:p-10 flex-1 bg-[#0a0a0c]">
-            <div className="overflow-x-auto rounded-[1.5rem] border border-white/10 bg-black/60 p-6 md:p-8 font-mono text-[13px] leading-8 text-zinc-400 shadow-2xl relative">
-              <div className="absolute top-0 right-0 h-32 w-32 bg-blue-500/5 blur-[40px] pointer-events-none" />
+          <div className="flex-1 p-8 md:p-10 bg-[#0b0814]/40">
+            <div className="overflow-x-auto rounded-[1.5rem] border border-white/[0.08] bg-[#0b0814]/90 p-6 md:p-8 font-mono text-[13px] leading-8 text-zinc-400 shadow-2xl relative transition-transform duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02]">
+              <div className="absolute top-0 right-0 h-32 w-32 bg-[#a78bfa]/10 blur-[40px] pointer-events-none" />
               <p className="text-zinc-600 relative z-10">{`<Scene duration={5}>`}</p>
               <p className="pl-6 text-zinc-300 relative z-10">{`<Title enter="fadeUp">`}</p>
               <p className="pl-12 text-white relative z-10">{copy.codeTitle}</p>
@@ -96,12 +100,13 @@ function ResourceHeroVisual({ copy }: { copy: Dictionary["resourcesPage"]["heroV
               <p className="pl-6 text-zinc-300 relative z-10">{`<Text delay={0.2}>`}</p>
               <p className="pl-12 text-zinc-500 relative z-10">{copy.codeBody}</p>
               <p className="pl-6 text-zinc-300 relative z-10">{`</Text>`}</p>
+              <p className="pl-6 text-zinc-300 relative z-10">{`<Chart values="42,58,72,92" />`}</p>
               <p className="text-zinc-600 relative z-10">{`</Scene>`}</p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-3 mt-6">
               {copy.cards.map(([title, body]) => (
-                <div key={title} className="rounded-[1.25rem] border border-white/10 bg-white/[0.02] p-5">
+                <div key={title} className="rounded-[1.25rem] border border-white/[0.08] bg-white/[0.02] p-5">
                   <p className="text-[14px] font-medium text-white">{title}</p>
                   <p className="mt-2 text-[13px] text-zinc-500 font-light leading-relaxed">{body}</p>
                 </div>
@@ -136,10 +141,7 @@ export default function ResourcesPage() {
           style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}
         />
       </div>
-
-      <SiteNav />
-
-      <section className="relative px-4 pt-40 pb-24 sm:px-6 md:pt-48 md:pb-32 lg:pb-40">
+      <section className="relative px-4 pt-40 pb-24 sm:px-6 md:pt-48 md:pb-32 lg:pb-40 overflow-hidden">
         <div className="mx-auto grid max-w-[1400px] gap-16 lg:grid-cols-[1fr_1fr] lg:items-center">
           <motion.div 
             initial={reduce ? false : { opacity: 0, filter: "blur(12px)", y: 40 }}
@@ -183,29 +185,32 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      {/* Quick Links Section - Asymmetric Bento Minimal */}
-      <section className="py-24 md:py-32 border-y border-white/[0.04] bg-black/40 backdrop-blur-2xl px-4 sm:px-6">
-        <div className="mx-auto grid max-w-[1400px] gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {t.resourcesPage.resourceItems.map((item, index) => (
-            <motion.a
-              key={item.title}
-              initial={reduce ? false : { opacity: 0, y: 32, filter: "blur(8px)" }}
-              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ delay: index * 0.1, duration: 1, ease: customEase }}
-              href={item.href}
-              className="group rounded-[2rem] border border-white/10 bg-white/[0.02] p-8 transition-colors hover:bg-white/[0.05]"
-            >
-              <div className="mb-8 flex items-center justify-between">
-                <span className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[11px] font-mono tracking-wide text-zinc-400">
-                  {item.label}
-                </span>
-                <ExternalLink className="h-4 w-4 text-zinc-600 transition-colors duration-500 group-hover:text-white" />
-              </div>
-              <h2 className="text-xl font-medium text-white">{item.title}</h2>
-              <p className="mt-3 text-[15px] leading-relaxed text-zinc-500 font-light">{item.description}</p>
-            </motion.a>
-          ))}
+      {/* Seamless Quick Links Typography */}
+      <section className="pb-24 pt-8 md:pt-16 relative z-10">
+        <div className="mx-auto max-w-[1400px] px-4 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {t.resourcesPage.resourceItems.map((item, index) => (
+              <Reveal key={item.title} delay={index * 0.1} y={16} className="h-full">
+                <Link href={item.href} className="group block h-full">
+                  <BezelCard className="h-full transition-transform duration-500 group-hover:scale-[1.02]">
+                    <div className="flex flex-col p-8 md:p-10 relative overflow-hidden h-full">
+                      <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 blur-[50px] rounded-full pointer-events-none transition-opacity duration-500 group-hover:opacity-100 opacity-60" />
+                      
+                      <div className="mb-12 flex items-center justify-between relative z-10">
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-white/10 group-hover:scale-105">
+                          {index === 0 ? <BookOpen className="h-6 w-6 stroke-[1.5]" /> : index === 1 ? <Blocks className="h-6 w-6 stroke-[1.5]" /> : index === 2 ? <Terminal className="h-6 w-6 stroke-[1.5]" /> : <Users className="h-6 w-6 stroke-[1.5]" />}
+                        </div>
+                        <ExternalLink className="h-4 w-4 text-zinc-600 transition-all duration-500 group-hover:text-white group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                      </div>
+                      
+                      <h3 className="text-2xl font-medium text-white relative z-10 transition-colors duration-500 group-hover:text-blue-400">{item.title}</h3>
+                      <p className="mt-4 text-[15px] leading-relaxed text-zinc-400 font-light relative z-10">{item.description}</p>
+                    </div>
+                  </BezelCard>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -235,11 +240,10 @@ export default function ResourcesPage() {
                   <div className="flex flex-col p-8 md:p-10 relative overflow-hidden h-full">
                     <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 blur-[50px] rounded-full pointer-events-none" />
                     
-                    <div className="mb-12 flex items-center justify-between relative z-10">
-                      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white">
-                        <FileCode2 className="h-5 w-5 stroke-[1.5]" />
-                      </span>
-                      <span className="font-mono text-[11px] tracking-wide text-zinc-500">0{index + 1}</span>
+                    <div className="mb-12 flex items-center justify-start relative z-10">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-white/10 group-hover:scale-105">
+                        <FileCode2 className="h-6 w-6 stroke-[1.5]" />
+                      </div>
                     </div>
                     <h3 className="text-2xl font-medium text-white relative z-10">{section.title}</h3>
                     <p className="mt-4 text-base leading-relaxed text-zinc-400 font-light relative z-10">{section.description}</p>
@@ -268,7 +272,7 @@ export default function ResourcesPage() {
         <div className="mx-auto max-w-[1400px]">
           <div className="grid gap-16 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
             <Reveal className="lg:sticky lg:top-40">
-              <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white">
+              <div className="mb-8 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/10 hover:scale-105">
                 <Code2 className="h-6 w-6 stroke-[1.5]" />
               </div>
               <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-white leading-[1.05]">
@@ -295,16 +299,19 @@ export default function ResourcesPage() {
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ delay: index * 0.1, duration: 1, ease: customEase }}
                 >
-                  <BezelCard>
-                    <div className="group p-6 md:p-8 flex flex-col h-full bg-[#0a0a0c] transition-colors duration-500 hover:bg-[#0d0d0f]">
-                      <div className="mb-8 flex items-center justify-between">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 border border-white/10 text-zinc-400 transition-colors duration-500 group-hover:text-white">
-                          <Icon className="h-5 w-5 stroke-[1.5]" />
+                  <BezelCard className="h-full">
+                    <div className="group p-8 md:p-10 flex flex-col h-full relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 blur-[50px] rounded-full pointer-events-none transition-opacity duration-500 group-hover:opacity-100 opacity-60" />
+                      
+                      <div className="mb-12 flex items-center justify-between relative z-10">
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-white/10 group-hover:scale-105">
+                          <Icon className="h-6 w-6 stroke-[1.5]" />
                         </div>
-                        <ChevronRight className="h-4 w-4 text-zinc-600 transition-colors duration-500 group-hover:text-white" />
+                        <ChevronRight className="h-5 w-5 text-zinc-600 transition-all duration-500 group-hover:text-white group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                       </div>
-                      <h3 className="font-mono text-[13px] font-medium tracking-wide text-white">{name}</h3>
-                      <p className="mt-3 text-[14px] leading-relaxed text-zinc-500 font-light">{description}</p>
+                      
+                      <h3 className="text-2xl font-medium text-white relative z-10 transition-colors duration-500 group-hover:text-blue-400">{name}</h3>
+                      <p className="mt-4 text-[15px] leading-relaxed text-zinc-400 font-light relative z-10">{description}</p>
                     </div>
                   </BezelCard>
                 </motion.div>
@@ -343,9 +350,6 @@ export default function ResourcesPage() {
             </div>
           </Reveal>
         </div>
-      </section>
-
-      <SiteFooter />
-    </main>
+      </section>    </main>
   );
 }

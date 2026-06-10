@@ -63,7 +63,7 @@ export function WatercolorStudioPanel({
   return (
     <div className="flex flex-col gap-4.5 animate-[bubble-appear_0.3s_ease-out]">
       <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
-        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#8ea5ff] flex items-center gap-1.5">
+        <span className="text-[10px] font-bold tracking-[0.15em] text-[#8ea5ff] flex items-center gap-1.5">
           <Palette size={12} className="text-[#8ea5ff]" />
           Watercolor Studio
         </span>
@@ -112,7 +112,7 @@ export function WatercolorStudioPanel({
       <div className="p-1.5 rounded-[1.25rem] border border-white/[0.03] bg-[#0A0A0C]/50 shadow-[0_4px_24px_rgba(0,0,0,0.15)] backdrop-blur-xl">
         <div className="rounded-[1rem] border border-white/[0.03] bg-black/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden">
           <div className="flex items-center justify-between border-b border-white/[0.03] px-3.5 py-3 bg-white/[0.01]">
-            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-400 flex items-center gap-2">
+            <span className="text-[10px] font-bold tracking-[0.16em] text-neutral-400 flex items-center gap-2">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#8ea5ff]/10 text-[#8ea5ff] border border-[#8ea5ff]/20 shadow-[0_0_10px_rgba(142,165,255,0.1)]">
                 <Palette size={10} />
               </span>
@@ -164,7 +164,7 @@ export function WatercolorStudioPanel({
       <div className="p-1.5 rounded-[1.25rem] border border-white/[0.03] bg-[#0A0A0C]/50 shadow-[0_4px_24px_rgba(0,0,0,0.15)] backdrop-blur-xl">
         <div className="rounded-[1rem] border border-white/[0.03] bg-black/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden">
           <div className="flex items-center justify-between border-b border-white/[0.03] px-3.5 py-3 bg-white/[0.01]">
-            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-400 flex items-center gap-2">
+            <span className="text-[10px] font-bold tracking-[0.16em] text-neutral-400 flex items-center gap-2">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#8ea5ff]/10 text-[#8ea5ff] border border-[#8ea5ff]/20 shadow-[0_0_10px_rgba(142,165,255,0.1)]">
                 <Sliders size={10} />
               </span>
@@ -274,7 +274,7 @@ function WatercolorColorInputs({
 
         return (
           <label className="group flex flex-col items-center gap-1.5 cursor-pointer relative" key={key}>
-            <span className="text-[8px] font-bold text-neutral-500 group-hover:text-neutral-400 transition-colors uppercase tracking-wider text-center w-full truncate">
+            <span className="text-[8px] font-bold text-neutral-500 group-hover:text-neutral-400 transition-colors tracking-wider text-center w-full truncate">
               {watercolorColorNames[index]}
             </span>
             <span
@@ -290,7 +290,7 @@ function WatercolorColorInputs({
                 value={hexValue}
               />
             </span>
-            <span className="text-[8px] font-mono text-neutral-500 bg-white/[0.02] border border-white/[0.04] px-1.5 py-0.5 rounded uppercase group-hover:text-neutral-300 transition-colors">
+            <span className="text-[8px] font-mono text-neutral-500 bg-white/[0.02] border border-white/[0.04] px-1.5 py-0.5 rounded group-hover:text-neutral-300 transition-colors">
               {displayValue.slice(0, 7)}
             </span>
           </label>

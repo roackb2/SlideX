@@ -100,7 +100,7 @@ export function LayerSidebar({
                 <Plus size={14} className="stroke-[2]" />
               </span>
               <span className="flex flex-col gap-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-white leading-none">New Slide</span>
+                <span className="text-xs font-bold tracking-wider text-white leading-none">New Slide</span>
                 <span className="text-[10px] text-neutral-500 leading-none">Choose templates...</span>
               </span>
             </span>

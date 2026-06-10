@@ -36,7 +36,7 @@ function AccordionSection({
         className="flex w-full items-center justify-between px-4 py-3.5 bg-transparent hover:bg-white/[0.02] text-left transition-colors cursor-pointer select-none active:scale-[0.99]"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="flex items-center gap-2.5 text-[10px] uppercase tracking-[0.2em] font-bold text-neutral-400">
+        <span className="flex items-center gap-2.5 text-[10px] tracking-[0.2em] font-bold text-neutral-400">
           {icon}
           {title}
         </span>
@@ -137,7 +137,7 @@ export function StudioInspector({
       
       {/* Inspector Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-white/[0.04] px-5 py-4 bg-white/[0.01]">
-        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-neutral-400">Properties</span>
+        <span className="text-[10px] tracking-[0.2em] font-bold text-neutral-400">Properties</span>
         <button
           className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-white/[0.1] bg-white/[0.05] hover:bg-white/[0.1] text-white px-2.5 text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-400 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.1)]"
           onClick={onOpenMdxEditor}

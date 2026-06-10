@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, BookOpen, CheckCircle2, Code2, FileCode2, SlidersHorizontal, Sparkles, type LucideIcon } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, Code2, FileCode2, SlidersHorizontal, Sparkles, X, type LucideIcon } from "lucide-react";
 import { easeSmooth, fadeInUp, type MdxDocsSection, type SyntaxCopy } from "@/features/docs/ui/mdxDocsModel";
 
 export function MdxDocsContent({ section, syntax }: { section: MdxDocsSection; syntax: SyntaxCopy }) {
@@ -63,11 +63,12 @@ function OverviewContent({ syntax }: { syntax: SyntaxCopy }) {
         </div>
       </motion.div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="rounded-[1.5rem] bg-white/[0.05] ring-1 ring-white/[0.12] shadow-2xl p-1">
-          <div className="h-full rounded-[calc(1.5rem-0.25rem)] bg-gradient-to-b from-[#121218] to-[#08080b] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] overflow-hidden">
+          <div className="h-full rounded-[calc(1.5rem-0.25rem)] bg-[#0b0814]/90 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] overflow-hidden relative">
+            <div className="absolute top-0 right-0 h-40 w-40 bg-[#a78bfa]/10 blur-[40px] pointer-events-none" />
             <CodePanelHeader fileLabel={syntax.fileLabel} title={syntax.overviewCodeTitle} />
-            <pre className="max-w-full overflow-x-auto p-4 text-[13px] leading-7 text-neutral-300 sm:p-5 sm:text-sm">
+            <pre className="max-w-full overflow-x-auto p-6 md:p-8 text-[13px] leading-8 text-neutral-300 font-mono relative z-10">
               <code>{syntax.overviewCode}</code>
             </pre>
           </div>
@@ -134,9 +135,10 @@ function ExampleContent({ syntax }: { syntax: SyntaxCopy }) {
   return (
     <section className="scroll-mt-28">
       <div className="rounded-[1.5rem] bg-white/[0.05] ring-1 ring-white/[0.12] shadow-2xl p-1">
-        <div className="overflow-hidden rounded-[calc(1.5rem-0.25rem)] bg-gradient-to-b from-[#121218] to-[#08080b] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+        <div className="overflow-hidden rounded-[calc(1.5rem-0.25rem)] bg-[#0b0814]/90 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] relative group">
+          <div className="absolute top-0 right-0 h-48 w-48 bg-[#a78bfa]/10 blur-[50px] pointer-events-none" />
           <CodePanelHeader fileLabel={syntax.fileLabel} title={syntax.fullExampleTitle} />
-          <pre className="max-h-[620px] overflow-auto p-4 text-[13px] leading-7 text-neutral-300 sm:p-5 sm:text-sm">
+          <pre className="max-h-[620px] overflow-auto p-6 md:p-8 text-[13px] leading-8 text-neutral-300 font-mono relative z-10">
             <code>{syntax.fullExample}</code>
           </pre>
         </div>
@@ -151,7 +153,7 @@ function PatternsContent({ syntax }: { syntax: SyntaxCopy }) {
       <div className="divide-y divide-white/[0.08]">
         {syntax.groups.map((group, index) => (
           <motion.div
-            className="grid gap-4 py-7 lg:grid-cols-[190px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)]"
+            className="grid gap-6 py-10 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]"
             initial={{ opacity: 0, y: 12 }}
             key={group.title}
             transition={{ delay: index * 0.03, duration: 0.35, ease: easeSmooth }}
@@ -159,16 +161,25 @@ function PatternsContent({ syntax }: { syntax: SyntaxCopy }) {
             whileInView={{ opacity: 1, y: 0 }}
           >
             <div>
-              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/5 text-sky-400">
-                <Code2 className="h-4 w-4" />
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/5 text-sky-400 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+                <Code2 className="h-5 w-5" />
               </div>
-              <h3 className="text-base font-semibold text-white">{group.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-neutral-500">{group.body}</p>
+              <h3 className="text-xl font-semibold text-white">{group.title}</h3>
+              <p className="mt-3 text-[15px] leading-relaxed text-neutral-400">{group.body}</p>
             </div>
-            <div className="rounded-[1rem] bg-white/[0.05] ring-1 ring-white/[0.12] shadow-2xl p-1">
-              <pre className="max-w-full overflow-x-auto rounded-[calc(1rem-0.25rem)] bg-gradient-to-b from-[#121218] to-[#08080b] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] p-4 text-xs leading-6 text-neutral-300">
-                <code>{group.code}</code>
-              </pre>
+            <div className="rounded-[1.5rem] bg-white/[0.05] ring-1 ring-white/[0.12] shadow-2xl p-1">
+              <div className="max-w-full overflow-hidden rounded-[calc(1.5rem-0.25rem)] bg-[#0b0814]/90 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] relative">
+                <div className="absolute top-0 right-0 h-32 w-32 bg-[#a78bfa]/10 blur-[40px] pointer-events-none" />
+                <div className="flex items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-5 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-[#a78bfa]" />
+                    <span className="text-[13px] font-mono text-zinc-400">MDX Snippet</span>
+                  </div>
+                </div>
+                <pre className="overflow-x-auto p-6 text-[13px] leading-8 text-neutral-300 font-mono relative z-10">
+                  <code>{group.code}</code>
+                </pre>
+              </div>
             </div>
           </motion.div>
         ))}
@@ -222,14 +233,18 @@ function MotionContent({ syntax }: { syntax: SyntaxCopy }) {
 
 function CodePanelHeader({ fileLabel, title }: { fileLabel: string; title: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] px-4 py-3">
-      <div className="flex items-center gap-2 text-sm font-semibold text-neutral-300">
-        <FileCode2 className="h-4 w-4 text-sky-400" />
-        {title}
+    <div className="flex items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-5 py-4">
+      <div className="flex items-center gap-2.5">
+        <Code2 className="text-[#a78bfa]" size={16} />
+        <span className="text-[14px] font-semibold tracking-wide text-white">{title}</span>
+        <div className="hidden h-3.5 w-[1px] bg-white/[0.08] sm:block mx-2" />
+        <span className="hidden rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-[11px] text-zinc-400 sm:block">
+          {fileLabel}
+        </span>
       </div>
-      <span className="rounded-full border border-blue-500/20 bg-blue-500/5 px-3 py-1 font-mono text-xs text-sky-300">
-        {fileLabel}
-      </span>
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 bg-white/5 transition-colors hover:text-white cursor-pointer">
+        <X size={14} />
+      </div>
     </div>
   );
 }

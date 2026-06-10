@@ -60,7 +60,7 @@ export function PreviewBlockList({
 export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlock; fillFrame?: boolean }) {
   if (block.type === "heading") {
     return (
-      <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-400">
+      <h2 className="text-sm font-semibold tracking-widest text-neutral-400">
         {block.text}
       </h2>
     );

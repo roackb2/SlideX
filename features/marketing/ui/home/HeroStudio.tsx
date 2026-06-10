@@ -1,11 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlignLeft, BarChart3, CreditCard, Image, MousePointerClick, Plus, Type } from "lucide-react";
+import { AlignLeft, BarChart3, CreditCard, Image, MousePointerClick, Plus, Sparkles, Type } from "lucide-react";
 import type { Dictionary } from "@/common/lib/i18n";
 import { springTransition } from "@/features/marketing/ui/home/homeMotion";
 
-const toolIcons = [Type, AlignLeft, CreditCard, BarChart3, Image, MousePointerClick];
+const toolIcons = [Type, Image, BarChart3, Sparkles];
 const layerIcons = [Type, AlignLeft, BarChart3, CreditCard];
 
 export function HeroStudio({ copy }: { copy: Dictionary["home"]["heroStudio"] }) {
@@ -15,7 +15,7 @@ export function HeroStudio({ copy }: { copy: Dictionary["home"]["heroStudio"] })
     active: index === 0
   }));
 
-  const toolButtons = copy.toolLabels.map((label, index) => ({
+  const toolButtons = copy.toolLabels.slice(0, 4).map((label, index) => ({
     icon: toolIcons[index] ?? Type,
     label
   }));
@@ -29,15 +29,20 @@ export function HeroStudio({ copy }: { copy: Dictionary["home"]["heroStudio"] })
     >
       <div className="absolute -inset-6 rounded-[2rem] bg-[radial-gradient(circle_at_70%_10%,rgba(0,112,243,0.12),transparent_42%)] blur-2xl" />
 
-      <div className="relative overflow-hidden rounded-[24px] border border-white/[0.12] bg-[#0b0d14]/[0.92] shadow-2xl shadow-black/50 md:rounded-[28px]">
-        <div className="flex items-center justify-between border-b border-white/[0.1] bg-white/[0.04] px-4 py-3">
+      <div className="relative overflow-hidden rounded-[24px] border border-white/[0.12] bg-[#0b0d14]/[0.92] shadow-2xl shadow-black/50 md:rounded-[28px] pb-2">
+        <div className="mx-4 mt-4 mb-2 flex items-center justify-between rounded-[2rem] border border-white/[0.06] bg-[#050505]/45 px-4 py-2.5 backdrop-blur-[32px] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.15),0_20px_40px_-10px_rgba(0,0,0,0.8)]">
           <div className="flex items-center gap-3">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#0070f3]" />
-            <span className="text-sm font-semibold text-white">{copy.title}</span>
-            <span className="hidden text-xs text-neutral-500 sm:inline">{copy.project}</span>
+            <span className="flex items-center text-sm font-semibold tracking-tight text-white">
+              <span className="mr-2 h-2 w-2 rounded-full bg-[#0070f3]" />
+              {copy.title}
+            </span>
+            <div className="hidden h-3.5 w-[1px] bg-white/[0.08] sm:block mx-1" />
+            <span className="hidden max-w-[180px] truncate whitespace-nowrap rounded-xl bg-neutral-900/40 px-3 py-1 text-[13px] font-medium tracking-wide text-neutral-300 sm:block border border-white/[0.04] shadow-inner">
+              {copy.project}
+            </span>
           </div>
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-black">
-            {copy.export}
+          <span className="flex h-7 items-center justify-center gap-1.5 rounded-lg bg-white px-3 text-xs font-bold text-black shadow-md shadow-white/[0.01]">
+            <span className="hidden sm:inline">{copy.export}</span>
           </span>
         </div>
 
@@ -86,7 +91,7 @@ export function HeroStudio({ copy }: { copy: Dictionary["home"]["heroStudio"] })
             </div>
           </aside>
 
-          <div className="relative flex min-h-[300px] flex-col overflow-hidden bg-[#05060a] sm:min-h-[360px]">
+          <div className="relative flex min-h-[300px] flex-col overflow-hidden bg-[#05060a] sm:min-h-[360px] rounded-2xl mx-2 md:ml-0 border border-white/5 shadow-inner">
             <div className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:42px_42px]" />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_38%_22%,rgba(0,112,243,0.12),transparent_32%)]" />
 
@@ -121,15 +126,15 @@ export function HeroStudio({ copy }: { copy: Dictionary["home"]["heroStudio"] })
               </div>
             </div>
 
-            <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full border border-white/[0.12] bg-[#0b0d14]/[0.9] p-1 shadow-xl backdrop-blur-xl">
+            <div className="absolute bottom-3 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1.5 rounded-xl border border-white/[0.04] bg-neutral-950/60 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.7)] backdrop-blur-xl sm:bottom-5 md:bottom-7">
               {toolButtons.map((tool) => (
                 <button
                   key={tool.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-neutral-500 transition hover:bg-white/[0.08] hover:text-white active:scale-95"
+                  className="group relative flex h-8 w-8 cursor-pointer flex-col items-center justify-center overflow-visible rounded-lg text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.06] hover:bg-white/[0.03] hover:text-white active:scale-[0.93] sm:h-9.5 sm:w-9.5 md:h-10.5 md:w-10.5"
                   type="button"
                   aria-label={tool.label}
                 >
-                  <tool.icon className="h-4 w-4" />
+                  <tool.icon className="scale-80 sm:scale-95 md:scale-105" />
                 </button>
               ))}
             </div>
@@ -139,3 +144,4 @@ export function HeroStudio({ copy }: { copy: Dictionary["home"]["heroStudio"] })
     </motion.div>
   );
 }
+

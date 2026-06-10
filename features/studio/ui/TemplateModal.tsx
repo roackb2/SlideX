@@ -38,7 +38,7 @@ export function TemplateModal({
         <div className="relative flex h-14 items-center justify-center border-b border-white/[0.06] bg-transparent px-6">
           <span className="text-sm font-bold text-white tracking-wide">Template Gallery</span>
           <div className="absolute right-4 flex items-center gap-3">
-            <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-400 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.05)]">
+            <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] font-bold tracking-[0.15em] text-neutral-400 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.05)]">
               Decks
             </span>
             <button
@@ -91,7 +91,7 @@ export function TemplateModal({
                 <span className="shrink-0 rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-mono font-bold text-neutral-400 border border-white/[0.06]">5s</span>
               </div>
               <span className="line-clamp-3 text-[11px] leading-relaxed text-neutral-500">Add a completely empty slide using the current theme, background, and accent.</span>
-              <span className="mt-auto text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-600 group-hover:text-neutral-400 transition-colors">Scene</span>
+              <span className="mt-auto text-[10px] font-bold tracking-[0.15em] text-neutral-600 group-hover:text-neutral-400 transition-colors">Scene</span>
             </div>
           </button>
 
@@ -142,7 +142,7 @@ function TemplateModalCard({
           <span className="shrink-0 rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-mono font-bold text-neutral-400 border border-white/[0.06]">{item.slideCount}p</span>
         </div>
         <span className="line-clamp-3 text-[11px] leading-relaxed text-neutral-500 group-hover:text-neutral-400 transition-colors duration-500">{item.description}</span>
-        <span className="mt-auto text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-600 group-hover:text-neutral-400 transition-colors duration-500">{item.tagLabel}</span>
+        <span className="mt-auto text-[10px] font-bold tracking-[0.15em] text-neutral-600 group-hover:text-neutral-400 transition-colors duration-500">{item.tagLabel}</span>
       </div>
     </button>
   );

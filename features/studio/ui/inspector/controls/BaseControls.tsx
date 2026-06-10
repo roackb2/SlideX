@@ -264,7 +264,7 @@ export function ColorInput({
           />
           <span className="block h-full w-full" style={{ backgroundColor: value }} />
         </span>
-        <span className="font-mono text-sm font-semibold uppercase text-neutral-300 tracking-wider pl-1.5">{value}</span>
+        <span className="font-mono text-sm font-semibold text-neutral-300 tracking-wider pl-1.5">{value}</span>
       </div>
     </div>
   );
