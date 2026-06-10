@@ -19,7 +19,7 @@ export function MdxDocsHeader({
   const CurrentIcon = currentSection.icon;
 
   return (
-    <motion.header animate="visible" className="border-b border-white/[0.08] pb-8" initial="hidden">
+    <motion.header animate="visible" className="border-b border-white/[0.05] pb-8" initial="hidden">
       <motion.div className="flex flex-wrap items-center gap-2 text-sm text-neutral-500" variants={fadeInUp}>
         <Link className="transition hover:text-neutral-200" href="/resources">
           {resourcesLabel}
@@ -33,8 +33,8 @@ export function MdxDocsHeader({
       </motion.div>
 
       <motion.div className="mt-6 max-w-3xl sm:mt-7" custom={1} variants={fadeInUp}>
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-sm font-medium text-neutral-300">
-          <CurrentIcon className="h-3.5 w-3.5 text-[#8ea5ff]" />
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/5 px-3 py-1.5 text-sm font-medium text-blue-200 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+          <CurrentIcon className="h-3.5 w-3.5 text-sky-400" />
           {syntax.eyebrow}
         </div>
         <h1 className="text-[2.35rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-4xl md:text-5xl">

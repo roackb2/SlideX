@@ -164,14 +164,6 @@ export const zhTwDictionary = {
       presets: {
         title: "從有用的簡報開始。",
         body: "範本是完整場景系統，不是空白主題。選一個、改寫故事，保留動效。"
-      },
-      downloadTeaser: {
-        title: "Mac Beta 已可下載。",
-        body: "SlideX Tauri 2.0.4 已放上 macOS Apple Silicon DMG，可先分享給早期使用者測試桌面版流程。",
-        cta: "下載 Mac Beta",
-        cardTitle: "SlideX for macOS",
-        status: "Version 2.0.4",
-        items: ["Apple Silicon DMG", "Mac 專案基礎", "Web Studio 相容"]
       }
     },
     templatesPage: {
@@ -465,44 +457,6 @@ export const zhTwDictionary = {
       cta: {
         title: "準備好建立場景了嗎？",
         body: "開啟 Studio，一邊參考文件一邊塑造第一份簡報。",
-        button: "開啟 Studio"
-      }
-    },
-    downloadPage: {
-      hero: {
-        eyebrow: "Homebrew Cask",
-        title: "SlideX for Mac 已可進行安裝。",
-        body: "第一版 Tauri 桌面 beta 目前透過 macOS 的 Homebrew Cask 發佈。這能自動繞過 macOS Gatekeeper 權限檢查，提供安全且順暢的安裝體驗。",
-        primary: "複製 Homebrew 指令",
-        secondary: "開啟 Web Studio"
-      },
-      packageCard: {
-        title: "macOS App",
-        subtitle: "Tauri 桌面版本",
-        status: "已可下載",
-        heading: "Homebrew Cask 套件",
-        fileMeta: [
-          ["來源", "Homebrew Tap"],
-          ["平台", "macOS Apple Silicon"],
-          ["Cask 名稱", "slidex"]
-        ],
-        items: ["Tauri 桌面 2.0.4", "自動繞過 Gatekeeper 安全檢查", "延續 Web Studio 的 MDX 場景模型", "2026.06.06 版本資訊"],
-        localTitle: "Homebrew 發佈管道",
-        localBody: "這一版把 Mac 桌面體驗、專案開啟流程與 Studio 預覽整合到可直接透過 Homebrew 安裝的 beta 版本，並由 GitHub Releases 提供直接更新服務。",
-        installTitle: "安裝指引",
-        installBody: "如要安裝，請複製下方指令並在您的 Mac 終端機 (Terminal) 中執行：",
-        installCommand: "brew install --cask zz41354899/slidex/slidex",
-        installStep1: "安裝完成後，您就可以直接在應用程式資料夾或啟動台中開啟 SlideX，不需要再處理安全性限制。",
-        installStep2Label: "執行 Cask 指令"
-      },
-      stats: [
-        ["Homebrew Tap", "SlideX 官方 Cask 套件庫，自動繞過 Gatekeeper 安全阻擋。"],
-        ["Mac 專案", "為桌面檔案與私密簡報流程鋪好基礎。"],
-        ["Web Studio 相容", "沿用 MDX 場景模型，方便之後接上匯出與播放流程。"]
-      ],
-      webStudio: {
-        title: "Web Studio 與 Mac Beta 同步前進。",
-        body: "瀏覽器版本現在就能組合場景、測試動效與準備簡報；Mac beta 則作為桌面版第一個公開節點，讓團隊開始收集真實使用回饋。",
         button: "開啟 Studio"
       }
     }

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { type ReactNode } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   AlignLeft,
   ArrowRight,
@@ -22,69 +23,93 @@ import { useI18n } from "@/common/lib/I18nProvider";
 import { SiteFooter, SiteNav } from "@/common/ui";
 import type { Dictionary } from "@/common/lib/i18n";
 
-const easeSmooth = [0.22, 1, 0.36, 1] as const;
+const customEase = [0.32, 0.72, 0, 1] as const;
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.12 }
-  }
-};
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+  y = 48
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+  y?: number;
+}) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      initial={reduce ? false : { opacity: 0, y, filter: "blur(12px)" }}
+      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 1.2, delay, ease: customEase }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
-const fadeInUp = {
-  hidden: { opacity: 0, y: 26 },
-  visible: (i: number = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.06, duration: 0.62, ease: easeSmooth }
-  })
-};
+// Double-Bezel Architecture
+function BezelCard({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-[2rem] bg-white/[0.05] ring-1 ring-white/[0.12] shadow-2xl p-1.5 ${className}`}>
+      <div className="h-full rounded-[calc(2rem-0.375rem)] bg-gradient-to-b from-[#121218] to-[#08080b] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] overflow-hidden">
+        {children}
+      </div>
+    </div>
+  );
+}
 
 const componentIcons = [Layers, Type, AlignLeft, Layout, Gauge, BarChart3, ImageIcon];
 
 function ResourceHeroVisual({ copy }: { copy: Dictionary["resourcesPage"]["heroVisual"] }) {
+  const reduce = useReducedMotion();
+  
   return (
     <motion.div
-      initial={{ opacity: 0, y: 34, scale: 0.98 }}
+      initial={reduce ? false : { opacity: 0, y: 64, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.8, delay: 0.2, ease: easeSmooth }}
-      className="relative"
+      transition={{ duration: 1.4, delay: 0.2, ease: customEase }}
+      className="relative w-full h-full"
     >
-      <div className="absolute -inset-6 rounded-[2rem] bg-[radial-gradient(circle_at_74%_10%,rgba(142,165,255,0.16),transparent_44%)] blur-2xl" />
-      <div className="relative overflow-hidden rounded-[24px] border border-white/[0.12] bg-[#0d1018] shadow-2xl shadow-black/50 md:rounded-[32px]">
-        <div className="flex items-center justify-between border-b border-white/[0.1] bg-white/[0.04] px-5 py-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-white">
-            <BookOpen className="h-4 w-4 text-[#8ea5ff]" />
-            {copy.label}
-          </div>
-          <span className="rounded-full border border-white/[0.12] px-3 py-1 font-mono text-xs text-neutral-400">
-            MDX
-          </span>
-        </div>
-
-        <div className="grid gap-4 p-5 md:p-6">
-          <div className="overflow-x-auto rounded-[20px] border border-white/[0.1] bg-black/35 p-4 font-mono text-[11px] leading-6 text-neutral-400 sm:text-xs md:rounded-[24px]">
-            <p className="text-neutral-600">{`<Scene duration={5}>`}</p>
-            <p className="pl-4 text-white">{`<Title enter="fadeUp">`}</p>
-            <p className="pl-8 text-[#8ea5ff]">{copy.codeTitle}</p>
-            <p className="pl-4 text-white">{`</Title>`}</p>
-            <p className="pl-4 text-white">{`<Text delay={0.2}>`}</p>
-            <p className="pl-8 text-neutral-500">{copy.codeBody}</p>
-            <p className="pl-4 text-white">{`</Text>`}</p>
-            <p className="text-neutral-600">{`</Scene>`}</p>
+      <div className="absolute -inset-10 rounded-[3rem] bg-[radial-gradient(circle_at_50%_50%,rgba(142,165,255,0.1),transparent_50%)] blur-3xl mix-blend-screen pointer-events-none" />
+      <BezelCard>
+        <div className="flex flex-col h-full min-h-[400px]">
+          <div className="flex items-center justify-between border-b border-white/[0.04] bg-white/[0.02] px-6 py-5">
+            <div className="flex items-center gap-3 text-[13px] font-medium text-white tracking-wide">
+              <BookOpen className="h-4 w-4 text-white" />
+              {copy.label}
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-[11px] text-zinc-400">
+              MDX
+            </span>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            {copy.cards.map(([title, body]) => (
-              <div key={title} className="rounded-[18px] border border-white/[0.1] bg-white/[0.045] p-4 md:rounded-[20px]">
-                <p className="text-sm font-semibold text-white">{title}</p>
-                <p className="mt-1 text-xs text-neutral-500">{body}</p>
-              </div>
-            ))}
+          <div className="grid gap-6 p-8 md:p-10 flex-1 bg-[#0a0a0c]">
+            <div className="overflow-x-auto rounded-[1.5rem] border border-white/10 bg-black/60 p-6 md:p-8 font-mono text-[13px] leading-8 text-zinc-400 shadow-2xl relative">
+              <div className="absolute top-0 right-0 h-32 w-32 bg-blue-500/5 blur-[40px] pointer-events-none" />
+              <p className="text-zinc-600 relative z-10">{`<Scene duration={5}>`}</p>
+              <p className="pl-6 text-zinc-300 relative z-10">{`<Title enter="fadeUp">`}</p>
+              <p className="pl-12 text-white relative z-10">{copy.codeTitle}</p>
+              <p className="pl-6 text-zinc-300 relative z-10">{`</Title>`}</p>
+              <p className="pl-6 text-zinc-300 relative z-10">{`<Text delay={0.2}>`}</p>
+              <p className="pl-12 text-zinc-500 relative z-10">{copy.codeBody}</p>
+              <p className="pl-6 text-zinc-300 relative z-10">{`</Text>`}</p>
+              <p className="text-zinc-600 relative z-10">{`</Scene>`}</p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              {copy.cards.map(([title, body]) => (
+                <div key={title} className="rounded-[1.25rem] border border-white/10 bg-white/[0.02] p-5">
+                  <p className="text-[14px] font-medium text-white">{title}</p>
+                  <p className="mt-2 text-[13px] text-zinc-500 font-light leading-relaxed">{body}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </BezelCard>
     </motion.div>
   );
 }
@@ -96,172 +121,192 @@ export default function ResourcesPage() {
     description,
     componentIcons[index] ?? Layers
   ] as const);
+  const reduce = useReducedMotion();
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#080a0f] text-neutral-200">
+    <main className="min-h-screen bg-[#050505] text-zinc-400 selection:bg-white/20 selection:text-white relative z-0">
+      {/* Background Mesh (Ethereal Blue Light) */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] h-[70vw] w-[70vw] rounded-full bg-[#1e3a8a]/20 blur-[120px] mix-blend-screen" />
+        <div className="absolute top-[20%] -right-[20%] h-[60vw] w-[60vw] rounded-full bg-[#0369a1]/15 blur-[120px] mix-blend-screen" />
+        <div className="absolute -bottom-[20%] left-[10%] h-[80vw] w-[80vw] rounded-full bg-[#312e81]/20 blur-[130px] mix-blend-screen" />
+        <div className="absolute top-[10%] left-[20%] h-[300px] w-[500px] rounded-full bg-[#38bdf8]/10 blur-[80px] mix-blend-screen" />
+        <div 
+          className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
+          style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}
+        />
+      </div>
+
       <SiteNav />
 
-      <section className="relative px-4 pt-24 sm:px-6">
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute left-1/2 top-0 h-[500px] w-[900px] -translate-x-1/2 rounded-full bg-[#8ea5ff]/[0.1] blur-3xl" />
-          <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:72px_72px]" />
-        </div>
-
-        <div className="mx-auto grid max-w-7xl gap-8 pb-14 sm:pb-16 md:pb-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-10">
-          <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="max-w-2xl">
-            <motion.div
-              variants={fadeInUp}
-              className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.05] px-3 py-1.5 text-sm font-medium text-neutral-300"
-            >
-              <BookOpen className="h-3.5 w-3.5 text-[#8ea5ff]" />
+      <section className="relative px-4 pt-40 pb-24 sm:px-6 md:pt-48 md:pb-32 lg:pb-40">
+        <div className="mx-auto grid max-w-[1400px] gap-16 lg:grid-cols-[1fr_1fr] lg:items-center">
+          <motion.div 
+            initial={reduce ? false : { opacity: 0, filter: "blur(12px)", y: 40 }}
+            animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+            transition={{ duration: 1.4, ease: customEase }}
+            className="max-w-2xl"
+          >
+            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-300">
+              <BookOpen className="h-4 w-4 text-white" />
               {t.resourcesPage.hero.eyebrow}
-            </motion.div>
-            <motion.h1
-              variants={fadeInUp}
-              custom={1}
-              className="text-[2.35rem] font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
-            >
+            </div>
+            <h1 className="text-[3rem] sm:text-5xl md:text-7xl font-medium tracking-tight text-white leading-[1.02]">
               {t.resourcesPage.hero.title}
-            </motion.h1>
-            <motion.p
-              variants={fadeInUp}
-              custom={2}
-              className="mt-5 max-w-xl text-[15px] leading-7 text-neutral-400 sm:text-base md:mt-6 md:text-lg"
-            >
+            </h1>
+            <p className="mt-8 max-w-xl text-lg md:text-xl text-zinc-400 leading-relaxed font-light">
               {t.resourcesPage.hero.body}
-            </motion.p>
-            <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <Link
-                href="/resources/mdx"
-                className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
-              >
-                {t.resourcesPage.hero.primary}
-                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-              </Link>
+            </p>
+            <div className="mt-12 flex flex-col sm:flex-row items-center gap-4">
+              <div className="relative group/btn inline-flex w-full sm:w-auto">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 rounded-full blur opacity-40 group-hover/btn:opacity-75 transition duration-1000 group-hover/btn:duration-200" />
+                <Link
+                  href="/resources/mdx"
+                  className="relative inline-flex w-full sm:w-auto items-center justify-between sm:justify-start gap-3 rounded-full bg-[#0a0a0c] border border-blue-500/20 pl-6 pr-2 py-2 text-[15px] font-medium text-white transition-all duration-700 hover:bg-[#121218] hover:border-blue-500/40 active:scale-[0.98]"
+                >
+                  <span>{t.resourcesPage.hero.primary}</span>
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-400 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] transition-transform duration-700 group-hover/btn:translate-x-1 group-hover/btn:scale-105">
+                    <ArrowRight className="h-4 w-4 text-white drop-shadow-md" />
+                  </div>
+                </Link>
+              </div>
               <Link
                 href="/studio"
-                className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-white/[0.22] hover:bg-white/[0.09] active:scale-95 sm:w-auto"
+                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-white/10 bg-transparent px-8 py-4 text-[15px] font-medium text-zinc-300 transition-colors duration-700 hover:bg-white/5 active:scale-[0.98]"
               >
                 {t.resourcesPage.hero.secondary}
               </Link>
-            </motion.div>
+            </div>
           </motion.div>
 
           <ResourceHeroVisual copy={t.resourcesPage.heroVisual} />
         </div>
       </section>
 
-      <section className="border-y border-white/[0.1] bg-white/[0.025]">
-        <div className="mx-auto grid max-w-7xl gap-3 px-4 py-5 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+      {/* Quick Links Section - Asymmetric Bento Minimal */}
+      <section className="py-24 md:py-32 border-y border-white/[0.04] bg-black/40 backdrop-blur-2xl px-4 sm:px-6">
+        <div className="mx-auto grid max-w-[1400px] gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {t.resourcesPage.resourceItems.map((item, index) => (
             <motion.a
               key={item.title}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.04, duration: 0.45, ease: easeSmooth }}
+              initial={reduce ? false : { opacity: 0, y: 32, filter: "blur(8px)" }}
+              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: index * 0.1, duration: 1, ease: customEase }}
               href={item.href}
-              className="group rounded-[20px] border border-white/[0.1] bg-white/[0.04] p-4 transition hover:border-[#8ea5ff]/[0.3] hover:bg-white/[0.07] md:rounded-[24px]"
+              className="group rounded-[2rem] border border-white/10 bg-white/[0.02] p-8 transition-colors hover:bg-white/[0.05]"
             >
-              <div className="mb-4 flex items-center justify-between">
-                <span className="rounded-full border border-white/[0.1] px-3 py-1 text-xs text-neutral-400">
+              <div className="mb-8 flex items-center justify-between">
+                <span className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[11px] font-mono tracking-wide text-zinc-400">
                   {item.label}
                 </span>
-                <ExternalLink className="h-4 w-4 text-neutral-600 transition group-hover:text-[#8ea5ff]" />
+                <ExternalLink className="h-4 w-4 text-zinc-600 transition-colors duration-500 group-hover:text-white" />
               </div>
-              <h2 className="text-base font-semibold text-white">{item.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-neutral-500">{item.description}</p>
+              <h2 className="text-xl font-medium text-white">{item.title}</h2>
+              <p className="mt-3 text-[15px] leading-relaxed text-zinc-500 font-light">{item.description}</p>
             </motion.a>
           ))}
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6 md:py-24 lg:py-28">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-12 max-w-3xl">
-            <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
+      {/* Docs Steps - Double Bezel Layout */}
+      <section className="px-4 py-32 md:py-48">
+        <div className="mx-auto max-w-[1400px]">
+          <Reveal className="max-w-3xl mb-24">
+            <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-white leading-[1.05]">
               {t.resourcesPage.docsIntro.title}
             </h2>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed text-neutral-400 md:text-lg">
+            <p className="mt-8 text-lg md:text-xl leading-relaxed text-zinc-400 font-light">
               {t.resourcesPage.docsIntro.body}
             </p>
-          </div>
+          </Reveal>
 
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-8 lg:grid-cols-3">
             {t.resourcesPage.docSections.map((section, index) => (
               <motion.article
                 key={section.title}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ delay: index * 0.06, duration: 0.55, ease: easeSmooth }}
-                className="flex flex-col rounded-[24px] border border-white/[0.1] bg-white/[0.045] p-5 md:min-h-[320px] md:rounded-[28px] md:p-6"
+                initial={reduce ? false : { opacity: 0, y: 48, filter: "blur(8px)" }}
+                whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ delay: index * 0.15, duration: 1.2, ease: customEase }}
+                className="h-full"
               >
-                <div className="mb-8 flex items-center justify-between">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
-                    <FileCode2 className="h-5 w-5" />
-                  </span>
-                  <span className="font-mono text-xs text-neutral-600">0{index + 1}</span>
-                </div>
-                <h3 className="text-2xl font-semibold tracking-tight text-white">{section.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-neutral-400">{section.description}</p>
-
-                <div className="mt-6 grid gap-2">
-                  {section.points.map((point) => (
-                    <div
-                      key={point}
-                      className="flex gap-3 rounded-[18px] border border-white/[0.08] bg-black/20 px-3 py-3 text-sm leading-relaxed text-neutral-400"
-                    >
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#8ea5ff]" />
-                      <span>{point}</span>
+                <BezelCard className="h-full">
+                  <div className="flex flex-col p-8 md:p-10 relative overflow-hidden h-full">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 blur-[50px] rounded-full pointer-events-none" />
+                    
+                    <div className="mb-12 flex items-center justify-between relative z-10">
+                      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white">
+                        <FileCode2 className="h-5 w-5 stroke-[1.5]" />
+                      </span>
+                      <span className="font-mono text-[11px] tracking-wide text-zinc-500">0{index + 1}</span>
                     </div>
-                  ))}
-                </div>
+                    <h3 className="text-2xl font-medium text-white relative z-10">{section.title}</h3>
+                    <p className="mt-4 text-base leading-relaxed text-zinc-400 font-light relative z-10">{section.description}</p>
+
+                    <div className="mt-12 grid gap-3 relative z-10">
+                      {section.points.map((point) => (
+                        <div
+                          key={point}
+                          className="flex items-center gap-4 rounded-[1.5rem] border border-white/5 bg-[#0a0a0c] px-5 py-4 text-[15px] leading-relaxed text-zinc-400 font-light transition-colors hover:bg-white/5"
+                        >
+                          <Check className="h-4 w-4 shrink-0 text-white" />
+                          <span>{point}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </BezelCard>
               </motion.article>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="components" className="px-4 pb-16 sm:px-6 md:pb-24 lg:pb-28">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
-            <div>
-              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[#8ea5ff]/[0.14] text-[#8ea5ff]">
-                <Code2 className="h-5 w-5" />
+      {/* Components Reference - High End Grid */}
+      <section id="components" className="px-4 pb-32 md:pb-48">
+        <div className="mx-auto max-w-[1400px]">
+          <div className="grid gap-16 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+            <Reveal className="lg:sticky lg:top-40">
+              <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white">
+                <Code2 className="h-6 w-6 stroke-[1.5]" />
               </div>
-              <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl">
+              <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-white leading-[1.05]">
                 {t.resourcesPage.components.title}
               </h2>
-              <p className="mt-5 max-w-lg text-base leading-relaxed text-neutral-400">
+              <p className="mt-8 text-lg leading-relaxed text-zinc-400 font-light max-w-lg">
                 {t.resourcesPage.components.body}
               </p>
-              <p className="mt-6 text-sm leading-relaxed text-neutral-500">
-                {t.resourcesPage.components.notePrefix}{" "}
-                <span className="mt-2 inline-flex max-w-full overflow-x-auto rounded-full border border-white/[0.1] bg-white/[0.05] px-3 py-1 align-middle font-mono text-xs text-neutral-300 sm:mt-0">
+              <p className="mt-8 text-[15px] leading-relaxed text-zinc-500 font-light">
+                {t.resourcesPage.components.notePrefix}
+                <br />
+                <span className="mt-4 inline-flex max-w-full overflow-x-auto rounded-full border border-white/10 bg-white/5 px-4 py-2 align-middle font-mono text-[13px] text-zinc-300">
                   {t.resourcesPage.components.docPath}
                 </span>
               </p>
-            </div>
+            </Reveal>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               {componentReference.map(([name, description, Icon], index) => (
                 <motion.div
                   key={name}
-                  initial={{ opacity: 0, y: 18 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.04, duration: 0.45, ease: easeSmooth }}
-                  className="group rounded-[20px] border border-white/[0.1] bg-white/[0.04] p-4 transition hover:bg-white/[0.07] md:rounded-[24px]"
+                  initial={reduce ? false : { opacity: 0, y: 32, filter: "blur(8px)" }}
+                  whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ delay: index * 0.1, duration: 1, ease: customEase }}
                 >
-                  <div className="mb-5 flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.07] text-neutral-400 transition group-hover:text-[#8ea5ff]">
-                      <Icon className="h-4 w-4" />
+                  <BezelCard>
+                    <div className="group p-6 md:p-8 flex flex-col h-full bg-[#0a0a0c] transition-colors duration-500 hover:bg-[#0d0d0f]">
+                      <div className="mb-8 flex items-center justify-between">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 border border-white/10 text-zinc-400 transition-colors duration-500 group-hover:text-white">
+                          <Icon className="h-5 w-5 stroke-[1.5]" />
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-zinc-600 transition-colors duration-500 group-hover:text-white" />
+                      </div>
+                      <h3 className="font-mono text-[13px] font-medium tracking-wide text-white">{name}</h3>
+                      <p className="mt-3 text-[14px] leading-relaxed text-zinc-500 font-light">{description}</p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-neutral-600 transition group-hover:text-neutral-300" />
-                  </div>
-                  <h3 className="font-mono text-sm font-semibold text-white">{name}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-neutral-500">{description}</p>
+                  </BezelCard>
                 </motion.div>
               ))}
             </div>
@@ -269,26 +314,34 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      <section className="border-t border-white/[0.1] px-4 py-16 text-center sm:px-6 md:py-20">
+      {/* CTA Section */}
+      <section className="border-t border-white/[0.04] px-4 py-32 text-center md:py-48">
         <div className="mx-auto max-w-3xl">
-          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.07] text-[#8ea5ff]">
-            <BookOpen className="h-6 w-6" />
-          </div>
-          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl">
-            {t.resourcesPage.cta.title}
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-neutral-400">
-            {t.resourcesPage.cta.body}
-          </p>
-          <div className="mt-8">
-            <Link
-              href="/studio"
-              className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
-            >
-              {t.resourcesPage.cta.button}
-              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-            </Link>
-          </div>
+          <Reveal>
+            <div className="mx-auto mb-10 flex h-20 w-20 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white">
+              <BookOpen className="h-8 w-8 stroke-[1.5]" />
+            </div>
+            <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-white leading-[1.05]">
+              {t.resourcesPage.cta.title}
+            </h2>
+            <p className="mx-auto mt-8 max-w-2xl text-lg md:text-xl leading-relaxed text-zinc-400 font-light">
+              {t.resourcesPage.cta.body}
+            </p>
+            <div className="mt-12 flex justify-center">
+              <div className="relative group/btn inline-flex w-full sm:w-auto">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 rounded-full blur opacity-40 group-hover/btn:opacity-75 transition duration-1000 group-hover/btn:duration-200" />
+                <Link
+                  href="/studio"
+                  className="relative inline-flex w-full sm:w-auto items-center justify-between sm:justify-start gap-3 rounded-full bg-[#0a0a0c] border border-blue-500/20 pl-8 pr-2 py-2.5 text-[16px] font-medium text-white transition-all duration-700 hover:bg-[#121218] hover:border-blue-500/40 active:scale-[0.98]"
+                >
+                  <span>{t.resourcesPage.cta.button}</span>
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-400 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] transition-transform duration-700 group-hover/btn:translate-x-1 group-hover/btn:scale-105">
+                    <ArrowRight className="h-5 w-5 text-white drop-shadow-md" />
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 

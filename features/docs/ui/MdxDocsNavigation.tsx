@@ -17,16 +17,19 @@ export function DesktopDocsSidebar({ docsGroups }: { docsGroups: DocsGroup[] }) 
               <div className="space-y-1">
                 {group.links.map((item) => (
                   <Link
-                    className={`group flex items-center justify-between gap-3 rounded-lg px-1 py-2 text-sm leading-6 transition ${
+                    className={`group relative flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm leading-6 transition overflow-hidden ${
                       item.active ? "text-white" : "text-neutral-400 hover:text-white"
                     }`}
                     href={item.href}
                     key={`${group.title}-${item.href}`}
                   >
-                    <span>{item.label}</span>
+                    {item.active && (
+                      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-600/20 to-transparent border-l-2 border-blue-500" />
+                    )}
+                    <span className={item.active ? "font-medium" : ""}>{item.label}</span>
                     <ChevronRight
                       className={`h-3.5 w-3.5 shrink-0 transition ${
-                        item.active ? "text-[#8ea5ff]" : "text-neutral-600 group-hover:text-neutral-300"
+                        item.active ? "text-sky-400 translate-x-1" : "text-neutral-600 group-hover:text-neutral-300"
                       }`}
                     />
                   </Link>
@@ -57,7 +60,7 @@ export function MobileDocsNav({
     <div className="mb-8 lg:hidden">
       <button
         aria-expanded={isMobileNavOpen}
-        className="flex w-full items-center justify-between rounded-2xl border border-white/[0.1] bg-white/[0.04] px-4 py-3.5 text-left shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur"
+        className="flex w-full items-center justify-between rounded-2xl bg-[#0a0a0c] border border-blue-500/20 px-4 py-3.5 text-left shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_10px_30px_rgba(0,0,0,0.4)] backdrop-blur-3xl transition-colors hover:border-blue-500/40"
         onClick={() => setIsMobileNavOpen((value) => !value)}
         type="button"
       >
@@ -94,14 +97,17 @@ export function MobileDocsNav({
 
                         return (
                           <Link
-                            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
-                              item.active ? "bg-white/[0.08] text-[#b9c6ff]" : "text-neutral-400 hover:bg-white/[0.055] hover:text-white"
+                            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition relative overflow-hidden ${
+                              item.active ? "text-white font-medium" : "text-neutral-400 hover:bg-white/[0.03] hover:text-white"
                             }`}
                             href={item.href}
                             key={`${group.title}-${item.href}`}
                             onClick={() => setIsMobileNavOpen(false)}
                           >
-                            <Icon className="h-4 w-4 shrink-0" />
+                            {item.active && (
+                              <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-600/20 to-transparent border-l-2 border-blue-500" />
+                            )}
+                            <Icon className={`h-4 w-4 shrink-0 ${item.active ? "text-sky-400" : ""}`} />
                             <span>{item.label}</span>
                           </Link>
                         );

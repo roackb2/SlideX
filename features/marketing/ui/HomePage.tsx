@@ -1,46 +1,52 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, type ReactNode } from "react";
-import { motion, useInView } from "framer-motion";
+import { type ReactNode } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, Code2, Download, Eye, FileCode2, Palette, Play, Sparkles } from "lucide-react";
 import { useI18n } from "@/common/lib/I18nProvider";
 import { localizeTemplates } from "@/common/lib/i18n";
 import { SiteFooter, SiteNav } from "@/common/ui";
 import { motionTemplates } from "@/core/motion-doc/presets/templates";
 import { HeroStudio } from "@/features/marketing/ui/home/HeroStudio";
-import { springTransition, fadeInUp, staggerContainer } from "@/features/marketing/ui/home/homeMotion";
 import { StyleThumbnail } from "@/features/marketing/ui/StyleThumbnail";
+
+const customEase = [0.32, 0.72, 0, 1] as const;
+const springTransition = { type: "spring", stiffness: 100, damping: 20 } as const;
 
 function Reveal({
   children,
   className = "",
-  delay = 0
+  delay = 0,
+  y = 48
 }: {
   children: ReactNode;
   className?: string;
   delay?: number;
+  y?: number;
 }) {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-
+  const reduce = useReducedMotion();
   return (
     <motion.div
-      ref={ref}
-      initial="hidden"
-      animate={isInView ? "visible" : "hidden"}
-      variants={{
-        hidden: { opacity: 0, y: 34 },
-        visible: {
-          opacity: 1,
-          y: 0,
-          transition: { delay, ...springTransition }
-        }
-      }}
+      initial={reduce ? false : { opacity: 0, y, filter: "blur(12px)" }}
+      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 1.2, delay, ease: customEase }}
       className={className}
     >
       {children}
     </motion.div>
+  );
+}
+
+// Double-Bezel Architecture
+function BezelCard({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-[2rem] bg-white/[0.05] ring-1 ring-white/[0.12] shadow-2xl p-1.5 ${className}`}>
+      <div className="h-full rounded-[calc(2rem-0.375rem)] bg-gradient-to-b from-[#121218] to-[#08080b] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] overflow-hidden">
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -53,249 +59,266 @@ export function HomePage() {
     ...item,
     icon: workflowIcons[index] ?? FileCode2
   }));
+  const reduce = useReducedMotion();
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#080a0f] text-neutral-200">
+    <main className="min-h-screen bg-[#050505] text-zinc-400 selection:bg-white/20 selection:text-white relative z-0">
+      {/* Background Mesh (Ethereal Blue Light) */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] h-[70vw] w-[70vw] rounded-full bg-[#1e3a8a]/20 blur-[120px] mix-blend-screen" />
+        <div className="absolute top-[20%] -right-[20%] h-[60vw] w-[60vw] rounded-full bg-[#0369a1]/15 blur-[120px] mix-blend-screen" />
+        <div className="absolute -bottom-[20%] left-[10%] h-[80vw] w-[80vw] rounded-full bg-[#312e81]/20 blur-[130px] mix-blend-screen" />
+        <div className="absolute top-[10%] left-[20%] h-[300px] w-[500px] rounded-full bg-[#38bdf8]/10 blur-[80px] mix-blend-screen" />
+        <div 
+          className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
+          style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}
+        />
+      </div>
+
       <SiteNav />
 
-      <section className="relative px-4 pt-24 sm:px-6">
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute left-[-10%] top-[-10%] h-[600px] w-[800px] rounded-full bg-[#0070f3]/15 blur-[120px]" />
-          <div className="absolute right-[5%] top-[10%] h-[500px] w-[600px] rounded-full bg-violet-600/10 blur-[120px]" />
-          <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:64px_64px]" />
-        </div>
-
-        <div className="mx-auto grid max-w-7xl gap-8 pb-14 sm:pb-16 md:pb-20 lg:min-h-[calc(100dvh-6rem)] lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:gap-10">
-          <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="max-w-2xl">
-            <motion.h1
-              variants={fadeInUp}
-              custom={1}
-              className="text-[2.75rem] font-medium leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-[5.5rem]"
-            >
+      {/* Hero Section */}
+      <section className="relative px-4 pt-40 pb-24 sm:px-6 md:pt-48 md:pb-32 lg:pb-40 overflow-hidden">
+        <div className="mx-auto max-w-[1400px] grid gap-16 lg:grid-cols-[1fr_1fr] lg:items-center">
+          <motion.div 
+            initial={reduce ? false : { opacity: 0, filter: "blur(12px)", y: 40 }}
+            animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+            transition={{ duration: 1.4, ease: customEase }}
+            className="max-w-2xl"
+          >
+            <h1 className="text-[3rem] sm:text-5xl md:text-7xl font-medium tracking-tight text-white leading-[1.02]">
               {t.home.hero.title}
-            </motion.h1>
-            <motion.p
-              variants={fadeInUp}
-              custom={2}
-              className="mt-5 max-w-xl text-[15px] leading-7 text-neutral-400 sm:text-base md:mt-6 md:text-lg"
-            >
+            </h1>
+            <p className="mt-8 max-w-xl text-lg md:text-xl text-zinc-400 leading-relaxed font-light">
               {t.home.hero.body}
-            </motion.p>
-            <motion.div variants={fadeInUp} custom={3} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <Link
-                href="/studio"
-                className="group inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-black transition hover:bg-neutral-200 active:scale-95 sm:w-auto"
-              >
-                {t.home.hero.primary}
-                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-              </Link>
+            </p>
+            <div className="mt-12 flex flex-col sm:flex-row items-center gap-4">
+              <div className="relative group/btn inline-flex w-full sm:w-auto">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 rounded-full blur opacity-40 group-hover/btn:opacity-75 transition duration-1000 group-hover/btn:duration-200" />
+                <Link
+                  href="/studio"
+                  className="relative inline-flex w-full sm:w-auto items-center justify-between sm:justify-start gap-3 rounded-full bg-[#0a0a0c] border border-blue-500/20 pl-6 pr-2 py-2 text-[15px] font-medium text-white transition-all duration-700 hover:bg-[#121218] hover:border-blue-500/40 active:scale-[0.98]"
+                >
+                  <span>{t.home.hero.primary}</span>
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-400 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] transition-transform duration-700 group-hover/btn:translate-x-1 group-hover/btn:scale-105">
+                    <ArrowRight className="h-4 w-4 text-white drop-shadow-md" />
+                  </div>
+                </Link>
+              </div>
               <Link
                 href="/templates"
-                className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/[0.13] bg-white/[0.04] px-7 py-3.5 text-[15px] font-medium text-neutral-200 transition hover:border-white/[0.25] hover:bg-white/[0.08] active:scale-95 sm:w-auto"
+                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-white/10 bg-transparent px-8 py-4 text-[15px] font-medium text-zinc-300 transition-colors duration-700 hover:bg-white/5 active:scale-[0.98]"
               >
                 {t.home.hero.secondary}
               </Link>
-            </motion.div>
-
-            <motion.div variants={fadeInUp} custom={4} className="mt-8 grid max-w-lg gap-3 sm:grid-cols-3">
+            </div>
+            
+            <div className="mt-14 flex flex-wrap items-center gap-8">
               {t.home.hero.checkpoints.map((item) => (
-                <div key={item} className="flex items-center gap-2 text-sm text-neutral-500">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0070f3]/[0.14] text-[#0070f3]">
-                    <Check className="h-3 w-3" />
-                  </span>
+                <div key={item} className="flex items-center gap-3 text-sm text-zinc-500 font-mono tracking-wide">
+                  <span className="flex h-1.5 w-1.5 items-center justify-center rounded-full bg-white/20" />
                   {item}
                 </div>
               ))}
-            </motion.div>
+            </div>
           </motion.div>
 
-          <HeroStudio copy={t.home.heroStudio} />
-        </div>
-      </section>
-
-      <section className="border-y border-white/[0.1] bg-white/[0.025]">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 divide-y divide-white/[0.08] px-4 sm:px-6 md:grid-cols-3 md:divide-x md:divide-y-0">
-          {t.home.stats.map(([title, body]) => (
-            <div key={title} className="py-6 md:px-8 md:py-7 first:md:pl-0 last:md:pr-0">
-              <p className="text-sm font-semibold text-white">{title}</p>
-              <p className="mt-1 text-sm leading-relaxed text-neutral-500">{body}</p>
+          <Reveal delay={0.2} y={64} className="w-full h-full min-h-[400px]">
+            <div className="rounded-[2.5rem] bg-white/[0.02] ring-1 ring-white/[0.06] p-2">
+              <div className="rounded-[calc(2.5rem-0.5rem)] overflow-hidden shadow-2xl shadow-black/80 ring-1 ring-white/10">
+                <HeroStudio copy={t.home.heroStudio} />
+              </div>
             </div>
-          ))}
+          </Reveal>
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6 md:py-24 lg:py-28">
-        <div className="mx-auto max-w-7xl">
-          <Reveal className="max-w-3xl">
-            <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
-              {t.home.compose.title}
-            </h2>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed text-neutral-400 md:text-lg">
-              {t.home.compose.body}
-            </p>
-          </Reveal>
-
-          <div className="mt-12 grid gap-4 lg:grid-cols-12">
-            <Reveal className="rounded-[24px] border border-white/[0.1] bg-white/[0.045] p-5 md:rounded-[28px] md:p-7 lg:col-span-7">
-              <div className="mb-5 flex items-center gap-2 text-sm font-medium text-[#0070f3]">
-                <Code2 className="h-4 w-4" />
-                {t.home.compose.sourceLabel}
-              </div>
-              <div className="overflow-x-auto rounded-[20px] border border-white/[0.1] bg-black p-4 font-mono text-xs leading-6 shadow-xl shadow-black/30 md:rounded-[22px]">
-                <p className="text-neutral-600">{`<Slide duration={5} theme="dark">`}</p>
-                <p className="pl-4 text-white">{`<Title enter="fadeUp">`}</p>
-                <p className="pl-8 text-[#0070f3]">{t.home.compose.codeTitle}</p>
-                <p className="pl-4 text-white">{`</Title>`}</p>
-                <p className="pl-4 text-white">{`<Chart values="42,58,72,92" />`}</p>
-                <p className="text-neutral-600">{`</Slide>`}</p>
-              </div>
-            </Reveal>
-
-            <Reveal
-              delay={0.05}
-              className="relative overflow-hidden rounded-[24px] border border-white/[0.1] bg-[#10131d] p-5 md:rounded-[28px] md:p-7 lg:col-span-5"
-            >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_15%,rgba(0,112,243,0.12),transparent_36%)]" />
-              <div className="relative">
-                <div className="mb-6 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm font-medium text-white">
-                    <Play className="h-4 w-4 text-[#0070f3]" />
-                    {t.home.compose.timelineLabel}
-                  </div>
-                  <span className="rounded-full border border-white/[0.1] px-3 py-1 font-mono text-xs text-neutral-400">
-                    00:05
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {t.home.compose.timelineItems.map((item, index) => (
-                    <div key={item} className="grid grid-cols-[72px_1fr] items-center gap-3 sm:grid-cols-[90px_1fr]">
-                      <span className="text-xs text-neutral-500">{item}</span>
-                      <span className="h-3 overflow-hidden rounded-full bg-white/[0.08]">
-                        <motion.span
-                          initial={{ width: 0 }}
-                          whileInView={{ width: `${76 - index * 12}%` }}
-                          viewport={{ once: true }}
-                          transition={{ delay: 0.2 + index * 0.12, ...springTransition }}
-                          className="block h-full rounded-full bg-[#0070f3]"
-                        />
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-
-            <Reveal className="overflow-hidden rounded-[24px] border border-white/[0.1] bg-white/[0.045] md:rounded-[28px] lg:col-span-4">
-              <StyleThumbnail
-                className="h-44 w-full sm:h-48"
-                label={selectedTemplates[0]?.category ?? t.thumbnail.fallbackLabel}
-                templateId={selectedTemplates[0]?.id ?? "preset"}
-                title={selectedTemplates[0]?.name ?? t.home.compose.templateTitle}
-                variant="feature"
-              />
-              <div className="p-5">
-                <h3 className="text-xl font-semibold tracking-tight text-white">{t.home.compose.templateTitle}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-neutral-400">
-                  {t.home.compose.templateBody}
-                </p>
-              </div>
-            </Reveal>
-
-            <Reveal delay={0.05} className="rounded-[24px] border border-white/[0.1] bg-white/[0.045] p-5 md:rounded-[28px] md:p-7 lg:col-span-4">
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-[#0070f3]/[0.14] text-[#0070f3]">
-                <Palette className="h-5 w-5" />
-              </div>
-              <h3 className="text-xl font-semibold tracking-tight text-white">{t.home.compose.blockTitle}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-neutral-400">
-                {t.home.compose.blockBody}
-              </p>
-            </Reveal>
-
-            <Reveal delay={0.1} className="rounded-[24px] border border-[#0070f3]/[0.25] bg-[#0070f3]/[0.1] p-5 md:rounded-[28px] md:p-7 lg:col-span-4">
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-white text-black">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <h3 className="text-xl font-semibold tracking-tight text-white">{t.home.compose.polishTitle}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-neutral-300">
-                {t.home.compose.polishBody}
-              </p>
-            </Reveal>
+      {/* Stats Section - Macro Whitespace */}
+      <section className="py-24 md:py-32 border-y border-white/[0.04] bg-black/40 backdrop-blur-2xl">
+        <div className="mx-auto max-w-[1400px] px-4 sm:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            {t.home.stats.map(([title, body], i) => (
+              <Reveal key={title} delay={i * 0.15} y={24} className="flex flex-col relative before:absolute before:-left-6 before:top-0 before:bottom-0 before:w-px before:bg-gradient-to-b before:from-white/10 before:to-transparent">
+                <p className="text-base font-medium text-white">{title}</p>
+                <p className="mt-3 text-base leading-relaxed text-zinc-500 max-w-[32ch] font-light">{body}</p>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6 md:py-24 lg:py-28">
-        <div className="mx-auto max-w-7xl">
-          <Reveal className="rounded-[24px] border border-white/[0.1] bg-[#0d1018] p-5 sm:p-6 md:rounded-[32px] md:p-10">
-            <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-              <div>
-                <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl">
-                  {t.home.workflow.title}
-                </h2>
-                <p className="mt-5 max-w-xl text-base leading-relaxed text-neutral-400">
-                  {t.home.workflow.body}
-                </p>
-              </div>
-
-              <div className="grid gap-3">
-                {workflow.map((item, index) => (
-                  <div
-                    key={item.title}
-                    className="grid gap-4 rounded-[20px] border border-white/[0.09] bg-black/20 p-4 sm:grid-cols-[48px_1fr_auto] sm:items-center md:rounded-[24px]"
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.08] text-[#0070f3]">
-                      <item.icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-semibold text-white">{item.title}</h3>
-                      <p className="mt-1 text-sm leading-relaxed text-neutral-500">{item.body}</p>
-                    </div>
-                    <span className="hidden rounded-full border border-white/[0.1] px-3 py-1 font-mono text-xs text-neutral-500 sm:inline-flex">
-                      0{index + 1}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+      {/* Compose Section - Asymmetrical Bento with Double-Bezel */}
+      <section className="px-4 py-32 md:py-48">
+        <div className="mx-auto max-w-[1400px]">
+          <Reveal className="max-w-3xl">
+            <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-white leading-[1.05]">
+              {t.home.compose.title}
+            </h2>
+            <p className="mt-8 text-lg md:text-xl leading-relaxed text-zinc-400 font-light">
+              {t.home.compose.body}
+            </p>
           </Reveal>
+
+          <div className="mt-24 grid gap-6 grid-cols-1 md:grid-cols-12 auto-rows-[minmax(320px,auto)]">
+            
+            {/* Cell 1: Source Code (8 cols) */}
+            <Reveal delay={0.1} className="md:col-span-8 md:row-span-2">
+              <BezelCard className="h-full">
+                <div className="flex flex-col h-full p-8 md:p-12 relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent" />
+                  <div className="mb-12 relative z-10">
+                    <div className="inline-flex items-center gap-3 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 text-[11px] font-mono text-zinc-400 tracking-wide">
+                      <Code2 className="h-4 w-4" />
+                      {t.home.compose.sourceLabel}
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-x-auto rounded-[1.5rem] border border-white/10 bg-[#0a0a0c] p-8 font-mono text-sm leading-8 shadow-2xl transition-transform duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.02] relative z-10">
+                    <p className="text-zinc-600">{`<Slide duration={5} theme="dark">`}</p>
+                    <p className="pl-6 text-zinc-300">{`<Title enter="fadeUp">`}</p>
+                    <p className="pl-12 text-white">{t.home.compose.codeTitle}</p>
+                    <p className="pl-6 text-zinc-300">{`</Title>`}</p>
+                    <p className="pl-6 text-zinc-300">{`<Chart values="42,58,72,92" />`}</p>
+                    <p className="text-zinc-600">{`</Slide>`}</p>
+                  </div>
+                </div>
+              </BezelCard>
+            </Reveal>
+
+            {/* Cell 2: Polish (4 cols) */}
+            <Reveal delay={0.2} className="md:col-span-4">
+              <BezelCard className="h-full">
+                <div className="flex flex-col h-full p-8 md:p-10">
+                  <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white">
+                    <Sparkles className="h-5 w-5 stroke-[1.5]" />
+                  </div>
+                  <h3 className="text-2xl font-medium text-white">{t.home.compose.polishTitle}</h3>
+                  <p className="mt-4 text-base leading-relaxed text-zinc-400 font-light">
+                    {t.home.compose.polishBody}
+                  </p>
+                </div>
+              </BezelCard>
+            </Reveal>
+
+            {/* Cell 3: Timeline (4 cols) */}
+            <Reveal delay={0.3} className="md:col-span-4">
+              <BezelCard className="h-full">
+                <div className="flex flex-col h-full p-8 md:p-10 relative overflow-hidden">
+                  <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-white/5 blur-[60px] pointer-events-none" />
+                  <div className="mb-8 flex items-center justify-between">
+                    <div className="inline-flex items-center gap-2 text-[11px] font-mono text-zinc-500 tracking-wide">
+                      <Play className="h-4 w-4" />
+                      {t.home.compose.timelineLabel}
+                    </div>
+                  </div>
+                  <div className="space-y-6">
+                    {t.home.compose.timelineItems.map((item, index) => (
+                      <div key={item} className="grid grid-cols-[60px_1fr] items-center gap-4">
+                        <span className="text-xs font-mono text-zinc-600">{item}</span>
+                        <span className="h-[3px] w-full overflow-hidden rounded-full bg-white/5">
+                          <motion.span
+                            initial={reduce ? false : { width: 0 }}
+                            whileInView={{ width: `${76 - index * 12}%` }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.5 + index * 0.15, duration: 1, ease: customEase }}
+                            className="block h-full rounded-full bg-white"
+                          />
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </BezelCard>
+            </Reveal>
+
+          </div>
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6 md:py-24 lg:py-28">
-        <div className="mx-auto max-w-7xl">
-          <Reveal className="max-w-3xl">
-            <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
+      {/* Workflow Section - Editorial Split */}
+      <section className="px-4 py-32 md:py-48 border-t border-white/[0.04]">
+        <div className="mx-auto max-w-[1400px]">
+          <div className="grid gap-16 md:gap-24 md:grid-cols-2 items-start">
+            <Reveal className="md:sticky md:top-40">
+              <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-white leading-[1.05]">
+                {t.home.workflow.title}
+              </h2>
+              <p className="mt-8 text-lg md:text-xl leading-relaxed text-zinc-400 font-light max-w-md">
+                {t.home.workflow.body}
+              </p>
+            </Reveal>
+
+            <ul className="grid gap-12">
+              {workflow.map((item, index) => (
+                <motion.li
+                  key={item.title}
+                  initial={reduce ? false : { opacity: 0, y: 48, filter: "blur(8px)" }}
+                  whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{
+                    duration: 1.2,
+                    delay: index * 0.2,
+                    ease: customEase,
+                  }}
+                  className="group"
+                >
+                  <BezelCard>
+                    <div className="flex flex-col sm:flex-row gap-8 p-8 md:p-10 items-start">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-white/10 group-hover:scale-105">
+                        <item.icon className="h-6 w-6 stroke-[1.5]" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-medium text-white">{item.title}</h3>
+                        <p className="mt-4 text-base leading-relaxed text-zinc-400 font-light">{item.body}</p>
+                      </div>
+                    </div>
+                  </BezelCard>
+                </motion.li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Presets Section - High-End Grid */}
+      <section className="px-4 py-32 md:py-48 border-t border-white/[0.04]">
+        <div className="mx-auto max-w-[1400px]">
+          <Reveal className="max-w-3xl mb-24">
+            <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-white leading-[1.05]">
               {t.home.presets.title}
             </h2>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed text-neutral-400 md:text-lg">
+            <p className="mt-8 text-lg md:text-xl leading-relaxed text-zinc-400 font-light">
               {t.home.presets.body}
             </p>
           </Reveal>
 
-          <div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             {selectedTemplates.map((template, index) => (
               <motion.div
                 key={template.id}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ delay: index * 0.06, ...springTransition }}
+                initial={reduce ? false : { opacity: 0, y: 48, filter: "blur(8px)" }}
+                whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ delay: index * 0.15, duration: 1.2, ease: customEase }}
+                className="h-full"
               >
-                <Link
-                  href="/studio"
-                  className="group flex h-full flex-col overflow-hidden rounded-[24px] border border-white/[0.1] bg-white/[0.045] transition hover:border-[#0070f3]/[0.35] hover:bg-white/[0.07] active:scale-[0.99] md:rounded-[28px]"
-                >
-                  <StyleThumbnail
-                    className="h-44 w-full transition duration-500 group-hover:scale-[1.03]"
-                    label={template.category}
-                    templateId={template.id}
-                    title={template.name}
-                  />
-                  <div className="flex flex-1 flex-col p-5">
-                    <h3 className="text-xl font-semibold tracking-tight text-white">{template.name}</h3>
-                    <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-400">{template.description}</p>
-                    <p className="mt-5 text-xs font-medium text-neutral-500">{template.useCase}</p>
-                  </div>
+                <Link href="/studio" className="block h-full group">
+                  <BezelCard className="h-full transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-white/5">
+                    <div className="flex h-full flex-col">
+                      <div className="h-56 overflow-hidden">
+                        <StyleThumbnail
+                          className="h-full w-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110"
+                          label={template.category}
+                          templateId={template.id}
+                          title={template.name}
+                        />
+                      </div>
+                      <div className="flex flex-1 flex-col p-8">
+                        <h3 className="text-xl font-medium text-white">{template.name}</h3>
+                        <p className="mt-3 flex-1 text-base leading-relaxed text-zinc-400 font-light">{template.description}</p>
+                        <p className="mt-8 font-mono text-[11px] tracking-wide text-zinc-600">{template.useCase}</p>
+                      </div>
+                    </div>
+                  </BezelCard>
                 </Link>
               </motion.div>
             ))}
@@ -303,10 +326,7 @@ export function HomePage() {
         </div>
       </section>
 
-
-
       <SiteFooter />
     </main>
   );
 }
-

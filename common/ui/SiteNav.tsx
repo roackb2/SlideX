@@ -52,6 +52,7 @@ function GithubMark({ className }: { className?: string }) {
 
 export function SiteNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const pathname = usePathname();
   const { locale, setLocale, t } = useI18n();
   const nextLocale = locale === "zh-TW" ? "en" : "zh-TW";
@@ -76,8 +77,7 @@ export function SiteNav() {
           initial={{ y: -24, opacity: 0, scale: 0.98 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, ease: easeSmooth }}
-          whileHover={{ boxShadow: "0 0 42px rgba(94,106,210,0.16)" }}
-          className="flex h-[56px] items-center justify-between gap-3 overflow-hidden rounded-full border border-white/[0.11] bg-[#111118]/82 px-3 py-2 shadow-2xl shadow-black/35 backdrop-blur-2xl sm:h-[58px] sm:px-4"
+          className="flex h-[56px] items-center justify-between gap-3 rounded-full border border-white/[0.11] bg-[#111118]/82 px-3 py-2 shadow-2xl shadow-black/35 backdrop-blur-2xl sm:h-[58px] sm:px-4"
         >
           <div className="flex min-w-0 items-center gap-3 md:gap-5">
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
@@ -138,15 +138,52 @@ export function SiteNav() {
               </a>
             </motion.div>
 
-            <button
-              className="hidden h-9 items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-3 text-xs font-semibold text-neutral-300 transition hover:border-white/[0.22] hover:bg-white/[0.08] hover:text-white sm:inline-flex"
-              type="button"
-              aria-label={t.nav.languageLabel}
-              onClick={() => setLocale(nextLocale)}
-            >
-              <Languages className="h-3.5 w-3.5" />
-              {t.nav.localeShortLabel}
-            </button>
+            <div className="relative hidden sm:block">
+              <button
+                className="flex h-9 items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-3 text-xs font-semibold text-neutral-300 transition hover:border-white/[0.22] hover:bg-white/[0.08] hover:text-white"
+                type="button"
+                aria-label={t.nav.languageLabel}
+                onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+              >
+                <Languages className="h-3.5 w-3.5" />
+                {locale === "en" ? "EN" : "TW"}
+              </button>
+
+              <AnimatePresence>
+                {isLangMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsLangMenuOpen(false)}
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 4, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full z-50 mt-2 w-32 origin-top-right rounded-xl border border-white/[0.12] bg-[#111118] p-1 shadow-2xl shadow-black/50"
+                    >
+                      <button
+                        onClick={() => { setLocale("en"); setIsLangMenuOpen(false); }}
+                        className={`flex w-full items-center rounded-lg px-3 py-2 text-sm transition-colors ${
+                          locale === "en" ? "bg-white/10 text-white" : "text-neutral-400 hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        English
+                      </button>
+                      <button
+                        onClick={() => { setLocale("zh-TW"); setIsLangMenuOpen(false); }}
+                        className={`flex w-full items-center rounded-lg px-3 py-2 text-sm transition-colors ${
+                          locale === "zh-TW" ? "bg-white/10 text-white" : "text-neutral-400 hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        繁體中文
+                      </button>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
 
             <motion.div
               whileHover={{ scale: 1.03 }}

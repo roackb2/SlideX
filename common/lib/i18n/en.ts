@@ -164,14 +164,6 @@ export const enDictionary = {
       presets: {
         title: "Start from a useful deck.",
         body: "Presets are complete scene systems, not blank themes. Pick one, rewrite the story, and keep the motion."
-      },
-      downloadTeaser: {
-        title: "Mac Beta is ready to download.",
-        body: "SlideX Tauri 2.0.4 is now available as a macOS Apple Silicon DMG for early desktop workflow testing.",
-        cta: "Download Mac Beta",
-        cardTitle: "SlideX for macOS",
-        status: "Version 2.0.4",
-        items: ["Apple Silicon DMG", "Mac project foundation", "Web Studio compatible"]
       }
     },
     templatesPage: {
@@ -465,44 +457,6 @@ export const enDictionary = {
       cta: {
         title: "Ready to build a scene?",
         body: "Open Studio and use the reference as you shape the first deck.",
-        button: "Open Studio"
-      }
-    },
-    downloadPage: {
-      hero: {
-        eyebrow: "Homebrew Cask",
-        title: "SlideX for Mac is ready to install.",
-        body: "The first Tauri desktop beta is now distributed via Homebrew Cask for macOS. This allows safe, seamless installation by automatically bypassing macOS Gatekeeper and security settings.",
-        primary: "Copy Homebrew Command",
-        secondary: "Open Web Studio"
-      },
-      packageCard: {
-        title: "macOS app",
-        subtitle: "Tauri desktop build",
-        status: "Available now",
-        heading: "Homebrew Cask Package",
-        fileMeta: [
-          ["Source", "Homebrew Tap"],
-          ["Platform", "macOS Apple Silicon"],
-          ["Cask Name", "slidex"]
-        ],
-        items: ["Tauri desktop 2.0.4", "Automated Gatekeeper security bypass", "Same MDX scene model as Web Studio", "2026.06.06 release notes"],
-        localTitle: "Homebrew Distribution",
-        localBody: "This release brings the Mac desktop experience, project-opening flow, and Studio preview into an easily installable Homebrew Cask that is updated directly from GitHub Releases.",
-        installTitle: "Installation Guide",
-        installBody: "To install, copy the command below and execute it in your Mac Terminal application:",
-        installCommand: "brew install --cask zz41354899/slidex/slidex",
-        installStep1: "Once the installation completes, you can open SlideX directly from your Applications folder or launchpad.",
-        installStep2Label: "Run Cask Command"
-      },
-      stats: [
-        ["Homebrew Tap", "The official Cask tap for SlideX, bypassing security warnings seamlessly."],
-        ["Mac projects", "A foundation for desktop files and private presentation workflows."],
-        ["Web Studio compatible", "Uses the same MDX scene model before export and playback workflows land."]
-      ],
-      webStudio: {
-        title: "Web Studio and Mac Beta now move together.",
-        body: "The browser version remains available for composing scenes, testing motion, and preparing decks. The Mac beta is the first public desktop milestone for collecting real usage feedback.",
         button: "Open Studio"
       }
     }
