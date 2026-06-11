@@ -1,7 +1,7 @@
 export const enDictionary = {
     metadata: {
       title: "SlideX — Motion Design System",
-      description: "Design animated presentations as MDX scene decks. Edit scenes, preview motion, and export sequences."
+      description: "Design animated presentations as MDX Slide decks. Edit slides, preview motion, and export sequences."
     },
     common: {
       productName: "SlideX",
@@ -14,7 +14,7 @@ export const enDictionary = {
       resources: "Docs",
       templates: "Presets",
       getStarted: "Get Started",
-      mobileDescription: "Design animated MDX scene decks.",
+      mobileDescription: "Design animated MDX Slide decks.",
       openMenu: "Open menu",
       closeMenu: "Close menu",
       githubLabel: "Open GitHub repository",
@@ -36,8 +36,8 @@ export const enDictionary = {
     thumbnail: {
       fallbackLabel: "Preset",
       ariaLabel: (title: string) => `${title} style thumbnail`,
-      sceneLayers: "Scene layers",
-      layers: ["Title", "Metric", "Chart"],
+      sceneLayers: "Slide layers",
+      layers: ["Text", "Icon", "Chart"],
       motionReady: "Motion ready"
     },
     templateMeta: {
@@ -106,7 +106,7 @@ export const enDictionary = {
       hero: {
         eyebrow: "SlideX Studio",
         title: "Motion decks without the rebuild.",
-        body: "Compose MDX scenes, tune timing, preview motion, and export the deck from one studio.",
+        body: "Compose MDX Slides, tune timing, preview motion, and export the deck from one studio.",
         primary: "Get Started",
         secondary: "View Presets",
         checkpoints: ["Author", "Preview", "Export"]
@@ -116,30 +116,30 @@ export const enDictionary = {
         project: "Project Alpha",
         export: "Export",
         newSlide: "New slide",
-        scenes: "Scenes",
+        scenes: "Slides",
         slides: ["Memo", "Signal", "Plan", "Ask"],
-        layers: ["Title", "Narrative", "Momentum chart", "Decision card"],
-        sceneLabel: "Scene 01",
+        layers: ["Headline", "Narrative", "Momentum chart", "Decision note"],
+        sceneLabel: "Slide 01",
         slideTitle: "Growth Investment Memo",
         slideBody: "A concise decision story with paced evidence, motion cues, and export-ready structure.",
-        toolLabels: ["Title", "Text", "Card", "Chart", "Image", "CTA"]
+        toolLabels: ["Text", "Icon", "Chart", "Image", "Video", "Export"]
       },
       stats: [
-        ["MDX-first", "Scenes stay editable after the pitch"],
+        ["MDX-first", "Slides stay editable after the pitch"],
         ["Live timing", "Preview animations as you compose"],
         ["Export ready", "Ship source, HTML, or captured sequences"]
       ],
       compose: {
         title: "Compose decks like software.",
-        body: "SlideX turns presentation work into reusable scenes, live preview, and outputs your team can maintain.",
-        sourceLabel: "MDX scene source",
+        body: "SlideX turns presentation work into reusable Slides, live preview, and outputs your team can maintain.",
+        sourceLabel: "MDX Slide source",
         codeTitle: "Growth Investment Memo",
         timelineLabel: "Preview timeline",
-        timelineItems: ["Title fade", "Chart rise", "Decision card"],
+        timelineItems: ["Text fade", "Chart rise", "Decision note"],
         templateTitle: "Template-backed starts",
-        templateBody: "Load complete scene decks for reviews, launches, updates, and QBRs.",
+        templateBody: "Load complete Slide decks for reviews, launches, updates, and QBRs.",
         blockTitle: "A controlled block kit",
-        blockBody: "Titles, cards, charts, media, and actions share one timing model.",
+        blockBody: "Text, icons, charts, images, and video share one timing model.",
         polishTitle: "Presentation polish stays editable",
         polishBody: "Motion survives revisions because the deck remains a document, not a pile of flattened frames."
       },
@@ -149,7 +149,7 @@ export const enDictionary = {
         items: [
           {
             title: "Write the narrative",
-            body: "Start with editable MDX scenes instead of rebuilding slides from shapes."
+            body: "Start with editable MDX Slides instead of rebuilding the deck from flattened assets."
           },
           {
             title: "Tune the motion",
@@ -163,7 +163,7 @@ export const enDictionary = {
       },
       presets: {
         title: "Start from a useful deck.",
-        body: "Presets are complete scene systems, not blank themes. Pick one, rewrite the story, and keep the motion."
+        body: "Presets are complete Slide systems, not blank themes. Pick one, rewrite the story, and keep the motion."
       },
       cta: {
         title: "Ready to compose?",
@@ -175,7 +175,7 @@ export const enDictionary = {
       hero: {
         eyebrow: "Deck Presets",
         title: "Useful decks with motion built in.",
-        body: "Start from complete MDX scene decks for reviews, launches, board updates, and customer stories.",
+        body: "Start from complete MDX Slide decks for reviews, launches, board updates, and customer stories.",
         primary: "Open Studio",
         secondary: "View Presets"
       },
@@ -185,16 +185,16 @@ export const enDictionary = {
         deckLabel: "MDX deck"
       },
       stats: [
-        ["Complete scenes", "Structure, copy rhythm, timing, and visual direction."],
+        ["Complete Slides", "Structure, copy rhythm, timing, and visual direction."],
         ["Editable source", "Everything stays as MDX so teams can rewrite the story."],
-        ["Export path", "Use the same scene tree for playback and capture."]
+        ["Export path", "Use the same Slide tree for playback and capture."]
       ],
       gallery: {
         title: "Choose the closest story.",
         body: "The gallery is organized around business moments, not decorative themes.",
         steps: [
           ["01", "Pick a deck"],
-          ["02", "Rewrite scenes"],
+          ["02", "Rewrite Slides"],
           ["03", "Preview timing"]
         ]
       },
@@ -202,14 +202,14 @@ export const enDictionary = {
         title: "Presets are starting points.",
         body: "Open a deck, keep the motion grammar, and replace the content with your real story.",
         items: [
-          ["Scene structure", "A complete deck outline with timed sections."],
+          ["Slide structure", "A complete deck outline with timed sections."],
           ["Motion defaults", "Enter, delay, and duration choices already tuned."],
           ["MDX source", "Readable source that can be maintained by the team."]
         ]
       },
       cta: {
         title: "Build from a preset today.",
-        body: "Load a deck into Studio, edit the scenes, and keep the motion system intact.",
+        body: "Load a deck into Studio, edit the Slides, and keep the motion system intact.",
         button: "Open Studio"
       }
     },
@@ -217,30 +217,36 @@ export const enDictionary = {
       heroVisual: {
         label: "Resources",
         codeTitle: "Motion Design Resources",
-        codeBody: "Scene model, workflow, export path.",
+        codeBody: "Slide model, workflow, export path.",
         cards: [
-          ["Scene", "Timed page"],
+          ["Slide", "Timed page"],
           ["Layer", "Motion block"],
           ["Export", "Portable output"]
         ]
       },
       hero: {
         eyebrow: "Documentation",
-        title: "Learn the scene system.",
-        body: "A focused hub for MDX scenes, component syntax, Studio workflow, keyboard navigation, and export direction.",
+        title: "Learn the Slide system.",
+        body: "A focused hub for MDX Slides, component syntax, Studio workflow, keyboard navigation, and export direction.",
         primary: "View MDX Syntax",
         secondary: "Open Studio"
       },
       resourceItems: [
         {
           title: "MDX Syntax",
-          description: "Complete syntax for Scene, text, data, image, and common props.",
+          description: "Complete syntax for Slide, text, Icon, chart, image, video, and common props.",
           href: "/resources/mdx",
           label: "Syntax"
         },
         {
-          title: "Scene Components",
-          description: "Reference for Scene, Title, Text, Card, Metric, Chart, ImageBlock, and timing props.",
+          title: "MCP Server",
+          description: "Connect SlideX to MCP clients so assistants can create, validate, edit, and export MotionDoc decks.",
+          href: "/resources/mdx/mcp",
+          label: "MCP"
+        },
+        {
+          title: "Slide Components",
+          description: "Reference for Slide, Text, Icon, Chart, ImageBlock, VideoBlock, and timing props.",
           href: "/resources#components",
           label: "Reference"
         },
@@ -252,30 +258,30 @@ export const enDictionary = {
         },
         {
           title: "Studio Workflow",
-          description: "Use the scene list, MDX editor, preview, and timeline to design animated presentations.",
+          description: "Use the slide list, MDX editor, preview, and timeline to design animated presentations.",
           href: "/studio",
           label: "Studio"
         }
       ],
       docsIntro: {
         title: "The docs follow the build loop.",
-        body: "Start with the scene model, move through composition, then prepare the output path."
+        body: "Start with the Slide model, move through composition, then prepare the output path."
       },
       docSections: [
         {
-          title: "Scene Model",
-          description: "SlideX treats a presentation as an MDX scene deck with editable source.",
+          title: "Slide Model",
+          description: "SlideX treats a presentation as an editable MDX slide document.",
           points: [
-            "Each Scene defines one timed page.",
-            "Title, Text, Card, Metric, Chart, and ImageBlock layers receive enter, delay, and duration props.",
-            "The same MDX deck powers the scene list, preview, timeline, and export."
+            "Each Slide defines one timed page.",
+            "Text, Icon, Chart, ImageBlock, and VideoBlock layers receive enter, delay, and duration props.",
+            "The same MDX deck powers the slide list, preview, timeline, and export."
           ]
         },
         {
           title: "Design Loop",
-          description: "The Studio keeps source, scene navigation, preview, and timeline output in sync.",
+          description: "The Studio keeps source, slide navigation, preview, and timeline output in sync.",
           points: [
-            "Load a deck preset or insert individual scene blocks.",
+            "Load a deck preset or insert individual Slide blocks.",
             "Edit the MDX source for advanced composition control.",
             "Replay resets the animation key without changing the composition."
           ]
@@ -284,9 +290,9 @@ export const enDictionary = {
           title: "Export Direction",
           description: "Video export is the publishing target, while the core product remains a motion design tool.",
           points: [
-            "Scene duration maps to timeline segments.",
+            "Slide duration maps to timeline segments.",
             "The preview canvas can become a browser capture target.",
-            "A renderer can consume the same MDX scene tree for video output."
+            "A renderer can consume the same MDX Slide tree for video output."
           ]
         }
       ],
@@ -297,7 +303,7 @@ export const enDictionary = {
         docsHomeLabel: "Docs home",
         studioLinkLabel: "Studio",
         onThisPageTitle: "On this page",
-        updatedAt: "Last updated on May 30, 2026",
+        updatedAt: "Last updated on June 11, 2026",
         helpfulTitle: "Was this page helpful?",
         feedbackLabel: "Back to docs home",
         nextLabel: "Next",
@@ -309,24 +315,24 @@ export const enDictionary = {
         overviewTitle: "Overview",
         fileLabel: ".mdx",
         title: "Complete MDX syntax.",
-        body: "SlideX MDX is organized around Scene blocks. Each Scene can contain text, cards, metrics, charts, and images, with props for timing, layout, color, and position.",
+        body: "SlideX MDX is organized around Slide blocks. Each Slide can contain text, Icon, chart, image, and video blocks, with props for timing, layout, color, and position.",
         overviewPageTitle: "MDX docs overview.",
-        overviewBody: "Start here to understand the SlideX docs structure, scene model, and authoring path before moving into the full example, common patterns, and props reference.",
-        overviewLeadTitle: "A deck is a set of playable scenes.",
-        overviewLeadBody: "SlideX treats each slide as a Scene instead of a static image. Name the deck with Markdown, describe the frame with MDX components, then tune animation rhythm with timing props.",
-        overviewCodeTitle: "Minimal scene",
-        overviewCode: `<Scene duration={5} theme="dark">
-  <Title enter="fadeUp">
+        overviewBody: "Start here to understand the SlideX docs structure, Slide model, and authoring path before moving into the full example, common patterns, and props reference.",
+        overviewLeadTitle: "A deck is a set of playable Slides.",
+        overviewLeadBody: "SlideX treats each page as a Slide instead of a static image. Name the deck with Markdown, describe the frame with MDX components, then tune animation rhythm with timing props.",
+        overviewCodeTitle: "Minimal Slide",
+        overviewCode: `<Slide duration={5} theme="dark" background="#050505" accent="#ffffff">
+  <Text enter="fadeUp" fontSize={72} fontWeight={800} x={8} y={18} w={72} h={18}>
     Launch Review
-  </Title>
-  <Text delay={0.2}>
-    One Scene per page, blocks handle content and rhythm.
   </Text>
-</Scene>`,
+  <Text enter="fadeUp" delay={0.2} fontSize={24} x={8} y={42} w={58} h={16}>
+    One Slide per page, blocks handle content and rhythm.
+  </Text>
+</Slide>`,
         overviewCards: [
           {
             title: "Read the full example",
-            body: "Start from a Scene that can be pasted into Studio and see how title, text, metrics, and charts fit together."
+            body: "Start from a Slide that can be pasted into Studio and see how text, Icon, charts, and images fit together."
           },
           {
             title: "Break down patterns",
@@ -339,70 +345,75 @@ export const enDictionary = {
           {
             title: "Understand parsing",
             body: "Learn which tag forms, number values, and Markdown heading rules the parser supports."
+          },
+          {
+            title: "Connect MCP",
+            body: "Register SlideX in an MCP client so assistants can create, validate, edit, and export MotionDoc decks."
           }
         ],
         overviewReferenceTitle: "Where to go next?",
         overviewReferenceBody: "Choose a section based on the work in front of you: use the example to get moving, or open props and parsing rules when you need a reference.",
         overviewWorkflowTitle: "Suggested reading path",
-        overviewWorkflowBody: "You do not need to read everything at once. Learn the scene model, edit from an example, then return to the props reference.",
+        overviewWorkflowBody: "You do not need to read everything at once. Learn the Slide model, edit from an example, then return to the props reference.",
         overviewWorkflowSteps: [
-          ["01", "Create scenes", "Name the deck with #, then split each page with Scene or Slide."],
-          ["02", "Add blocks", "Use Title, Text, Card, Metric, Chart, and ImageBlock to describe the frame."],
+          ["01", "Create Slides", "Name the deck with #, then split each page with <Slide>."],
+          ["02", "Add blocks", "Use Text, Icon, Chart, ImageBlock, and VideoBlock to describe the frame."],
           ["03", "Tune rhythm", "Use enter, delay, duration, and frame props to control motion and layout."]
         ],
         rules: [
           "Use # at the top of the file to name the deck.",
-          "Every <Scene> or <Slide> needs duration in seconds.",
-          "Text components use paired tags; data, image, and chart components use self-closing tags.",
+          "Every <Slide> needs duration in seconds.",
+          "Text components use paired tags; Icon, chart, image, and video components use self-closing tags.",
           "x, y, w, and h use percent-based frame coordinates for precise slide layout."
         ],
         patternsTitle: "Common patterns",
         patternsBody: "These examples can be pasted into Studio and then tuned for content, color, layout, and timing.",
         fullExampleTitle: "Full example",
-        exampleBody: "This complete MDX scene can be used as a starting point for a new deck. It includes a title, supporting copy, a metric, and a chart while showing common timing and frame props.",
+        exampleBody: "This complete MDX Slide can be used as a starting point for a new deck. It includes a text headline, supporting copy, a text-based metric, and a chart while showing common timing and frame props.",
         fullExample: `# Quarterly Business Review
 
-<Scene duration={6} theme="dark" accent="#8ea5ff" layout="default" alignX="left" alignY="center">
-  <Title enter="fadeUp" fontSize={72} x={8} y={12} w={64} h={18}>
+<Slide duration={6} theme="dark" accent="#8ea5ff" background="#050505" layout="default" alignX="left" alignY="center">
+  <Text enter="fadeUp" fontSize={72} fontWeight={800} x={8} y={12} w={64} h={18}>
     Growth review
-  </Title>
+  </Text>
   <Text enter="fadeUp" delay={0.2} fontSize={24} x={8} y={34} w={52} h={16}>
     Focus the conversation on momentum, risk, and the next decision.
   </Text>
-  <Metric label="ARR" value="+42%" caption="Trailing twelve-month growth." enter="fadeUp" delay={0.3} x={8} y={56} w={28} h={24} />
+  <Text enter="fadeUp" delay={0.3} fontSize={56} fontWeight={800} x={8} y={58} w={28} h={12}>
+    +42%
+  </Text>
+  <Text enter="fadeUp" delay={0.34} fontSize={18} x={8} y={72} w={28} h={10}>
+    Trailing twelve-month ARR growth.
+  </Text>
   <Chart title="Pipeline quality" labels="Q1,Q2,Q3,Q4" values="42,58,73,91" height={144} enter="fadeUp" delay={0.35} x={40} y={52} w={48} h={34} />
-</Scene>`,
+</Slide>`,
         groups: [
           {
-            title: "Document and scenes",
-            body: "Name the deck with a Markdown heading, then create one page at a time with Scene or Slide.",
+            title: "Document and Slides",
+            body: "Name the deck with a Markdown heading, then create one page at a time with Slide.",
             code: `# Launch Review
 
-<Scene duration={5} theme="light" background="#f8fafc" accent="#2563eb">
-  ...
-</Scene>
-
-<Slide duration={4} theme="dark">
+<Slide duration={5} theme="light" background="#f8fafc" accent="#2563eb">
   ...
 </Slide>`
           },
           {
             title: "Text and motion",
-            body: "Title and Text use paired tags. Their content is normalized into one readable line.",
-            code: `<Title enter="fadeUp" fontSize={72} textAlign="left">
+            body: "Text uses paired tags. Its content is normalized into one readable line and can represent titles, paragraphs, notes, or text-based metrics.",
+            code: `<Text enter="fadeUp" fontSize={72} fontWeight={800} textAlign="left">
   Board-ready story
-</Title>
+</Text>
 
 <Text enter="slideLeft" delay={0.2} duration={0.7} fontSize={24}>
   Explain the decision with one clear supporting sentence.
 </Text>`
           },
           {
-            title: "Data blocks",
-            body: "Card, Metric, and Chart describe evidence, numbers, and trend lines through props.",
-            code: `<Metric label="Retention" value="119%" caption="Expansion remains healthy." width="sm" />
-
-<Card icon="BadgeCheck" layout="horizontal" title="Proof point" text="Use one concrete reason for confidence." width="lg" />
+            title: "Icon, metrics, and charts",
+            body: "Use Icon plus Text for compact proof points, Text for metrics, and Chart for structured trend data.",
+            code: `<Icon icon="BadgeCheck" x={8} y={34} w={8} h={12} />
+<Text fontSize={56} fontWeight={800} x={8} y={52} w={24} h={12}>119%</Text>
+<Text fontSize={18} x={8} y={68} w={32} h={10}>Expansion remains healthy.</Text>
 
 <Chart title="Readiness" labels="Sales,Success,Product" values="82,64,48" height={144} />`
           },
@@ -419,48 +430,137 @@ export const enDictionary = {
         propsTitle: "Common props",
         propsBody: "These props can be written directly on MDX tags and parsed into preview and timeline data.",
         propsRows: [
-          ["Scene", "duration", "number", "Scene length in seconds."],
-          ["Scene", "theme", "dark | light | paper | blue", "Sets default background and text contrast."],
-          ["Scene", "layout", "default | split-left | split-right", "Controls the main scene layout direction."],
+          ["Slide", "duration", "number", "Slide length in seconds."],
+          ["Slide", "theme", "dark | light | paper | blue", "Sets default background and text contrast."],
+          ["Slide", "layout", "default | split-left | split-right", "Controls the main slide layout direction."],
           ["Block", "enter", "fadeIn | fadeUp | zoomIn | slideLeft", "Controls entrance animation."],
           ["Block", "delay", "number", "Delays entrance timing in seconds."],
           ["Block", "x y w h", "number", "Percent-based frame position and size."],
           ["Text", "fontSize", "number", "Overrides text size."],
-          ["Card", "icon", "Lucide name", "Displays a supported icon name."],
+          ["Icon", "icon", "Lucide name", "Displays a supported icon name."],
           ["Chart", "labels / values", "comma list", "Comma-separated labels and values."],
-          ["ImageBlock", "fit", "cover | contain | fill | scale-down", "Controls how the image fills the frame."]
+          ["ImageBlock", "fit", "cover | contain | fill | scale-down", "Controls how the image fills the frame."],
+          ["VideoBlock", "controls / loop / muted", "string boolean", "Controls video playback behavior."]
         ],
         motionTitle: "Motion and parsing rules",
-        motionBody: "The MDX parser intentionally supports a small, stable syntax for website presets and Studio editing.",
+        motionBody: "The MDX parser intentionally supports a small, stable syntax for website presets and Studio editing. Legacy tags can still be parsed for older files, but new docs and MCP tools use Slide-first syntax.",
         motionRows: [
-          ["<Title>...</Title>", "Text-like components must use paired tags."],
-          ["<Card ... />", "Data-like components use self-closing tags."],
+          ["<Slide>...</Slide>", "Every timed page is wrapped in one Slide tag."],
+          ["<Text>...</Text>", "Text components must use paired tags."],
+          ["<Icon ... />", "Icon, chart, image, and video components use self-closing tags."],
+          ["<Chart ... />", "Chart data is passed through comma-separated labels and values."],
           ["{72}", "Plain numbers inside braces are parsed as number values."],
           ["\"fadeUp\"", "Quoted values are parsed as strings."],
-          ["# Heading", "A # outside Scene becomes the deck title."],
-          ["## Subheading", "An unwrapped ## inside Scene becomes a heading block."]
+          ["# Heading", "A # outside Slide becomes the deck title."],
+          ["## Subheading", "An unwrapped ## inside Slide becomes a text heading block."]
+        ],
+        mcpTitle: "MCP Server",
+        mcpBody: "The SlideX MCP server exposes MotionDoc tools over stdio, allowing MCP-capable assistants to create decks, read templates, edit slides, validate MDX, and export standalone HTML.",
+        mcpInstallTitle: "Install and configure",
+        mcpInstallLead: "The same server can be connected through a local project, npm package, or GitHub clone.",
+        mcpInstallBody: "Local mode is available now. If you later publish to npm or distribute from GitHub, keep stdout reserved for JSON-RPC; use --silent when launching through npm.",
+        mcpInstallCards: [
+          {
+            title: "Local project",
+            body: "Best while developing. The MCP client starts the server from this project root, which works well for local testing and private projects.",
+            fileLabel: "mcp.json",
+            code: `{
+  "mcpServers": {
+    "slidex": {
+      "command": "npm",
+      "args": ["--silent", "run", "mcp"],
+      "cwd": "/Users/zz41354899/Desktop/Animark"
+    }
+  }
+}`
+          },
+          {
+            title: "NPM package (Recommended)",
+            body: "Launch the published package with npx. Always use @latest so your assistant downloads the newest version with dynamic skills enabled.",
+            fileLabel: "mcp.json",
+            code: `{
+  "mcpServers": {
+    "slidex": {
+      "command": "npx",
+      "args": ["-y", "@z7589xxz758/slidex-mcp-server@latest"]
+    }
+  }
+}`
+          },
+          {
+            title: "Cursor / Claude Desktop",
+            body: "Open your editor's MCP settings (Cursor: Settings -> Features -> MCP, Claude: claude_desktop_config.json). Add a new command-type server with these parameters:",
+            fileLabel: "UI Configuration",
+            code: `Name: slidex
+Type: command
+Command: npx
+Args: -y @z7589xxz758/slidex-mcp-server@latest`
+          },
+          {
+            title: "GitHub clone",
+            body: "If you do not publish to npm yet, users can clone the repo, install dependencies, and point cwd to the cloned folder.",
+            fileLabel: "terminal + mcp.json",
+            code: `git clone https://github.com/<owner>/<repo>.git
+cd <repo>
+npm install
+
+{
+  "mcpServers": {
+    "slidex": {
+      "command": "npm",
+      "args": ["--silent", "run", "mcp"],
+      "cwd": "/absolute/path/to/<repo>"
+    }
+  }
+}`
+          }
+        ],
+        mcpToolsTitle: "Available tools",
+        mcpToolsBody: "All tools use the slidex_ prefix to avoid collisions with other MCP servers.",
+        mcpToolsRows: [
+          ["slidex_parse_motion_doc", "Parse MDX and return slides, blocks, stats, and validation."],
+          ["slidex_list_templates", "List bundled templates and use cases."],
+          ["slidex_create_deck", "Create editable MotionDoc MDX from a structured outline."],
+          ["slidex_create_from_template", "Clone a template and optionally replace title and text."],
+          ["slidex_add_block", "Add text, image, video, chart, or Icon blocks to a slide."],
+          ["slidex_list_slide_layouts", "List the 16 built-in Studio slide layouts."],
+          ["slidex_get_slide_layout", "Get the MDX block source for a specific layout."],
+          ["slidex_create_slide_from_layout", "Create a complete <Slide>...</Slide> block from a layout."],
+          ["slidex_add_slide_from_layout", "Append or insert a new slide generated from a layout."],
+          ["slidex_replace_slide_with_layout", "Replace an existing slide with a selected layout."],
+          ["slidex_update_slide_props", "Update one slide's theme, background, accent, duration, and other props."],
+          ["slidex_replace_slide", "Replace one slide with a complete <Slide>...</Slide> block."],
+          ["slidex_export_html", "Export a standalone HTML player."]
+        ],
+        mcpPublishTitle: "Before publishing",
+        mcpPublishBody: "If you later make the MCP server installable from npm or GitHub, tighten these pieces first.",
+        mcpPublishNotes: [
+          "An npm release needs a package bin, such as slidex-mcp, so npx can start the server directly.",
+          "An MCP stdio server must not write normal logs to stdout; write logs to stderr or use npm --silent.",
+          "The most reliable GitHub mode is clone plus cwd plus npm --silent run mcp; direct npx github:<owner>/<repo> requires a configured bin.",
+          "For global installation, compile the MCP server to JavaScript so users do not depend on a local TypeScript runtime."
         ],
         ctaTitle: "Try MDX in Studio.",
-        ctaBody: "Paste an example into Studio, tune scene timing and block positions, then preview the motion immediately.",
+        ctaBody: "Paste an example into Studio, tune slide timing and block positions, then preview the motion immediately.",
         ctaButton: "Open Studio"
       },
       components: {
-        title: "Scene component reference.",
+        title: "Slide component reference.",
         body: "A small component vocabulary keeps the Studio predictable while still supporting rich presentation work.",
         notePrefix: "Full maintenance notes remain in",
         docPath: "docs/USAGE.zh-TW.md",
         items: [
           ["Slide", "Timed page container for one presentation moment."],
-          ["Title", "Animated headline layer with enter and timing props."],
-          ["Text", "Supporting copy with delay, duration, and layout controls."],
-          ["Card", "Structured proof block for context and decisions."],
-          ["Image", "Adds image URL, alt text, fit mode, and frame position."],
-          ["CTA", "High-contrast button component to drive user action."]
+          ["Text", "Headlines, body copy, notes, and text-based metrics."],
+          ["Icon", "Lucide icon layer for compact visual emphasis."],
+          ["Chart", "Structured labels and values for visual data."],
+          ["ImageBlock", "Image URL, alt text, fit mode, and frame position."],
+          ["VideoBlock", "Video source, playback flags, fit mode, and frame position."]
         ]
       },
       cta: {
-        title: "Ready to build a scene?",
-        body: "Open Studio and use the reference as you shape the first deck.",
+        title: "Ready to build a Slide?",
+        body: "Open Studio and use the reference as you draft the first deck.",
         button: "Open Studio"
       }
     }

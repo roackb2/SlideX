@@ -168,7 +168,7 @@ export default async function OpenGraphImage() {
                 fontWeight: 400
               }}
             >
-              Compose cinematic scenes with MDX, fine-tune timings on an interactive timeline, and export editable slides or video.
+              Compose cinematic Slides with MDX, fine-tune timings on an interactive timeline, and export editable slides or video.
             </div>
           </div>
 
@@ -306,14 +306,14 @@ export default async function OpenGraphImage() {
                   }}
                 >
                   <div style={{ display: "flex", gap: 4 }}>
-                    <span style={{ color: "#ff7b72" }}>{"<Scene"}</span>
+                    <span style={{ color: "#ff7b72" }}>{"<Slide"}</span>
                     <span style={{ color: "#79c0ff" }}>duration</span>
                     <span style={{ color: "#ff7b72" }}>{"={6}>"}</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", paddingLeft: 12, gap: 1 }}>
-                    <span style={{ color: "#8b949e" }}>{"<Title"}</span>
-                    <span style={{ color: "#a5d6ff", paddingLeft: 12 }}>{"text=\"Welcome\""}</span>
-                    <span style={{ color: "#8b949e" }}>{"/>"}</span>
+                    <span style={{ color: "#8b949e" }}>{"<Text"}</span>
+                    <span style={{ color: "#a5d6ff", paddingLeft: 12 }}>{"fontWeight={800}"}</span>
+                    <span style={{ color: "#8b949e" }}>{">Welcome</Text>"}</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", paddingLeft: 12, gap: 1, marginTop: 4 }}>
                     <span style={{ color: "#8b949e" }}>{"<Chart"}</span>
@@ -322,7 +322,7 @@ export default async function OpenGraphImage() {
                     <span style={{ color: "#8b949e" }}>{"/>"}</span>
                   </div>
                   <div style={{ display: "flex" }}>
-                    <span style={{ color: "#ff7b72" }}>{"</Scene>"}</span>
+                    <span style={{ color: "#ff7b72" }}>{"</Slide>"}</span>
                   </div>
                 </div>
 

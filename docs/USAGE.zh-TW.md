@@ -1,162 +1,171 @@
-# Animark MotionDoc Usage Guide
+# SlideX MotionDoc 使用指南
 
-This guide provides comprehensive instructions on how to set up, operate, and author motion documents using the Animark MotionDoc prototype.
+SlideX MotionDoc 是一套以 MDX Slide 為核心的動態簡報格式。你可以用文字描述每一頁的版面、內容、動畫節奏與媒體，再交給 Studio 預覽、調整與匯出。
 
-## Introduction
-
-Animark MotionDoc is a **document-to-motion prototype** designed to validate MDX as a format for defining motion graphics. It allows you to write structured content in MDX and see it instantly transformed into a polished, animated presentation.
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (Latest LTS version recommended)
-- npm or yarn
-
-### Installation
-
-Clone the repository and install the dependencies:
+## 快速開始
 
 ```bash
 npm install
-```
-
-### Running the Project
-
-Start the development server:
-
-```bash
 npm run dev
 ```
 
-Once started, the following routes are available:
+常用路由：
 
-- **Product Intro**: [http://localhost:3000](http://localhost:3000) - Overview of the Animark concept.
-- **Resources**: [http://localhost:3000/resources](http://localhost:3000/resources) - Technical documentation and roadmap.
-- **Template Library**: [http://localhost:3000/templates](http://localhost:3000/templates) - Pre-built MDX examples.
-- **MotionDoc Studio**: [http://localhost:3000/studio](http://localhost:3000/studio) - The interactive editor and previewer.
+- Website: `http://localhost:3000`
+- Resources: `http://localhost:3000/resources`
+- Templates: `http://localhost:3000/templates`
+- Studio: `http://localhost:3000/studio`
 
----
+## Studio 工作流
 
-## The MotionDoc Studio
+Studio 由幾個核心區域組成：
 
-The Studio is the core of the Animark experience. It features a split-pane interface:
+- **Slide list**：切換、排序與管理每一頁。
+- **MDX editor**：直接編輯 MotionDoc source。
+- **Preview canvas**：即時預覽目前 Slide 的版面與動畫。
+- **Timeline / inspector**：調整時間、位置、尺寸、字體與區塊屬性。
+- **Snippets**：插入目前支援的 Slide、Text、Icon、Chart、ImageBlock 與 VideoBlock 範例。
 
-1.  **Top Bar**: Switch between built-in templates (Brand Intro, Product Launch, etc.).
-2.  **Left Pane (Editor)**: A code editor for writing your MDX document.
-3.  **Right Pane (Preview)**: A live-updating view of your animation scenes powered by Framer Motion.
+## Slide 概念
 
-### Studio Features
-
--   **Templates**: Quickly load predefined MDX structures to see what's possible.
--   **Snippets**: Click the buttons (e.g., `+ Scene`, `+ Card`) to insert common components at your cursor.
--   **Live Preview**: Changes in the editor are parsed in real-time.
--   **Replay**: Restarts the entry animations for the current document.
--   **Copy MDX**: Copies the current editor content to your clipboard.
-
----
-
-## Authoring MotionDoc with MDX
-
-MotionDoc uses a simplified MDX syntax to define your animation. Every document should start with a top-level H1 title (e.g., `# My Video`).
-
-### The Scene Concept
-
-The core unit of Animark is the `<Scene>`. Each scene represents a logical block of time or a specific "slide" in your motion sequence.
+每一個 `<Slide>` 代表一個可播放的簡報頁面，`duration` 會對應到播放與匯出時間軸。
 
 ```mdx
-<Scene duration={5}>
-  ... components go here ...
-</Scene>
+# Quarterly Review
+
+<Slide duration={5} theme="dark" background="#050505" accent="#ffffff">
+  <Text enter="fadeUp" fontSize={72} fontWeight={800} x={8} y={18} w={72} h={18}>
+    Launch Review
+  </Text>
+  <Text enter="fadeUp" delay={0.2} fontSize={24} x={8} y={42} w={58} h={16}>
+    一頁一個 Slide，區塊負責內容與節奏。
+  </Text>
+</Slide>
 ```
 
--   **`duration`**: (Number) Defines the length of the scene in seconds. *Note: Currently used for visual reference and future export calculations.*
+## 目前支援的 MDX 元件
 
----
+### `<Slide>`
 
-## Component Reference
+Timed page container。每個 Slide 應該有 `duration`，也可以設定 `theme`、`background`、`accent` 等外觀屬性。
 
-All components (except `Scene`) support the [Animation Props](#animation-props).
-
-### `<Title>`
-Displays a large, impactful heading. Best used for main messages.
 ```mdx
-<Title enter="fadeUp">The Future of Content</Title>
+<Slide duration={6} theme="light" background="#f8fafc" accent="#2563eb">
+  ...
+</Slide>
 ```
 
 ### `<Text>`
-Used for body text or descriptions. Supports multi-line content.
+
+主要文字元件，負責標題、段落、註解與文字型數字。新版寫法以 `Text` 搭配 `fontSize`、`fontWeight`、`x/y/w/h` 取代舊的 `Title`、`Metric` 類型。
+
 ```mdx
-<Text delay={0.3}>
-  Transforming structured documents into motion.
+<Text enter="fadeUp" fontSize={64} fontWeight={800} x={8} y={14} w={70} h={16}>
+  Growth review
 </Text>
 ```
 
-### `<Card>`
-A contained info block with a title and description.
+### `<Icon>`
+
+顯示 Lucide icon，常用於重點、流程、功能卡片或視覺提示。
+
 ```mdx
-<Card
-  title="Component Driven"
-  text="Reusable blocks for faster production."
-  enter="zoomIn"
-/>
+<Icon icon="Sparkles" size={96} strokeWidth={2} x={8} y={32} w={12} h={18} />
+```
+
+### `<Chart>`
+
+用 props 描述圖表資料。`labels` 與 `values` 使用逗號分隔字串。
+
+```mdx
+<Chart title="Pipeline quality" labels="Q1,Q2,Q3,Q4" values="42,58,73,91" chartType="bar" x={38} y={48} w={50} h={34} />
 ```
 
 ### `<ImageBlock>`
-Displays a 16:9 image.
-```mdx
-<ImageBlock
-  src="https://example.com/image.jpg"
-  alt="Description of image"
-  enter="slideLeft"
-/>
-```
 
-### `<CTA>`
-A stylized "Call to Action" badge, perfect for the end of a sequence.
-```mdx
-<CTA text="Start Building" />
-```
-
----
-
-## Animation Props
-
-You can control how each component enters the scene using these props:
-
-| Prop | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `enter` | `string` | `"fadeUp"` | Entry variant: `"fadeIn"`, `"fadeUp"`, `"zoomIn"`, `"slideLeft"`. |
-| `delay` | `number` | `0` | Delay before the animation starts (in seconds). |
-| `duration` | `number` | `0.6` | The duration of the entry animation (in seconds). |
-
-### Examples
+顯示圖片，可搭配 `fit`、`radius` 與 frame props。
 
 ```mdx
-{/* Enters from the right with a 1-second delay */}
-<Title enter="slideLeft" delay={1}>Hello World</Title>
-
-{/* Zooms in quickly */}
-<Card title="Quick Tip" text="..." enter="zoomIn" duration={0.3} />
+<ImageBlock src="https://example.com/product.png" alt="Product screenshot" fit="cover" radius={18} x={52} y={16} w={40} h={56} />
 ```
 
----
+### `<VideoBlock>`
 
-## Technical Architecture
+顯示影片，可設定 `controls`、`loop`、`muted`。
 
--   **Parser**: A custom regex-based parser (`lib/motionDocParser.ts`) converts MDX into a structured JSON scene tree.
--   **Renderer**: The `PreviewPane` consumes the scene tree and maps it to Framer Motion components.
--   **Styling**: Built with Tailwind CSS for a modern, responsive interface.
+```mdx
+<VideoBlock src="https://example.com/demo.mp4" controls="true" muted="true" x={10} y={22} w={80} h={56} />
+```
 
----
+## 動畫與版面 Props
 
-## Roadmap: Toward MP4 Export
+| Prop | Type | Description |
+| :--- | :--- | :--- |
+| `enter` | `string` | 進場動畫，例如 `fadeIn`、`fadeUp`、`zoomIn`、`slideLeft`。 |
+| `delay` | `number` | 進場延遲秒數。 |
+| `duration` | `number` | Slide 長度或區塊動畫時間。 |
+| `x` / `y` | `number` | 百分比座標位置。 |
+| `w` / `h` | `number` | 百分比寬高。 |
+| `fontSize` | `number` | 文字尺寸。 |
+| `fontWeight` | `number` | 文字粗細。 |
 
-This prototype is built with a clear path toward video generation:
+## 完整範例
 
-1.  **Timeline Mapping**: The `Scene duration` will be used to sequence scenes on a global timeline.
-2.  **Headless Rendering**: The same React components can be rendered in a headless browser (like Puppeteer).
-3.  **Frame Capture**: Capturing snapshots of the canvas at fixed intervals (e.g., 60fps).
-4.  **FFmpeg Pipeline**: Stitching captured frames and audio into a final MP4 file.
+```mdx
+# Quarterly Business Review
 
-Currently, Animark focuses on the **Authoring Loop**—making the process of creating motion content as fast as writing a markdown file.
+<Slide duration={6} theme="dark" accent="#8ea5ff" background="#050505">
+  <Text enter="fadeUp" fontSize={72} fontWeight={800} x={8} y={12} w={64} h={18}>
+    Growth review
+  </Text>
+  <Text enter="fadeUp" delay={0.2} fontSize={24} x={8} y={34} w={52} h={16}>
+    Focus the conversation on momentum, risk, and the next decision.
+  </Text>
+  <Text enter="fadeUp" delay={0.3} fontSize={56} fontWeight={800} x={8} y={58} w={28} h={12}>
+    +42%
+  </Text>
+  <Text enter="fadeUp" delay={0.34} fontSize={18} x={8} y={72} w={28} h={10}>
+    Trailing twelve-month ARR growth.
+  </Text>
+  <Chart title="Pipeline quality" labels="Q1,Q2,Q3,Q4" values="42,58,73,91" height={144} enter="fadeUp" delay={0.35} x={40} y={52} w={48} h={34} />
+</Slide>
+```
+
+## MCP Server
+
+SlideX 也提供 MCP server，讓支援 MCP 的 agent 建立、驗證、修改與匯出 MotionDoc。
+
+```bash
+npm run mcp
+```
+
+stdio client 建議使用 silent 啟動：
+
+```json
+{
+  "mcpServers": {
+    "slidex": {
+      "command": "npm",
+      "args": ["--silent", "run", "mcp"],
+      "cwd": "/Users/zz41354899/Desktop/Animark"
+    }
+  }
+}
+```
+
+## 技術架構
+
+- Parser: `core/motion-doc/domain/motionDocParser.ts`
+- Serializer: `core/motion-doc/application/motionDocSerialize.ts`
+- Automation tools: `core/motion-doc/application/motionDocAutomation.ts`
+- Export adapter: `core/motion-doc/infrastructure/export/motionDocExport.ts`
+- MCP server: `mcp/server.ts`
+
+## 匯出方向
+
+SlideX 的匯出路徑以同一份 MDX Slide tree 為基礎：
+
+1. `Slide duration` 對應 timeline segment。
+2. Preview canvas 可作為 browser capture target。
+3. Export adapter 可把 MotionDoc 轉成 standalone HTML player。
+4. 後續可延伸 headless render 與 MP4 pipeline。

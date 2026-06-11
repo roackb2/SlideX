@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { type ReactNode } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Check, Code2, Download, Eye, FileCode2, Palette, Play, Sparkles, PlayCircle, Share2, Presentation, X } from "lucide-react";
+import { ArrowRight, Code2, Download, Eye, FileCode2, Play, Sparkles, PlayCircle, Share2, Presentation, X } from "lucide-react";
 import { useI18n } from "@/common/lib/I18nProvider";
 import { localizeTemplates } from "@/common/lib/i18n";
 import { motionTemplates } from "@/core/motion-doc/presets/templates";
@@ -11,7 +11,6 @@ import { HeroStudio } from "@/features/marketing/ui/home/HeroStudio";
 import { StyleThumbnail } from "@/features/marketing/ui/StyleThumbnail";
 
 const customEase = [0.32, 0.72, 0, 1] as const;
-const springTransition = { type: "spring", stiffness: 100, damping: 20 } as const;
 
 function Reveal({
   children,
@@ -180,9 +179,9 @@ export function HomePage() {
                     </div>
                     <div className="flex-1 overflow-x-auto p-6 md:p-8 font-mono text-sm leading-8">
                       <p className="text-zinc-600">{`<Slide duration={5} theme="dark">`}</p>
-                      <p className="pl-6 text-zinc-300">{`<Title enter="fadeUp">`}</p>
+                      <p className="pl-6 text-zinc-300">{`<Text enter="fadeUp" fontWeight={800}>`}</p>
                       <p className="pl-12 text-white">{t.home.compose.codeTitle}</p>
-                      <p className="pl-6 text-zinc-300">{`</Title>`}</p>
+                      <p className="pl-6 text-zinc-300">{`</Text>`}</p>
                       <p className="pl-6 text-zinc-300">{`<Chart values="42,58,72,92" />`}</p>
                       <p className="text-zinc-600">{`</Slide>`}</p>
                     </div>

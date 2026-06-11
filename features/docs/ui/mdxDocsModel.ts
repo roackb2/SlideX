@@ -1,7 +1,7 @@
-import { BookOpen, Code2, FileCode2, MonitorPlay, SlidersHorizontal, Sparkles, type LucideIcon } from "lucide-react";
+import { BookOpen, Code2, FileCode2, MonitorPlay, SlidersHorizontal, Sparkles, Terminal, type LucideIcon } from "lucide-react";
 import type { Dictionary } from "@/common/lib/i18n";
 
-export type MdxDocsSection = "overview" | "example" | "patterns" | "props" | "motion";
+export type MdxDocsSection = "overview" | "example" | "patterns" | "props" | "motion" | "mcp";
 export type SyntaxCopy = Dictionary["resourcesPage"]["syntax"];
 
 export type DocsSectionLink = {
@@ -36,6 +36,7 @@ export function getSectionBody(section: MdxDocsSection, syntax: SyntaxCopy) {
   const bodies = {
     example: syntax.exampleBody,
     motion: syntax.motionBody,
+    mcp: syntax.mcpBody,
     overview: syntax.overviewBody,
     patterns: syntax.patternsBody,
     props: syntax.propsBody
@@ -50,7 +51,8 @@ export function buildDocSections(syntax: SyntaxCopy) {
     { href: "/resources/mdx/example", icon: FileCode2, id: "example", label: syntax.fullExampleTitle },
     { href: "/resources/mdx/patterns", icon: Code2, id: "patterns", label: syntax.patternsTitle },
     { href: "/resources/mdx/props", icon: SlidersHorizontal, id: "props", label: syntax.propsTitle },
-    { href: "/resources/mdx/motion", icon: Sparkles, id: "motion", label: syntax.motionTitle }
+    { href: "/resources/mdx/motion", icon: Sparkles, id: "motion", label: syntax.motionTitle },
+    { href: "/resources/mdx/mcp", icon: Terminal, id: "mcp", label: syntax.mcpTitle }
   ] satisfies DocsSectionLink[];
 }
 
@@ -75,6 +77,7 @@ export function buildDocsGroups(
       links: [
         { ...docSections[3], active: section === "props" },
         { ...docSections[4], active: section === "motion" },
+        { ...docSections[5], active: section === "mcp" },
         { active: false, href: "/studio", icon: MonitorPlay, label: syntax.studioLinkLabel }
       ],
       title: syntax.sideNavGroups.reference

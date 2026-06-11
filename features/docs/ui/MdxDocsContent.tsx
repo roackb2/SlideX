@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, BookOpen, CheckCircle2, Code2, FileCode2, SlidersHorizontal, Sparkles, X, type LucideIcon } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, Code2, FileCode2, SlidersHorizontal, Sparkles, Terminal, X, type LucideIcon } from "lucide-react";
 import { easeSmooth, fadeInUp, type MdxDocsSection, type SyntaxCopy } from "@/features/docs/ui/mdxDocsModel";
 
 export function MdxDocsContent({ section, syntax }: { section: MdxDocsSection; syntax: SyntaxCopy }) {
@@ -22,6 +22,10 @@ export function MdxDocsContent({ section, syntax }: { section: MdxDocsSection; s
     return <MotionContent syntax={syntax} />;
   }
 
+  if (section === "mcp") {
+    return <McpContent syntax={syntax} />;
+  }
+
   return <OverviewContent syntax={syntax} />;
 }
 
@@ -30,7 +34,8 @@ function OverviewContent({ syntax }: { syntax: SyntaxCopy }) {
     { href: "/resources/mdx/example", icon: FileCode2 },
     { href: "/resources/mdx/patterns", icon: Code2 },
     { href: "/resources/mdx/props", icon: SlidersHorizontal },
-    { href: "/resources/mdx/motion", icon: Sparkles }
+    { href: "/resources/mdx/motion", icon: Sparkles },
+    { href: "/resources/mdx/mcp", icon: Terminal }
   ] satisfies Array<{ href: string; icon: LucideIcon }>;
 
   return (
@@ -226,6 +231,75 @@ function MotionContent({ syntax }: { syntax: SyntaxCopy }) {
             </div>
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function McpContent({ syntax }: { syntax: SyntaxCopy }) {
+  return (
+    <section className="scroll-mt-28 space-y-8">
+      <div className="rounded-[2rem] bg-white/[0.05] ring-1 ring-white/[0.12] shadow-2xl p-1.5">
+        <div className="rounded-[calc(2rem-0.375rem)] bg-gradient-to-b from-[#121218] to-[#08080b] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] p-5 sm:p-6 md:p-8">
+          <p className="text-sm font-semibold text-sky-400">{syntax.mcpInstallTitle}</p>
+          <h2 className="mt-3 max-w-2xl text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            {syntax.mcpInstallLead}
+          </h2>
+          <p className="mt-4 max-w-3xl text-[15px] leading-7 text-neutral-300 sm:text-base sm:leading-8">
+            {syntax.mcpInstallBody}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-5">
+        {syntax.mcpInstallCards.map((card) => (
+          <div className="rounded-[1.5rem] bg-white/[0.05] ring-1 ring-white/[0.12] shadow-2xl p-1" key={card.title}>
+            <div className="overflow-hidden rounded-[calc(1.5rem-0.25rem)] bg-[#0b0814]/90 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] relative">
+              <div className="absolute top-0 right-0 h-40 w-40 bg-[#38bdf8]/10 blur-[40px] pointer-events-none" />
+              <CodePanelHeader fileLabel={card.fileLabel} title={card.title} />
+              <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+                <div className="border-b border-white/[0.08] p-5 text-sm leading-7 text-neutral-400 lg:border-b-0 lg:border-r lg:p-6">
+                  {card.body}
+                </div>
+                <pre className="max-w-full overflow-x-auto p-5 text-[12px] leading-7 text-neutral-300 font-mono relative z-10 sm:text-[13px] md:p-6">
+                  <code>{card.code}</code>
+                </pre>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-[1.5rem] bg-white/[0.05] ring-1 ring-white/[0.12] shadow-2xl p-1">
+        <div className="rounded-[calc(1.5rem-0.25rem)] bg-gradient-to-b from-[#121218] to-[#08080b] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+          <div className="border-b border-white/[0.05] p-5 md:p-6">
+            <h2 className="text-2xl font-semibold tracking-tight text-white">{syntax.mcpToolsTitle}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-7 text-neutral-500">{syntax.mcpToolsBody}</p>
+          </div>
+          <div className="divide-y divide-white/[0.05]">
+            {syntax.mcpToolsRows.map(([tool, body]) => (
+              <div className="grid gap-2 bg-white/[0.01] px-4 py-3 text-sm md:grid-cols-[0.7fr_1.3fr] hover:bg-white/[0.02] transition-colors" key={tool}>
+                <span className="font-mono text-sky-400">{tool}</span>
+                <span className="text-neutral-500">{body}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[1.5rem] bg-white/[0.05] ring-1 ring-white/[0.12] shadow-2xl p-1">
+        <div className="rounded-[calc(1.5rem-0.25rem)] bg-[#0b0814]/90 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] p-5 md:p-6">
+          <h2 className="text-2xl font-semibold tracking-tight text-white">{syntax.mcpPublishTitle}</h2>
+          <p className="mt-3 text-sm leading-7 text-neutral-400">{syntax.mcpPublishBody}</p>
+          <div className="mt-5 grid gap-3">
+            {syntax.mcpPublishNotes.map((note) => (
+              <div className="flex gap-3 rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-4 text-sm leading-7 text-neutral-300" key={note}>
+                <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-sky-400" />
+                <span>{note}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

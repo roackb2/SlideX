@@ -13,10 +13,16 @@ export type DocSection = {
 
 export const resourceItems: ResourceItem[] = [
   {
-    title: "Scene Components",
-    description: "Reference for Scene, Title, Text, Card, Metric, Chart, ImageBlock, and timing props.",
+    title: "Slide Components",
+    description: "Reference for Slide, Text, Icon, Chart, ImageBlock, VideoBlock, and timing props.",
     href: "/resources#components",
     label: "Reference"
+  },
+  {
+    title: "MCP Server",
+    description: "Connect SlideX to MCP clients so assistants can create, validate, edit, and export MotionDoc decks.",
+    href: "/resources/mdx/mcp",
+    label: "MCP"
   },
   {
     title: "Deck Presets",
@@ -26,7 +32,7 @@ export const resourceItems: ResourceItem[] = [
   },
   {
     title: "Studio Workflow",
-    description: "Use the scene list, MDX editor, preview, and timeline to design animated presentations.",
+    description: "Use the slide list, MDX editor, preview, and timeline to design animated presentations.",
     href: "/studio",
     label: "Studio"
   }
@@ -34,19 +40,19 @@ export const resourceItems: ResourceItem[] = [
 
 export const docSections: DocSection[] = [
   {
-    title: "Scene Model",
-    description: "SlideX treats a presentation as an MDX scene deck with editable source.",
+    title: "Slide Model",
+    description: "SlideX treats a presentation as an editable MDX slide document.",
     points: [
-      "Each Scene defines one timed page.",
-      "Title, Text, Card, Metric, Chart, and ImageBlock layers receive enter, delay, and duration props.",
-      "The same MDX deck powers the scene list, preview, timeline, and export."
+      "Each Slide defines one timed page.",
+      "Text, Icon, Chart, ImageBlock, and VideoBlock layers receive enter, delay, and duration props.",
+      "The same MDX deck powers the slide list, preview, timeline, and export."
     ]
   },
   {
     title: "Design Loop",
-    description: "The Studio keeps source, scene navigation, preview, and timeline output in sync.",
+    description: "The Studio keeps source, slide navigation, preview, and timeline output in sync.",
     points: [
-      "Load a deck preset or insert individual scene blocks.",
+      "Load a deck preset or insert individual Slide blocks.",
       "Edit the MDX source for advanced composition control.",
       "Replay resets the animation key without changing the composition."
     ]
@@ -55,9 +61,9 @@ export const docSections: DocSection[] = [
     title: "Export Direction",
     description: "Video export is the publishing target, while the core product remains a motion design tool.",
     points: [
-      "Scene duration maps to timeline segments.",
+      "Slide duration maps to timeline segments.",
       "The preview canvas can become a browser capture target.",
-      "A renderer can consume the same MDX scene tree for video output."
+      "A renderer can consume the same MDX Slide tree for video output."
     ]
   }
 ];

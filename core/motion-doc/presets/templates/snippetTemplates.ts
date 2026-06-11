@@ -3,7 +3,7 @@ export const snippetTemplates = [
     id: "slide",
     label: "Slide",
     code: `<Slide duration={5} theme="dark" background="#050505" accent="#ffffff">
-  <Title enter="fadeUp" fontSize={72} radius={0} x={8} y={12} w={64} h={18}>New slide title</Title>
+  <Text enter="fadeUp" fontSize={72} fontWeight={800} radius={0} x={8} y={12} w={64} h={18}>New slide title</Text>
   <Text enter="fadeUp" delay={0.25} fontSize={24} radius={0} x={8} y={38} w={52} h={16}>
     Add supporting copy here.
   </Text>
@@ -21,14 +21,14 @@ export const snippetTemplates = [
   },
   {
     id: "snip-card",
-    label: "Information Card",
+    label: "Proof Point",
     code: `<Icon icon="Sparkles" size={42} strokeWidth={1.5} x={8} y={38} w={5} h={8} />
 <Text fontSize={24} fontWeight={700} x={8} y={50} w={40} h={8}>Key point</Text>
 <Text fontSize={18} lineHeight={1.5} x={8} y={62} w={40} h={18}>Describe one benefit or detail.</Text>`
   },
   {
     id: "snip-metric",
-    label: "Data Metric",
+    label: "Text Metric",
     code: `<Text fontSize={64} fontWeight={800} x={8} y={38} w={32} h={14}>$2.4M</Text>
 <Text fontSize={20} fontWeight={600} x={8} y={60} w={32} h={8}>Pipeline</Text>
 <Text fontSize={16} lineHeight={1.4} x={8} y={74} w={32} h={14}>Qualified revenue influenced this quarter.</Text>`

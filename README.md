@@ -1,6 +1,6 @@
 # SlideX
 
-SlideX 是一個以 MDX scene 為核心的動態簡報系統。它把簡報內容、版面、動畫節奏、預覽與桌面專案流程放在同一個可維護的程式碼結構裡。全新升級的 Studio 介面採用 Double-Bezel 玻璃擬真（Glassmorphism）與高對比視覺美學，將開發工具的穩健與高階設計的質感完美融合。
+SlideX 是一個以 MDX Slide 為核心的動態簡報系統。它把簡報內容、版面、動畫節奏、預覽與桌面專案流程放在同一個可維護的程式碼結構裡。全新升級的 Studio 介面採用 Double-Bezel 玻璃擬真（Glassmorphism）與高對比視覺美學，將開發工具的穩健與高階設計的質感完美融合。
 
 目前版本包含：
 
@@ -38,6 +38,20 @@ npm run start
 ```bash
 npm run lint
 ```
+
+MCP server：
+
+透過 npx 直接啟動：
+```bash
+npx -y @z7589xxz758/slidex-mcp-server
+```
+
+本地開發啟動：
+```bash
+npm run mcp
+```
+
+使用方式見 [docs/MCP.zh-TW.md](docs/MCP.zh-TW.md)。
 
 ## Architecture
 
@@ -142,14 +156,14 @@ features/studio/
 
 ## MotionDoc Components
 
-目前 parser 支援的主要 scene/block（已與最新版 Studio 對齊）：
+目前對外文件與 MCP 支援的主要 Slide/block（已與最新版 Studio 對齊）：
 
-- `Slide` （取代舊版的 Scene）
-- `Title`
+- `Slide`
 - `Text`
-- `Card`
-- `Image`
-- `CTA`
+- `Icon`
+- `Chart`
+- `ImageBlock`
+- `VideoBlock`
 
 常用 motion props：
 

@@ -6,14 +6,12 @@ import { motion, useReducedMotion } from "framer-motion";
 import {
   AlignLeft,
   ArrowRight,
-  BarChart3,
   BookOpen,
   Check,
   ChevronRight,
   Code2,
   ExternalLink,
   FileCode2,
-  Gauge,
   Image as ImageIcon,
   Layers,
   Layout,
@@ -66,6 +64,7 @@ function BezelCard({ children, className = "" }: { children: ReactNode; classNam
 }
 
 const componentIcons = [Layers, Type, AlignLeft, Layout, ImageIcon, MousePointerClick];
+const resourceCardIcons = [BookOpen, Terminal, Blocks, Code2, Users] as const;
 
 function ResourceHeroVisual({ copy }: { copy: Dictionary["resourcesPage"]["heroVisual"] }) {
   const reduce = useReducedMotion();
@@ -93,15 +92,15 @@ function ResourceHeroVisual({ copy }: { copy: Dictionary["resourcesPage"]["heroV
           <div className="flex-1 p-8 md:p-10 bg-[#0b0814]/40">
             <div className="overflow-x-auto rounded-[1.5rem] border border-white/[0.08] bg-[#0b0814]/90 p-6 md:p-8 font-mono text-[13px] leading-8 text-zinc-400 shadow-2xl relative transition-transform duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02]">
               <div className="absolute top-0 right-0 h-32 w-32 bg-[#a78bfa]/10 blur-[40px] pointer-events-none" />
-              <p className="text-zinc-600 relative z-10">{`<Scene duration={5}>`}</p>
-              <p className="pl-6 text-zinc-300 relative z-10">{`<Title enter="fadeUp">`}</p>
+              <p className="text-zinc-600 relative z-10">{`<Slide duration={5}>`}</p>
+              <p className="pl-6 text-zinc-300 relative z-10">{`<Text enter="fadeUp" fontWeight={800}>`}</p>
               <p className="pl-12 text-white relative z-10">{copy.codeTitle}</p>
-              <p className="pl-6 text-zinc-300 relative z-10">{`</Title>`}</p>
+              <p className="pl-6 text-zinc-300 relative z-10">{`</Text>`}</p>
               <p className="pl-6 text-zinc-300 relative z-10">{`<Text delay={0.2}>`}</p>
               <p className="pl-12 text-zinc-500 relative z-10">{copy.codeBody}</p>
               <p className="pl-6 text-zinc-300 relative z-10">{`</Text>`}</p>
               <p className="pl-6 text-zinc-300 relative z-10">{`<Chart values="42,58,72,92" />`}</p>
-              <p className="text-zinc-600 relative z-10">{`</Scene>`}</p>
+              <p className="text-zinc-600 relative z-10">{`</Slide>`}</p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3 mt-6">
@@ -188,7 +187,7 @@ export default function ResourcesPage() {
       {/* Seamless Quick Links Typography */}
       <section className="pb-24 pt-8 md:pt-16 relative z-10">
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
             {t.resourcesPage.resourceItems.map((item, index) => (
               <Reveal key={item.title} delay={index * 0.1} y={16} className="h-full">
                 <Link href={item.href} className="group block h-full">
@@ -198,7 +197,10 @@ export default function ResourcesPage() {
                       
                       <div className="mb-12 flex items-center justify-between relative z-10">
                         <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-white/10 group-hover:scale-105">
-                          {index === 0 ? <BookOpen className="h-6 w-6 stroke-[1.5]" /> : index === 1 ? <Blocks className="h-6 w-6 stroke-[1.5]" /> : index === 2 ? <Terminal className="h-6 w-6 stroke-[1.5]" /> : <Users className="h-6 w-6 stroke-[1.5]" />}
+                          {(() => {
+                            const Icon = resourceCardIcons[index] ?? Users;
+                            return <Icon className="h-6 w-6 stroke-[1.5]" />;
+                          })()}
                         </div>
                         <ExternalLink className="h-4 w-4 text-zinc-600 transition-all duration-500 group-hover:text-white group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                       </div>
