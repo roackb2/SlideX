@@ -61,59 +61,61 @@ export function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#050505] text-zinc-400 selection:bg-white/20 selection:text-white relative z-0">
-      {/* Background Mesh (Ethereal Blue Light) */}
+      {/* Background Mesh (Deep Space) */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] h-[70vw] w-[70vw] rounded-full bg-[#1e3a8a]/20 blur-[120px] mix-blend-screen" />
-        <div className="absolute top-[20%] -right-[20%] h-[60vw] w-[60vw] rounded-full bg-[#0369a1]/15 blur-[120px] mix-blend-screen" />
-        <div className="absolute -bottom-[20%] left-[10%] h-[80vw] w-[80vw] rounded-full bg-[#312e81]/20 blur-[130px] mix-blend-screen" />
-        <div className="absolute top-[10%] left-[20%] h-[300px] w-[500px] rounded-full bg-[#38bdf8]/10 blur-[80px] mix-blend-screen" />
+        <div className="absolute -top-[10%] left-[10%] h-[50vw] w-[50vw] rounded-full bg-[#0c4a6e]/20 blur-[140px] mix-blend-screen" />
+        <div className="absolute top-[20%] -right-[10%] h-[60vw] w-[60vw] rounded-full bg-[#1e3a8a]/20 blur-[140px] mix-blend-screen" />
+        <div className="absolute -bottom-[20%] left-[20%] h-[70vw] w-[70vw] rounded-full bg-[#312e81]/15 blur-[150px] mix-blend-screen" />
+        <div className="absolute top-[30%] left-[30%] h-[400px] w-[600px] rounded-full bg-[#38bdf8]/10 blur-[100px] mix-blend-screen" />
         <div 
-          className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
+          className="absolute inset-0 opacity-[0.06] mix-blend-overlay"
           style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}
         />
       </div>
       {/* Hero Section */}
-      <section className="relative px-4 pt-40 pb-24 sm:px-6 md:pt-48 md:pb-32 lg:pb-40 overflow-hidden">
-        <div className="mx-auto max-w-[1400px] grid gap-16 lg:grid-cols-[1fr_1fr] lg:items-center">
+      <section className="relative px-4 pt-32 pb-24 sm:px-6 md:pt-40 md:pb-32 lg:pb-40 overflow-hidden">
+        <div className="mx-auto max-w-[1400px] flex flex-col items-center">
           <motion.div 
             initial={reduce ? false : { opacity: 0, filter: "blur(12px)", y: 40 }}
             animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
             transition={{ duration: 1.4, ease: customEase }}
-            className="max-w-2xl"
+            className="max-w-4xl text-center flex flex-col items-center"
           >
-            <h1 className="text-[3rem] sm:text-5xl md:text-7xl font-medium tracking-tight text-white leading-[1.02]">
-              {t.home.hero.title}
+            <h1 className="text-4xl sm:text-6xl md:text-[5.5rem] font-medium tracking-tight text-zinc-50 leading-[1.3] md:leading-[1.1] drop-shadow-sm">
+              {t.home.hero.title.regular}
+              <span className="text-sky-400 drop-shadow-sm pr-2">
+                {t.home.hero.title.highlight}
+              </span>
             </h1>
-            <p className="mt-8 max-w-xl text-lg md:text-xl text-zinc-400 leading-relaxed font-light">
+            <p className="mt-8 max-w-2xl text-lg md:text-xl text-zinc-400/90 leading-relaxed font-light">
               {t.home.hero.body}
             </p>
-            <div className="mt-12 flex flex-col sm:flex-row items-center gap-4">
+            <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
               <div className="relative group/btn inline-flex w-full sm:w-auto">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 rounded-full blur opacity-40 group-hover/btn:opacity-75 transition duration-1000 group-hover/btn:duration-200" />
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-400 rounded-full blur opacity-40 group-hover/btn:opacity-75 transition duration-1000 group-hover/btn:duration-200" />
                 <Link
                   href="/studio"
-                  className="relative inline-flex w-full sm:w-auto items-center justify-between sm:justify-start gap-3 rounded-full bg-[#0a0a0c] border border-blue-500/20 pl-6 pr-2 py-2 text-[15px] font-medium text-white transition-all duration-700 hover:bg-[#121218] hover:border-blue-500/40 active:scale-[0.98]"
+                  className="relative inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-full bg-[#0a0a0c] border border-sky-500/20 pl-8 pr-3 py-2.5 text-[16px] font-medium text-white transition-all duration-700 hover:bg-[#121218] hover:border-sky-500/40 active:scale-[0.98]"
                 >
                   <span>{t.home.hero.primary}</span>
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-400 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] transition-transform duration-700 group-hover/btn:translate-x-1 group-hover/btn:scale-105">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-sky-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] transition-transform duration-700 group-hover/btn:translate-x-1 group-hover/btn:scale-105">
                     <ArrowRight className="h-4 w-4 text-white drop-shadow-md" />
                   </div>
                 </Link>
               </div>
               <Link
                 href="/templates"
-                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-white/10 bg-transparent px-8 py-4 text-[15px] font-medium text-zinc-300 transition-colors duration-700 hover:bg-white/5 active:scale-[0.98]"
+                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-white/10 bg-transparent px-8 py-4 text-[16px] font-medium text-zinc-300 transition-colors duration-700 hover:bg-white/5 active:scale-[0.98]"
               >
                 {t.home.hero.secondary}
               </Link>
             </div>
-            
-
           </motion.div>
 
-          <Reveal delay={0.2} y={64} className="w-full h-full min-h-[400px]">
-            <div className="rounded-[2.5rem] bg-white/[0.02] ring-1 ring-white/[0.06] p-2">
-              <div className="rounded-[calc(2.5rem-0.5rem)] overflow-hidden shadow-2xl shadow-black/80 ring-1 ring-white/10">
+          <Reveal delay={0.2} y={64} className="w-full mt-20 max-w-[1200px]">
+            <div className="relative w-full rounded-[2.5rem] bg-white/[0.02] ring-1 ring-white/[0.06] p-2">
+              <div className="absolute -inset-6 rounded-[3rem] bg-[radial-gradient(ellipse_at_50%_0%,rgba(56,189,248,0.15),transparent_70%)] blur-2xl pointer-events-none" />
+              <div className="relative rounded-[calc(2.5rem-0.5rem)] overflow-hidden shadow-2xl shadow-black/80 ring-1 ring-white/10 bg-[#05060a]">
                 <HeroStudio copy={t.home.heroStudio} />
               </div>
             </div>
@@ -165,12 +167,12 @@ export function HomePage() {
             <Reveal delay={0.1} className="md:col-span-8 md:row-span-2">
               <BezelCard className="h-full">
                 <div className="flex flex-col h-full p-8 md:p-12 relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#a78bfa]/[0.05] to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#38bdf8]/[0.05] to-transparent" />
                   
                   <div className="flex-1 flex flex-col overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-[#0b0814]/90 shadow-2xl transition-transform duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.02] relative z-10">
                     <div className="flex items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-5 py-4">
                       <div className="flex items-center gap-2.5">
-                        <Code2 className="text-[#a78bfa]" size={16} />
+                        <Code2 className="text-[#38bdf8]" size={16} />
                         <span className="text-sm font-semibold tracking-wide text-white">{t.home.compose.sourceLabel}</span>
                       </div>
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 bg-white/5 transition-colors group-hover:text-white">
@@ -209,7 +211,7 @@ export function HomePage() {
             <Reveal delay={0.3} className="md:col-span-4">
               <BezelCard className="h-full">
                 <div className="flex flex-col h-full p-8 md:p-10 relative overflow-hidden group">
-                  <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-white/5 blur-[60px] pointer-events-none group-hover:bg-[#788bfd]/10 transition-colors duration-1000" />
+                  <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-white/5 blur-[60px] pointer-events-none group-hover:bg-[#38bdf8]/10 transition-colors duration-1000" />
                   <div className="mb-8 flex items-center justify-between">
                     <div className="inline-flex items-center gap-2 text-[11px] font-mono font-semibold tracking-wide text-neutral-400">
                       <Play className="h-4 w-4" />
@@ -226,7 +228,7 @@ export function HomePage() {
                             whileInView={{ width: `${76 - index * 12}%` }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.5 + index * 0.15, duration: 1, ease: customEase }}
-                            className="block h-full rounded-full bg-[#788bfd] transition-transform duration-500 group-hover:scale-x-105 origin-left"
+                            className="block h-full rounded-full bg-[#38bdf8] transition-transform duration-500 group-hover:scale-x-105 origin-left"
                           />
                         </span>
                       </div>

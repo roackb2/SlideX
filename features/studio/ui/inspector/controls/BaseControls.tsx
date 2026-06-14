@@ -39,21 +39,21 @@ export function OptionButtons<T extends string>({
 }) {
   return (
     <Field label={label}>
-      <div className={`grid gap-1 rounded-[1rem] border border-white/[0.04] bg-white/[0.02] p-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)] ${optionGridClass(options.length)}`}>
+      <div className="flex w-full gap-1 rounded-[1rem] border border-white/[0.04] bg-[#141416] p-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)] overflow-x-auto custom-scrollbar">
         {options.map((option) => {
           const isSelected = value === option.value;
           return (
             <button
-              className={`rounded-lg py-1.5 text-xs font-bold tracking-wide transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer active:scale-[0.96] ${
+              className={`flex-1 min-w-0 flex items-center justify-center rounded-lg px-2 py-1.5 text-[11px] font-medium tracking-wide transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer active:scale-[0.98] ${
                 isSelected
-                  ? "bg-white/[0.08] text-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] border border-white/[0.05]"
-                  : "text-neutral-400 hover:bg-white/[0.03] hover:text-neutral-200"
+                  ? "bg-[#222224] text-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] ring-1 ring-white/5"
+                  : "text-zinc-500 hover:bg-white/[0.03] hover:text-zinc-300"
               }`}
               key={option.value}
               onClick={() => onChange(option.value)}
               type="button"
             >
-              {option.label}
+              <span className="truncate whitespace-nowrap">{option.label}</span>
             </button>
           );
         })}
@@ -75,16 +75,16 @@ export function IconSegmentedControl<T extends string>({
 }) {
   return (
     <Field label={label}>
-      <div className={`grid gap-1 rounded-[1rem] border border-white/[0.04] bg-white/[0.02] p-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)] ${optionGridClass(options.length)}`}>
+      <div className="flex w-full gap-1 rounded-[1rem] border border-white/[0.04] bg-[#141416] p-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)]">
         {options.map((option) => {
           const isSelected = value === option.value;
           return (
             <button
               aria-label={option.label}
-              className={`group relative flex h-8.5 items-center justify-center rounded-lg transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer active:scale-[0.96] ${
+              className={`group relative flex-1 flex h-8 items-center justify-center rounded-lg transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer active:scale-[0.98] ${
                 isSelected
-                  ? "bg-white/[0.08] text-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] border border-white/[0.05]"
-                  : "text-neutral-400 hover:bg-white/[0.03] hover:text-neutral-200"
+                  ? "bg-[#222224] text-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] ring-1 ring-white/5"
+                  : "text-zinc-500 hover:bg-white/[0.03] hover:text-zinc-300"
               }`}
               key={option.value}
               onClick={() => onChange(option.value)}

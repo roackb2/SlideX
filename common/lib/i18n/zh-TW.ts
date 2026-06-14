@@ -105,7 +105,10 @@ export const zhTwDictionary = {
     home: {
       hero: {
         eyebrow: "SlideX Studio",
-        title: "不用重做的動態簡報。",
+        title: {
+          regular: "像寫程式一樣，",
+          highlight: "打造動態簡報。"
+        },
         body: "用 MDX 組合 Slide、調整節奏、預覽動效，並在同一個 Studio 裡匯出簡報。",
         primary: "開始使用",
         secondary: "查看範本",
@@ -113,16 +116,44 @@ export const zhTwDictionary = {
       },
       heroStudio: {
         title: "Studio",
-        project: "Project Alpha",
+        project: "專案 Alpha",
         export: "匯出",
-        newSlide: "新增投影片",
-        scenes: "投影片",
+        newSlide: "新增 Slide",
+        scenes: "Scenes",
         slides: ["備忘錄", "訊號", "計畫", "請求"],
-        layers: ["主標", "敘事", "動能圖表", "決策註記"],
+        layers: ["大標題", "敘述文字", "動能圖表", "決策備註"],
         sceneLabel: "Slide 01",
         slideTitle: "成長投資備忘錄",
-        slideBody: "用節奏清楚的證據、動效提示與可匯出的結構，整理一個精簡決策故事。",
-        toolLabels: ["文字", "Icon", "圖表", "圖片", "影片", "匯出"]
+        slideBody: "簡潔的決策故事，包含節奏明確的證據、動態提示與可匯出的結構。",
+        toolLabels: ["文字", "圖示", "圖表", "圖片", "影片", "匯出"],
+        tabs: {
+          slides: "Slides",
+          layers: "Layers"
+        },
+        header: {
+          untitled: "Untitled",
+          ready: "Ready",
+          undo: "Undo",
+          replay: "Replay"
+        },
+        inspector: {
+          properties: "Properties",
+          mdxEditor: "MDX Editor",
+          background: "Background",
+          backgroundType: "Background Type",
+          colorPresets: "Color Presets",
+          all: "All",
+          themeColors: "Theme colors",
+          savedSwatches: "Saved swatches",
+          addNewSlide: "Add New Slide",
+          slideTemplateName: "Title, Body & Author",
+          presets: ["Midnight", "Editorial", "Portfolio", "Sage", "Plum", "Steel"]
+        },
+        canvas: {
+          pagination: "1 / 1",
+          slideTitle: "Title",
+          slideBody: "Write a short paragraph to begin your story."
+        }
       },
       stats: [
         ["MDX 優先", "簡報後續仍可編輯"],

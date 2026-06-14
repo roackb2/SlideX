@@ -105,7 +105,10 @@ export const enDictionary = {
     home: {
       hero: {
         eyebrow: "SlideX Studio",
-        title: "Motion decks without the rebuild.",
+        title: {
+          regular: "Motion decks ",
+          highlight: "without the rebuild."
+        },
         body: "Compose MDX Slides, tune timing, preview motion, and export the deck from one studio.",
         primary: "Get Started",
         secondary: "View Presets",
@@ -115,14 +118,42 @@ export const enDictionary = {
         title: "Studio",
         project: "Project Alpha",
         export: "Export",
-        newSlide: "New slide",
-        scenes: "Slides",
+        newSlide: "New Slide",
+        scenes: "Scenes",
         slides: ["Memo", "Signal", "Plan", "Ask"],
         layers: ["Headline", "Narrative", "Momentum chart", "Decision note"],
         sceneLabel: "Slide 01",
         slideTitle: "Growth Investment Memo",
         slideBody: "A concise decision story with paced evidence, motion cues, and export-ready structure.",
-        toolLabels: ["Text", "Icon", "Chart", "Image", "Video", "Export"]
+        toolLabels: ["Text", "Icon", "Chart", "Image", "Video", "Export"],
+        tabs: {
+          slides: "Slides",
+          layers: "Layers"
+        },
+        header: {
+          untitled: "Untitled",
+          ready: "Ready",
+          undo: "Undo",
+          replay: "Replay"
+        },
+        inspector: {
+          properties: "Properties",
+          mdxEditor: "MDX Editor",
+          background: "Background",
+          backgroundType: "Background Type",
+          colorPresets: "Color Presets",
+          all: "All",
+          themeColors: "Theme colors",
+          savedSwatches: "Saved swatches",
+          addNewSlide: "Add New Slide",
+          slideTemplateName: "Title, Body & Author",
+          presets: ["Midnight", "Editorial", "Portfolio", "Sage", "Plum", "Steel"]
+        },
+        canvas: {
+          pagination: "1 / 1",
+          slideTitle: "Title",
+          slideBody: "Write a short paragraph to begin your story."
+        }
       },
       stats: [
         ["MDX-first", "Slides stay editable after the pitch"],

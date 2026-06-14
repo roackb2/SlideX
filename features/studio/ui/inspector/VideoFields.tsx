@@ -1,7 +1,7 @@
 "use client";
 
-import { Link2, PlayCircle, Upload, Video } from "lucide-react";
-import { OptionButtons, TextInput, type BlockFieldProps } from "@/features/studio/ui/inspector/InspectorControls";
+import { Link2, PlayCircle, Upload, Video, Maximize, Minimize, StretchHorizontal, Shrink } from "lucide-react";
+import { OptionButtons, TextInput, IconSegmentedControl, type BlockFieldProps } from "@/features/studio/ui/inspector/InspectorControls";
 import { imageFitOptions } from "@/features/studio/ui/studioOptions";
 
 const booleanOptions = [
@@ -61,9 +61,14 @@ export function VideoFields({
           value={block.props.poster ?? ""}
         />
       </div>
-      <OptionButtons
+      <IconSegmentedControl
         label="Fit"
-        options={imageFitOptions.map((value) => ({ label: value, value }))}
+        options={[
+          { label: "cover", value: "cover", icon: <Maximize size={14} /> },
+          { label: "contain", value: "contain", icon: <Minimize size={14} /> },
+          { label: "fill", value: "fill", icon: <StretchHorizontal size={14} /> },
+          { label: "scale-down", value: "scale-down", icon: <Shrink size={14} /> },
+        ]}
         value={normalizeFit(block.props.fit)}
         onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, fit: value })}
       />

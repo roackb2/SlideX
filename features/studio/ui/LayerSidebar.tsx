@@ -189,8 +189,8 @@ export function LayerSidebar({
                         setDragOverSlideIndex(null);
                       }}
                       className={`relative flex flex-col p-2.5 pb-6 mb-2 rounded-xl transition-all cursor-pointer ${
-                        isActive ? "bg-[#1875ff] shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)]" : "hover:bg-white/[0.04]"
-                      } ${dragOverSlideIndex === slide.index ? (draggedSlideIndex! < slide.index ? "border-b-2 border-b-blue-400 border-b-solid" : "border-t-2 border-t-blue-400 border-t-solid") : ""}`}
+                        isActive ? "bg-sky-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)]" : "hover:bg-white/[0.04]"
+                      } ${dragOverSlideIndex === slide.index ? (draggedSlideIndex! < slide.index ? "border-b-2 border-b-sky-400 border-b-solid" : "border-t-2 border-t-sky-400 border-t-solid") : ""}`}
                       onClick={() => onSelectSlide(slide.index)}
                     >
                       <div className={`relative aspect-video w-full rounded-[4px] shadow-sm overflow-hidden flex items-center justify-center ${isActive ? "bg-white border border-black/10" : "bg-neutral-800 border border-white/10"}`}>

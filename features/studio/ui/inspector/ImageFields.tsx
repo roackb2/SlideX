@@ -1,7 +1,7 @@
 "use client";
 
-import { Image as ImageIcon, Link2, Upload } from "lucide-react";
-import { Field, NativeSelect, OptionButtons, TextInput, type BlockFieldProps } from "@/features/studio/ui/inspector/InspectorControls";
+import { Image as ImageIcon, Link2, Upload, Maximize, Minimize, StretchHorizontal, Shrink } from "lucide-react";
+import { Field, NativeSelect, OptionButtons, TextInput, IconSegmentedControl, type BlockFieldProps } from "@/features/studio/ui/inspector/InspectorControls";
 import { imageFitOptions, imageModeOptions } from "@/features/studio/ui/studioOptions";
 
 export function ImageFields({
@@ -44,9 +44,17 @@ export function ImageFields({
         </span>
         <TextInput label="Alt Text" placeholder="Image description" value={block.props.alt ?? ""} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, alt: value })} />
       </div>
-      <Field label="Image fit">
-        <NativeSelect options={imageFitOptions.map((fit) => ({ label: fit, value: fit }))} value={String(block.props.fit ?? "cover")} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, fit: value })} />
-      </Field>
+      <IconSegmentedControl
+        label="Image fit"
+        options={[
+          { label: "cover", value: "cover", icon: <Maximize size={14} /> },
+          { label: "contain", value: "contain", icon: <Minimize size={14} /> },
+          { label: "fill", value: "fill", icon: <StretchHorizontal size={14} /> },
+          { label: "scale-down", value: "scale-down", icon: <Shrink size={14} /> },
+        ]}
+        value={String(block.props.fit ?? "cover")}
+        onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, fit: value })}
+      />
       <OptionButtons label="Image mode" options={imageModeOptions} value={String(block.props.full ?? "false")} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, full: value })} />
     </>
   );

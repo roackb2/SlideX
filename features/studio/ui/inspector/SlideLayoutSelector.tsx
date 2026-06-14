@@ -88,7 +88,7 @@ function SlideLayoutsPopover({
                   onClose();
                 }}
               >
-                <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-white/[0.1] bg-white shadow-md group-hover:border-[#788bfd]/50 group-hover:shadow-[0_0_20px_-5px_rgba(120,139,253,0.5)]">
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-white/[0.1] bg-white shadow-md group-hover:border-[#0ea5e9]/50 group-hover:shadow-[0_0_20px_-5px_rgba(14,165,233,0.5)]">
                   <LayoutThumbnail layoutId={layout.id} />
                 </div>
                 <span className="text-xs font-semibold text-neutral-300 group-hover:text-white transition-colors">{layout.name}</span>

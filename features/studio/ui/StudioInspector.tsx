@@ -443,7 +443,7 @@ function TextTypeFields({
             type="button"
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[1rem] border transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-105 active:scale-95 ${
               props.listType === "bullet"
-                ? "border-[#788bfd]/50 bg-[#788bfd]/20 text-[#788bfd] shadow-[0_0_12px_-2px_rgba(120,139,253,0.3)]"
+                ? "border-[#0ea5e9]/50 bg-[#0ea5e9]/20 text-[#0ea5e9] shadow-[0_0_12px_-2px_rgba(14,165,233,0.3)]"
                 : "border-white/[0.05] bg-[#020202] text-neutral-400 hover:border-white/[0.1] hover:text-white"
             }`}
             onClick={toggleList}

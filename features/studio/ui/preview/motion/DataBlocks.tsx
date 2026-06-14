@@ -395,7 +395,7 @@ function normalizeChartType(value: string | undefined): "area" | "bar" | "donut"
 function pieColor(index: number) {
   const colors = [
     "var(--block-fg, var(--slide-fg))",
-    "rgba(120,139,253,0.85)", // Primary brand blue
+    "rgba(14,165,233,0.85)", // Primary brand sky blue
     "rgba(94,234,212,0.85)",  // Teal accent
     "rgba(251,191,36,0.85)",  // Amber
     "rgba(244,114,182,0.85)"  // Pink

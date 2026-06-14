@@ -185,7 +185,7 @@ function IconToolbox({
         {icons.map((iconName) => (
           <button
             aria-label={`Add ${lucideIconLabels[iconName]} icon`}
-            className="group flex h-10 items-center justify-center rounded-lg border border-white/[0.04] bg-white/[0.01] text-neutral-300 transition duration-300 hover:border-[#788bfd]/30 hover:bg-[#788bfd]/12 hover:text-white active:scale-95"
+            className="group flex h-10 items-center justify-center rounded-lg border border-white/[0.04] bg-white/[0.01] text-neutral-300 transition duration-300 hover:border-[#0ea5e9]/30 hover:bg-[#0ea5e9]/12 hover:text-white active:scale-95"
             draggable
             key={iconName}
             onClick={() => onAddTool("Icon", { props: { icon: iconName } })}
@@ -305,7 +305,7 @@ export function CanvasTimeline({
             aria-label={`Go to slide ${slide.index + 1}`}
             className={`group/time h-full border-r border-white/[0.03] transition-all relative flex flex-col justify-between p-0.5 cursor-pointer ${
               isActive 
-                ? "bg-[#788bfd]/8 shadow-[inset_0_1px_0_rgba(120,139,253,0.1)]" 
+                ? "bg-[#0ea5e9]/8 shadow-[inset_0_1px_0_rgba(14,165,233,0.1)]" 
                 : "bg-transparent hover:bg-white/[0.01]"
             }`}
             key={slide.index}
@@ -314,7 +314,7 @@ export function CanvasTimeline({
             type="button"
           >
             {/* Active glowing indicator block */}
-            <span className={`absolute top-0 left-0 right-0 h-[2px] transition-all ${isActive ? "bg-[#788bfd]" : "bg-transparent"}`} />
+            <span className={`absolute top-0 left-0 right-0 h-[2px] transition-all ${isActive ? "bg-[#0ea5e9]" : "bg-transparent"}`} />
             
             {/* Tick marks inside timeline */}
             <div className="flex w-full justify-between px-1 opacity-20 group-hover/time:opacity-40 transition-opacity">
@@ -325,7 +325,7 @@ export function CanvasTimeline({
             </div>
             
             <div className="flex w-full items-center justify-between px-1.5 pb-0.5 font-mono text-[11px] font-semibold">
-              <span className={isActive ? "text-[#788bfd]" : "text-neutral-500 group-hover/time:text-neutral-400"}>
+              <span className={isActive ? "text-[#0ea5e9]" : "text-neutral-500 group-hover/time:text-neutral-400"}>
                 S{slide.index + 1}
               </span>
               <span className="text-neutral-600 group-hover/time:text-neutral-500 font-normal">
