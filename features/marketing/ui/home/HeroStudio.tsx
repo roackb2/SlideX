@@ -54,8 +54,8 @@ export function HeroStudio({ copy }: { copy: Dictionary["home"]["heroStudio"] })
     >
       <div className="absolute -inset-6 rounded-[2rem] bg-[radial-gradient(circle_at_50%_10%,rgba(56,189,248,0.08),transparent_42%)] blur-2xl pointer-events-none" />
 
-      {/* Main App Container */}
-      <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[#0a0a0c] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8),inset_0_1px_1px_0_rgba(255,255,255,0.05)] md:rounded-[28px] ring-1 ring-white/5 font-sans">
+      {/* Main App Container with Chromatic Dispersion Glassmorphism */}
+      <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[#0a0a0c]/80 backdrop-blur-3xl shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8),inset_0_1px_1px_0_rgba(255,255,255,0.1),inset_-1px_0_2px_rgba(0,255,255,0.15),inset_1px_0_2px_rgba(255,0,255,0.15),inset_0_-1px_2px_rgba(255,255,0,0.1)] md:rounded-[28px] ring-1 ring-white/5 font-sans">
         
         {/* Top Header */}
         <div className="flex h-14 items-center justify-between border-b border-white/[0.04] px-4">
