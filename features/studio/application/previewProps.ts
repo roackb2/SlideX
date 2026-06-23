@@ -18,6 +18,16 @@ export function spacingProp(value: string | number | undefined) {
   return value;
 }
 
+export function opacityProp(value: string | number | undefined, fallback?: number) {
+  const parsed = typeof value === "number" ? value : Number(value);
+
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(parsed, 0), 1);
+}
+
 export function enterProp(value: string | number | undefined): EnterAnimation | undefined {
   if (
     value === "fadeIn" ||

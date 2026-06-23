@@ -4,7 +4,8 @@ const config: Config = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./lib/**/*.{js,ts,jsx,tsx,mdx}"
+    "./lib/**/*.{js,ts,jsx,tsx,mdx}",
+    "./features/**/*.{js,ts,jsx,tsx,mdx}"
   ],
   theme: {
     extend: {
@@ -21,6 +22,17 @@ const config: Config = {
           DEFAULT: "#0c0b10",
           raised: "#121118",
           sunken: "#050509"
+        },
+        ibm: {
+          primary: "#3b82f6",
+          canvas: "#ffffff",
+          surface1: "#f4f4f4",
+          surface2: "#e0e0e0",
+          ink: "#161616",
+          inkMuted: "#525252",
+          hairline: "#e0e0e0",
+          inverseCanvas: "#161616",
+          inverseInkMuted: "#c6c6c6"
         }
       },
       fontFamily: {
@@ -41,7 +53,8 @@ const config: Config = {
           "Monaco",
           "Consolas",
           "monospace"
-        ]
+        ],
+        ibm: ["var(--font-ibm)", "sans-serif"]
       }
     }
   },

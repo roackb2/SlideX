@@ -15,21 +15,16 @@ export const resourceItems: ResourceItem[] = [
   {
     title: "Slide Components",
     description: "Reference for Slide, Text, Icon, Chart, ImageBlock, VideoBlock, and timing props.",
-    href: "/resources#components",
+    href: "/docs/introduction#components",
     label: "Reference"
   },
   {
     title: "MCP Server",
     description: "Connect SlideX to MCP clients so assistants can create, validate, edit, and export MotionDoc decks.",
-    href: "/resources/mdx/mcp",
+    href: "/docs/mcp",
     label: "MCP"
   },
-  {
-    title: "Deck Presets",
-    description: "Reusable MDX slide decks for product stories, feature tours, lessons, and carousels.",
-    href: "/templates",
-    label: "Presets"
-  },
+
   {
     title: "Studio Workflow",
     description: "Use the slide list, MDX editor, preview, and timeline to design animated presentations.",

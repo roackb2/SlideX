@@ -1,368 +1,448 @@
 "use client";
 
 import Link from "next/link";
-import { type ReactNode } from "react";
-import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Code2, Download, Eye, FileCode2, Play, Sparkles, PlayCircle, Share2, Presentation, X } from "lucide-react";
 import { useI18n } from "@/common/lib/I18nProvider";
-import { localizeTemplates } from "@/common/lib/i18n";
-import { motionTemplates } from "@/core/motion-doc/presets/templates";
-import { HeroStudio } from "@/features/marketing/ui/home/HeroStudio";
-import { StyleThumbnail } from "@/features/marketing/ui/StyleThumbnail";
-
-const customEase = [0.32, 0.72, 0, 1] as const;
-
-function Reveal({
-  children,
-  className = "",
-  delay = 0,
-  y = 48
-}: {
-  children: ReactNode;
-  className?: string;
-  delay?: number;
-  y?: number;
-}) {
-  const reduce = useReducedMotion();
-  return (
-    <motion.div
-      initial={reduce ? false : { opacity: 0, y, filter: "blur(12px)" }}
-      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 1.2, delay, ease: customEase }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-// Double-Bezel Architecture
-function BezelCard({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={`rounded-[2rem] bg-white/[0.05] ring-1 ring-white/[0.12] shadow-2xl p-1.5 ${className}`}>
-      <div className="h-full rounded-[calc(2rem-0.375rem)] bg-gradient-to-b from-[#121218] to-[#08080b] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] overflow-hidden">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-const workflowIcons = [FileCode2, Eye, Download];
+import { BorderBeam } from "border-beam";
+import { motion } from "framer-motion";
 
 export function HomePage() {
-  const { t } = useI18n();
-  const selectedTemplates = localizeTemplates(motionTemplates, t.templateMeta).slice(0, 4);
-  const workflow = t.home.workflow.items.map((item, index) => ({
-    ...item,
-    icon: workflowIcons[index] ?? FileCode2
-  }));
-  const reduce = useReducedMotion();
+  const { t, localePath } = useI18n();
+  const secondary = t.home.secondaryFeatures;
+
+  const fadeUpVariant = {
+    hidden: { opacity: 0, y: 40 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+  };
 
   return (
-    <main className="min-h-screen bg-[#050505] text-zinc-400 selection:bg-white/20 selection:text-white relative z-0">
-      {/* Background Mesh (Deep Space) */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[10%] left-[10%] h-[50vw] w-[50vw] rounded-full bg-[#0c4a6e]/20 blur-[140px] mix-blend-screen" />
-        <div className="absolute top-[20%] -right-[10%] h-[60vw] w-[60vw] rounded-full bg-[#1e3a8a]/20 blur-[140px] mix-blend-screen" />
-        <div className="absolute -bottom-[20%] left-[20%] h-[70vw] w-[70vw] rounded-full bg-[#312e81]/15 blur-[150px] mix-blend-screen" />
-        <div className="absolute top-[30%] left-[30%] h-[400px] w-[600px] rounded-full bg-[#38bdf8]/10 blur-[100px] mix-blend-screen" />
-        <div 
-          className="absolute inset-0 opacity-[0.06] mix-blend-overlay"
-          style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}
-        />
-      </div>
-      {/* Hero Section */}
-      <section className="relative px-4 pt-32 pb-24 sm:px-6 md:pt-40 md:pb-32 lg:pb-40 overflow-hidden">
-        <div className="mx-auto max-w-[1400px] flex flex-col items-center">
-          <motion.div 
-            initial={reduce ? false : { opacity: 0, filter: "blur(12px)", y: 40 }}
-            animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
-            transition={{ duration: 1.4, ease: customEase }}
-            className="max-w-4xl text-center flex flex-col items-center"
+    <main className="min-h-[100dvh] bg-[#070707] text-white selection:bg-blue-500/30 selection:text-white">
+      
+      {/* 1. HERO SECTION */}
+      <section className="relative flex flex-col items-center justify-center pt-48 pb-24 px-4 overflow-hidden">
+        <div className="absolute inset-0 top-0 -z-10 h-full w-full bg-[#070707] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(59,130,246,0.15),rgba(255,255,255,0))]"></div>
+        
+        <motion.div 
+          initial="hidden" 
+          animate="visible" 
+          variants={fadeUpVariant}
+          className="max-w-5xl mx-auto text-center space-y-8"
+        >
+          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight text-balance text-[#fcfbf8]">
+            {t.home.hero.title.regular} <br className="hidden md:block" />
+            <span className="text-blue-500 font-semibold">{t.home.hero.title.highlight}</span>
+          </h1>
+          
+          <p className="mx-auto max-w-2xl text-xl md:text-2xl text-white/50 leading-relaxed text-balance">
+            {t.home.hero.body}
+          </p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+            <Link 
+              href={localePath("/studio")}
+              className="w-full sm:w-auto h-12 px-8 inline-flex items-center justify-center rounded-full bg-white text-black font-medium text-[15px] transition-transform hover:scale-105"
+            >
+              {t.home.hero.primary}
+            </Link>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* 2. CORE PRODUCTS BENTO GRID */}
+      <section className="max-w-7xl mx-auto px-4 py-32">
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeUpVariant}
+          className="mb-20 text-center"
+        >
+          <h2 className="text-4xl md:text-5xl font-medium tracking-tight text-white mb-6">
+            {t.home.productsSection.title}
+          </h2>
+          <p className="text-xl text-white/50 max-w-2xl mx-auto">
+            {t.home.productsSection.body}
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
+          
+          {/* Briefly Card */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={{
+              hidden: { opacity: 0, y: 40 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0 } }
+            }}
+            className="flex flex-col h-full group rounded-[24px]"
           >
-            <h1 className="text-4xl sm:text-6xl md:text-[5.5rem] font-medium tracking-tight text-zinc-50 leading-[1.3] md:leading-[1.1] drop-shadow-sm">
-              {t.home.hero.title.regular}
-              <span className="text-sky-400 drop-shadow-sm pr-2">
-                {t.home.hero.title.highlight}
-              </span>
-            </h1>
-            <p className="mt-8 max-w-2xl text-lg md:text-xl text-zinc-400/90 leading-relaxed font-light">
-              {t.home.hero.body}
-            </p>
-            <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
-              <div className="relative group/btn inline-flex w-full sm:w-auto">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-400 rounded-full blur opacity-40 group-hover/btn:opacity-75 transition duration-1000 group-hover/btn:duration-200" />
-                <Link
-                  href="/studio"
-                  className="relative inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-full bg-[#0a0a0c] border border-sky-500/20 pl-8 pr-3 py-2.5 text-[16px] font-medium text-white transition-all duration-700 hover:bg-[#121218] hover:border-sky-500/40 active:scale-[0.98]"
-                >
-                  <span>{t.home.hero.primary}</span>
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-sky-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] transition-transform duration-700 group-hover/btn:translate-x-1 group-hover/btn:scale-105">
-                    <ArrowRight className="h-4 w-4 text-white drop-shadow-md" />
+            <BorderBeam size="line" className="flex flex-col h-full rounded-[24px]">
+              <div className="flex flex-col justify-end h-full min-h-[520px] relative overflow-hidden rounded-[24px] bg-[#0d0d0d] border border-white/10 p-10 group-hover:bg-[#141414] group-hover:border-red-500/30 group-hover:shadow-[0_0_40px_-10px_rgba(239,68,68,0.15)] transition-all duration-500">
+                <div className="relative z-10 mt-auto pt-24">
+                  <h3 className="text-3xl font-bold tracking-tight text-white mb-2">
+                    {t.home.products.briefly.title}
+                  </h3>
+                  <p className="text-blue-500 font-medium text-lg mb-8">
+                    {t.home.products.briefly.core}
+                  </p>
+                  <div className="space-y-6">
+                    <div>
+                      <span className="block text-[11px] uppercase tracking-[0.15em] text-white/40 mb-2 font-semibold">{t.home.productsSection.targetLabel}</span>
+                      <p className="text-white/80 text-[15px] font-medium leading-relaxed">
+                        {t.home.products.briefly.target}
+                      </p>
+                    </div>
                   </div>
-                </Link>
+                </div>
+                {/* Mars (火星) - The Red Planet */}
+                <motion.svg className="absolute top-6 left-1/2 -translate-x-1/2 w-[280px] h-[280px] text-white/30 group-hover:text-red-500/90 group-hover:scale-110 group-hover:-translate-y-4 transition-all duration-700 ease-out pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="currentColor">
+                  {/* Atmospheric Glow */}
+                  <motion.circle cx="100" cy="100" r="55" fill="currentColor" fillOpacity="0.05" stroke="none" />
+                  
+                  {/* Mars Core */}
+                  <motion.circle initial={{ scale: 0 }} whileInView={{ scale: 1 }} transition={{ duration: 1.5, ease: "easeOut" }} cx="100" cy="100" r="45" strokeWidth="1.5" strokeOpacity="1" fill="#0d0d0d" />
+                  
+                  {/* Topographic Lines (Minimalist Surface) */}
+                  <clipPath id="mars-clip">
+                    <circle cx="100" cy="100" r="45" />
+                  </clipPath>
+                  <motion.g clipPath="url(#mars-clip)">
+                    {/* Concentric rings representing Olympus Mons or craters, drawn precisely */}
+                    <motion.circle cx="115" cy="85" r="12" strokeWidth="1" strokeOpacity="0.5" />
+                    <motion.circle cx="115" cy="85" r="6" strokeWidth="1" strokeOpacity="0.8" />
+                    <motion.circle cx="80" cy="120" r="25" strokeWidth="1" strokeOpacity="0.3" />
+                    <motion.circle cx="80" cy="120" r="15" strokeWidth="1" strokeOpacity="0.4" />
+                    <motion.path d="M 60 90 Q 90 100 120 140" strokeWidth="1" strokeOpacity="0.3" />
+                    <motion.path d="M 70 80 Q 100 90 140 130" strokeWidth="1" strokeOpacity="0.2" />
+                    {/* Polar Cap - very clean */}
+                    <motion.path d="M 85 62 Q 100 70 115 62 Q 100 55 85 62" strokeWidth="1" strokeOpacity="0.8" fill="currentColor" fillOpacity="0.1" />
+                  </motion.g>
+
+                  {/* Elegant Orbital Ring */}
+                  <motion.ellipse cx="100" cy="100" rx="75" ry="18" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="4 6" animate={{ strokeDashoffset: [0, -100] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} transform="rotate(-20 100 100)" />
+                  <motion.g animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} style={{ transformOrigin: "100px 100px" }}>
+                    <circle cx="25" cy="100" r="3" strokeWidth="1.5" strokeOpacity="1" fill="#0d0d0d" />
+                  </motion.g>
+                </motion.svg>
               </div>
-              <Link
-                href="/templates"
-                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-white/10 bg-transparent px-8 py-4 text-[16px] font-medium text-zinc-300 transition-colors duration-700 hover:bg-white/5 active:scale-[0.98]"
-              >
-                {t.home.hero.secondary}
-              </Link>
+            </BorderBeam>
+          </motion.div>
+
+          {/* Studio Card */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={{
+              hidden: { opacity: 0, y: 40 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 } }
+            }}
+            className="flex flex-col h-full group rounded-[24px]"
+          >
+            <BorderBeam size="line" className="flex flex-col h-full rounded-[24px]">
+              <div className="flex flex-col justify-end h-full min-h-[520px] relative overflow-hidden rounded-[24px] bg-[#0d0d0d] border border-white/10 p-10 group-hover:bg-[#141414] group-hover:border-orange-400/30 group-hover:shadow-[0_0_40px_-10px_rgba(251,146,60,0.15)] transition-all duration-500">
+                <div className="relative z-10 mt-auto pt-24">
+                  <h3 className="text-3xl font-bold tracking-tight text-white mb-2">
+                    {t.home.products.studio.title}
+                  </h3>
+                  <p className="text-blue-500 font-medium text-lg mb-8">
+                    {t.home.products.studio.core}
+                  </p>
+                  <div className="space-y-6">
+                    <div>
+                      <span className="block text-[11px] uppercase tracking-[0.15em] text-white/40 mb-2 font-semibold">{t.home.productsSection.targetLabel}</span>
+                      <p className="text-white/80 text-[15px] font-medium leading-relaxed">
+                        {t.home.products.studio.target}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                {/* Jupiter (木星) - The Gas Giant */}
+                <motion.svg className="absolute top-6 left-1/2 -translate-x-1/2 w-[280px] h-[280px] text-white/30 group-hover:text-orange-400/90 group-hover:scale-110 group-hover:-translate-y-4 transition-all duration-700 ease-out pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="currentColor">
+                  <defs>
+                    <clipPath id="jupiter-clip">
+                      <circle cx="100" cy="100" r="45" />
+                    </clipPath>
+                  </defs>
+                  
+                  {/* Jupiter Glow */}
+                  <motion.circle cx="100" cy="100" r="55" fill="currentColor" fillOpacity="0.05" stroke="none" />
+                  
+                  {/* Jupiter Core */}
+                  <motion.circle initial={{ scale: 0 }} whileInView={{ scale: 1 }} transition={{ duration: 1.5, ease: "easeOut" }} cx="100" cy="100" r="45" strokeWidth="1.5" strokeOpacity="1" fill="#0d0d0d" />
+                  
+                  {/* Thin elegant rings */}
+                  <motion.g transform="rotate(-15 100 100)">
+                    <motion.ellipse cx="100" cy="100" rx="75" ry="8" strokeWidth="1" strokeOpacity="0.5" strokeDasharray="6 4" animate={{ strokeDashoffset: [0, 100] }} transition={{ duration: 25, repeat: Infinity, ease: "linear" }} />
+                    <motion.ellipse cx="100" cy="100" rx="65" ry="5" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="2 4" animate={{ strokeDashoffset: [0, -100] }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }} />
+                  </motion.g>
+
+                  {/* Gas Bands perfectly clipped inside r=45 */}
+                  <motion.g clipPath="url(#jupiter-clip)" transform="rotate(-15 100 100)">
+                    {/* The Great Red Spot */}
+                    <motion.ellipse cx="85" cy="115" rx="10" ry="5" strokeWidth="1" strokeOpacity="0.8" fill="currentColor" fillOpacity="0.1" />
+                    <motion.ellipse cx="85" cy="115" rx="5" ry="2.5" strokeWidth="1" strokeOpacity="0.5" />
+
+                    {/* Moving Gas Bands */}
+                    <motion.path initial={{ x: -20 }} animate={{ x: 20 }} transition={{ duration: 4, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} d="M 40 80 Q 100 85 160 80" strokeWidth="1" strokeOpacity="0.6" />
+                    <motion.path initial={{ x: 15 }} animate={{ x: -15 }} transition={{ duration: 5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} d="M 40 88 Q 100 95 160 88" strokeWidth="1.5" strokeOpacity="0.4" />
+                    <motion.path initial={{ x: -25 }} animate={{ x: 25 }} transition={{ duration: 6, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} d="M 40 100 Q 100 105 160 100" strokeWidth="1" strokeOpacity="0.8" />
+                    <motion.path initial={{ x: 20 }} animate={{ x: -20 }} transition={{ duration: 4.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} d="M 40 110 Q 100 115 160 110" strokeWidth="2" strokeOpacity="0.3" />
+                    <motion.path initial={{ x: -10 }} animate={{ x: 10 }} transition={{ duration: 5.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} d="M 40 125 Q 100 130 160 125" strokeWidth="1" strokeOpacity="0.5" />
+                  </motion.g>
+
+                  {/* Moons */}
+                  <motion.g animate={{ rotate: 15 }} transition={{ duration: 12, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} style={{ transformOrigin: "100px 100px" }}>
+                    <motion.circle cx="10" cy="100" r="3" fill="currentColor" stroke="none" />
+                    <motion.circle cx="190" cy="100" r="4" fill="currentColor" stroke="none" />
+                  </motion.g>
+                </motion.svg>
+              </div>
+            </BorderBeam>
+          </motion.div>
+
+
+        </div>
+      </section>
+
+      {/* 3. SECONDARY FEATURES */}
+      <section className="max-w-7xl mx-auto px-4 py-32 border-t border-white/5">
+        <div className="grid lg:grid-cols-2 gap-16 lg:gap-12 items-start mb-24">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-4xl md:text-5xl font-medium tracking-tight text-white leading-tight whitespace-pre-wrap"
+          >
+            {secondary?.header?.title || "Craft persuasive narratives\n"}
+            <span className="text-white/40">{secondary?.header?.highlight || "with zero friction."}</span>
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+            className="text-xl text-white/50 leading-relaxed max-w-lg lg:ml-auto mt-2"
+          >
+            {secondary?.header?.body || "A complete toolkit for modern leaders. Ideate, track, and deliver impactful project documents without ever leaving your workflow."}
+          </motion.p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Feature 1: Components */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="flex flex-col justify-end h-full min-h-[440px] relative overflow-hidden rounded-[24px] bg-[#0a0a0a] border border-white/10 p-10 group-hover:bg-[#141414] group-hover:border-white/30 group-hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.1)] transition-all duration-500 group"
+          >
+            <div className="relative z-10 mt-auto pt-24">
+              <h3 className="text-2xl font-bold tracking-tight text-white mb-4">
+                {secondary?.components?.title || "Component Library"}
+              </h3>
+              <p className="text-white/50 text-[15px] leading-relaxed">
+                {secondary?.components?.desc || "Pre-built, animated MDX components ready for your next presentation."}
+              </p>
+            </div>
+            {/* Saturn (土星) - For Components */}
+            <motion.svg className="absolute top-6 left-1/2 -translate-x-1/2 w-[240px] h-[240px] pointer-events-none text-white/20 group-hover:text-white/90 group-hover:scale-110 group-hover:-translate-y-4 transition-all duration-700 ease-out" viewBox="0 0 200 200" fill="none" stroke="currentColor">
+              {/* Saturn Core */}
+              <motion.circle initial={{ scale: 0 }} whileInView={{ scale: 1 }} transition={{ duration: 1.5, ease: "easeOut" }} cx="100" cy="100" r="35" strokeWidth="1.5" strokeOpacity="1" fill="#0a0a0a" />
+              {/* Subtle Core Rings */}
+              <motion.ellipse cx="100" cy="100" rx="30" ry="7.5" strokeWidth="1" strokeOpacity="0.6" />
+              <motion.ellipse cx="100" cy="100" rx="25" ry="5" strokeWidth="1" strokeOpacity="0.3" />
+              
+              {/* Massive Outer Rings */}
+              <motion.g transform="rotate(-25 100 100)">
+                <motion.ellipse initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} transition={{ duration: 2, ease: "easeInOut" }} cx="100" cy="100" rx="80" ry="16" strokeWidth="1" strokeOpacity="0.8" />
+                <motion.ellipse initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} transition={{ duration: 2, delay: 0.1, ease: "easeInOut" }} cx="100" cy="100" rx="70" ry="14" strokeWidth="1.5" strokeOpacity="0.5" />
+                <motion.ellipse initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} transition={{ duration: 2, delay: 0.2, ease: "easeInOut" }} cx="100" cy="100" rx="60" ry="10" strokeWidth="1" strokeOpacity="1" />
+                <motion.ellipse initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} transition={{ duration: 2, delay: 0.3, ease: "easeInOut" }} cx="100" cy="100" rx="50" ry="8" strokeWidth="1" strokeOpacity="0.6" strokeDasharray="3 3" />
+              </motion.g>
+            </motion.svg>
+          </motion.div>
+
+          {/* Feature 2: Built-in Motion */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+            className="flex flex-col justify-end h-full min-h-[440px] relative overflow-hidden rounded-[24px] bg-[#0a0a0a] border border-white/10 p-10 group-hover:bg-[#141414] group-hover:border-white/30 group-hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.1)] transition-all duration-500 group"
+          >
+            <div className="relative z-10 mt-auto pt-24">
+              <h3 className="text-2xl font-bold tracking-tight text-white mb-4">
+                {secondary?.animations?.title || "Built-in Motion"}
+              </h3>
+              <p className="text-white/50 text-[15px] leading-relaxed">
+                {secondary?.animations?.desc || "Add high-quality animations to your slides instantly. No keyframes required."}
+              </p>
+            </div>
+            {/* Venus (金星) - For Built-in Motion */}
+            <motion.svg className="absolute top-6 left-1/2 -translate-x-1/2 w-[240px] h-[240px] pointer-events-none text-white/20 group-hover:text-white/90 group-hover:scale-110 group-hover:-translate-y-4 transition-all duration-700 ease-out" viewBox="0 0 200 200" fill="none" stroke="currentColor">
+              <clipPath id="venus-clip">
+                <circle cx="100" cy="100" r="35" />
+              </clipPath>
+              
+              {/* Venus Core */}
+              <motion.circle initial={{ scale: 0 }} whileInView={{ scale: 1 }} transition={{ duration: 1.5, ease: "easeOut" }} cx="100" cy="100" r="35" strokeWidth="1.5" strokeOpacity="1" fill="#0a0a0a" />
+              
+              {/* Swirling Clouds (Motion) */}
+              <motion.g clipPath="url(#venus-clip)">
+                <motion.path initial={{ x: -10 }} animate={{ x: 10 }} transition={{ duration: 3, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} d="M 60 80 Q 100 65 140 80" strokeWidth="1.5" strokeOpacity="0.9" />
+                <motion.path initial={{ x: 15 }} animate={{ x: -15 }} transition={{ duration: 4, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} d="M 60 90 Q 100 110 140 90" strokeWidth="2" strokeOpacity="0.6" />
+                <motion.path initial={{ x: -20 }} animate={{ x: 20 }} transition={{ duration: 5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} d="M 60 100 Q 100 85 140 100" strokeWidth="1" strokeOpacity="1" />
+                <motion.path initial={{ x: 10 }} animate={{ x: -10 }} transition={{ duration: 3.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} d="M 60 110 Q 100 125 140 110" strokeWidth="1.5" strokeOpacity="0.8" />
+                <motion.path initial={{ x: -5 }} animate={{ x: 5 }} transition={{ duration: 2.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} d="M 60 120 Q 100 110 140 120" strokeWidth="1" strokeOpacity="1" strokeDasharray="2 2" />
+              </motion.g>
+
+              {/* Atmospheric waves outside */}
+              <motion.circle initial={{ scale: 1 }} animate={{ scale: 1.2, opacity: 0 }} transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }} cx="100" cy="100" r="35" strokeWidth="1" strokeOpacity="0.8" />
+              <motion.circle initial={{ scale: 1 }} animate={{ scale: 1.35, opacity: 0 }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut", delay: 0.5 }} cx="100" cy="100" r="35" strokeWidth="1" strokeOpacity="0.5" />
+            </motion.svg>
+          </motion.div>
+
+          {/* Feature 3: Export */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+            className="flex flex-col justify-end h-full min-h-[440px] relative overflow-hidden rounded-[24px] bg-[#0a0a0a] border border-white/10 p-10 group-hover:bg-[#141414] group-hover:border-white/30 group-hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.1)] transition-all duration-500 group"
+          >
+            <div className="relative z-10 mt-auto pt-24">
+              <h3 className="text-2xl font-bold tracking-tight text-white mb-4">
+                {secondary?.export?.title || "Multi-format Export"}
+              </h3>
+              <p className="text-white/50 text-[15px] leading-relaxed">
+                {secondary?.export?.desc || "Export to Web, PDF, or video with a single click. Always pixel perfect."}
+              </p>
+            </div>
+            {/* Uranus (天王星) - For Export */}
+            <motion.svg className="absolute top-6 left-1/2 -translate-x-1/2 w-[240px] h-[240px] pointer-events-none text-white/20 group-hover:text-white/90 group-hover:scale-110 group-hover:-translate-y-4 transition-all duration-700 ease-out" viewBox="0 0 200 200" fill="none" stroke="currentColor">
+              {/* Uranus Core */}
+              <motion.circle initial={{ scale: 0 }} whileInView={{ scale: 1 }} transition={{ duration: 1.5, ease: "easeOut" }} cx="100" cy="100" r="35" strokeWidth="1.5" strokeOpacity="1" fill="#0a0a0a" />
+              
+              {/* Vertical Rings (Uranus is tilted ~90 deg) */}
+              <motion.g transform="rotate(80 100 100)">
+                <motion.ellipse initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} transition={{ duration: 2, ease: "easeInOut" }} cx="100" cy="100" rx="55" ry="8" strokeWidth="1" strokeOpacity="1" />
+                <motion.ellipse initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} transition={{ duration: 2, delay: 0.2, ease: "easeInOut" }} cx="100" cy="100" rx="70" ry="12" strokeWidth="1" strokeOpacity="0.6" strokeDasharray="2 2" />
+              </motion.g>
+
+              {/* Moons/Data streaming outwards (Export) */}
+              <motion.circle initial={{ x: 100, y: 100, opacity: 1 }} animate={{ x: 50, y: 30, opacity: 0 }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut" }} r="2" fill="currentColor" stroke="none" />
+              <motion.circle initial={{ x: 100, y: 100, opacity: 1 }} animate={{ x: 140, y: 10, opacity: 0 }} transition={{ duration: 3, repeat: Infinity, ease: "easeOut", delay: 0.5 }} r="1.5" fill="currentColor" stroke="none" />
+              <motion.circle initial={{ x: 100, y: 100, opacity: 1 }} animate={{ x: 70, y: 20, opacity: 0 }} transition={{ duration: 2, repeat: Infinity, ease: "easeOut", delay: 1 }} r="2.5" fill="currentColor" stroke="none" />
+              <motion.circle initial={{ x: 100, y: 100, opacity: 1 }} animate={{ x: 160, y: 40, opacity: 0 }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeOut", delay: 1.5 }} r="1.5" fill="currentColor" stroke="none" />
+              <motion.circle initial={{ x: 100, y: 100, opacity: 1 }} animate={{ x: 30, y: 70, opacity: 0 }} transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut", delay: 0.8 }} r="2" fill="currentColor" stroke="none" />
+              <motion.circle initial={{ x: 100, y: 100, opacity: 1 }} animate={{ x: 120, y: -10, opacity: 0 }} transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut", delay: 1.2 }} r="1" fill="currentColor" stroke="none" />
+            </motion.svg>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* 4. DEVELOPER/STUDIO SPLIT SCREEN (CODE VS PREVIEW) */}
+      <section className="max-w-7xl mx-auto px-4 py-32 border-t border-white/5 overflow-hidden">
+        <div className="grid lg:grid-cols-2 gap-16 lg:gap-12 items-center">
+          
+          {/* Left: Copy & Code Mock */}
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeUpVariant}
+            className="space-y-10"
+          >
+            <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-white leading-tight whitespace-pre-wrap">
+              {t.home.devSection.title.regular}
+              <span className="text-white/40">{t.home.devSection.title.highlight}</span>
+            </h2>
+            <p className="text-xl text-white/50 leading-relaxed max-w-lg">
+              {t.home.devSection.body}
+            </p>
+            
+            <div className="rounded-[16px] bg-[#0a0a0a] border border-white/10 p-6 font-mono text-[14px] leading-relaxed text-white/70 overflow-x-auto shadow-2xl relative">
+              <div className="flex gap-2 mb-6">
+                <div className="w-3 h-3 rounded-full bg-white/20" />
+                <div className="w-3 h-3 rounded-full bg-white/20" />
+                <div className="w-3 h-3 rounded-full bg-white/20" />
+              </div>
+              <p><span className="text-blue-500">#</span> Growth Investment Memo</p>
+              <br/>
+              <p>{`<Slide duration={6} theme="dark">`}</p>
+              <p className="pl-4">{`<Text enter="fadeUp" fontSize={72} fontWeight={800}>`}</p>
+              <p className="pl-8 text-white">{t.home.devSection.mockTitle}</p>
+              <p className="pl-4">{`</Text>`}</p>
+              <p className="pl-4">{`<Chart type="bar" data={revenueData} delay={0.3} />`}</p>
+              <p>{`</Slide>`}</p>
             </div>
           </motion.div>
 
-          <Reveal delay={0.2} y={64} className="w-full mt-20 max-w-[1200px]">
-            <div className="relative w-full rounded-[2.5rem] bg-white/[0.02] ring-1 ring-white/[0.06] p-2">
-              <div className="absolute -inset-6 rounded-[3rem] bg-[radial-gradient(ellipse_at_50%_0%,rgba(56,189,248,0.15),transparent_70%)] blur-2xl pointer-events-none" />
-              <div className="relative rounded-[calc(2.5rem-0.5rem)] overflow-hidden shadow-2xl shadow-black/80 ring-1 ring-white/10 bg-[#05060a]">
-                <HeroStudio copy={t.home.heroStudio} />
+          {/* Right: Studio Preview Mock */}
+          <motion.div 
+            initial={{ opacity: 0, x: 40 }}
+            whileInView={{ opacity: 1, x: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.2 } }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="relative w-full"
+          >
+            <div className="absolute inset-0 bg-blue-500/20 blur-[120px] rounded-full" />
+            <BorderBeam size="line" className="rounded-[24px]">
+              <div className="relative aspect-[4/3] rounded-[24px] bg-[#111] border border-white/10 p-2 overflow-hidden flex flex-col shadow-2xl">
+                {/* Header mock */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#0d0d0d] rounded-t-[16px]">
+                  <div className="text-xs font-semibold tracking-wider text-white/50 uppercase">{t.home.devSection.mockPreview}</div>
+                  <div className="flex gap-1">
+                    <div className="h-2 w-8 bg-blue-500/80 rounded-full" />
+                    <div className="h-2 w-2 bg-white/20 rounded-full" />
+                    <div className="h-2 w-2 bg-white/20 rounded-full" />
+                  </div>
+                </div>
+                {/* Canvas mock */}
+                <div className="flex-1 bg-[#050505] rounded-b-[16px] m-1 mt-0 border border-t-0 border-white/5 relative flex flex-col justify-center items-center p-8 overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.1),transparent_50%)]" />
+                  <motion.h3 
+                    animate={{ scale: [0.98, 1, 0.98], opacity: [0.8, 1, 0.8] }} 
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className="text-5xl font-bold tracking-tighter text-white z-10"
+                  >
+                    {t.home.devSection.mockTitle}
+                  </motion.h3>
+                  <div className="mt-12 w-full max-w-sm flex items-end justify-between h-40 gap-3 z-10">
+                    <motion.div initial={{ height: "0%" }} whileInView={{ height: "30%" }} transition={{ duration: 1, ease: "easeOut" }} className="w-full bg-white/10 rounded-t-sm" />
+                    <motion.div initial={{ height: "0%" }} whileInView={{ height: "50%" }} transition={{ duration: 1, delay: 0.1, ease: "easeOut" }} className="w-full bg-white/20 rounded-t-sm" />
+                    <motion.div initial={{ height: "0%" }} whileInView={{ height: "70%" }} transition={{ duration: 1, delay: 0.2, ease: "easeOut" }} className="w-full bg-white/30 rounded-t-sm" />
+                    <motion.div initial={{ height: "0%" }} whileInView={{ height: "90%" }} transition={{ duration: 1, delay: 0.3, ease: "easeOut" }} className="w-full bg-blue-500 rounded-t-sm shadow-[0_0_30px_rgba(59,130,246,0.4)]" />
+                  </div>
+                </div>
               </div>
-            </div>
-          </Reveal>
+            </BorderBeam>
+          </motion.div>
+
         </div>
       </section>
 
-      {/* Seamless Feature Typography */}
-      <section className="pb-24 pt-8 md:pt-16 relative z-10">
-        <div className="mx-auto max-w-[1400px] px-4 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {t.home.stats.map(([title, body], i) => (
-              <Reveal key={title} delay={i * 0.15} y={16} className="h-full">
-                <BezelCard className="h-full transition-transform duration-500 hover:scale-[1.02]">
-                  <div className="flex flex-col p-8 md:p-10 relative overflow-hidden h-full">
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 blur-[50px] rounded-full pointer-events-none" />
-                    
-                    <div className="mb-12 flex items-center justify-start relative z-10">
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-white/10 group-hover:scale-105">
-                        {i === 0 ? <FileCode2 className="h-6 w-6 stroke-[1.5]" /> : i === 1 ? <PlayCircle className="h-6 w-6 stroke-[1.5]" /> : <Share2 className="h-6 w-6 stroke-[1.5]" />}
-                      </div>
-                    </div>
-                    
-                    <h3 className="text-2xl font-medium text-white relative z-10 group-hover:text-blue-400 transition-colors duration-500">{title}</h3>
-                    <p className="mt-4 text-base leading-relaxed text-zinc-400 font-light relative z-10">{body}</p>
-                  </div>
-                </BezelCard>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* 5. FINAL CTA */}
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={fadeUpVariant}
+        className="py-40 text-center px-4 border-t border-white/5 bg-[#0a0a0a]"
+      >
+        <h2 className="text-5xl md:text-7xl font-medium tracking-tight text-white mb-10">
+          {t.home.finalCta.title}
+        </h2>
+        <Link 
+          href={localePath("/studio")}
+          className="h-14 px-10 inline-flex items-center justify-center rounded-full bg-white text-black font-semibold text-[16px] hover:scale-105 transition-transform"
+        >
+          {t.home.cta.button}
+        </Link>
+      </motion.section>
 
-      {/* Compose Section - Asymmetrical Bento with Double-Bezel */}
-      <section className="px-4 py-32 md:py-48">
-        <div className="mx-auto max-w-[1400px]">
-          <Reveal className="max-w-3xl">
-            <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-white leading-[1.05]">
-              {t.home.compose.title}
-            </h2>
-            <p className="mt-8 text-lg md:text-xl leading-relaxed text-zinc-400 font-light">
-              {t.home.compose.body}
-            </p>
-          </Reveal>
-
-          <div className="mt-24 grid gap-6 grid-cols-1 md:grid-cols-12 auto-rows-[minmax(320px,auto)]">
-            
-            {/* Cell 1: Source Code (8 cols) */}
-            <Reveal delay={0.1} className="md:col-span-8 md:row-span-2">
-              <BezelCard className="h-full">
-                <div className="flex flex-col h-full p-8 md:p-12 relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#38bdf8]/[0.05] to-transparent" />
-                  
-                  <div className="flex-1 flex flex-col overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-[#0b0814]/90 shadow-2xl transition-transform duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.02] relative z-10">
-                    <div className="flex items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-5 py-4">
-                      <div className="flex items-center gap-2.5">
-                        <Code2 className="text-[#38bdf8]" size={16} />
-                        <span className="text-sm font-semibold tracking-wide text-white">{t.home.compose.sourceLabel}</span>
-                      </div>
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 bg-white/5 transition-colors group-hover:text-white">
-                        <X size={14} />
-                      </div>
-                    </div>
-                    <div className="flex-1 overflow-x-auto p-6 md:p-8 font-mono text-sm leading-8">
-                      <p className="text-zinc-600">{`<Slide duration={5} theme="dark">`}</p>
-                      <p className="pl-6 text-zinc-300">{`<Text enter="fadeUp" fontWeight={800}>`}</p>
-                      <p className="pl-12 text-white">{t.home.compose.codeTitle}</p>
-                      <p className="pl-6 text-zinc-300">{`</Text>`}</p>
-                      <p className="pl-6 text-zinc-300">{`<Chart values="42,58,72,92" />`}</p>
-                      <p className="text-zinc-600">{`</Slide>`}</p>
-                    </div>
-                  </div>
-                </div>
-              </BezelCard>
-            </Reveal>
-
-            {/* Cell 2: Polish (4 cols) */}
-            <Reveal delay={0.2} className="md:col-span-4">
-              <BezelCard className="h-full">
-                <div className="flex flex-col h-full p-8 md:p-10 relative overflow-hidden group">
-                  <div className="mb-8 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-white/10 group-hover:scale-105">
-                    <Sparkles className="h-6 w-6 stroke-[1.5]" />
-                  </div>
-                  <h3 className="text-2xl font-medium text-white relative z-10 group-hover:text-blue-400 transition-colors duration-500">{t.home.compose.polishTitle}</h3>
-                  <p className="mt-4 text-base leading-relaxed text-zinc-400 font-light relative z-10">
-                    {t.home.compose.polishBody}
-                  </p>
-                </div>
-              </BezelCard>
-            </Reveal>
-
-            {/* Cell 3: Timeline (4 cols) */}
-            <Reveal delay={0.3} className="md:col-span-4">
-              <BezelCard className="h-full">
-                <div className="flex flex-col h-full p-8 md:p-10 relative overflow-hidden group">
-                  <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-white/5 blur-[60px] pointer-events-none group-hover:bg-[#38bdf8]/10 transition-colors duration-1000" />
-                  <div className="mb-8 flex items-center justify-between">
-                    <div className="inline-flex items-center gap-2 text-[11px] font-mono font-semibold tracking-wide text-neutral-400">
-                      <Play className="h-4 w-4" />
-                      {t.home.compose.timelineLabel}
-                    </div>
-                  </div>
-                  <div className="space-y-6">
-                    {t.home.compose.timelineItems.map((item, index) => (
-                      <div key={item} className="grid grid-cols-[60px_1fr] items-center gap-4 group/time">
-                        <span className="text-xs font-mono font-semibold text-zinc-500 group-hover:text-zinc-300 transition-colors">{item}</span>
-                        <span className="h-[4px] w-full overflow-hidden rounded-full bg-white/5">
-                          <motion.span
-                            initial={reduce ? false : { width: 0 }}
-                            whileInView={{ width: `${76 - index * 12}%` }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.5 + index * 0.15, duration: 1, ease: customEase }}
-                            className="block h-full rounded-full bg-[#38bdf8] transition-transform duration-500 group-hover:scale-x-105 origin-left"
-                          />
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </BezelCard>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* Workflow Section - Editorial Split */}
-      <section className="px-4 py-32 md:py-48 border-t border-white/[0.04]">
-        <div className="mx-auto max-w-[1400px]">
-          <div className="grid gap-16 md:gap-24 md:grid-cols-2 items-start">
-            <Reveal className="md:sticky md:top-40">
-              <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-white leading-[1.05]">
-                {t.home.workflow.title}
-              </h2>
-              <p className="mt-8 text-lg md:text-xl leading-relaxed text-zinc-400 font-light max-w-md">
-                {t.home.workflow.body}
-              </p>
-            </Reveal>
-
-            <ul className="grid gap-12">
-              {workflow.map((item, index) => (
-                <motion.li
-                  key={item.title}
-                  initial={reduce ? false : { opacity: 0, y: 48, filter: "blur(8px)" }}
-                  whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{
-                    duration: 1.2,
-                    delay: index * 0.2,
-                    ease: customEase,
-                  }}
-                  className="group"
-                >
-                  <BezelCard>
-                    <div className="flex flex-col sm:flex-row gap-8 p-8 md:p-10 items-start">
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:bg-white/10 group-hover:scale-105">
-                        <item.icon className="h-6 w-6 stroke-[1.5]" />
-                      </div>
-                      <div>
-                        <h3 className="text-2xl font-medium text-white">{item.title}</h3>
-                        <p className="mt-4 text-base leading-relaxed text-zinc-400 font-light">{item.body}</p>
-                      </div>
-                    </div>
-                  </BezelCard>
-                </motion.li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* Presets Section - High-End Grid */}
-      <section className="px-4 py-32 md:py-48 border-t border-white/[0.04]">
-        <div className="mx-auto max-w-[1400px]">
-          <Reveal className="max-w-3xl mb-24">
-            <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-white leading-[1.05]">
-              {t.home.presets.title}
-            </h2>
-            <p className="mt-8 text-lg md:text-xl leading-relaxed text-zinc-400 font-light">
-              {t.home.presets.body}
-            </p>
-          </Reveal>
-
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {selectedTemplates.map((template, index) => (
-              <motion.div
-                key={template.id}
-                initial={reduce ? false : { opacity: 0, y: 48, filter: "blur(8px)" }}
-                whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: index * 0.15, duration: 1.2, ease: customEase }}
-                className="h-full"
-              >
-                <Link href="/studio" className="block h-full group">
-                  <BezelCard className="h-full transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-white/5">
-                    <div className="flex h-full flex-col">
-                      <div className="h-56 overflow-hidden">
-                        <StyleThumbnail
-                          className="h-full w-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110"
-                          label={template.category}
-                          templateId={template.id}
-                          title={template.name}
-                        />
-                      </div>
-                      <div className="flex flex-1 flex-col p-8">
-                        <h3 className="text-xl font-medium text-white">{template.name}</h3>
-                        <p className="mt-3 flex-1 text-base leading-relaxed text-zinc-400 font-light">{template.description}</p>
-                        <p className="mt-8 font-mono text-[11px] tracking-wide text-zinc-600">{template.useCase}</p>
-                      </div>
-                    </div>
-                  </BezelCard>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Call to Action Section */}
-      <section className="border-t border-white/[0.04] px-4 py-32 text-center md:py-48 relative z-10">
-        <div className="mx-auto max-w-3xl">
-          <Reveal>
-            <div className="mx-auto mb-10 flex h-20 w-20 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white">
-              <Presentation className="h-8 w-8 stroke-[1.5]" />
-            </div>
-            <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-white leading-[1.05]">
-              {t.home.cta.title}
-            </h2>
-            <p className="mx-auto mt-8 max-w-2xl text-lg md:text-xl leading-relaxed text-zinc-400 font-light">
-              {t.home.cta.body}
-            </p>
-            <div className="mt-12 flex justify-center">
-              <div className="relative group/btn inline-flex w-full sm:w-auto">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 rounded-full blur opacity-40 group-hover/btn:opacity-75 transition duration-1000 group-hover/btn:duration-200" />
-                <Link
-                  href="/studio"
-                  className="relative inline-flex w-full sm:w-auto items-center justify-between sm:justify-start gap-3 rounded-full bg-[#0a0a0c] border border-blue-500/20 pl-8 pr-2 py-2.5 text-[16px] font-medium text-white transition-all duration-700 hover:bg-[#121218] hover:border-blue-500/40 active:scale-[0.98]"
-                >
-                  <span>{t.home.cta.button}</span>
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-400 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] transition-transform duration-700 group-hover/btn:translate-x-1 group-hover/btn:scale-105">
-                    <ArrowRight className="h-5 w-5 text-white drop-shadow-md" />
-                  </div>
-                </Link>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
     </main>
   );
 }

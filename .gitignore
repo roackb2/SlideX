@@ -37,3 +37,4 @@ public/downloads/*.dmg
 
 # local homebrew tap workspace
 homebrew-slidex/
+.gemini/

@@ -11,8 +11,8 @@ export const enDictionary = {
     },
     nav: {
       homeLabel: "SlideX home",
-      resources: "Docs",
-      templates: "Presets",
+      products: "Products",
+      resources: "Resources",
       getStarted: "Get Started",
       mobileDescription: "Design animated MDX Slide decks.",
       openMenu: "Open menu",
@@ -25,10 +25,8 @@ export const enDictionary = {
       homeLabel: "SlideX home",
       description: "Motion decks for teams that want source, timing, and export in one place.",
       product: "Product",
-      library: "Library",
       studio: "Studio",
       getStarted: "Get Started",
-      presets: "Presets",
       docs: "Docs",
       rights: "© 2026 SlideX. All rights reserved.",
       signature: ""
@@ -103,16 +101,72 @@ export const enDictionary = {
       }
     },
     home: {
+      studio: {
+        title: "Meet SlideX Studio.",
+        headline: "A focused editor for writing, previewing, and packaging motion decks without rebuilding the story."
+      },
       hero: {
-        eyebrow: "SlideX Studio",
+        eyebrow: "SlideX",
         title: {
-          regular: "Motion decks ",
-          highlight: "without the rebuild."
+          regular: "From Project Brief to Deck, ",
+          highlight: "articulate clearly."
         },
-        body: "Compose MDX Slides, tune timing, preview motion, and export the deck from one studio.",
+        body: "Help you articulate your project clearly, persuasively, and deliver it as a document for external communication.",
         primary: "Get Started",
         secondary: "View Presets",
         checkpoints: ["Author", "Preview", "Export"]
+      },
+      products: {
+        briefly: {
+          title: "Briefly",
+          core: "Articulate project clearly",
+          target: "PM, Founder, Consultant, Project Owner",
+          output: "Brief / MDX / HTML / PDF"
+        },
+        studio: {
+          title: "Studio",
+          core: "Articulate project persuasively",
+          target: "PM, BD, Sales, Founder, Consultant",
+          output: "Deck / Proposal / Pitch"
+        }
+      },
+      trustedBy: "Trusted by modern teams",
+      productsSection: {
+        title: "Everything you need for project alignment",
+        body: "From brief to pitch, one system to articulate your value.",
+        targetLabel: "Target Audience",
+        outputLabel: "Output Format"
+      },
+      secondaryFeatures: {
+        header: {
+          title: "Craft persuasive narratives\n",
+          highlight: "with zero friction.",
+          body: "A complete toolkit for modern leaders. Ideate, track, and deliver impactful project documents without ever leaving your workflow."
+        },
+        components: {
+          title: "Component Library",
+          desc: "Pre-built, animated MDX components ready for your next presentation."
+        },
+        animations: {
+          title: "Built-in Motion",
+          desc: "Add high-quality animations to your slides instantly. No keyframes required."
+        },
+        export: {
+          title: "Multi-format Export",
+          desc: "Export to HTML or PDF with a single click."
+        }
+      },
+      devSection: {
+        title: {
+          regular: "Presentations\n",
+          highlight: "built with code."
+        },
+        body: "Say goodbye to dragged keyframes and flattened assets. Write your slides in MDX, tune the motion, and export to HTML.",
+        mockPreview: "Preview",
+        mockTitle: "Momentum Review"
+      },
+      finalCta: {
+        title: "Ready to align your team?"
       },
       heroStudio: {
         title: "Studio",
@@ -199,7 +253,80 @@ export const enDictionary = {
       cta: {
         title: "Ready to compose?",
         body: "Open Studio and experience the new standard for motion presentations.",
-        button: "Get Started"
+        button: "Get Started",
+        buttonStudio: "Get Started"
+      }
+    },
+    studioPage: {
+      hero: {
+        eyebrow: "SlideX Studio",
+        title: {
+          regular: "Compose motion decks",
+          highlight: "without leaving source."
+        },
+        body: "Write MDX Slides, shape animation timing, preview the result, and keep every revision editable.",
+        primary: "Open Workspace"
+      },
+      bentoFeatures: [
+        {
+          title: "MDX-first authoring",
+          body: "Build slides as readable source, then refine copy, layout, and motion without flattening the deck.",
+          codeLabel: "motion-doc.mdx",
+          codeTitle: "Executive Growth Review"
+        },
+        {
+          title: "Live motion preview",
+          body: "Replay timing, layer entrances, and pacing in the same workspace where you edit the story."
+        },
+        {
+          title: "Template-backed layouts",
+          body: "Start from useful slide structures and keep the motion grammar consistent across the whole deck."
+        }
+      ],
+      workflow: {
+        title: "From draft to playback in one loop.",
+        body: "Studio keeps the written story, visual structure, and animation timeline moving together.",
+        steps: [
+          {
+            label: "01",
+            title: "Write the slide source",
+            body: "Start with MDX blocks for titles, text, icons, charts, images, and video."
+          },
+          {
+            label: "02",
+            title: "Tune the composition",
+            body: "Adjust frame positions, colors, timing, and slide duration while preview stays connected."
+          },
+          {
+            label: "03",
+            title: "Package the result",
+            body: "Keep a maintainable source deck ready for presentation, export, or automation."
+          }
+        ]
+      },
+      useCases: {
+        eyebrow: "Use cases",
+        title: "Built for decks that keep changing.",
+        body: "Use Studio when the presentation needs polish, motion, and a source format the team can revise.",
+        cases: [
+          {
+            title: "Business reviews",
+            body: "Turn metrics, risks, and decisions into a paced executive story."
+          },
+          {
+            title: "Product narratives",
+            body: "Create launch, feature, and roadmap decks with motion that survives iteration."
+          },
+          {
+            title: "Reusable systems",
+            body: "Build repeatable slide patterns for teams that publish the same story in many forms."
+          }
+        ]
+      },
+      cta: {
+        title: "Open the workspace.",
+        body: "Start from a clean deck, load a preset, or paste MDX and preview the motion immediately.",
+        button: "Open Workspace"
       }
     },
     templatesPage: {
@@ -244,7 +371,15 @@ export const enDictionary = {
         button: "Open Studio"
       }
     },
+
     resourcesPage: {
+      docsHub: {
+        eyebrow: "Documentation hub",
+        title: "Choose the guide for the work in front of you.",
+        body: "Read the MDX and Studio docs for motion decks.",
+        studioTitle: "SlideX Studio Docs",
+        studioBody: "Learn the MDX slide model, component syntax, positioning props, Studio workflow, and MCP setup."
+      },
       heroVisual: {
         label: "Resources",
         codeTitle: "Motion Design Resources",
@@ -266,27 +401,22 @@ export const enDictionary = {
         {
           title: "MDX Syntax",
           description: "Complete syntax for Slide, text, Icon, chart, image, video, and common props.",
-          href: "/resources/mdx",
+          href: "/docs/introduction",
           label: "Syntax"
         },
         {
           title: "MCP Server",
           description: "Connect SlideX to MCP clients so assistants can create, validate, edit, and export MotionDoc decks.",
-          href: "/resources/mdx/mcp",
+          href: "/docs/mcp",
           label: "MCP"
         },
         {
           title: "Slide Components",
           description: "Reference for Slide, Text, Icon, Chart, ImageBlock, VideoBlock, and timing props.",
-          href: "/resources#components",
+          href: "/docs/introduction#components",
           label: "Reference"
         },
-        {
-          title: "Deck Presets",
-          description: "Reusable MDX slide decks for product stories, feature tours, lessons, and carousels.",
-          href: "/templates",
-          label: "Presets"
-        },
+
         {
           title: "Studio Workflow",
           description: "Use the slide list, MDX editor, preview, and timeline to design animated presentations.",
@@ -320,13 +450,155 @@ export const enDictionary = {
         {
           title: "Export Direction",
           description: "Video export is the publishing target, while the core product remains a motion design tool.",
-          points: [
-            "Slide duration maps to timeline segments.",
-            "The preview canvas can become a browser capture target.",
-            "A renderer can consume the same MDX Slide tree for video output."
+          mcpPublishNotes: [
+            "The inspector must be running to receive requests.",
+            "Network requests are securely brokered through standard stdio."
           ]
         }
       ],
+      brieflyDocs: {
+        overviewTitle: "Briefly Overview",
+        builderTitle: "Brief Builder",
+        blocksTitle: "Blocks Reference",
+        overviewLeadTitle: "Project Briefs aligned with your presentations.",
+        overviewLeadBody: "Briefly allows you to create structured project briefs, maintain narrative consistency, and export perfectly formatted documents.",
+        builderLeadTitle: "Builder Workflow",
+        builderLeadBody: "Use the interactive Briefly builder to define project scope, target audience, key messages, and generate documents on the fly.",
+        blocksLeadTitle: "Core & Advanced Blocks",
+        blocksLeadBody: "Briefly MDX uses <BriefBlock> as the main container, supporting <BriefField>, <BriefTags>, and <BriefList> child components to structure project data. Below are all available block types.",
+        blocks: [
+          {
+            title: "Cover / Project Snapshot",
+            type: "cover",
+            body: "Use <BriefMeta> to tag project category and status.",
+            code: `<BriefBlock type="cover" title="Cover & Snapshot" coverImage="/assets/cover.jpg">
+  <BriefField name="project_name">Project Alpha</BriefField>
+  <BriefField name="one_liner">Brief summary</BriefField>
+  <BriefMeta category="SaaS" stage="Planning" status="Draft" owner="PM" confidentiality="internal" />
+</BriefBlock>`
+          },
+          {
+            title: "Background & Problem",
+            type: "background",
+            body: "State the project vision and problem to be solved.",
+            code: `<BriefBlock type="background" title="Background & Problem">
+  <BriefField name="vision_statement">Project Vision</BriefField>
+  <BriefField name="problem_statement">Problem Statement</BriefField>
+  <BriefField name="background">Historical context</BriefField>
+  <BriefField name="context_note">Notes</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Goal & Success",
+            type: "goal",
+            body: "Define primary goals and non-goals.",
+            code: `<BriefBlock type="goal" title="Goals & Success Criteria">
+  <BriefField name="primary_goal">Primary Goal</BriefField>
+  <BriefTags name="secondary_goals" items={["Increase Conversion", "Reduce Costs"]} />
+  <BriefList name="non_goals" items={["No architecture refactoring"]} />
+  <BriefField name="success_signal">Success Metrics</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Deliverables & Scope",
+            type: "deliverables",
+            body: "List in-scope deliverables and out-of-scope items.",
+            code: `<BriefBlock type="deliverables" title="Deliverables & Scope">
+  <BriefList name="deliverables" items={["MVP Web App", "Design System"]} />
+  <BriefList name="out_of_scope" items={["Mobile App"]} />
+  <BriefField name="expected_outputs">Expected Output Notes</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Timeline",
+            type: "timeline",
+            body: "Create a timeline using <BriefTimelineItem>.",
+            code: `<BriefBlock type="timeline" title="Timeline">
+  <BriefField name="start_date">2026-07-01</BriefField>
+  <BriefField name="target_date">2026-09-30</BriefField>
+  <BriefTimeline>
+    <BriefTimelineItem label="Kickoff" date="2026-07-01" />
+    <BriefTimelineItem label="Beta Release" date="2026-08-15" />
+  </BriefTimeline>
+  <BriefList name="milestones" items={["Design Complete", "Code Freeze"]} />
+</BriefBlock>`
+          },
+          {
+            title: "Audience",
+            type: "audience",
+            body: "Analyze target users and use cases.",
+            code: `<BriefBlock type="audience" title="Target Audience">
+  <BriefField name="target_users">Primary Users</BriefField>
+  <BriefList name="use_cases" items={["Case A", "Case B"]} />
+  <BriefField name="early_adopters">Early Adopter Traits</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Team",
+            type: "team",
+            body: "Define RACI roles using <BriefTeamMember>.",
+            code: `<BriefBlock type="team" title="Team">
+  <BriefTeam>
+    <BriefTeamMember name="Alice" role="PM" raci_type="responsible" />
+    <BriefTeamMember name="Bob" role="Tech Lead" raci_type="accountable" />
+  </BriefTeam>
+  <BriefField name="roles">Role Descriptions</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Risks & Assumptions",
+            type: "risks",
+            body: "List potential risks and mitigation plans.",
+            code: `<BriefBlock type="risks" title="Risks & Assumptions">
+  <BriefList name="risks" items={["Schedule delay risk"]} />
+  <BriefList name="mitigation_plans" items={["Add headcount"]} />
+  <BriefList name="open_questions" items={["Is the 3rd-party API stable?"]} />
+  <BriefList name="assumptions_to_validate" items={["Users are willing to pay"]} />
+</BriefBlock>`
+          },
+          {
+            title: "FAQ",
+            type: "faq",
+            body: "List common questions with <BriefFAQItem>.",
+            code: `<BriefBlock type="faq" title="FAQ">
+  <BriefFAQ>
+    <BriefFAQItem question="Why now?" answer="Increased market demand" />
+  </BriefFAQ>
+</BriefBlock>`
+          },
+          {
+            title: "Resources & Assets",
+            type: "resources",
+            body: "List external links and attachments.",
+            code: `<BriefBlock type="resources" title="Resources & Assets">
+  <BriefList name="available_assets" items={["Figma Link"]} />
+  <BriefAttachments>
+    <BriefAttachment name="spec.pdf" type="application/pdf" size={1024000} dataUrl="..." />
+  </BriefAttachments>
+  <BriefField name="files_or_links">Other references</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Budget",
+            type: "budget",
+            body: "Plan project budget and resource allocation.",
+            code: `<BriefBlock type="budget" title="Budget & Resources">
+  <BriefField name="total_budget">$50,000</BriefField>
+  <BriefField name="budget_notes">Includes external design fees</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Decisions",
+            type: "decisions",
+            body: "Log major project decisions.",
+            code: `<BriefBlock type="decisions" title="Decision Log">
+  <BriefField name="decision_notes">Decided on 6/15 to use Next.js for the frontend.</BriefField>
+</BriefBlock>`
+          }
+        ],
+        ctaTitle: "Open Briefly",
+        ctaBody: "Start drafting your first project brief today."
+      },
       syntax: {
         eyebrow: "MDX Docs",
         backLabel: "Back to docs",
@@ -339,9 +611,10 @@ export const enDictionary = {
         feedbackLabel: "Back to docs home",
         nextLabel: "Next",
         sideNavGroups: {
-          start: "Start",
+          start: "Getting started",
           syntax: "Syntax",
-          reference: "Reference"
+          reference: "Reference",
+          briefly: "Briefly Docs"
         },
         overviewTitle: "Overview",
         fileLabel: ".mdx",

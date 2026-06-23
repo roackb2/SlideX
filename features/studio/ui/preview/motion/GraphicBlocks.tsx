@@ -292,7 +292,11 @@ function normalizeIntValue(value: number | string | undefined, fallback: number)
   return Number.isFinite(parsed) ? Math.min(Math.max(parsed, 3), 12) : fallback;
 }
 
-function normalizeOpacity(value: number | string | undefined) {
+function normalizeOpacity(value: unknown) {
+  if (value === null || value === undefined || value === "") {
+    return 1;
+  }
+
   const parsed = typeof value === "number" ? value : Number(value);
 
   return Number.isFinite(parsed) ? Math.min(Math.max(parsed, 0), 1) : 1;

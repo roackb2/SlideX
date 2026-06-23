@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
+import { useI18n } from "@/common/lib/I18nProvider";
 import { fadeInUp, getSectionBody, type DocsSectionLink, type MdxDocsSection, type SyntaxCopy } from "@/features/docs/ui/mdxDocsModel";
 
 export function MdxDocsHeader({
@@ -17,33 +18,34 @@ export function MdxDocsHeader({
   syntax: SyntaxCopy;
 }) {
   const CurrentIcon = currentSection.icon;
+  const { localePath } = useI18n();
 
   return (
-    <motion.header animate="visible" className="border-b border-white/[0.05] pb-8" initial="hidden">
-      <motion.div className="flex flex-wrap items-center gap-2 text-sm text-neutral-500" variants={fadeInUp}>
-        <Link className="transition hover:text-neutral-200" href="/resources">
+    <motion.header animate="visible" className="border-b border-[#222] pb-12" initial="hidden">
+      <motion.div className="flex flex-wrap items-center gap-2 text-[13px] font-medium text-[#888]" variants={fadeInUp}>
+        <Link className="transition hover:text-[#ededed]" href={localePath("/docs")}>
           {resourcesLabel}
         </Link>
-        <ChevronRight className="h-3.5 w-3.5 text-neutral-700" />
-        <Link className="transition hover:text-neutral-200" href="/resources/mdx">
+        <ChevronRight className="h-3.5 w-3.5 text-[#555]" />
+        <Link className="transition hover:text-[#ededed]" href={localePath("/docs/introduction")}>
           {syntax.eyebrow}
         </Link>
-        <ChevronRight className="h-3.5 w-3.5 text-neutral-700" />
-        <span className="text-neutral-300">{currentSection.label}</span>
+        <ChevronRight className="h-3.5 w-3.5 text-[#555]" />
+        <span className="text-[#ededed]">{currentSection.label}</span>
       </motion.div>
 
-      <motion.div className="mt-6 max-w-3xl sm:mt-7" custom={1} variants={fadeInUp}>
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/5 px-3 py-1.5 text-sm font-medium text-blue-200 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
-          <CurrentIcon className="h-3.5 w-3.5 text-sky-400" />
+      <motion.div className="mt-10 max-w-3xl sm:mt-12" custom={1} variants={fadeInUp}>
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#222] bg-[#111] px-3 py-1.5 text-[12px] font-medium text-[#ededed] shadow-sm">
+          <CurrentIcon className="h-3.5 w-3.5 text-blue-500" />
           {syntax.eyebrow}
         </div>
-        <h1 className="text-[2.35rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-4xl md:text-5xl">
+        <h1 className="text-[36px] sm:text-[48px] font-semibold leading-none tracking-[-0.03em] text-[#ededed]">
           {section === "overview" ? syntax.overviewPageTitle : currentSection.label}
         </h1>
-        <p className="mt-4 max-w-2xl text-[15px] leading-7 text-neutral-400 sm:text-base">
+        <p className="mt-6 max-w-[65ch] text-[16px] leading-relaxed text-[#888]">
           {getSectionBody(section, syntax)}
         </p>
-        <p className="mt-4 text-sm text-neutral-600">{syntax.updatedAt}</p>
+        <p className="mt-6 text-[13px] text-[#555] font-mono">{syntax.updatedAt}</p>
       </motion.div>
     </motion.header>
   );

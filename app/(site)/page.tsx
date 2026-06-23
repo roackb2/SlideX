@@ -1,5 +1,5 @@
-import { HomePage } from "@/features/marketing";
+import { LocaleRedirect } from "@/common/ui";
 
-export default function Home() {
-  return <HomePage />;
+export default function RootRedirect() {
+  return <LocaleRedirect targetPath="/" />;
 }

@@ -11,6 +11,7 @@ import {
   fitProp,
   isPositionedBlock,
   numberProp,
+  opacityProp,
   optionalTextAlignProp,
   sizeNumberProp,
   spacingProp,
@@ -235,7 +236,7 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
         fillFrame={fillFrame}
         mask={stringProp(block.props.mask)}
         operation={stringProp(block.props.operation)}
-        opacity={spacingProp(block.props.opacity)}
+        opacity={opacityProp(block.props.opacity)}
         points={spacingProp(block.props.points)}
         radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
         shape={stringProp(block.props.shape)}

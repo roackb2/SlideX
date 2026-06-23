@@ -1,5 +1,5 @@
 import { MotionDocApp } from "@/features/studio";
 
-export default function StudioPage() {
+export default function StudioWorkspacePage() {
   return <MotionDocApp />;
 }

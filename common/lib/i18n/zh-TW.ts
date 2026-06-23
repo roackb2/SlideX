@@ -1,5 +1,4 @@
-export const zhTwDictionary = {
-    metadata: {
+export const zhTwDictionary = {    metadata: {
       title: "SlideX — 動態簡報系統",
       description: "用 MDX Slide 設計動態簡報。編輯投影片、預覽動效，並匯出序列。"
     },
@@ -11,8 +10,8 @@ export const zhTwDictionary = {
     },
     nav: {
       homeLabel: "SlideX 首頁",
-      resources: "文件",
-      templates: "範本",
+      products: "產品",
+      resources: "資源",
       getStarted: "開始使用",
       mobileDescription: "設計可動畫的 MDX Slide 簡報。",
       openMenu: "開啟選單",
@@ -25,10 +24,8 @@ export const zhTwDictionary = {
       homeLabel: "SlideX 首頁",
       description: "把原始碼、時間軸與匯出流程放在同一處的動態簡報工具。",
       product: "產品",
-      library: "資源",
       studio: "Studio",
       getStarted: "開始使用",
-      presets: "範本",
       docs: "文件",
       rights: "© 2026 SlideX. 保留所有權利。",
       signature: ""
@@ -103,16 +100,72 @@ export const zhTwDictionary = {
       }
     },
     home: {
+      studio: {
+        title: "認識 SlideX Studio。",
+        headline: "在同一個專注編輯器裡撰寫、預覽並打包動態簡報，不必重建故事。"
+      },
       hero: {
-        eyebrow: "SlideX Studio",
+        eyebrow: "SlideX",
         title: {
-          regular: "像寫程式一樣，",
-          highlight: "打造動態簡報。"
+          regular: "從 Project Brief 到 Deck，",
+          highlight: "把專案說清楚。"
         },
-        body: "用 MDX 組合 Slide、調整節奏、預覽動效，並在同一個 Studio 裡匯出簡報。",
+        body: "幫你把專案說清楚、講得有說服力，並交付成可對外溝通的文件。",
         primary: "開始使用",
         secondary: "查看範本",
         checkpoints: ["撰寫", "預覽", "匯出"]
+      },
+      products: {
+        briefly: {
+          title: "Briefly",
+          core: "把專案說清楚",
+          target: "PM、Founder、顧問、專案負責人",
+          output: "Brief / MDX / HTML / PDF"
+        },
+        studio: {
+          title: "Studio",
+          core: "把專案講得有說服力",
+          target: "PM、BD、業務、創辦人、顧問",
+          output: "Deck / Proposal / Pitch"
+        }
+      },
+      trustedBy: "備受現代團隊信賴",
+      productsSection: {
+        title: "你需要的所有專案對齊工具",
+        body: "從 Brief 到 Pitch，用同一個系統說清楚你的價值。",
+        targetLabel: "主要對象",
+        outputLabel: "輸出格式"
+      },
+      secondaryFeatures: {
+        header: {
+          title: "打造具備說服力的\n",
+          highlight: "專案敘事。",
+          body: "為現代領導者打造的完整工具。從構思、追蹤到交付高影響力文件，幫助您與團隊完美對齊，全在同一個流暢的工作區內完成。"
+        },
+        components: {
+          title: "元件庫",
+          desc: "預先建置且帶有動效的 MDX 元件，隨時可用於您的下一份簡報。"
+        },
+        animations: {
+          title: "內建微動態",
+          desc: "一鍵為簡報加入高質感的進場與互動動畫，完全不需要手動調整關鍵影格。"
+        },
+        export: {
+          title: "多格式輸出",
+          desc: "一鍵匯出為 HTML 或 PDF 格式。"
+        }
+      },
+      devSection: {
+        title: {
+          regular: "用程式碼寫出\n",
+          highlight: "高質感動態簡報。"
+        },
+        body: "告別手拉 keyframe 與被壓平的靜態素材。用 MDX 撰寫投影片、調整動效，並匯出成 HTML。",
+        mockPreview: "預覽",
+        mockTitle: "動能檢討"
+      },
+      finalCta: {
+        title: "準備好對齊你的團隊了嗎？"
       },
       heroStudio: {
         title: "Studio",
@@ -199,8 +252,86 @@ export const zhTwDictionary = {
       cta: {
         title: "準備好製作第一份簡報了嗎？",
         body: "開啟 Studio，體驗全新的動態簡報標準。",
-        button: "立即開始"
+        button: "立即開始",
+        buttonStudio: "立即開始"
       }
+    },
+    studioPage: {
+      hero: {
+        eyebrow: "SlideX Studio",
+        title: {
+          regular: "用原始碼製作",
+          highlight: "動態簡報。"
+        },
+        body: "撰寫 MDX Slide、調整動畫節奏、即時預覽結果，並讓每一次修改都保持可編輯。",
+        primary: "開啟工作區",
+        mcpPublishNotes: [
+          "檢查器必須處於執行狀態才能接收請求。",
+          "網路請求皆透過標準 stdio 安全地橋接傳輸。"
+        ]
+      },
+      bentoFeatures: [
+        {
+          title: "MDX 優先編輯",
+          body: "用可閱讀的原始碼建立投影片，再調整文案、版面與動效，不需要把簡報壓平成圖片。",
+          codeLabel: "motion-doc.mdx",
+          codeTitle: "主管成長檢討"
+        },
+        {
+          title: "即時動效預覽",
+          body: "在同一個工作區裡重播時間、圖層進場與敘事節奏，邊看邊調整。"
+        },
+        {
+          title: "範本化版面",
+          body: "從實用的投影片結構開始，讓整份簡報維持一致的動效語法。"
+        }
+      ],
+      workflow: {
+        title: "從草稿到播放的一條流程。",
+        body: "Studio 讓書寫內容、視覺結構與動畫時間軸一起前進。",
+        steps: [
+          {
+            label: "01",
+            title: "撰寫 Slide 原始碼",
+            body: "用 MDX 區塊建立標題、文字、Icon、圖表、圖片與影片。"
+          },
+          {
+            label: "02",
+            title: "調整畫面組合",
+            body: "調整位置、顏色、時間與 Slide 長度，同時保持預覽同步。"
+          },
+          {
+            label: "03",
+            title: "打包完成結果",
+            body: "保留可維護的原始碼簡報，準備播放、匯出或接上自動化。"
+          }
+        ]
+      },
+      useCases: {
+        eyebrow: "使用情境",
+        title: "為會持續變動的簡報而生。",
+        body: "當簡報需要質感、動效，以及團隊能反覆修改的原始格式時，就用 Studio。",
+        cases: [
+          {
+            title: "業務檢討",
+            body: "把指標、風險與決策整理成有節奏的主管敘事。"
+          },
+          {
+            title: "產品敘事",
+            body: "製作上市、功能與 roadmap 簡報，讓動效能承受反覆迭代。"
+          },
+          {
+            title: "可重用系統",
+            body: "為需要用多種形式發布同一故事的團隊建立可重複的 Slide 模式。"
+          }
+        ]
+      },
+      cta: {
+        title: "開啟工作區。",
+        body: "從空白簡報開始、載入範本，或貼上 MDX 後立即預覽動效。",
+        button: "開啟工作區"
+      },
+
     },
     templatesPage: {
       hero: {
@@ -244,7 +375,15 @@ export const zhTwDictionary = {
         button: "開啟 Studio"
       }
     },
+
     resourcesPage: {
+      docsHub: {
+        eyebrow: "文件中心",
+        title: "依照眼前的工作選擇指南。",
+        body: "閱讀 MDX 與 Studio 文件來製作動態簡報。",
+        studioTitle: "SlideX Studio 文件",
+        studioBody: "學習 MDX Slide 模型、元件語法、定位 props、Studio 工作流程與 MCP 設定。"
+      },
       heroVisual: {
         label: "資源",
         codeTitle: "動態設計資源",
@@ -266,27 +405,22 @@ export const zhTwDictionary = {
         {
           title: "MDX 語法",
           description: "完整的 Slide、文字、Icon、圖表、圖片、影片與常用 props 寫法。",
-          href: "/resources/mdx",
+          href: "/docs/introduction",
           label: "語法"
         },
         {
           title: "MCP Server",
           description: "把 SlideX 接到支援 MCP 的助理，讓它能建立、驗證、修改與匯出 MotionDoc。",
-          href: "/resources/mdx/mcp",
+          href: "/docs/mcp",
           label: "MCP"
         },
         {
           title: "Slide 元件",
           description: "Slide、Text、Icon、Chart、ImageBlock、VideoBlock 與時間 props 的參考。",
-          href: "/resources#components",
+          href: "/docs/introduction#components",
           label: "參考"
         },
-        {
-          title: "簡報範本",
-          description: "可重用的 MDX 投影片簡報，適合產品故事、功能導覽、課程與輪播。",
-          href: "/templates",
-          label: "範本"
-        },
+
         {
           title: "Studio 流程",
           description: "用投影片列表、MDX 編輯器、預覽與時間軸設計動態簡報。",
@@ -327,6 +461,149 @@ export const zhTwDictionary = {
           ]
         }
       ],
+      brieflyDocs: {
+        overviewTitle: "Briefly 總覽",
+        builderTitle: "Brief Builder 建構器",
+        blocksTitle: "Blocks 區塊語法",
+        overviewLeadTitle: "讓專案文件與你的簡報敘事保持對齊。",
+        overviewLeadBody: "Briefly 幫助你建立結構化的專案需求文件，保持敘事一致性，並輸出格式完美的文檔。",
+        builderLeadTitle: "Builder 工作流程",
+        builderLeadBody: "使用互動式的 Briefly Builder 來定義專案範圍、目標受眾、核心訊息，並即時生成文件。",
+        blocksLeadTitle: "核心與進階區塊參考",
+        blocksLeadBody: "Briefly 的 MDX 使用 <BriefBlock> 作為容器，內部支援 <BriefField>、<BriefTags> 與 <BriefList> 等子元件來描述專案資訊。以下是所有的區塊結構。",
+        blocks: [
+          {
+            title: "Cover / 專案封面",
+            type: "cover",
+            body: "使用 <BriefMeta> 標記專案的分類與狀態。",
+            code: `<BriefBlock type="cover" title="封面與簡介" coverImage="/assets/cover.jpg">
+  <BriefField name="project_name">Project Alpha</BriefField>
+  <BriefField name="one_liner">簡介</BriefField>
+  <BriefMeta category="SaaS" stage="規劃中" status="草稿" owner="PM" confidentiality="internal" />
+</BriefBlock>`
+          },
+          {
+            title: "Background / 背景與問題陳述",
+            type: "background",
+            body: "陳述專案的願景與欲解決的問題。",
+            code: `<BriefBlock type="background" title="背景與問題陳述">
+  <BriefField name="vision_statement">專案願景</BriefField>
+  <BriefField name="problem_statement">問題陳述</BriefField>
+  <BriefField name="background">歷史背景</BriefField>
+  <BriefField name="context_note">備註</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Goal / 目標與成功標準",
+            type: "goal",
+            body: "定義主要目標與非目標 (Non-goals)。",
+            code: `<BriefBlock type="goal" title="目標與成功標準">
+  <BriefField name="primary_goal">主要目標</BriefField>
+  <BriefTags name="secondary_goals" items={["提升轉換率", "降低成本"]} />
+  <BriefList name="non_goals" items={["不涉及架構重構"]} />
+  <BriefField name="success_signal">成功指標</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Deliverables / 預期產出與範圍",
+            type: "deliverables",
+            body: "列出範圍內與範圍外的交付物。",
+            code: `<BriefBlock type="deliverables" title="預期產出與範圍">
+  <BriefList name="deliverables" items={["MVP Web App", "設計指南"]} />
+  <BriefList name="out_of_scope" items={["行動版 App"]} />
+  <BriefField name="expected_outputs">產出說明</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Timeline / 時程規劃",
+            type: "timeline",
+            body: "使用 <BriefTimelineItem> 建立時間軸。",
+            code: `<BriefBlock type="timeline" title="時程規劃">
+  <BriefField name="start_date">2026-07-01</BriefField>
+  <BriefField name="target_date">2026-09-30</BriefField>
+  <BriefTimeline>
+    <BriefTimelineItem label="Kickoff" date="2026-07-01" />
+    <BriefTimelineItem label="Beta Release" date="2026-08-15" />
+  </BriefTimeline>
+  <BriefList name="milestones" items={["完成設計", "程式碼凍結"]} />
+</BriefBlock>`
+          },
+          {
+            title: "Audience / 目標受眾",
+            type: "audience",
+            body: "分析使用者與核心使用情境。",
+            code: `<BriefBlock type="audience" title="目標受眾">
+  <BriefField name="target_users">主要使用者</BriefField>
+  <BriefList name="use_cases" items={["情境 A", "情境 B"]} />
+  <BriefField name="early_adopters">早期採用者特徵</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Team / 團隊陣容",
+            type: "team",
+            body: "使用 <BriefTeamMember> 定義 RACI 角色。",
+            code: `<BriefBlock type="team" title="團隊陣容">
+  <BriefTeam>
+    <BriefTeamMember name="Alice" role="PM" raci_type="responsible" />
+    <BriefTeamMember name="Bob" role="Tech Lead" raci_type="accountable" />
+  </BriefTeam>
+  <BriefField name="roles">角色說明</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Risks / 風險與假設",
+            type: "risks",
+            body: "列出潛在風險與應對計畫。",
+            code: `<BriefBlock type="risks" title="風險與假設">
+  <BriefList name="risks" items={["時程延宕風險"]} />
+  <BriefList name="mitigation_plans" items={["增加人力配置"]} />
+  <BriefList name="open_questions" items={["第三方 API 是否穩定？"]} />
+  <BriefList name="assumptions_to_validate" items={["使用者願意付費"]} />
+</BriefBlock>`
+          },
+          {
+            title: "FAQ / 常見問題",
+            type: "faq",
+            body: "使用 <BriefFAQItem> 條列問答。",
+            code: `<BriefBlock type="faq" title="常見問題">
+  <BriefFAQ>
+    <BriefFAQItem question="為何現在做？" answer="市場需求提升" />
+  </BriefFAQ>
+</BriefBlock>`
+          },
+          {
+            title: "Resources / 參考資源",
+            type: "resources",
+            body: "列出外部連結與夾帶檔案。",
+            code: `<BriefBlock type="resources" title="參考資源與附錄">
+  <BriefList name="available_assets" items={["Figma 連結"]} />
+  <BriefAttachments>
+    <BriefAttachment name="spec.pdf" type="application/pdf" size={1024000} dataUrl="..." />
+  </BriefAttachments>
+  <BriefField name="files_or_links">其他補充資源</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Budget / 預算與資源",
+            type: "budget",
+            body: "規劃專案預算配置。",
+            code: `<BriefBlock type="budget" title="預算與資源">
+  <BriefField name="total_budget">$50,000</BriefField>
+  <BriefField name="budget_notes">包含外包設計費用</BriefField>
+</BriefBlock>`
+          },
+          {
+            title: "Decisions / 決策紀錄",
+            type: "decisions",
+            body: "紀錄專案開發過程中的重大決策。",
+            code: `<BriefBlock type="decisions" title="決策紀錄">
+  <BriefField name="decision_notes">於 6/15 決定使用 Next.js 作為前端框架。</BriefField>
+</BriefBlock>`
+          }
+        ],
+        ctaTitle: "開啟 Briefly",
+        ctaBody: "立即開始草擬你的第一份專案需求。"
+      },
       syntax: {
         eyebrow: "MDX 文件",
         backLabel: "返回文件",
@@ -339,9 +616,10 @@ export const zhTwDictionary = {
         feedbackLabel: "回到文件首頁",
         nextLabel: "下一步",
         sideNavGroups: {
-          start: "入門",
+          start: "開始使用",
           syntax: "語法",
-          reference: "參考"
+          reference: "參考資料",
+          briefly: "Briefly 文件"
         },
         overviewTitle: "概覽",
         fileLabel: ".mdx",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
+import { IBM_Plex_Sans } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import { I18nProvider } from "@/common/lib/I18nProvider";
 import { defaultLocale, dictionaries } from "@/common/lib/i18n";
@@ -9,6 +10,13 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-mono",
+  display: "swap",
+});
+
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "600"],
+  variable: "--font-ibm",
   display: "swap",
 });
 
@@ -23,7 +31,10 @@ const ogImage = {
 };
 
 export const metadata: Metadata = {
-  title: defaultMetadata.title,
+  title: {
+    default: "SlideX — 專案管理與協作平台 | Project Management Platform",
+    template: "%s | SlideX",
+  },
   description: defaultMetadata.description,
   applicationName: "SlideX",
   metadataBase: siteUrl,
@@ -31,7 +42,7 @@ export const metadata: Metadata = {
     canonical: "/"
   },
   openGraph: {
-    title: defaultMetadata.title,
+    title: "SlideX — 專案管理與協作平台",
     description: defaultMetadata.description,
     url: "/",
     siteName: "SlideX",
@@ -42,7 +53,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: defaultMetadata.title,
+    title: "SlideX — 專案管理與協作平台",
     description: defaultMetadata.description,
     images: [
       {
@@ -62,7 +73,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-TW" suppressHydrationWarning translate="no" className={`${GeistSans.variable} ${jetbrainsMono.variable}`}>
+    <html lang="zh-TW" suppressHydrationWarning translate="no" className={`${GeistSans.variable} ${jetbrainsMono.variable} ${ibmPlexSans.variable}`}>
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
