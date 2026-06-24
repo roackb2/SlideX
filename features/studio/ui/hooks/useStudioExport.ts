@@ -102,9 +102,43 @@ export function useStudioExport({
     }
   }, [canvasSource, documentTitle, setIsExportMenuOpen, setNotice]);
 
+  const exportPdfFile = useCallback(async () => {
+    const title = documentTitle || "slidesx-deck";
+    const finalTitle = title.trim();
+
+    try {
+      setNotice("Preparing PDF...");
+      const finalSource = await embedLocalFiles(canvasSource);
+      const html = buildMotionDocHtml(finalSource, finalTitle);
+
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        setNotice("Please allow popups to export PDF");
+        setIsExportMenuOpen(false);
+        return;
+      }
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.document.title = finalTitle;
+          printWindow.print();
+        }, 500); // Wait for fonts and images
+      };
+
+      setIsExportMenuOpen(false);
+      setNotice("PDF prepared");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "PDF export failed");
+    }
+  }, [canvasSource, documentTitle, setIsExportMenuOpen, setNotice]);
+
   return {
     copySource,
     exportHtmlFile,
-    exportMdxFile
+    exportMdxFile,
+    exportPdfFile
   };
 }

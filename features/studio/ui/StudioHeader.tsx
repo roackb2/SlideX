@@ -13,6 +13,7 @@ export function StudioHeader({
   projectName,
   onExportHtml,
   onExportMdx,
+  onExportPdf,
   onReplay,
   onUndo,
   onToggleInspector,
@@ -27,6 +28,7 @@ export function StudioHeader({
   projectName: string;
   onExportHtml: () => void;
   onExportMdx: () => void;
+  onExportPdf: () => void;
   onReplay: () => void;
   onUndo: () => void;
   onToggleInspector: () => void;
@@ -114,6 +116,14 @@ export function StudioHeader({
               >
                 <FileText size={14} className="text-neutral-400" />
                 Export `.html`
+              </button>
+              <button
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-neutral-300 transition-colors hover:bg-white/[0.04] hover:text-white cursor-pointer duration-150"
+                onClick={onExportPdf}
+                type="button"
+              >
+                <FileText size={14} className="text-neutral-400" />
+                Export `.pdf`
               </button>
             </div>
           )}

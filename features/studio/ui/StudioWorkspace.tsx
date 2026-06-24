@@ -29,6 +29,7 @@ export function StudioWorkspace(props: StudioWorkspaceProps) {
         notice={props.notice}
         onExportHtml={props.exportHtmlFile}
         onExportMdx={props.exportMdxFile}
+        onExportPdf={props.exportPdfFile}
         onReplay={() => props.setReplayNonce((value) => value + 1)}
         onToggleInspector={() => {
           props.setIsMobileInspectorOpen((value) => !value);

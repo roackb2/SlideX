@@ -43,6 +43,7 @@ export type StudioWorkspaceProps = {
   dragOverBlockIndex: number | null;
   exportHtmlFile: () => void;
   exportMdxFile: () => void;
+  exportPdfFile: () => void;
   exportMenuRef: RefObject<HTMLDivElement | null>;
   goToNextSlide: () => void;
   goToPreviousSlide: () => void;

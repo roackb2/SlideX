@@ -196,7 +196,7 @@ ${runtimePremiumShaderBody}
           const id = canvas.dataset.shader;
           const frag = SHADER_FRAGS[id];
           if (!frag) return null;
-          const gl = canvas.getContext('webgl2', {alpha:true, antialias:false, premultipliedAlpha:false});
+          const gl = canvas.getContext('webgl2', {alpha:true, antialias:false, premultipliedAlpha:false, preserveDrawingBuffer: true});
           if (!gl) return null;
           gl.enable(gl.BLEND);
           gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -236,7 +236,7 @@ ${runtimePremiumShaderBody}
           let renderer;
 
           try {
-            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false, canvas, premultipliedAlpha: false });
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false, canvas, premultipliedAlpha: false, preserveDrawingBuffer: true });
           } catch (_) {
             return null;
           }

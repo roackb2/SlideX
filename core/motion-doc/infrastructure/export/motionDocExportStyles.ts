@@ -591,4 +591,70 @@ export const motionDocExportStyles = `      :root {
         .button-group {
           justify-content: center;
         }
+      }
+      @media print {
+        @page {
+          size: 1024px 576px;
+          margin: 0;
+        }
+        html, body {
+          width: 1024px;
+          height: 576px;
+          margin: 0;
+          padding: 0;
+          background: #000;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+          overflow: visible;
+        }
+        .player {
+          display: block;
+          height: auto;
+          padding: 0;
+          background: transparent;
+        }
+        .controls {
+          display: none !important;
+        }
+        .stage {
+          display: block;
+          height: auto;
+        }
+        .viewport {
+          width: 100%;
+          max-width: none;
+          height: auto;
+          aspect-ratio: auto;
+          border-radius: 0;
+          background: transparent;
+          box-shadow: none;
+          overflow: visible;
+        }
+        .frame {
+          position: relative;
+          width: 100%;
+          height: auto;
+          transform: none;
+          overflow: visible;
+        }
+        .slide {
+          position: relative;
+          display: block !important;
+          width: 1024px;
+          height: 576px;
+          page-break-after: always;
+          page-break-inside: avoid;
+          overflow: hidden;
+          opacity: 1 !important;
+          transform: none !important;
+          margin-bottom: 0;
+        }
+        * {
+          transition: none !important;
+          animation: none !important;
+        }
+        .motion-block {
+          opacity: 1 !important;
+          transform: translate3d(0, 0, 0) scale(1) !important;
+        }
       }`;

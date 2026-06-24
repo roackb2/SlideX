@@ -98,7 +98,7 @@ export function MotionDocApp() {
     source,
     undoStackRef
   });
-  const { copySource, exportHtmlFile, exportMdxFile } = useStudioExport({
+  const { copySource, exportHtmlFile, exportMdxFile, exportPdfFile } = useStudioExport({
     canvasSource,
     documentTitle: sliderDocument.title,
     setIsExportMenuOpen,
@@ -236,6 +236,7 @@ export function MotionDocApp() {
       dragOverBlockIndex={dragOverBlockIndex}
       exportHtmlFile={exportHtmlFile}
       exportMdxFile={exportMdxFile}
+      exportPdfFile={exportPdfFile}
       exportMenuRef={exportMenuRef}
       goToNextSlide={studioCommands.goToNextSlide}
       goToPreviousSlide={studioCommands.goToPreviousSlide}
