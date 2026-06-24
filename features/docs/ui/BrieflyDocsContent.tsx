@@ -26,13 +26,7 @@ export function BrieflyDocsContent({
 }
 
 function OverviewContent({ brieflyDocs, syntax }: { brieflyDocs: BrieflyDocsCopy; syntax: SyntaxCopy }) {
-  const { t } = useI18n();
-  const rules = [
-    "將複雜的需求結構化為清晰的目標與核心訊息",
-    "自動產生符合邏輯的故事線架構",
-    "無縫對接 SlideX Studio 進行 MDX 簡報設計",
-    "隨時更新 Brief，保持團隊對焦"
-  ];
+
 
   return (
     <section className="scroll-mt-28 space-y-6 md:space-y-8">
@@ -51,7 +45,7 @@ function OverviewContent({ brieflyDocs, syntax }: { brieflyDocs: BrieflyDocsCopy
             {brieflyDocs.overviewLeadBody}
           </p>
           <div className="mt-10 grid gap-4 md:grid-cols-2">
-            {rules.map((rule) => (
+            {brieflyDocs.overviewRules.map((rule) => (
               <div
                 className="flex items-start gap-3 rounded-xl border border-[#222] bg-[#0a0a0a] px-5 py-4 text-[14px] leading-relaxed text-[#888] shadow-sm"
                 key={rule}
@@ -66,40 +60,50 @@ function OverviewContent({ brieflyDocs, syntax }: { brieflyDocs: BrieflyDocsCopy
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-[#222] bg-[#050505] p-8 shadow-sm">
-          <h2 className="text-[20px] font-medium tracking-tight text-[#ededed]">為什麼需要 Briefly？</h2>
+          <h2 className="text-[20px] font-medium tracking-tight text-[#ededed]">{brieflyDocs.overviewWhyTitle}</h2>
           <p className="mt-4 text-[14px] leading-relaxed text-[#888]">
-            在製作任何高品質的提案或簡報之前，確保核心團隊對「我們要溝通什麼」有著相同的理解是關鍵的。Briefly 提供了一個清晰的框架，讓你與利害關係人能先對焦以下要素：
+            {brieflyDocs.overviewWhyBody}
           </p>
           <ul className="mt-6 space-y-4 text-[14px] text-[#888]">
-            <li className="flex items-start gap-3">
-              <span className="text-[#ededed] mt-1">•</span> 
-              <span className="leading-relaxed"><strong>專案目標 (Goal)</strong>：這份簡報希望達成的最終商業目的是什麼？</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-[#ededed] mt-1">•</span> 
-              <span className="leading-relaxed"><strong>目標受眾 (Audience)</strong>：誰在聽？他們關心什麼？</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-[#ededed] mt-1">•</span> 
-              <span className="leading-relaxed"><strong>核心訊息 (Key Messages)</strong>：哪些亮點或數據是絕對不能漏掉的？</span>
-            </li>
+            {brieflyDocs.overviewWhyPoints.map((point, idx) => {
+              const colonIndex = point.indexOf("：");
+              const isEn = colonIndex === -1;
+              const splitChar = isEn ? ":" : "：";
+              const splitIndex = point.indexOf(splitChar);
+              if (splitIndex === -1) {
+                return (
+                  <li key={idx} className="flex items-start gap-3">
+                    <span className="text-[#ededed] mt-1">•</span>
+                    <span className="leading-relaxed">{point}</span>
+                  </li>
+                );
+              }
+              const boldPart = point.substring(0, splitIndex + 1);
+              const restPart = point.substring(splitIndex + 1);
+              return (
+                <li key={idx} className="flex items-start gap-3">
+                  <span className="text-[#ededed] mt-1">•</span>
+                  <span className="leading-relaxed"><strong>{boldPart}</strong>{restPart}</span>
+                </li>
+              );
+            })}
           </ul>
         </div>
 
         <div className="rounded-2xl border border-[#222] bg-[#050505] p-8 flex flex-col justify-between shadow-sm">
           <div>
-            <h2 className="text-[20px] font-medium tracking-tight text-[#ededed]">從 Briefly 到 Studio</h2>
+            <h2 className="text-[20px] font-medium tracking-tight text-[#ededed]">{brieflyDocs.overviewWorkflowTitle}</h2>
             <p className="mt-4 text-[14px] leading-relaxed text-[#888]">
-              當你完成了一份 Brief 之後，可以一鍵轉換為 Markdown 或直接匯出為 MDX，作為 SlideX Studio 的大綱骨架。這樣你就可以確保視覺設計與內容動態完全貼合最初的商業邏輯，避免後期的來回修改。
+              {brieflyDocs.overviewWorkflowBody}
             </p>
           </div>
           <div className="mt-8 flex items-center gap-3">
             <div className="flex h-10 items-center justify-center rounded-xl border border-[#222] bg-[#0a0a0a] px-5 text-[13px] font-medium text-[#ededed] shadow-sm">
-              Briefly 產出大綱
+              {brieflyDocs.overviewWorkflowStep1}
             </div>
             <div className="h-[1px] flex-1 bg-[#222]" />
             <div className="flex h-10 items-center justify-center rounded-xl border border-[#222] bg-[#0a0a0a] px-5 text-[13px] font-medium text-[#ededed] shadow-sm">
-              Studio 製作簡報
+              {brieflyDocs.overviewWorkflowStep2}
             </div>
           </div>
         </div>
@@ -109,24 +113,7 @@ function OverviewContent({ brieflyDocs, syntax }: { brieflyDocs: BrieflyDocsCopy
 }
 
 function BuilderContent({ brieflyDocs, syntax }: { brieflyDocs: BrieflyDocsCopy; syntax: SyntaxCopy }) {
-  const steps = [
-    {
-      title: "1. 新增 Block 區塊",
-      desc: "從左側工具列選擇需要的文件區塊，如：封面 (Cover)、專案目標 (Goal)、時程規劃 (Timeline) 或目標受眾 (Audience)。系統會自動將區塊加入預覽畫布中。"
-    },
-    {
-      title: "2. 透過 Inspector 填寫資料",
-      desc: "點擊任一區塊，右側的 Inspector 面板會展開相對應的專屬表單，幫助你結構化地輸入核心訊息與數據，不需煩惱版面問題。"
-    },
-    {
-      title: "3. 調整設計與大綱排序",
-      desc: "利用 Outline 工具拖曳排序章節，並切換至 Design 工具設定排版寬度、字型 (Typography)、邊框樣式以及視覺主題 (Theme Gradient)。"
-    },
-    {
-      title: "4. 預覽與匯出文件",
-      desc: "隨時切換 MDX 預覽模式查看生成的標記語法。完成後，你可以將 Brief 匯出為 HTML、PDF，或是轉換為 MDX 檔案供 SlideX Studio 製作簡報使用。"
-    }
-  ];
+
 
   return (
     <section className="scroll-mt-28 space-y-6 md:space-y-8">
@@ -149,13 +136,13 @@ function BuilderContent({ brieflyDocs, syntax }: { brieflyDocs: BrieflyDocsCopy;
 
       <div className="rounded-2xl border border-[#222] bg-[#050505] shadow-sm">
         <div className="p-8 md:p-12">
-          <h2 className="text-[20px] font-medium tracking-tight text-[#ededed]">使用步驟</h2>
+          <h2 className="text-[20px] font-medium tracking-tight text-[#ededed]">{brieflyDocs.builderStepsTitle}</h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2">
-            {steps.map((step, idx) => {
+            {brieflyDocs.builderSteps.map((step, idx) => {
               return (
                 <div key={idx} className="flex flex-col gap-3 rounded-xl border border-[#222] bg-[#0a0a0a] p-6 hover:border-[#444] transition-colors shadow-sm">
-                  <h3 className="text-[16px] font-medium text-[#ededed]">{step.title}</h3>
-                  <p className="text-[14px] leading-relaxed text-[#888]">{step.desc}</p>
+                  <h3 className="text-[16px] font-medium text-[#ededed]">{step[0]}</h3>
+                  <p className="text-[14px] leading-relaxed text-[#888]">{step[1]}</p>
                 </div>
               );
             })}
@@ -165,7 +152,7 @@ function BuilderContent({ brieflyDocs, syntax }: { brieflyDocs: BrieflyDocsCopy;
 
       <div className="rounded-2xl border border-[#222] bg-[#050505] overflow-hidden shadow-sm">
         <div className="border-b border-[#222] bg-[#050505] px-8 py-5">
-          <span className="text-[12px] uppercase tracking-widest font-medium text-[#ededed]">範例輸出 (MDX)</span>
+          <span className="text-[12px] uppercase tracking-widest font-medium text-[#ededed]">{brieflyDocs.builderExampleTitle}</span>
         </div>
         <pre className="overflow-x-auto p-8 text-[13px] leading-relaxed text-[#888] font-mono bg-[#0a0a0a] relative z-10">
           <code>{`<BriefBlock type="cover" title="專案封面" coverImage="/assets/cover.jpg">

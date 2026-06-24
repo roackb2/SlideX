@@ -464,8 +464,33 @@ export const enDictionary = {
         overviewLeadBody: "Briefly allows you to create structured project briefs, maintain narrative consistency, and export perfectly formatted documents.",
         builderLeadTitle: "Builder Workflow",
         builderLeadBody: "Use the interactive Briefly builder to define project scope, target audience, key messages, and generate documents on the fly.",
-        blocksLeadTitle: "Core & Advanced Blocks",
-        blocksLeadBody: "Briefly MDX uses <BriefBlock> as the main container, supporting <BriefField>, <BriefTags>, and <BriefList> child components to structure project data. Below are all available block types.",
+        blocksLeadTitle: "Core and Advanced Blocks",
+        blocksLeadBody: "Briefly's MDX uses <BriefBlock> as a container, supporting child components like <BriefField>, <BriefTags>, and <BriefList> to describe project info. Here are all available structures.",
+        overviewWhyTitle: "Why Briefly?",
+        overviewWhyBody: "Before building any high-quality pitch or presentation, ensuring the core team shares the same understanding of 'what we are communicating' is crucial. Briefly provides a clear framework to align with stakeholders on the following elements:",
+        overviewWhyPoints: [
+          "Project Goal: What is the ultimate business objective this deck aims to achieve?",
+          "Audience: Who is listening? What do they care about?",
+          "Key Messages: Which highlights or metrics absolutely cannot be missed?"
+        ],
+        overviewWorkflowTitle: "From Briefly to Studio",
+        overviewWorkflowBody: "Once you complete a Brief, you can convert it to Markdown with a single click or export it directly to MDX to serve as the outline skeleton for SlideX Studio. This ensures the visual design and motion perfectly match the original business logic, avoiding back-and-forth revisions later.",
+        overviewWorkflowStep1: "Briefly generates outline",
+        overviewWorkflowStep2: "Studio builds deck",
+        overviewRules: [
+          "Structure complex requirements into clear goals and key messages",
+          "Automatically generate a logical storyline structure",
+          "Seamlessly connect to SlideX Studio for MDX deck design",
+          "Update the Brief anytime to keep the team aligned"
+        ],
+        builderStepsTitle: "How to Use",
+        builderSteps: [
+          ["1. Add Blocks", "Select document blocks from the left toolbar, such as Cover, Goal, Timeline, or Audience. The system will automatically add them to the preview canvas."],
+          ["2. Fill out data via Inspector", "Click any block, and the right Inspector panel will expand the corresponding form, helping you input key messages and data structurally without worrying about layout."],
+          ["3. Adjust design and outline", "Use the Outline tool to drag and reorder sections, and switch to the Design tool to set layout width, typography, border styles, and theme gradient."],
+          ["4. Preview and Export", "Switch to MDX preview mode anytime to see the generated markup. When finished, export the Brief as HTML, PDF, or convert it to an MDX file for SlideX Studio."]
+        ],
+        builderExampleTitle: "Example Output (MDX)",
         blocks: [
           {
             title: "Cover / Project Snapshot",

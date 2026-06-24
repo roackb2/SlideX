@@ -471,6 +471,31 @@ export const zhTwDictionary = {    metadata: {
         builderLeadBody: "使用互動式的 Briefly Builder 來定義專案範圍、目標受眾、核心訊息，並即時生成文件。",
         blocksLeadTitle: "核心與進階區塊參考",
         blocksLeadBody: "Briefly 的 MDX 使用 <BriefBlock> 作為容器，內部支援 <BriefField>、<BriefTags> 與 <BriefList> 等子元件來描述專案資訊。以下是所有的區塊結構。",
+        overviewWhyTitle: "為什麼需要 Briefly？",
+        overviewWhyBody: "在製作任何高品質的提案或簡報之前，確保核心團隊對「我們要溝通什麼」有著相同的理解是關鍵的。Briefly 提供了一個清晰的框架，讓你與利害關係人能先對焦以下要素：",
+        overviewWhyPoints: [
+          "專案目標 (Goal)：這份簡報希望達成的最終商業目的是什麼？",
+          "目標受眾 (Audience)：誰在聽？他們關心什麼？",
+          "核心訊息 (Key Messages)：哪些亮點或數據是絕對不能漏掉的？"
+        ],
+        overviewWorkflowTitle: "從 Briefly 到 Studio",
+        overviewWorkflowBody: "當你完成了一份 Brief 之後，可以一鍵轉換為 Markdown 或直接匯出為 MDX，作為 SlideX Studio 的大綱骨架。這樣你就可以確保視覺設計與內容動態完全貼合最初的商業邏輯，避免後期的來回修改。",
+        overviewWorkflowStep1: "Briefly 產出大綱",
+        overviewWorkflowStep2: "Studio 製作簡報",
+        overviewRules: [
+          "將複雜的需求結構化為清晰的目標與核心訊息",
+          "自動產生符合邏輯的故事線架構",
+          "無縫對接 SlideX Studio 進行 MDX 簡報設計",
+          "隨時更新 Brief，保持團隊對焦"
+        ],
+        builderStepsTitle: "使用步驟",
+        builderSteps: [
+          ["1. 新增 Block 區塊", "從左側工具列選擇需要的文件區塊，如：封面 (Cover)、專案目標 (Goal)、時程規劃 (Timeline) 或目標受眾 (Audience)。系統會自動將區塊加入預覽畫布中。"],
+          ["2. 透過 Inspector 填寫資料", "點擊任一區塊，右側的 Inspector 面板會展開相對應的專屬表單，幫助你結構化地輸入核心訊息與數據，不需煩惱版面問題。"],
+          ["3. 調整設計與大綱排序", "利用 Outline 工具拖曳排序章節，並切換至 Design 工具設定排版寬度、字型 (Typography)、邊框樣式以及視覺主題 (Theme Gradient)。"],
+          ["4. 預覽與匯出文件", "隨時切換 MDX 預覽模式查看生成的標記語法。完成後，你可以將 Brief 匯出為 HTML、PDF，或是轉換為 MDX 檔案供 SlideX Studio 製作簡報使用。"]
+        ],
+        builderExampleTitle: "範例輸出 (MDX)",
         blocks: [
           {
             title: "Cover / 專案封面",
