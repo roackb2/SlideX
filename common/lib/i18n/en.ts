@@ -458,8 +458,11 @@ export const enDictionary = {
       ],
       brieflyDocs: {
         overviewTitle: "Briefly Overview",
+        overviewBody: "Create structured project briefs and align your presentations.",
         builderTitle: "Brief Builder",
+        builderBody: "Use the interactive builder to define project scope and generate documents.",
         blocksTitle: "Blocks Reference",
+        blocksBody: "Reference guide for all Briefly block types and their MDX structures.",
         overviewLeadTitle: "Project Briefs aligned with your presentations.",
         overviewLeadBody: "Briefly allows you to create structured project briefs, maintain narrative consistency, and export perfectly formatted documents.",
         builderLeadTitle: "Builder Workflow",

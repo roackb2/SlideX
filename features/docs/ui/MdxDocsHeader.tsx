@@ -4,18 +4,20 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { useI18n } from "@/common/lib/I18nProvider";
-import { fadeInUp, getSectionBody, type DocsSectionLink, type MdxDocsSection, type SyntaxCopy } from "@/features/docs/ui/mdxDocsModel";
+import { fadeInUp, getSectionBody, type DocsSectionLink, type MdxDocsSection, type SyntaxCopy, type BrieflyDocsCopy } from "@/features/docs/ui/mdxDocsModel";
 
 export function MdxDocsHeader({
   currentSection,
   resourcesLabel,
   section,
-  syntax
+  syntax,
+  brieflyDocs
 }: {
   currentSection: DocsSectionLink;
   resourcesLabel: string;
   section: MdxDocsSection;
   syntax: SyntaxCopy;
+  brieflyDocs: BrieflyDocsCopy;
 }) {
   const CurrentIcon = currentSection.icon;
   const { localePath } = useI18n();
@@ -43,7 +45,7 @@ export function MdxDocsHeader({
           {section === "overview" ? syntax.overviewPageTitle : currentSection.label}
         </h1>
         <p className="mt-6 max-w-[65ch] text-[16px] leading-relaxed text-[#888]">
-          {getSectionBody(section, syntax)}
+          {getSectionBody(section, syntax, brieflyDocs)}
         </p>
         <p className="mt-6 text-[13px] text-[#555] font-mono">{syntax.updatedAt}</p>
       </motion.div>

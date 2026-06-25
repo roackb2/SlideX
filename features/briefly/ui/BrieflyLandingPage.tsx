@@ -104,47 +104,7 @@ export function BrieflyLandingPage() {
             </Link>
           </div>
 
-          {/* Hero Mockup */}
-          <motion.div 
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0, transition: { duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] } }}
-            className="mt-28 w-full max-w-4xl mx-auto"
-          >
-            <BorderBeam size="line" className="rounded-[40px]">
-              <div className="relative aspect-[21/9] w-full overflow-hidden rounded-[40px] border border-white/10 bg-[#0a0a0a] shadow-2xl">
-                <div className="flex h-12 items-center border-b border-white/10 px-6 bg-[#050505]">
-                  <div className="flex gap-2">
-                    <div className="h-3 w-3 rounded-full bg-[#ff5f56]" />
-                    <div className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
-                    <div className="h-3 w-3 rounded-full bg-[#27c93f]" />
-                  </div>
-                </div>
-                <div className="flex h-full p-8 gap-8 opacity-60">
-                  <div className="w-1/3 flex flex-col gap-5">
-                      <div className="h-5 w-1/2 rounded-full bg-white/20" />
-                      <div className="space-y-3 mt-4">
-                        <div className="h-4 w-3/4 rounded-full bg-white/10" />
-                        <div className="h-4 w-2/3 rounded-full bg-white/10" />
-                        <div className="h-4 w-5/6 rounded-full bg-white/10" />
-                      </div>
-                  </div>
-                  <div className="flex-1 rounded-[20px] border border-white/10 bg-[#0d0d0d] p-8">
-                      <div className="h-8 w-1/3 rounded-lg bg-white/20 mb-8" />
-                      <div className="space-y-5">
-                        <div className="h-3 w-full rounded-full bg-white/10" />
-                        <div className="h-3 w-full rounded-full bg-white/10" />
-                        <div className="h-3 w-4/5 rounded-full bg-white/10" />
-                      </div>
-                      <div className="mt-8 flex gap-4">
-                        <div className="h-24 w-24 rounded-xl border border-white/10 bg-white/5" />
-                        <div className="h-24 w-24 rounded-xl border border-white/10 bg-white/5" />
-                      </div>
-                  </div>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-[#0a0a0a] to-transparent pointer-events-none" />
-              </div>
-            </BorderBeam>
-          </motion.div>
+
         </motion.div>
       </section>
 

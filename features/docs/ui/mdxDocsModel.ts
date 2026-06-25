@@ -42,9 +42,9 @@ export function getSectionBody(section: MdxDocsSection, syntax: SyntaxCopy, brie
     overview: syntax.overviewBody,
     patterns: syntax.patternsBody,
     props: syntax.propsBody,
-    "briefly-overview": "Create structured project briefs and align your presentations.",
-    "briefly-builder": "Use the interactive builder to define project scope and generate documents.",
-    "briefly-blocks": "Reference guide for all Briefly block types and their MDX structures."
+    "briefly-overview": brieflyDocs?.overviewBody ?? "Create structured project briefs and align your presentations.",
+    "briefly-builder": brieflyDocs?.builderBody ?? "Use the interactive builder to define project scope and generate documents.",
+    "briefly-blocks": brieflyDocs?.blocksBody ?? "Reference guide for all Briefly block types and their MDX structures."
   };
 
   return bodies[section];

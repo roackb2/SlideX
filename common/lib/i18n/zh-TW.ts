@@ -463,8 +463,11 @@ export const zhTwDictionary = {    metadata: {
       ],
       brieflyDocs: {
         overviewTitle: "Briefly 總覽",
+        overviewBody: "建立結構化的專案需求文件，並與你的簡報保持對齊。",
         builderTitle: "Brief Builder 建構器",
+        builderBody: "使用互動式建構器定義專案範圍並產生文件。",
         blocksTitle: "Blocks 區塊語法",
+        blocksBody: "所有 Briefly 區塊類型與 MDX 結構的參考指南。",
         overviewLeadTitle: "讓專案文件與你的簡報敘事保持對齊。",
         overviewLeadBody: "Briefly 幫助你建立結構化的專案需求文件，保持敘事一致性，並輸出格式完美的文檔。",
         builderLeadTitle: "Builder 工作流程",

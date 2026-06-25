@@ -46,6 +46,7 @@ export default function MdxDocsShell({ section }: { section: MdxDocsSection }) {
               resourcesLabel={t.nav.resources}
               section={section}
               syntax={syntax}
+              brieflyDocs={brieflyDocs}
             />
 
             <article className="py-8">
