@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Briefly Local Export Test</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap');
+    
+    :root { 
+      
+      --bg-body: #f5f5f5;
+      --bg-main: #ffffff;
+      --card-bg: #fafafa;
+      --card-bg-alt: #f0f0f0;
+      --border-color: #e5e5e5;
+      --text-primary: #111111;
+      --text-secondary: #525252;
+      --text-muted: #737373;
+      --shadow-color: rgba(0,0,0,0.04);
+    
+      color-scheme: light; 
+    }
+    
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      background: var(--bg-body);
+      color: var(--text-primary);
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Double Bezel Outer Shell Container */
+    .document-wrapper {
+      max-width: calc(860px + 6rem);
+      margin: 4rem auto;
+      padding: 3rem;
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 1.5rem;
+      box-shadow: 0 20px 40px var(--shadow-color);
+    }
+
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 3rem;
+    }
+
+    main > * {
+      grid-column: 1 / -1;
+    }
+
+    .layout-half-left { grid-column: 1 / 2; }
+    .layout-half-right { grid-column: 2 / 3; }
+
+    /* Header & Cover */
+    .cover {
+      padding-bottom: 3rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 3rem;
+      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    
+    .cover-image {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+    }
+    
+    h1, h2, h3, p { margin: 0; }
+    
+    h1 {
+      font-size: clamp(32px, 5vw, 48px);
+      line-height: 1.1;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      max-width: 800px;
+      color: var(--text-primary);
+    }
+    
+    .one-liner {
+      margin-top: 1.25rem;
+      max-width: 700px;
+      color: var(--text-secondary);
+      font-size: 1.125rem;
+      line-height: 1.6;
+    }
+
+    /* Tag Pills */
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+    
+    .tag-list span {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      background: transparent; border: 1px solid var(--border-color); color: var(--text-primary);
+    }
+
+    /* Sections */
+    .brief-section {
+      border-top: 1px solid var(--border-color); padding-top: 2rem;
+      margin-bottom: 3rem;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      opacity: 0;
+      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    
+    .section-number {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      font-family: 'Fira Code', monospace;
+    }
+    
+    h2 {
+      font-size: 1.5rem;
+      line-height: 1.3;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 1.25rem;
+      color: var(--text-primary);
+    }
+    
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    p { color: var(--text-secondary); }
+    p + p,
+    p + ul,
+    p + ol,
+    p + blockquote,
+    ul + p,
+    ol + p,
+    blockquote + p { margin-top: 1rem; }
+    
+    ul,
+    ol {
+      margin: 1rem 0 0;
+      padding-left: 1.35rem;
+      color: var(--text-secondary);
+    }
+    
+    li + li { margin-top: 0.5rem; }
+    li::marker { color: var(--text-muted); }
+
+    blockquote {
+      margin: 1rem 0 0;
+      padding-left: 1rem;
+      border-left: 3px solid var(--border-color);
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+    
+    a { 
+      color: var(--text-primary); 
+      text-decoration-thickness: 1px;
+      text-underline-offset: 4px;
+      text-decoration-color: var(--border-color);
+      transition: all 0.2s;
+    }
+    
+    /* Grids & Cards */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    
+    .meta-grid div {
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+    }
+    
+    .meta-grid span {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+    
+    .meta-grid p {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .contact-box {
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      background: var(--card-bg);
+      margin-bottom: 1rem;
+    }
+
+    .timeline-list {
+      display: grid;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+    }
+
+    .timeline-item {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      border-radius: 0.85rem;
+      background: var(--card-bg);
+      padding: 1.25rem 1.25rem 1.25rem 1.5rem;
+      box-shadow: 0 4px 16px var(--shadow-color);
+    }
+
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--text-primary);
+      opacity: 0.9;
+    }
+
+    .timeline-date {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .attachment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+    }
+
+    .attachment-card {
+      display: block;
+      border: 1px solid var(--border-color);
+      border-radius: 0.85rem;
+      background: var(--card-bg);
+      padding: 1rem;
+      text-decoration: none;
+      box-shadow: 0 4px 16px var(--shadow-color);
+    }
+
+    .attachment-card strong {
+      display: block;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .attachment-card span {
+      display: block;
+      margin-top: 0.35rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .references {
+      display: grid;
+      gap: 0.75rem;
+    }
+    
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    
+    figure { margin: 0; }
+    
+    img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      background: var(--card-bg-alt);
+      object-fit: cover;
+    }
+    
+    figcaption {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+      text-align: center;
+    }
+
+    /* Team Layout */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    .team-member {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+    }
+    
+    .team-avatar {
+      width: 3.5rem;
+      height: 3.5rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg-alt);
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    
+    .team-info p.name {
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .team-info p.role {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); filter: blur(4px); }
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+    
+    .brief-section:nth-child(2) { animation-delay: 0.1s; }
+    .brief-section:nth-child(3) { animation-delay: 0.2s; }
+    .brief-section:nth-child(4) { animation-delay: 0.3s; }
+    .brief-section:nth-child(5) { animation-delay: 0.4s; }
+    
+    .placeholder { color: var(--text-muted); font-style: italic; }
+    
+    /* Media Queries */
+    @media (max-width: 768px) {
+      .document-wrapper { margin: 0; padding: 1.5rem; border-radius: 0; border: none; max-width: none; box-shadow: none; }
+      .meta-grid, .image-grid, .team-grid { grid-template-columns: 1fr; }
+    }
+    
+    @media print {
+      @page {
+        size: A4;
+        margin: 15mm 12mm;
+      }
+      :root {
+        --bg-body: #ffffff;
+        --bg-main: #ffffff;
+        --card-bg: #ffffff;
+        --card-bg-alt: #f5f5f5;
+        --border-color: #d1d5db;
+        --text-primary: #000000;
+        --text-secondary: #374151;
+        --text-muted: #6b7280;
+        --shadow-color: transparent;
+      }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      body { background: #ffffff !important; }
+      .document-wrapper { margin: 0; border: 0; padding: 0; max-width: none; box-shadow: none; border-radius: 0; }
+      .brief-section {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        animation: none !important;
+        opacity: 1 !important;
+      }
+      .cover { animation: none !important; opacity: 1 !important; }
+      .team-member, .timeline-item, .contact-box, .attachment-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      img { border-color: #d1d5db; }
+    }
+  </style>
+</head>
+<body>
+  <div class="document-wrapper">
+    <main>
+      
+      <header class="cover">
+        
+        <h1>Briefly Local Export Test</h1>
+        <p class="one-liner">Verify local HTML and PDF export from the Briefly MCP pipeline.</p>
+        <div class="meta-grid">
+          <div><span>Category</span><p>AI Tool</p></div>
+          <div><span>Stage</span><p>Planning</p></div>
+          <div><span>Status</span><p>Draft</p></div>
+          <div><span>Owner</span><p>Codex</p></div>
+          <div><span>Confidentiality</span><p>Internal</p></div>
+        </div>
+      </header>
+      <section class="brief-section"><h2>Background &amp; Problem</h2><p>Make Briefly documents portable across MCP clients.</p><p>The user needs confidence that local export works before publishing.</p></section>
+      <section class="brief-section"><h2>Goal / Success Criteria</h2><p>Produce a real HTML file and a real PDF file from the same Briefly document.</p><div class="tag-list"><span>Validate MCP export</span><span>Validate local PDF rendering</span></div><p>Both files exist and contain non-empty output.</p></section>
+      <section class="brief-section"><h2>Deliverables &amp; Scope</h2><p class="placeholder">Add details here.</p></section>
+      <section class="brief-section"><h2>Timeline</h2><p class="placeholder">Add details here.</p></section>
+      
+    </main>
+  </div>
+</body>
+</html>

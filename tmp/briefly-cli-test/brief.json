@@ -1,0 +1,93 @@
+{
+  "id": "brief_20260627130805",
+  "title": "Project Brief Builder",
+  "document_name": "Briefly CLI 中文測試",
+  "sections": [
+    {
+      "id": "cover_default_1",
+      "type": "cover",
+      "title": "封面與簡介",
+      "enabled": true,
+      "order": 1,
+      "data": {
+        "cover_image": "",
+        "project_name": "Briefly CLI 中文測試",
+        "one_liner": "用終端 CLI 建立、匯出 HTML 與 PDF。",
+        "project_category": "AI 工具",
+        "project_stage": "MVP (最小可行性產品)",
+        "status": "尋求回饋",
+        "owner": "CLI 測試",
+        "confidentiality": "internal"
+      }
+    },
+    {
+      "id": "background_mqwdl1u7_mivqu6",
+      "type": "background",
+      "title": "背景與問題陳述",
+      "enabled": true,
+      "order": 2,
+      "data": {
+        "vision_statement": "",
+        "problem_statement": "",
+        "background": "",
+        "context_note": ""
+      }
+    },
+    {
+      "id": "goal_mqwdl1u7_0soyt9",
+      "type": "goal",
+      "title": "目標與成功標準",
+      "enabled": true,
+      "order": 3,
+      "data": {
+        "primary_goal": "",
+        "secondary_goals": [],
+        "non_goals": [],
+        "success_signal": ""
+      }
+    },
+    {
+      "id": "deliverables_mqwdl1u7_p9j1i2",
+      "type": "deliverables",
+      "title": "預期產出與範圍",
+      "enabled": true,
+      "order": 4,
+      "data": {
+        "deliverables": [],
+        "out_of_scope": [],
+        "expected_outputs": "",
+        "scope_notes": ""
+      }
+    },
+    {
+      "id": "timeline_mqwdl1u7_4dtw1c",
+      "type": "timeline",
+      "title": "時程規劃",
+      "enabled": true,
+      "order": 5,
+      "data": {
+        "start_date": "",
+        "target_date": "",
+        "timeline_items": [],
+        "milestones": [],
+        "dependencies": []
+      }
+    }
+  ],
+  "layout_settings": {
+    "page_width": "standard",
+    "section_spacing": "standard",
+    "header_style": "minimal",
+    "image_layout": "grid",
+    "section_numbering": false
+  },
+  "style_settings": {
+    "typography": "sans",
+    "font_size": "medium",
+    "border_style": "light",
+    "tag_style": "outline",
+    "page_background": "white"
+  },
+  "created_at": "2026-06-27T13:08:05.647Z",
+  "updated_at": "2026-06-27T13:08:05.648Z"
+}

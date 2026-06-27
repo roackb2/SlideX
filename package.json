@@ -14,7 +14,11 @@
     "mcp": "tsx mcp/server.ts",
     "mcp:build": "node scripts/build-mcp-server.mjs",
     "mcp:pack": "npm pack ./packages/slidex-mcp-server",
-    "mcp:publish": "npm publish ./packages/slidex-mcp-server --access public"
+    "mcp:publish": "npm publish ./packages/slidex-mcp-server --access public",
+    "briefly:mcp": "tsx mcp/brieflyServer.ts",
+    "briefly:mcp:build": "node scripts/build-briefly-mcp-server.mjs",
+    "briefly:mcp:pack": "npm pack ./packages/briefly-mcp-server",
+    "briefly:mcp:publish": "npm publish ./packages/briefly-mcp-server --access public"
   },
   "dependencies": {
     "@codemirror/lang-html": "^6.4.11",
@@ -30,6 +34,7 @@
     "@tiptap/react": "^3.27.1",
     "@tiptap/starter-kit": "^3.27.1",
     "@uiw/react-codemirror": "^4.25.10",
+    "@z7589xxz758/briefly-mcp-server": "^0.1.0",
     "border-beam": "^1.2.0",
     "framer-motion": "11.18.2",
     "geist": "^1.7.2",

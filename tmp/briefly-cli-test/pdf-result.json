@@ -1,0 +1,39 @@
+{
+  "bytes": 154729,
+  "chromePath": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "filePath": "/Users/zz41354899/Desktop/Animark/tmp/briefly-cli-test/brief.pdf",
+  "filename": "brief.pdf",
+  "mimeType": "application/pdf",
+  "summary": {
+    "displayTitle": "Briefly CLI 中文測試",
+    "enabledSectionCount": 5,
+    "sectionCount": 5,
+    "sections": [
+      {
+        "order": 1,
+        "title": "封面與簡介",
+        "type": "cover"
+      },
+      {
+        "order": 2,
+        "title": "背景與問題陳述",
+        "type": "background"
+      },
+      {
+        "order": 3,
+        "title": "目標與成功標準",
+        "type": "goal"
+      },
+      {
+        "order": 4,
+        "title": "預期產出與範圍",
+        "type": "deliverables"
+      },
+      {
+        "order": 5,
+        "title": "時程規劃",
+        "type": "timeline"
+      }
+    ]
+  }
+}

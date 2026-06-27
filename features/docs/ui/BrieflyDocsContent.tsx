@@ -1,9 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle2, FileText, Settings, Play } from "lucide-react";
-import { useI18n } from "@/common/lib/I18nProvider";
-import { easeSmooth, fadeInUp, type MdxDocsSection, type SyntaxCopy, type BrieflyDocsCopy } from "@/features/docs/ui/mdxDocsModel";
+import { CheckCircle2, ExternalLink, TerminalSquare } from "lucide-react";
+import { fadeInUp, type MdxDocsSection, type SyntaxCopy, type BrieflyDocsCopy } from "@/features/docs/ui/mdxDocsModel";
 
 export function BrieflyDocsContent({
   section,
@@ -25,7 +24,7 @@ export function BrieflyDocsContent({
   return <OverviewContent brieflyDocs={brieflyDocs} syntax={syntax} />;
 }
 
-function OverviewContent({ brieflyDocs, syntax }: { brieflyDocs: BrieflyDocsCopy; syntax: SyntaxCopy }) {
+function OverviewContent({ brieflyDocs }: { brieflyDocs: BrieflyDocsCopy; syntax: SyntaxCopy }) {
 
 
   return (
@@ -57,6 +56,8 @@ function OverviewContent({ brieflyDocs, syntax }: { brieflyDocs: BrieflyDocsCopy
           </div>
         </div>
       </motion.div>
+
+      <BrieflyMcpInstallPanel brieflyDocs={brieflyDocs} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-[#222] bg-[#050505] p-8 shadow-sm">
@@ -112,7 +113,42 @@ function OverviewContent({ brieflyDocs, syntax }: { brieflyDocs: BrieflyDocsCopy
   );
 }
 
-function BuilderContent({ brieflyDocs, syntax }: { brieflyDocs: BrieflyDocsCopy; syntax: SyntaxCopy }) {
+function BrieflyMcpInstallPanel({ brieflyDocs }: { brieflyDocs: BrieflyDocsCopy }) {
+  return (
+    <div className="rounded-2xl border border-[#222] bg-[#050505] p-8 shadow-sm md:p-10">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="max-w-2xl">
+          <p className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-widest text-blue-500">
+            <TerminalSquare className="h-4 w-4" />
+            {brieflyDocs.mcpInstallEyebrow}
+          </p>
+          <h2 className="mt-3 text-[22px] font-medium tracking-tight text-[#ededed] md:text-[28px]">
+            {brieflyDocs.mcpInstallTitle}
+          </h2>
+          <p className="mt-4 text-[14px] leading-relaxed text-[#888]">
+            {brieflyDocs.mcpInstallBody}
+          </p>
+        </div>
+        <div className="w-full lg:max-w-[440px]">
+          <pre className="overflow-x-auto rounded-xl border border-[#222] bg-[#0a0a0a] p-4 text-[13px] leading-relaxed text-[#ededed]">
+            <code>{brieflyDocs.mcpInstallCommand}</code>
+          </pre>
+          <a
+            className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl border border-[#222] bg-[#0a0a0a] px-4 text-[13px] font-medium text-[#ededed] transition-colors hover:border-[#444]"
+            href={brieflyDocs.mcpPackageUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {brieflyDocs.mcpPackageLabel}
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BuilderContent({ brieflyDocs }: { brieflyDocs: BrieflyDocsCopy; syntax: SyntaxCopy }) {
 
 
   return (
@@ -219,7 +255,7 @@ function BlocksContent({ brieflyDocs, syntax }: { brieflyDocs: BrieflyDocsCopy; 
             <div className="border-b border-[#222] bg-[#050505] p-8">
               <h3 className="text-[20px] font-medium tracking-tight text-[#ededed] flex items-center gap-3">
                 <span className="font-mono text-[13px] text-blue-500 bg-[#0a0a0a] border border-[#222] px-2.5 py-1 rounded-md">
-                  type="{block.type}"
+                  {`type="${block.type}"`}
                 </span>
                 {block.title}
               </h3>

@@ -1,0 +1,30 @@
+{
+  "name": "@z7589xxz758/briefly-mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server for Briefly Builder documents and review rubrics.",
+  "type": "module",
+  "bin": {
+    "briefly-mcp-server": "dist/server.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/build-briefly-mcp-server.mjs",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "briefly",
+    "builder",
+    "mcp",
+    "model-context-protocol",
+    "review"
+  ],
+  "author": "zz41354899",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

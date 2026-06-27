@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import {
   Braces,
   FileText,
@@ -11,7 +12,9 @@ import {
   Eye,
   FileJson,
   TerminalSquare,
-  Workflow
+  Workflow,
+  Copy,
+  Check
 } from "lucide-react";
 import { useI18n } from "@/common/lib/I18nProvider";
 import { getBrieflyCopy } from "@/features/briefly/ui/brieflyCopy";
@@ -56,6 +59,13 @@ const features = [
 export function BrieflyLandingPage() {
   const { locale } = useI18n();
   const copy = getBrieflyCopy(locale).landing;
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(copy.mcpInstallCommand);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <main className="min-h-[100dvh] bg-[#070707] text-white selection:bg-blue-500/30 selection:text-white">
@@ -126,6 +136,72 @@ export function BrieflyLandingPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative border-b border-white/5 bg-[#070707] px-4 py-24 overflow-hidden">
+        {/* Decorative Background Glow for the Terminal */}
+        <div className="absolute left-1/2 top-1/2 -z-10 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 bg-blue-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+        
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-16 lg:flex-row lg:gap-20">
+          <div className="flex-1 space-y-6 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-white/50 backdrop-blur-md">
+              <TerminalSquare className="h-3.5 w-3.5 text-blue-400" />
+              {copy.mcpInstallEyebrow}
+            </div>
+            <h2 className="font-display text-4xl font-medium tracking-tight text-white md:text-5xl">
+              {copy.mcpInstallTitle}
+            </h2>
+            <p className="text-lg text-white/50 leading-relaxed max-w-xl mx-auto lg:mx-0">
+              {copy.mcpInstallBody}
+            </p>
+            <div className="pt-4 flex justify-center lg:justify-start">
+              <Link
+                href={copy.mcpPackageUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white/10 px-6 text-[14px] font-medium text-white transition-all hover:bg-white hover:text-black"
+              >
+                {copy.mcpPackageLabel}
+                <Workflow className="h-4 w-4 opacity-50 transition-transform group-hover:rotate-12" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="w-full max-w-xl lg:w-[540px]">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="relative rounded-2xl border border-white/10 bg-[#0A0A0A] shadow-[0_32px_80px_rgba(0,0,0,0.4)] overflow-hidden group"
+            >
+              {/* macOS Window Controls */}
+              <div className="flex items-center gap-2 border-b border-white/5 bg-[#111] px-4 py-3">
+                <div className="h-3 w-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
+                <div className="h-3 w-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
+                <div className="h-3 w-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
+                <div className="ml-2 text-[11px] font-medium text-white/30 font-mono">bash</div>
+              </div>
+
+              {/* Terminal Content */}
+              <BorderBeam size="md" colorVariant="ocean" duration={12} className="p-6 relative">
+                <div className="flex items-center justify-between gap-4">
+                  <code className="block flex-1 overflow-x-auto whitespace-nowrap font-mono text-[14px] leading-relaxed text-blue-300">
+                    <span className="text-pink-500 mr-2">❯</span>
+                    {copy.mcpInstallCommand}
+                  </code>
+                  <button
+                    onClick={handleCopy}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-white/50 transition-all hover:bg-white/10 hover:text-white active:scale-95"
+                    title="Copy command"
+                  >
+                    {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+                  </button>
+                </div>
+              </BorderBeam>
+            </motion.div>
           </div>
         </div>
       </section>

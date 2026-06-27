@@ -1,0 +1,30 @@
+Briefly CLI 0.1.0
+
+Usage:
+  briefly review <file|url|-> --profile <id> [--out review-prompt.md]
+  briefly structure <file|url|-> [--out structure.json]
+  briefly create --project-name <name> [--out brief.json] [--mdx brief.mdx]
+  briefly export <brief.json|brief.mdx|-> --format <mdx|html|json> [--out file]
+  briefly export-pdf <brief.json|brief.mdx|-> --out brief.pdf
+  briefly rubrics [rubric-id] [--out file]
+
+Review profiles:
+  course-planning, brand-guidelines, document-clarity
+
+Common options:
+  --locale en|zh-TW
+  --content-type auto|html|markdown|text
+  --audience <text>
+  --objective <text>
+  --notes <text>
+  --json
+
+Examples:
+  briefly review ./plan.md --profile course-planning --out review-prompt.md
+  briefly structure https://example.com --out structure.json
+  briefly create --project-name "AI course" --one-liner "14-day workflow sprint" --out brief.json --mdx brief.mdx
+  briefly export brief.json --format html --locale zh-TW --out brief.html
+  briefly export-pdf brief.json --locale zh-TW --out brief.pdf
+
+Note:
+  "briefly review" prepares a rubric-backed review prompt. It does not call an external LLM.
