@@ -16,9 +16,9 @@ Use this skill together with `slidex-architecture` whenever code changes are req
 When a request is vague, infer safely from local context and ask only for details that materially change data shape, storage, Tauri behavior, or UX. A good internal brief contains:
 
 - Goal: what user workflow improves.
-- Scope: Studio, Inspector, PreviewCanvas, Export, Docs, Marketing, Tauri, or MotionDoc core.
+- Scope: Pitch, Inspector, PreviewCanvas, Export, Docs, Marketing, Tauri, or MotionDoc core.
 - Data impact: whether MotionDoc MDX, parser, serializer, presets, export, localStorage, or filesystem changes.
-- Layer owner: `app`, `common`, `core/motion-doc`, or `features/studio`.
+- Layer owner: `app`, `common`, `core/motion-doc`, or `features/pitch`.
 - Validation: `npm run lint`; also `npm run build` for moved files, public APIs, React/Tauri boundaries, or TypeScript-heavy changes.
 
 ## User Prompt Pattern
@@ -32,7 +32,7 @@ Goal:
 <What user workflow should improve?>
 
 Scope:
-- Affected area: Studio / Inspector / PreviewCanvas / Export / Docs / Tauri
+- Affected area: Pitch / Inspector / PreviewCanvas / Export / Docs / Tauri
 - Does this need localStorage / file system / Tauri?
 - Does this change the MotionDoc MDX format, parser, serializer, or export?
 
@@ -49,8 +49,8 @@ Validation:
 
 ## Implementation Rules
 
-- Do not put new behavior into `MotionDocApp.tsx` unless it is orchestration. Prefer hooks in `features/studio/ui/hooks`, pure commands in `features/studio/application`, and adapters in `features/studio/infrastructure`.
-- Do not put large implementations into `InspectorControls.tsx`. Keep it as a facade. Put generic controls in `features/studio/ui/inspector/controls`, color UI in `features/studio/ui/inspector/color`, storage in `features/studio/infrastructure`, and pure color rules in `features/studio/application`.
+- Do not put new behavior into `MotionDocApp.tsx` unless it is orchestration. Prefer hooks in `features/pitch/ui/hooks`, pure commands in `features/pitch/application`, and adapters in `features/pitch/infrastructure`.
+- Do not put large implementations into `InspectorControls.tsx`. Keep it as a facade. Put generic controls in `features/pitch/ui/inspector/controls`, color UI in `features/pitch/ui/inspector/color`, storage in `features/pitch/infrastructure`, and pure color rules in `features/pitch/application`.
 - If behavior knows MotionDoc syntax, parsing, serialization, frames, presets, or export, place it under `core/motion-doc` instead of UI.
 - If behavior is cross-feature and has no SlideX/MotionDoc knowledge, place it under `common/lib`, `common/ui`, or `common/util`.
 - Keep public route files thin. `app/*` should compose features and shared UI, not own business logic.

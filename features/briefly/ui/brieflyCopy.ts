@@ -705,7 +705,7 @@ const optionLabels: Record<Locale, Record<string, string>> = {
     "早期客戶": "Early Customer",
     "顧問或導師": "Advisor / Mentor",
     "共同創辦人": "Co-founder",
-    "工作室或團隊": "Studio / Team",
+    "工作室或團隊": "Pitch / Team",
     "客戶或商業夥伴": "Client / Business Partner",
     "前端開發": "Frontend Development",
     "後端開發": "Backend Development",

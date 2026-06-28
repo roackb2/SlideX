@@ -97,7 +97,7 @@ export const commercialTemplates: MotionTemplate[] = [
   <Text enter="fadeUp" fontSize={54} fontWeight={700} h={15} w={84} x={8} y={10}>Risks and controls</Text>
   <Icon icon="Lock" size={42} strokeWidth={1.5} x={8} y={32} w={5} h={8} />
   <Text fontSize={24} fontWeight={700} x={8} y={52} w={40} h={8}>Confidentiality</Text>
-  <Text fontSize={18} lineHeight={1.5} x={8} y={68} w={40} h={18}>Sensitive customer and strategy work can stay in the installed local Studio.</Text>
+  <Text fontSize={18} lineHeight={1.5} x={8} y={68} w={40} h={18}>Sensitive customer and strategy work can stay in the installed local Pitch.</Text>
 
   <Icon icon="Settings" size={42} strokeWidth={1.5} x={50} y={32} w={5} h={8} />
   <Text fontSize={24} fontWeight={700} x={50} y={52} w={40} h={8}>Governance</Text>
@@ -221,7 +221,7 @@ export const commercialTemplates: MotionTemplate[] = [
   <Text enter="fadeUp" fontSize={54} fontWeight={700} h={15} w={84} x={8} y={10}>Implementation guardrails</Text>
   <Icon icon="Lock" size={42} strokeWidth={1.5} x={8} y={32} w={5} h={8} />
   <Text fontSize={24} fontWeight={700} x={8} y={52} w={40} h={8}>Private work stays local</Text>
-  <Text fontSize={18} lineHeight={1.5} x={8} y={68} w={40} h={18}>Installed Studio unlocks local-only editing for confidential customer and strategy work.</Text>
+  <Text fontSize={18} lineHeight={1.5} x={8} y={68} w={40} h={18}>Installed Pitch unlocks local-only editing for confidential customer and strategy work.</Text>
 
   <Icon icon="FileText" size={42} strokeWidth={1.5} x={50} y={32} w={5} h={8} />
   <Text fontSize={24} fontWeight={700} x={50} y={52} w={40} h={8}>Outputs stay portable</Text>

@@ -1,11 +1,11 @@
 # SlideX
 
-SlideX 是一個以 MDX Slide 為核心的動態簡報系統。它把簡報內容、版面、動畫節奏、預覽與桌面專案流程放在同一個可維護的程式碼結構裡。全新升級的 Studio 介面採用 Double-Bezel 玻璃擬真（Glassmorphism）與高對比視覺美學，將開發工具的穩健與高階設計的質感完美融合。
+SlideX 是一個以 MDX Slide 為核心的動態簡報系統。它把簡報內容、版面、動畫節奏、預覽與桌面專案流程放在同一個可維護的程式碼結構裡。全新升級的 Pitch 介面採用 Double-Bezel 玻璃擬真（Glassmorphism）與高對比視覺美學，將開發工具的穩健與高階設計的質感完美融合。
 
 目前版本包含：
 
 - **Public Website**：採用高階美學設計的產品首頁、文件、範本頁、下載頁
-- **Web Studio**：包含 MDX 編輯覆蓋層 (`WorkspaceCodeEditorOverlay`)、圖層側邊欄 (`WorkspaceLayerSidebar`)、時間軸與屬性面板 (`WorkspaceInspectorPanel`)、頂部工作列 (`StudioHeader`) 以及即時預覽畫布 (`PreviewCanvas`)。
+- **Web Pitch**：包含 MDX 編輯覆蓋層 (`WorkspaceCodeEditorOverlay`)、圖層側邊欄 (`WorkspaceLayerSidebar`)、時間軸與屬性面板 (`WorkspaceInspectorPanel`)、頂部工作列 (`PitchHeader`) 以及即時預覽畫布 (`PreviewCanvas`)。
 - **MotionDoc Core**：MDX Parser、serializer、自由版面座標系統、預設範本
 - **Architecture**：以 `app/`、`common/`、`core/`、`features/` 為基礎的 Domain-Driven Layering
 - **Boundaries**：使用 `eslint-plugin-boundaries` 用 lint 嚴格固定 import 方向
@@ -24,7 +24,7 @@ npm run dev
 - Website: `http://localhost:3000`
 - Resources: `http://localhost:3000/resources`
 - Templates: `http://localhost:3000/templates`
-- Studio: `http://localhost:3000/studio`
+- Pitch: `http://localhost:3000/pitch`
 
 Production build：
 
@@ -83,7 +83,7 @@ features/
     ui/
     index.ts
 
-  studio/
+  pitch/
     application/
     infrastructure/
     ui/
@@ -93,7 +93,7 @@ features/
 `app/*` 應優先 import feature public API，例如：
 
 ```ts
-import { MotionDocApp } from "@/features/studio";
+import { MotionDocApp } from "@/features/pitch";
 import MdxDocsShell from "@/features/docs";
 import { HomePage } from "@/features/marketing";
 ```
@@ -121,12 +121,12 @@ npm run lint
 npm run build
 ```
 
-## Studio Structure
+## Pitch Structure
 
-Studio 是目前最重要的 feature，目前採用全新的高階視覺工作區架構：
+Pitch 是目前最重要的 feature，目前採用全新的高階視覺工作區架構：
 
 ```text
-features/studio/
+features/pitch/
 ├── application/
 │   ├── motionDocCommands.ts
 │   ├── previewProps.ts
@@ -136,8 +136,8 @@ features/studio/
 │   └── recentProjects.ts
 └── ui/
     ├── MotionDocApp.tsx
-    ├── StudioWorkspace.tsx
-    ├── StudioHeader.tsx
+    ├── PitchWorkspace.tsx
+    ├── PitchHeader.tsx
     ├── PreviewCanvas.tsx
     └── workspace/
         ├── WorkspaceCodeEditorOverlay.tsx
@@ -149,14 +149,14 @@ features/studio/
 設計方向：
 
 - `MotionDocApp.tsx`：整體狀態協調。
-- `StudioWorkspace.tsx`：版面組合，整合 Toolbar、Sidebar、Panel 與 Editor Overlay。
+- `PitchWorkspace.tsx`：版面組合，整合 Toolbar、Sidebar、Panel 與 Editor Overlay。
 - `WorkspaceCodeEditorOverlay.tsx`：取代原本的單一編輯器，成為漂浮式的高階 MDX 編輯視窗。
 - Color/Theme storage 放 `infrastructure`。
 - Frame、selection、palette、preview prop normalization 放 `application`。
 
 ## MotionDoc Components
 
-目前對外文件與 MCP 支援的主要 Slide/block（已與最新版 Studio 對齊）：
+目前對外文件與 MCP 支援的主要 Slide/block（已與最新版 Pitch 對齊）：
 
 - `Slide`
 - `Text`
@@ -236,7 +236,7 @@ npm run lint         # ESLint + boundaries
 
 ## Current Direction
 
-SlideX 的方向是先把 MDX slide deck 與全新改版的 Studio editor 穩定下來。未來可延伸：
+SlideX 的方向是先把 MDX slide deck 與全新改版的 Pitch editor 穩定下來。未來可延伸：
 
 - Local asset library
 - Richer export outputs

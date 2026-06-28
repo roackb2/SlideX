@@ -62,7 +62,7 @@ export function BrieflyBuilder() {
   return (
     <main
       lang={locale}
-      className={`briefly-app briefly-studio min-h-[100dvh] selection:bg-blue-500/30 selection:text-blue-100 ${themeClass}`}
+      className={`briefly-app briefly-pitch min-h-[100dvh] selection:bg-blue-500/30 selection:text-blue-100 ${themeClass}`}
     >
       <style>{brieflyBuilderCss}</style>
       <BuilderTopBar

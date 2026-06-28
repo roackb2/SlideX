@@ -423,7 +423,7 @@ Pick a coherent visual direction and execute it clearly.
 Choose 1:
 1. Pristine Light Mode
 2. Deep Dark Mode
-3. Bold Studio Solid
+3. Bold Pitch Solid
 4. Quiet Premium Neutral
 
 ### Background Character

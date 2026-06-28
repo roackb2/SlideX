@@ -78,7 +78,7 @@ npm install
 - `slidex_update_slide_props`: 更新單一 slide props。
 - `slidex_replace_slide`: 用完整 `<Slide>...</Slide>` 取代指定 slide。
 - `slidex_add_block`: 在指定 slide 新增目前支援的區塊：`Text`、`Image`、`Video`、`ChartBar`、`ChartLine`、`ChartArea`、`ChartPie`、`ChartDonut`、`Icon`。
-- `slidex_list_slide_layouts`: 列出內建 layout presets，對應 Studio 的 Select Layout 面板。
+- `slidex_list_slide_layouts`: 列出內建 layout presets，對應 Pitch 的 Select Layout 面板。
 - `slidex_get_slide_layout`: 取得指定 layout 的 MDX block source。
 - `slidex_create_slide_from_layout`: 用 layout 建立完整 `<Slide>...</Slide>` source。
 - `slidex_add_slide_from_layout`: 將 layout 產生的新 slide 加到現有 MotionDoc。
@@ -100,7 +100,7 @@ npm install
 
 ## Built-in Slide Layouts
 
-安裝 `@z7589xxz758/slidex-mcp-server` 後，MCP client 會直接擁有以下 16 個 Studio layout：
+安裝 `@z7589xxz758/slidex-mcp-server` 後，MCP client 會直接擁有以下 16 個 Pitch layout：
 
 - `title`: Title, Body & Author
 - `title-photo`: Title & Photo

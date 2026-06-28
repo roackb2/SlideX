@@ -4,7 +4,7 @@ export const zhTwDictionary = {    metadata: {
     },
     common: {
       productName: "SlideX",
-      openStudio: "開啟 Studio",
+      openPitch: "開啟 Pitch",
       getStarted: "開始使用",
       viewPresets: "查看範本"
     },
@@ -24,7 +24,7 @@ export const zhTwDictionary = {    metadata: {
       homeLabel: "SlideX 首頁",
       description: "把原始碼、時間軸與匯出流程放在同一處的動態簡報工具。",
       product: "產品",
-      studio: "Studio",
+      pitch: "Pitch",
       getStarted: "開始使用",
       docs: "文件",
       rights: "© 2026 SlideX. 保留所有權利。",
@@ -100,8 +100,8 @@ export const zhTwDictionary = {    metadata: {
       }
     },
     home: {
-      studio: {
-        title: "認識 SlideX Studio。",
+      pitch: {
+        title: "認識 SlideX Pitch。",
         headline: "在同一個專注編輯器裡撰寫、預覽並打包動態簡報，不必重建故事。"
       },
       hero: {
@@ -122,8 +122,8 @@ export const zhTwDictionary = {    metadata: {
           target: "PM、Founder、顧問、專案負責人",
           output: "Brief / MDX / HTML / PDF"
         },
-        studio: {
-          title: "Studio",
+        pitch: {
+          title: "Pitch",
           core: "把專案講得有說服力",
           target: "PM、BD、業務、創辦人、顧問",
           output: "Deck / Proposal / Pitch"
@@ -167,8 +167,8 @@ export const zhTwDictionary = {    metadata: {
       finalCta: {
         title: "準備好對齊你的團隊了嗎？"
       },
-      heroStudio: {
-        title: "Studio",
+      heroPitch: {
+        title: "Pitch",
         project: "專案 Alpha",
         export: "匯出",
         newSlide: "新增 Slide",
@@ -241,7 +241,7 @@ export const zhTwDictionary = {    metadata: {
           },
           {
             title: "打包輸出",
-            body: "讓原始碼、預覽與匯出序列都對齊同一個 Studio。"
+            body: "讓原始碼、預覽與匯出序列都對齊同一個 Pitch。"
           }
         ]
       },
@@ -251,14 +251,14 @@ export const zhTwDictionary = {    metadata: {
       },
       cta: {
         title: "準備好製作第一份簡報了嗎？",
-        body: "開啟 Studio，體驗全新的動態簡報標準。",
+        body: "開啟 Pitch，體驗全新的動態簡報標準。",
         button: "立即開始",
-        buttonStudio: "立即開始"
+        buttonPitch: "立即開始"
       }
     },
-    studioPage: {
+    pitchPage: {
       hero: {
-        eyebrow: "SlideX Studio",
+        eyebrow: "SlideX Pitch",
         title: {
           regular: "用原始碼製作",
           highlight: "動態簡報。"
@@ -288,7 +288,7 @@ export const zhTwDictionary = {    metadata: {
       ],
       workflow: {
         title: "從草稿到播放的一條流程。",
-        body: "Studio 讓書寫內容、視覺結構與動畫時間軸一起前進。",
+        body: "Pitch 讓書寫內容、視覺結構與動畫時間軸一起前進。",
         steps: [
           {
             label: "01",
@@ -310,7 +310,7 @@ export const zhTwDictionary = {    metadata: {
       useCases: {
         eyebrow: "使用情境",
         title: "為會持續變動的簡報而生。",
-        body: "當簡報需要質感、動效，以及團隊能反覆修改的原始格式時，就用 Studio。",
+        body: "當簡報需要質感、動效，以及團隊能反覆修改的原始格式時，就用 Pitch。",
         cases: [
           {
             title: "業務檢討",
@@ -338,7 +338,7 @@ export const zhTwDictionary = {    metadata: {
         eyebrow: "簡報範本",
         title: "內建動效的實用簡報。",
         body: "從完整的 MDX Slide 簡報開始，適合檢討、上市、董事會更新與客戶故事。",
-        primary: "開啟 Studio",
+        primary: "開啟 Pitch",
         secondary: "查看範本"
       },
       featured: {
@@ -371,8 +371,8 @@ export const zhTwDictionary = {    metadata: {
       },
       cta: {
         title: "今天就從範本開始。",
-        body: "把簡報載入 Studio、編輯 Slide，並保留整套動效系統。",
-        button: "開啟 Studio"
+        body: "把簡報載入 Pitch、編輯 Slide，並保留整套動效系統。",
+        button: "開啟 Pitch"
       }
     },
 
@@ -380,9 +380,9 @@ export const zhTwDictionary = {    metadata: {
       docsHub: {
         eyebrow: "文件中心",
         title: "依照眼前的工作選擇指南。",
-        body: "閱讀 MDX 與 Studio 文件來製作動態簡報。",
-        studioTitle: "SlideX Studio 文件",
-        studioBody: "學習 MDX Slide 模型、元件語法、定位 props、Studio 工作流程與 MCP 設定。"
+        body: "閱讀 MDX 與 Pitch 文件來製作動態簡報。",
+        pitchTitle: "SlideX Pitch 文件",
+        pitchBody: "學習 MDX Slide 模型、元件語法、定位 props、Pitch 工作流程與 MCP 設定。"
       },
       heroVisual: {
         label: "資源",
@@ -397,9 +397,9 @@ export const zhTwDictionary = {    metadata: {
       hero: {
         eyebrow: "文件",
         title: "理解 Slide 系統。",
-        body: "集中整理 MDX Slide、元件語法、Studio 流程、鍵盤操作與匯出方向。",
+        body: "集中整理 MDX Slide、元件語法、Pitch 流程、鍵盤操作與匯出方向。",
         primary: "查看 MDX 語法",
-        secondary: "開啟 Studio"
+        secondary: "開啟 Pitch"
       },
       resourceItems: [
         {
@@ -422,10 +422,10 @@ export const zhTwDictionary = {    metadata: {
         },
 
         {
-          title: "Studio 流程",
+          title: "Pitch 流程",
           description: "用投影片列表、MDX 編輯器、預覽與時間軸設計動態簡報。",
-          href: "/studio",
-          label: "Studio"
+          href: "/pitch",
+          label: "Pitch"
         }
       ],
       docsIntro: {
@@ -444,7 +444,7 @@ export const zhTwDictionary = {    metadata: {
         },
         {
           title: "設計循環",
-          description: "Studio 讓原始碼、投影片導覽、預覽與時間軸輸出保持同步。",
+          description: "Pitch 讓原始碼、投影片導覽、預覽與時間軸輸出保持同步。",
           points: [
             "載入簡報範本或插入單一 Slide 區塊。",
             "編輯 MDX 原始碼來控制進階組合。",
@@ -487,14 +487,14 @@ export const zhTwDictionary = {    metadata: {
           "目標受眾 (Audience)：誰在聽？他們關心什麼？",
           "核心訊息 (Key Messages)：哪些亮點或數據是絕對不能漏掉的？"
         ],
-        overviewWorkflowTitle: "從 Briefly 到 Studio",
-        overviewWorkflowBody: "當你完成了一份 Brief 之後，可以一鍵轉換為 Markdown 或直接匯出為 MDX，作為 SlideX Studio 的大綱骨架。這樣你就可以確保視覺設計與內容動態完全貼合最初的商業邏輯，避免後期的來回修改。",
+        overviewWorkflowTitle: "從 Briefly 到 Pitch",
+        overviewWorkflowBody: "當你完成了一份 Brief 之後，可以一鍵轉換為 Markdown 或直接匯出為 MDX，作為 SlideX Pitch 的大綱骨架。這樣你就可以確保視覺設計與內容動態完全貼合最初的商業邏輯，避免後期的來回修改。",
         overviewWorkflowStep1: "Briefly 產出大綱",
-        overviewWorkflowStep2: "Studio 製作簡報",
+        overviewWorkflowStep2: "Pitch 製作簡報",
         overviewRules: [
           "將複雜的需求結構化為清晰的目標與核心訊息",
           "自動產生符合邏輯的故事線架構",
-          "無縫對接 SlideX Studio 進行 MDX 簡報設計",
+          "無縫對接 SlideX Pitch 進行 MDX 簡報設計",
           "隨時更新 Brief，保持團隊對焦"
         ],
         builderStepsTitle: "使用步驟",
@@ -502,7 +502,7 @@ export const zhTwDictionary = {    metadata: {
           ["1. 新增 Block 區塊", "從左側工具列選擇需要的文件區塊，如：封面 (Cover)、專案目標 (Goal)、時程規劃 (Timeline) 或目標受眾 (Audience)。系統會自動將區塊加入預覽畫布中。"],
           ["2. 透過 Inspector 填寫資料", "點擊任一區塊，右側的 Inspector 面板會展開相對應的專屬表單，幫助你結構化地輸入核心訊息與數據，不需煩惱版面問題。"],
           ["3. 調整設計與大綱排序", "利用 Outline 工具拖曳排序章節，並切換至 Design 工具設定排版寬度、字型 (Typography)、邊框樣式以及視覺主題 (Theme Gradient)。"],
-          ["4. 預覽與匯出文件", "隨時切換 MDX 預覽模式查看生成的標記語法。完成後，你可以將 Brief 匯出為 HTML、PDF，或是轉換為 MDX 檔案供 SlideX Studio 製作簡報使用。"]
+          ["4. 預覽與匯出文件", "隨時切換 MDX 預覽模式查看生成的標記語法。完成後，你可以將 Brief 匯出為 HTML、PDF，或是轉換為 MDX 檔案供 SlideX Pitch 製作簡報使用。"]
         ],
         builderExampleTitle: "範例輸出 (MDX)",
         blocks: [
@@ -643,7 +643,7 @@ export const zhTwDictionary = {    metadata: {
         backLabel: "返回文件",
         sideNavTitle: "文件導覽",
         docsHomeLabel: "文件首頁",
-        studioLinkLabel: "Studio",
+        pitchLinkLabel: "Pitch",
         onThisPageTitle: "本頁內容",
         updatedAt: "最後更新於 2026年6月11日",
         helpfulTitle: "這個頁面有幫助嗎？",
@@ -675,7 +675,7 @@ export const zhTwDictionary = {    metadata: {
         overviewCards: [
           {
             title: "先看完整範例",
-            body: "從一份可直接貼進 Studio 的 Slide 開始，了解文字、Icon、圖表與圖片如何組合。"
+            body: "從一份可直接貼進 Pitch 的 Slide 開始，了解文字、Icon、圖表與圖片如何組合。"
           },
           {
             title: "拆解常用寫法",
@@ -710,7 +710,7 @@ export const zhTwDictionary = {    metadata: {
           "x、y、w、h 使用百分比座標，適合精準控制簡報版面。"
         ],
         patternsTitle: "常用寫法",
-        patternsBody: "以下範例可以直接貼進 Studio，再依照內容、顏色與版面需求微調 props。",
+        patternsBody: "以下範例可以直接貼進 Pitch，再依照內容、顏色與版面需求微調 props。",
         fullExampleTitle: "完整範例",
         exampleBody: "這是一份完整的 MDX Slide，可以作為新簡報的起點。它包含標題、輔助文字、文字型指標與圖表，並示範常見的時間與版面 props。",
         fullExample: `# 季度業務檢討
@@ -767,7 +767,7 @@ export const zhTwDictionary = {    metadata: {
           }
         ],
         propsTitle: "常用 props",
-        propsBody: "這些 props 可直接寫在 MDX 標籤上，Studio 會解析成預覽與時間軸資料。",
+        propsBody: "這些 props 可直接寫在 MDX 標籤上，Pitch 會解析成預覽與時間軸資料。",
         propsRows: [
           ["Slide", "duration", "number", "投影片長度，單位為秒。"],
           ["Slide", "theme", "dark | light | paper | blue", "設定預設背景與文字對比。"],
@@ -861,7 +861,7 @@ npm install
           ["slidex_create_deck", "用結構化大綱建立可編輯的 MotionDoc MDX。"],
           ["slidex_create_from_template", "複製模板，並可替換標題與文字。"],
           ["slidex_add_block", "在指定 slide 新增文字、圖片、影片、圖表或 Icon。"],
-          ["slidex_list_slide_layouts", "列出 16 個內建 Studio slide layouts。"],
+          ["slidex_list_slide_layouts", "列出 16 個內建 Pitch slide layouts。"],
           ["slidex_get_slide_layout", "取得指定 layout 的 MDX block source。"],
           ["slidex_create_slide_from_layout", "用 layout 建立完整 <Slide>...</Slide> 區塊。"],
           ["slidex_add_slide_from_layout", "新增或插入由 layout 產生的 slide。"],
@@ -878,13 +878,13 @@ npm install
           "GitHub 模式最穩的是 clone 後用 cwd 執行 npm --silent run mcp；直接 npx github:<owner>/<repo> 需要 repo 已正確設定 bin。",
           "如果要讓使用者全域安裝，最好把 MCP server 編譯成 JavaScript，避免依賴本機 TypeScript runtime。"
         ],
-        ctaTitle: "用 Studio 試一份 MDX。",
-        ctaBody: "把範例貼進 Studio，調整 Slide 時間與區塊位置，就能快速看到動效預覽。",
-        ctaButton: "開啟 Studio"
+        ctaTitle: "用 Pitch 試一份 MDX。",
+        ctaBody: "把範例貼進 Pitch，調整 Slide 時間與區塊位置，就能快速看到動效預覽。",
+        ctaButton: "開啟 Pitch"
       },
       components: {
         title: "Slide 元件參考。",
-        body: "小而穩定的元件語彙讓 Studio 可預期，同時支援豐富的簡報作品。",
+        body: "小而穩定的元件語彙讓 Pitch 可預期，同時支援豐富的簡報作品。",
         notePrefix: "完整維護筆記保留在",
         docPath: "docs/USAGE.zh-TW.md",
         items: [
@@ -898,8 +898,8 @@ npm install
       },
       cta: {
         title: "準備好建立 Slide 了嗎？",
-        body: "開啟 Studio，一邊參考文件一邊塑造第一份簡報。",
-        button: "開啟 Studio"
+        body: "開啟 Pitch，一邊參考文件一邊塑造第一份簡報。",
+        button: "開啟 Pitch"
       }
     }
 };

@@ -193,8 +193,8 @@ export const documentThemes = [
     preview: { surface: "#7ddcff" }
   }),
   createDocumentTheme({
-    id: "plum-studio",
-    name: "Plum Studio",
+    id: "plum-pitch",
+    name: "Plum Pitch",
     category: "creative",
     theme: "dark",
     background: "#170b24",

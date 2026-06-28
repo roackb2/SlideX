@@ -21,7 +21,7 @@ export function SiteFooter() {
         <div>
           <h4 className="text-white font-semibold mb-6 tracking-wide text-sm">{t.nav.products}</h4>
           <ul className="space-y-4 text-[14px]">
-            <li><Link href={localePath("/studio")} className="text-white/50 hover:text-white transition-colors">SlideX Studio</Link></li>
+            <li><Link href={localePath("/pitch")} className="text-white/50 hover:text-white transition-colors">SlideX Pitch</Link></li>
             <li><Link href={localePath("/briefly")} className="text-white/50 hover:text-white transition-colors">SlideX Briefly</Link></li>
           </ul>
         </div>

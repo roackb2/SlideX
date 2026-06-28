@@ -121,7 +121,7 @@ Encode these as explicit "NEVER DO" rules in the DESIGN.md:
 (Evocative description of the mood, density, variance, and motion intensity.
 Example: "A restrained, gallery-airy interface with confident asymmetric layouts
 and fluid spring-physics motion. The atmosphere is clinical yet warm — like a
-well-lit architecture studio.")
+well-lit architecture pitch.")
 
 ## 2. Color Palette & Roles
 - **Canvas White** (#F9FAFB) — Primary background surface

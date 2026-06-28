@@ -55,7 +55,7 @@ features/
 
 - If code does not know SlideX or MotionDoc, use `common/lib`, `common/ui`, or `common/util`.
 - If code knows MotionDoc concepts, use `core/motion-doc`.
-- If code only serves Studio, use `features/studio`.
+- If code only serves Pitch, use `features/pitch`.
 - If code touches Tauri, localStorage, filesystem, or browser platform APIs, use `infrastructure`.
 - If code is React rendering or UI interaction state, use `ui`.
 - If code is a pure command, selector, or business decision, prefer `application`.
@@ -106,16 +106,16 @@ Never make `core` import from `features` or `app`. Never make feature infrastruc
 ## Refactoring Expectations
 
 - Split large React files by responsibility before adding more behavior.
-- For `features/studio/ui/MotionDocApp.tsx`, prefer extracting to:
-  - `features/studio/ui/hooks/` for React state/effects.
-  - `features/studio/application/` for pure commands, shortcuts, selectors, flow normalization.
-  - `features/studio/infrastructure/` for Tauri/storage/platform code.
-- For `features/studio/ui/inspector/InspectorControls.tsx`, do not keep generic controls, color picker popovers, palette presets, swatch storage, and prop-field domain typing in one file. Prefer:
-  - Keep `features/studio/ui/inspector/InspectorControls.tsx` as a small facade that re-exports inspector controls and types.
-  - `features/studio/ui/inspector/controls/` for small reusable form controls such as field shells, text inputs, number inputs, selects, and segmented controls.
-  - `features/studio/ui/inspector/color/` for color picker UI, palette UI, color swatch UI, and color-specific React hooks.
-  - `features/studio/infrastructure/` for browser storage adapters such as custom swatch persistence.
-  - `features/studio/application/` for pure color normalization, dedupe, palette application decisions, or type guards that do not render React.
+- For `features/pitch/ui/MotionDocApp.tsx`, prefer extracting to:
+  - `features/pitch/ui/hooks/` for React state/effects.
+  - `features/pitch/application/` for pure commands, shortcuts, selectors, flow normalization.
+  - `features/pitch/infrastructure/` for Tauri/storage/platform code.
+- For `features/pitch/ui/inspector/InspectorControls.tsx`, do not keep generic controls, color picker popovers, palette presets, swatch storage, and prop-field domain typing in one file. Prefer:
+  - Keep `features/pitch/ui/inspector/InspectorControls.tsx` as a small facade that re-exports inspector controls and types.
+  - `features/pitch/ui/inspector/controls/` for small reusable form controls such as field shells, text inputs, number inputs, selects, and segmented controls.
+  - `features/pitch/ui/inspector/color/` for color picker UI, palette UI, color swatch UI, and color-specific React hooks.
+  - `features/pitch/infrastructure/` for browser storage adapters such as custom swatch persistence.
+  - `features/pitch/application/` for pure color normalization, dedupe, palette application decisions, or type guards that do not render React.
 - Keep public route imports clean: `app/*` should usually import from `features/<feature>` or `common/ui`, not from deep feature UI paths.
 - Keep changes scoped. Do not rename/move unrelated files just to make the tree look symmetrical.
 - When introducing a new layer folder, update `eslint.config.mjs` boundaries rules in the same change.

@@ -138,7 +138,7 @@ export default async function OpenGraphImage() {
                 marginBottom: 16
               }}
             >
-              SlideX Studio
+              SlideX Pitch
             </div>
 
             {/* Headline */}

@@ -1,6 +1,6 @@
 # SlideX MotionDoc 使用指南
 
-SlideX MotionDoc 是一套以 MDX Slide 為核心的動態簡報格式。你可以用文字描述每一頁的版面、內容、動畫節奏與媒體，再交給 Studio 預覽、調整與匯出。
+SlideX MotionDoc 是一套以 MDX Slide 為核心的動態簡報格式。你可以用文字描述每一頁的版面、內容、動畫節奏與媒體，再交給 Pitch 預覽、調整與匯出。
 
 ## 快速開始
 
@@ -14,11 +14,11 @@ npm run dev
 - Website: `http://localhost:3000`
 - Resources: `http://localhost:3000/resources`
 - Templates: `http://localhost:3000/templates`
-- Studio: `http://localhost:3000/studio`
+- Pitch: `http://localhost:3000/pitch`
 
-## Studio 工作流
+## Pitch 工作流
 
-Studio 由幾個核心區域組成：
+Pitch 由幾個核心區域組成：
 
 - **Slide list**：切換、排序與管理每一頁。
 - **MDX editor**：直接編輯 MotionDoc source。

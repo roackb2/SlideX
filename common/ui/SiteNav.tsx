@@ -43,7 +43,7 @@ export function SiteNav() {
   }, []);
 
   const navLinks = [
-    { href: "/studio", label: "Studio" },
+    { href: "/pitch", label: "Pitch" },
     { href: "/briefly", label: "Briefly" },
     { href: "/docs", label: t.nav.resources },
   ];
@@ -97,8 +97,8 @@ export function SiteNav() {
               <span className="flex items-center gap-1">{t.nav.products} <ChevronDown className="w-3.5 h-3.5 opacity-50" /></span>
               <div className="absolute left-0 top-full hidden group-hover:block -mt-2">
                 <div className="bg-[#0d0d0d] border border-white/10 rounded-[16px] p-2 w-[220px] shadow-2xl backdrop-blur-xl">
-                  <Link href={localePath("/studio")} className="block px-3 py-2.5 rounded-xl hover:bg-white/10 text-white transition-colors">
-                    <div className="font-medium">SlideX Studio</div>
+                  <Link href={localePath("/pitch")} className="block px-3 py-2.5 rounded-xl hover:bg-white/10 text-white transition-colors">
+                    <div className="font-medium">SlideX Pitch</div>
                     <div className="text-xs text-white/40 mt-0.5">Motion Design Editor</div>
                   </Link>
                   <Link href={localePath("/briefly")} className="block px-3 py-2.5 rounded-xl hover:bg-white/10 text-white transition-colors">

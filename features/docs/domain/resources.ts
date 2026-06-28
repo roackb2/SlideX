@@ -26,10 +26,10 @@ export const resourceItems: ResourceItem[] = [
   },
 
   {
-    title: "Studio Workflow",
+    title: "Pitch Workflow",
     description: "Use the slide list, MDX editor, preview, and timeline to design animated presentations.",
-    href: "/studio",
-    label: "Studio"
+    href: "/pitch",
+    label: "Pitch"
   }
 ];
 
@@ -45,7 +45,7 @@ export const docSections: DocSection[] = [
   },
   {
     title: "Design Loop",
-    description: "The Studio keeps source, slide navigation, preview, and timeline output in sync.",
+    description: "The Pitch keeps source, slide navigation, preview, and timeline output in sync.",
     points: [
       "Load a deck preset or insert individual Slide blocks.",
       "Edit the MDX source for advanced composition control.",

@@ -142,7 +142,7 @@ If the user says **"SaaS" / "product" / "dashboard" / "fintech" / "infra"**:
 - Composition: clear product framing, trust-driven anchors
 - Slightly higher implementation clarity
 
-If the user says **"agency" / "creative studio" / "portfolio"**:
+If the user says **"agency" / "creative pitch" / "portfolio"**:
 - Hero Scale: Giant Statement OR Mini Minimalist (decisive)
 - Background Mode: vary boldly (full-bleed image, color-blocked diptych, duotone)
 - Gradients: editorial color washes acceptable
@@ -174,7 +174,7 @@ Choose 1:
    Off-white / cream / paper tones, sharp dark text, editorial confidence.
 2. Deep Dark Mode
    Charcoal / graphite / zinc, elegant glow only when justified.
-3. Bold Studio Solid
+3. Bold Pitch Solid
    Strong controlled color fields like oxblood, royal blue, forest, vermilion, or emerald with crisp contrasting UI.
 4. Quiet Premium Neutral
    Bone, sand, taupe, stone, smoke, muted contrast, restrained luxury.
@@ -945,7 +945,7 @@ Interpretation:
 - Composition Anchor: bottom-left text over full-bleed product/atmosphere image
 - Background Mode: full-bleed image with dark tonal overlay
 - CTA Variation: outlined inline + small label hint
-- Palette: Deep Dark or Bold Studio Solid, one consistent accent
+- Palette: Deep Dark or Bold Pitch Solid, one consistent accent
 - no cliche dashboard spam, no purple AI glow
 
 ### Example 2

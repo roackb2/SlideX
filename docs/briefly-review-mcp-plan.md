@@ -1,6 +1,6 @@
 # 實作計畫：Briefly Review MCP 整合開發 (Slidex Briefly Builder MCP)
 
-本計畫旨在將「Briefly 核心審查功能」整合至現有的 `Slidex Motion Doc MCP Server` 中，打造一個兼具「產出 (Studio/Builder)」與「審查 (Briefly/Review)」雙重能力的終極 AI 工作站。
+本計畫旨在將「Briefly 核心審查功能」整合至現有的 `Slidex Motion Doc MCP Server` 中，打造一個兼具「產出 (Pitch/Builder)」與「審查 (Briefly/Review)」雙重能力的終極 AI 工作站。
 
 ## User Review Required
 

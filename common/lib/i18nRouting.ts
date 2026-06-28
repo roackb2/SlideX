@@ -4,14 +4,14 @@ import { defaultLocale, isLocale, locales, type Locale } from "@/common/lib/i18n
 export const localizedSiteSegments = [
   "briefly",
   "docs",
-  "studio"
+  "pitch"
 ] as const;
 
 export type SitePageKey =
   | "briefly"
   | "home"
   | "docs"
-  | "studio";
+  | "pitch";
 
 export type LocaleRouteParams = Promise<{ locale: string }>;
 
@@ -26,7 +26,7 @@ export const sitePagePaths = {
   briefly: "/briefly",
   home: "/",
   docs: "/docs",
-  studio: "/studio"
+  pitch: "/pitch"
 } satisfies Record<SitePageKey, string>;
 
 const pageMetadata = {
@@ -41,10 +41,10 @@ const pageMetadata = {
     },
     docs: {
       title: "SlideX 資源中心 — 文件與教學",
-      description: "SlideX 完整技術文件、使用教學與 API 參考。涵蓋 Studio 編輯器與 SwiftShip 範本系統。",
+      description: "SlideX 完整技術文件、使用教學與 API 參考。涵蓋 Pitch 編輯器與 SwiftShip 範本系統。",
     },
-    studio: {
-      title: "SlideX Studio — 動態簡報編輯器",
+    pitch: {
+      title: "SlideX Pitch — 動態簡報編輯器",
       description: "用 MDX 語法撰寫投影片，即時預覽動效，並匯出高品質動態簡報。",
     }
   },
@@ -59,10 +59,10 @@ const pageMetadata = {
     },
     docs: {
       title: "SlideX Resources — Documentation and Guides",
-      description: "Technical documentation, workflow guides, and API references for SlideX Studio and SwiftShip.",
+      description: "Technical documentation, workflow guides, and API references for SlideX Pitch and SwiftShip.",
     },
-    studio: {
-      title: "SlideX Studio — Motion Deck Editor",
+    pitch: {
+      title: "SlideX Pitch — Motion Deck Editor",
       description: "Write slides in MDX, preview motion live, and export polished motion presentations.",
     }
   }

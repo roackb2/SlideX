@@ -4,7 +4,7 @@ MCP server for SlideX MotionDoc decks. It lets MCP clients create decks, read te
 
 Current authoring syntax uses `<Slide>` with `Text`, `Icon`, `Chart`, `ImageBlock`, and `VideoBlock`. New MCP block insertion only creates the current authoring blocks.
 
-The package also includes built-in slide layout presets matching the SlideX Studio layout picker, such as Title & Photo, Title & Bullets, Agenda, Key Fact, Quote, Photos - 3 on a page, and Photo. Once installed, MCP clients can list layouts, fetch layout source, create a slide from a layout, append a layout slide, or replace an existing slide with a layout.
+The package also includes built-in slide layout presets matching the SlideX Pitch layout picker, such as Title & Photo, Title & Bullets, Agenda, Key Fact, Quote, Photos - 3 on a page, and Photo. Once installed, MCP clients can list layouts, fetch layout source, create a slide from a layout, append a layout slide, or replace an existing slide with a layout.
 
 ## Quick Start
 

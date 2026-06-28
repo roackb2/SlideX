@@ -5,7 +5,7 @@ export const enDictionary = {
     },
     common: {
       productName: "SlideX",
-      openStudio: "Open Studio",
+      openPitch: "Open Pitch",
       getStarted: "Get Started",
       viewPresets: "View Presets"
     },
@@ -25,7 +25,7 @@ export const enDictionary = {
       homeLabel: "SlideX home",
       description: "Motion decks for teams that want source, timing, and export in one place.",
       product: "Product",
-      studio: "Studio",
+      pitch: "Pitch",
       getStarted: "Get Started",
       docs: "Docs",
       rights: "© 2026 SlideX. All rights reserved.",
@@ -101,8 +101,8 @@ export const enDictionary = {
       }
     },
     home: {
-      studio: {
-        title: "Meet SlideX Studio.",
+      pitch: {
+        title: "Meet SlideX Pitch.",
         headline: "A focused editor for writing, previewing, and packaging motion decks without rebuilding the story."
       },
       hero: {
@@ -123,8 +123,8 @@ export const enDictionary = {
           target: "PM, Founder, Consultant, Project Owner",
           output: "Brief / MDX / HTML / PDF"
         },
-        studio: {
-          title: "Studio",
+        pitch: {
+          title: "Pitch",
           core: "Articulate project persuasively",
           target: "PM, BD, Sales, Founder, Consultant",
           output: "Deck / Proposal / Pitch"
@@ -168,8 +168,8 @@ export const enDictionary = {
       finalCta: {
         title: "Ready to align your team?"
       },
-      heroStudio: {
-        title: "Studio",
+      heroPitch: {
+        title: "Pitch",
         project: "Project Alpha",
         export: "Export",
         newSlide: "New Slide",
@@ -242,7 +242,7 @@ export const enDictionary = {
           },
           {
             title: "Package the output",
-            body: "Keep source, preview, and exported sequences aligned from one studio."
+            body: "Keep source, preview, and exported sequences aligned from one pitch."
           }
         ]
       },
@@ -252,14 +252,14 @@ export const enDictionary = {
       },
       cta: {
         title: "Ready to compose?",
-        body: "Open Studio and experience the new standard for motion presentations.",
+        body: "Open Pitch and experience the new standard for motion presentations.",
         button: "Get Started",
-        buttonStudio: "Get Started"
+        buttonPitch: "Get Started"
       }
     },
-    studioPage: {
+    pitchPage: {
       hero: {
-        eyebrow: "SlideX Studio",
+        eyebrow: "SlideX Pitch",
         title: {
           regular: "Compose motion decks",
           highlight: "without leaving source."
@@ -285,7 +285,7 @@ export const enDictionary = {
       ],
       workflow: {
         title: "From draft to playback in one loop.",
-        body: "Studio keeps the written story, visual structure, and animation timeline moving together.",
+        body: "Pitch keeps the written story, visual structure, and animation timeline moving together.",
         steps: [
           {
             label: "01",
@@ -307,7 +307,7 @@ export const enDictionary = {
       useCases: {
         eyebrow: "Use cases",
         title: "Built for decks that keep changing.",
-        body: "Use Studio when the presentation needs polish, motion, and a source format the team can revise.",
+        body: "Use Pitch when the presentation needs polish, motion, and a source format the team can revise.",
         cases: [
           {
             title: "Business reviews",
@@ -334,7 +334,7 @@ export const enDictionary = {
         eyebrow: "Deck Presets",
         title: "Useful decks with motion built in.",
         body: "Start from complete MDX Slide decks for reviews, launches, board updates, and customer stories.",
-        primary: "Open Studio",
+        primary: "Open Pitch",
         secondary: "View Presets"
       },
       featured: {
@@ -367,8 +367,8 @@ export const enDictionary = {
       },
       cta: {
         title: "Build from a preset today.",
-        body: "Load a deck into Studio, edit the Slides, and keep the motion system intact.",
-        button: "Open Studio"
+        body: "Load a deck into Pitch, edit the Slides, and keep the motion system intact.",
+        button: "Open Pitch"
       }
     },
 
@@ -376,9 +376,9 @@ export const enDictionary = {
       docsHub: {
         eyebrow: "Documentation hub",
         title: "Choose the guide for the work in front of you.",
-        body: "Read the MDX and Studio docs for motion decks.",
-        studioTitle: "SlideX Studio Docs",
-        studioBody: "Learn the MDX slide model, component syntax, positioning props, Studio workflow, and MCP setup."
+        body: "Read the MDX and Pitch docs for motion decks.",
+        pitchTitle: "SlideX Pitch Docs",
+        pitchBody: "Learn the MDX slide model, component syntax, positioning props, Pitch workflow, and MCP setup."
       },
       heroVisual: {
         label: "Resources",
@@ -393,9 +393,9 @@ export const enDictionary = {
       hero: {
         eyebrow: "Documentation",
         title: "Learn the Slide system.",
-        body: "A focused hub for MDX Slides, component syntax, Studio workflow, keyboard navigation, and export direction.",
+        body: "A focused hub for MDX Slides, component syntax, Pitch workflow, keyboard navigation, and export direction.",
         primary: "View MDX Syntax",
-        secondary: "Open Studio"
+        secondary: "Open Pitch"
       },
       resourceItems: [
         {
@@ -418,10 +418,10 @@ export const enDictionary = {
         },
 
         {
-          title: "Studio Workflow",
+          title: "Pitch Workflow",
           description: "Use the slide list, MDX editor, preview, and timeline to design animated presentations.",
-          href: "/studio",
-          label: "Studio"
+          href: "/pitch",
+          label: "Pitch"
         }
       ],
       docsIntro: {
@@ -440,7 +440,7 @@ export const enDictionary = {
         },
         {
           title: "Design Loop",
-          description: "The Studio keeps source, slide navigation, preview, and timeline output in sync.",
+          description: "The Pitch keeps source, slide navigation, preview, and timeline output in sync.",
           points: [
             "Load a deck preset or insert individual Slide blocks.",
             "Edit the MDX source for advanced composition control.",
@@ -482,14 +482,14 @@ export const enDictionary = {
           "Audience: Who is listening? What do they care about?",
           "Key Messages: Which highlights or metrics absolutely cannot be missed?"
         ],
-        overviewWorkflowTitle: "From Briefly to Studio",
-        overviewWorkflowBody: "Once you complete a Brief, you can convert it to Markdown with a single click or export it directly to MDX to serve as the outline skeleton for SlideX Studio. This ensures the visual design and motion perfectly match the original business logic, avoiding back-and-forth revisions later.",
+        overviewWorkflowTitle: "From Briefly to Pitch",
+        overviewWorkflowBody: "Once you complete a Brief, you can convert it to Markdown with a single click or export it directly to MDX to serve as the outline skeleton for SlideX Pitch. This ensures the visual design and motion perfectly match the original business logic, avoiding back-and-forth revisions later.",
         overviewWorkflowStep1: "Briefly generates outline",
-        overviewWorkflowStep2: "Studio builds deck",
+        overviewWorkflowStep2: "Pitch builds deck",
         overviewRules: [
           "Structure complex requirements into clear goals and key messages",
           "Automatically generate a logical storyline structure",
-          "Seamlessly connect to SlideX Studio for MDX deck design",
+          "Seamlessly connect to SlideX Pitch for MDX deck design",
           "Update the Brief anytime to keep the team aligned"
         ],
         builderStepsTitle: "How to Use",
@@ -497,7 +497,7 @@ export const enDictionary = {
           ["1. Add Blocks", "Select document blocks from the left toolbar, such as Cover, Goal, Timeline, or Audience. The system will automatically add them to the preview canvas."],
           ["2. Fill out data via Inspector", "Click any block, and the right Inspector panel will expand the corresponding form, helping you input key messages and data structurally without worrying about layout."],
           ["3. Adjust design and outline", "Use the Outline tool to drag and reorder sections, and switch to the Design tool to set layout width, typography, border styles, and theme gradient."],
-          ["4. Preview and Export", "Switch to MDX preview mode anytime to see the generated markup. When finished, export the Brief as HTML, PDF, or convert it to an MDX file for SlideX Studio."]
+          ["4. Preview and Export", "Switch to MDX preview mode anytime to see the generated markup. When finished, export the Brief as HTML, PDF, or convert it to an MDX file for SlideX Pitch."]
         ],
         builderExampleTitle: "Example Output (MDX)",
         blocks: [
@@ -638,7 +638,7 @@ export const enDictionary = {
         backLabel: "Back to docs",
         sideNavTitle: "Documentation",
         docsHomeLabel: "Docs home",
-        studioLinkLabel: "Studio",
+        pitchLinkLabel: "Pitch",
         onThisPageTitle: "On this page",
         updatedAt: "Last updated on June 11, 2026",
         helpfulTitle: "Was this page helpful?",
@@ -670,7 +670,7 @@ export const enDictionary = {
         overviewCards: [
           {
             title: "Read the full example",
-            body: "Start from a Slide that can be pasted into Studio and see how text, Icon, charts, and images fit together."
+            body: "Start from a Slide that can be pasted into Pitch and see how text, Icon, charts, and images fit together."
           },
           {
             title: "Break down patterns",
@@ -705,7 +705,7 @@ export const enDictionary = {
           "x, y, w, and h use percent-based frame coordinates for precise slide layout."
         ],
         patternsTitle: "Common patterns",
-        patternsBody: "These examples can be pasted into Studio and then tuned for content, color, layout, and timing.",
+        patternsBody: "These examples can be pasted into Pitch and then tuned for content, color, layout, and timing.",
         fullExampleTitle: "Full example",
         exampleBody: "This complete MDX Slide can be used as a starting point for a new deck. It includes a text headline, supporting copy, a text-based metric, and a chart while showing common timing and frame props.",
         fullExample: `# Quarterly Business Review
@@ -781,7 +781,7 @@ export const enDictionary = {
           ["VideoBlock", "controls / loop / muted", "string boolean", "Controls video playback behavior."]
         ],
         motionTitle: "Motion and parsing rules",
-        motionBody: "The MDX parser intentionally supports a small, stable syntax for website presets and Studio editing. Legacy tags can still be parsed for older files, but new docs and MCP tools use Slide-first syntax.",
+        motionBody: "The MDX parser intentionally supports a small, stable syntax for website presets and Pitch editing. Legacy tags can still be parsed for older files, but new docs and MCP tools use Slide-first syntax.",
         motionRows: [
           ["<Slide>...</Slide>", "Every timed page is wrapped in one Slide tag."],
           ["<Text>...</Text>", "Text components must use paired tags."],
@@ -861,7 +861,7 @@ npm install
           ["slidex_create_deck", "Create editable MotionDoc MDX from a structured outline."],
           ["slidex_create_from_template", "Clone a template and optionally replace title and text."],
           ["slidex_add_block", "Add text, image, video, chart, or Icon blocks to a slide."],
-          ["slidex_list_slide_layouts", "List the 16 built-in Studio slide layouts."],
+          ["slidex_list_slide_layouts", "List the 16 built-in Pitch slide layouts."],
           ["slidex_get_slide_layout", "Get the MDX block source for a specific layout."],
           ["slidex_create_slide_from_layout", "Create a complete <Slide>...</Slide> block from a layout."],
           ["slidex_add_slide_from_layout", "Append or insert a new slide generated from a layout."],
@@ -878,13 +878,13 @@ npm install
           "The most reliable GitHub mode is clone plus cwd plus npm --silent run mcp; direct npx github:<owner>/<repo> requires a configured bin.",
           "For global installation, compile the MCP server to JavaScript so users do not depend on a local TypeScript runtime."
         ],
-        ctaTitle: "Try MDX in Studio.",
-        ctaBody: "Paste an example into Studio, tune slide timing and block positions, then preview the motion immediately.",
-        ctaButton: "Open Studio"
+        ctaTitle: "Try MDX in Pitch.",
+        ctaBody: "Paste an example into Pitch, tune slide timing and block positions, then preview the motion immediately.",
+        ctaButton: "Open Pitch"
       },
       components: {
         title: "Slide component reference.",
-        body: "A small component vocabulary keeps the Studio predictable while still supporting rich presentation work.",
+        body: "A small component vocabulary keeps the Pitch predictable while still supporting rich presentation work.",
         notePrefix: "Full maintenance notes remain in",
         docPath: "docs/USAGE.zh-TW.md",
         items: [
@@ -898,8 +898,8 @@ npm install
       },
       cta: {
         title: "Ready to build a Slide?",
-        body: "Open Studio and use the reference as you draft the first deck.",
-        button: "Open Studio"
+        body: "Open Pitch and use the reference as you draft the first deck.",
+        button: "Open Pitch"
       }
     }
 };

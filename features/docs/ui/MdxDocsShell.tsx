@@ -29,7 +29,7 @@ export default function MdxDocsShell({ section }: { section: MdxDocsSection }) {
   const currentIndex = docSections.findIndex((item) => item.id === section);
   const currentSection = docSections[currentIndex] ?? docSections[0];
   const nextSection = docSections[currentIndex + 1];
-  const nextHref = nextSection?.href ?? localePath("/studio");
+  const nextHref = nextSection?.href ?? localePath("/pitch");
   const nextTitle = nextSection?.label ?? syntax.ctaTitle;
   const nextBody = nextSection ? getSectionBody(nextSection.id, syntax, brieflyDocs) : syntax.ctaBody;
 

@@ -86,7 +86,7 @@ export function buildDocsGroups(
         { ...docSections[3], active: section === "props" },
         { ...docSections[4], active: section === "motion" },
         { ...docSections[5], active: section === "mcp" },
-        { active: false, href: "/studio", icon: MonitorPlay, label: syntax.studioLinkLabel }
+        { active: false, href: "/pitch", icon: MonitorPlay, label: syntax.pitchLinkLabel }
       ],
       title: syntax.sideNavGroups.reference
     },

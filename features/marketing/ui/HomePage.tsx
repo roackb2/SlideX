@@ -38,7 +38,7 @@ export function HomePage() {
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
             <Link 
-              href={localePath("/studio")}
+              href={localePath("/pitch")}
               className="w-full sm:w-auto h-12 px-8 inline-flex items-center justify-center rounded-full bg-white text-black font-medium text-[15px] transition-transform hover:scale-105"
             >
               {t.home.hero.primary}
@@ -129,7 +129,7 @@ export function HomePage() {
             </BorderBeam>
           </motion.div>
 
-          {/* Studio Card */}
+          {/* Pitch Card */}
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -144,16 +144,16 @@ export function HomePage() {
               <div className="flex flex-col justify-end h-full min-h-[520px] relative overflow-hidden rounded-[24px] bg-[#0d0d0d] border border-white/10 p-10 group-hover:bg-[#141414] group-hover:border-orange-400/30 group-hover:shadow-[0_0_40px_-10px_rgba(251,146,60,0.15)] transition-all duration-500">
                 <div className="relative z-10 mt-auto pt-24">
                   <h3 className="text-3xl font-bold tracking-tight text-white mb-2">
-                    {t.home.products.studio.title}
+                    {t.home.products.pitch.title}
                   </h3>
                   <p className="text-blue-500 font-medium text-lg mb-8">
-                    {t.home.products.studio.core}
+                    {t.home.products.pitch.core}
                   </p>
                   <div className="space-y-6">
                     <div>
                       <span className="block text-[11px] uppercase tracking-[0.15em] text-white/40 mb-2 font-semibold">{t.home.productsSection.targetLabel}</span>
                       <p className="text-white/80 text-[15px] font-medium leading-relaxed">
-                        {t.home.products.studio.target}
+                        {t.home.products.pitch.target}
                       </p>
                     </div>
                   </div>
@@ -344,7 +344,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* 4. DEVELOPER/STUDIO SPLIT SCREEN (CODE VS PREVIEW) */}
+      {/* 4. DEVELOPER/PITCH SPLIT SCREEN (CODE VS PREVIEW) */}
       <section className="max-w-7xl mx-auto px-4 py-32 border-t border-white/5 overflow-hidden">
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-12 items-center">
           
@@ -381,7 +381,7 @@ export function HomePage() {
             </div>
           </motion.div>
 
-          {/* Right: Studio Preview Mock */}
+          {/* Right: Pitch Preview Mock */}
           <motion.div 
             initial={{ opacity: 0, x: 40 }}
             whileInView={{ opacity: 1, x: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.2 } }}
@@ -436,7 +436,7 @@ export function HomePage() {
           {t.home.finalCta.title}
         </h2>
         <Link 
-          href={localePath("/studio")}
+          href={localePath("/pitch")}
           className="h-14 px-10 inline-flex items-center justify-center rounded-full bg-white text-black font-semibold text-[16px] hover:scale-105 transition-transform"
         >
           {t.home.cta.button}

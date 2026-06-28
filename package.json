@@ -63,7 +63,7 @@
     "tsx": "^4.22.4",
     "typescript": "5.9.3"
   },
-  "description": "SlideX 是一個以 MDX Slide 為核心的動態簡報系統。它把簡報內容、版面、動畫節奏、預覽與桌面專案流程放在同一個可維護的程式碼結構裡。全新升級的 Studio 介面採用 Double-Bezel 玻璃擬真（Glassmorphism）與高對比視覺美學，將開發工具的穩健與高階設計的質感完美融合。",
+  "description": "SlideX 是一個以 MDX Slide 為核心的動態簡報系統。它把簡報內容、版面、動畫節奏、預覽與桌面專案流程放在同一個可維護的程式碼結構裡。全新升級的 Pitch 介面採用 Double-Bezel 玻璃擬真（Glassmorphism）與高對比視覺美學，將開發工具的穩健與高階設計的質感完美融合。",
   "main": "index.js",
   "directories": {
     "doc": "docs"
