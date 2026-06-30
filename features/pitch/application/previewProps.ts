@@ -1,6 +1,7 @@
 import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
+import { normalizeEnterAnimation, type EnterAnimation } from "@/features/pitch/application/motionPresets";
 
-export type EnterAnimation = "fadeIn" | "fadeUp" | "none" | "zoomIn" | "slideLeft";
+export type { EnterAnimation };
 export type SlideLayout = "default" | "split-left" | "split-right";
 export type AlignX = "left" | "center" | "right" | "stretch";
 export type AlignY = "top" | "center" | "bottom";
@@ -29,21 +30,11 @@ export function opacityProp(value: string | number | undefined, fallback?: numbe
 }
 
 export function enterProp(value: string | number | undefined): EnterAnimation | undefined {
-  if (
-    value === "fadeIn" ||
-    value === "fadeUp" ||
-    value === "none" ||
-    value === "zoomIn" ||
-    value === "slideLeft"
-  ) {
-    return value;
+  if (value === undefined) {
+    return undefined;
   }
 
-  if (value === "") {
-    return "none";
-  }
-
-  return undefined;
+  return normalizeEnterAnimation(value);
 }
 
 export function layoutProp(value: string | number | undefined): SlideLayout {

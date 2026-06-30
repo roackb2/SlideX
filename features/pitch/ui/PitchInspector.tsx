@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Code2, ChevronDown, ChevronRight, Type, Sliders, List } from "lucide-react";
-import { BlockLayerIcon } from "@/features/pitch/ui/LayerRow";
+import { Code2, ChevronDown, ChevronRight, List, AlignCenter, AlignLeft, AlignRight } from "lucide-react";
 import { CardFields } from "@/features/pitch/ui/inspector/CardFields";
 import { ChartFields } from "@/features/pitch/ui/inspector/ChartFields";
 import { IconFields } from "@/features/pitch/ui/inspector/IconFields";
@@ -14,44 +13,50 @@ import { SlideSettings } from "@/features/pitch/ui/inspector/SlideSettings";
 import { SlideLayoutSelector } from "@/features/pitch/ui/inspector/SlideLayoutSelector";
 import { StackFields } from "@/features/pitch/ui/inspector/StackFields";
 import { VideoFields } from "@/features/pitch/ui/inspector/VideoFields";
-import { Field, type PropRecord } from "@/features/pitch/ui/inspector/InspectorControls";
+import { autoSizeTextFrameProps } from "@/features/pitch/application/textFrameSizing";
+import { Field, IconSegmentedControl, NumberInput, type PropRecord } from "@/features/pitch/ui/inspector/InspectorControls";
+import { FontPicker } from "@/features/pitch/ui/preview/controls/FontPicker";
+import { useDynamicFont } from "@/features/pitch/ui/hooks/useDynamicFont";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
 
-function AccordionSection({
+function Section({
   title,
-  icon,
   children,
-  defaultOpen = true
+  defaultOpen = true,
+  rightElement = null
 }: {
   title: string;
-  icon: React.ReactNode;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  rightElement?: React.ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
-    <div className="rounded-[1.25rem] border border-white/[0.04] bg-white/[0.01] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.05),0_8px_32px_-8px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-500 hover:border-white/[0.06] hover:bg-white/[0.02]">
-      <button
-        type="button"
-        className="flex w-full items-center justify-between px-4 py-3.5 bg-transparent hover:bg-white/[0.02] text-left transition-colors cursor-pointer select-none active:scale-[0.99]"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <span className="flex items-center gap-2.5 text-[10px] tracking-[0.2em] font-bold text-neutral-400">
-          {icon}
-          {title}
-        </span>
-        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-white/[0.03] text-neutral-400 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
-          {isOpen ? (
-            <ChevronDown size={12} className="transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" />
-          ) : (
-            <ChevronRight size={12} className="transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" />
-          )}
-        </div>
-      </button>
+    <div className="flex flex-col border-b border-white/[0.04] last:border-b-0">
+      <div className="flex w-full items-center justify-between py-3">
+        <button
+          type="button"
+          className="flex items-center gap-1.5 text-left transition-colors cursor-pointer select-none group"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <div className="flex items-center justify-center text-neutral-500 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:text-neutral-300">
+            {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </div>
+          <span className="text-[13px] font-medium text-neutral-300 group-hover:text-white transition-colors">
+            {title}
+          </span>
+        </button>
+        {rightElement && (
+          <div className="flex items-center">
+            {rightElement}
+          </div>
+        )}
+      </div>
       
-      <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+      <div className={`grid transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
         <div className="overflow-hidden">
-          <div className="p-4 flex flex-col gap-5 border-t border-white/[0.03] bg-gradient-to-b from-white/[0.01] to-transparent">
+          <div className="flex flex-col gap-4 pb-4">
             {children}
           </div>
         </div>
@@ -67,6 +72,7 @@ export function PitchInspector({
   activeSlideAlignY,
   activeSlideBackground,
   activeSlideLayout,
+  activeSlideLayoutPreset,
   activeSlideMutedColor,
   activeSlideShader,
   activeSlideShaderColor1,
@@ -80,13 +86,13 @@ export function PitchInspector({
   activeSlideShaderDetail,
   activeSlideTextColor,
   activeSlideTheme,
-  addSlideWithLayout,
+  applyLayoutToActiveSlide,
   isGridVisible,
   onOpenMdxEditor,
+  pushUndoSnapshot,
   selectedBlockIndex,
   selectedBlockIndices = [],
   setIsGridVisible,
-  setSelectedBlockIndex,
   updateAllSlidesStyle,
   updateActiveSlideStyle,
   updateBlock,
@@ -99,6 +105,7 @@ export function PitchInspector({
   activeSlideAlignY: string;
   activeSlideBackground: string;
   activeSlideLayout: string;
+  activeSlideLayoutPreset: string;
   activeSlideMutedColor: string;
   activeSlideShader: string;
   activeSlideShaderColor1: string;
@@ -112,53 +119,50 @@ export function PitchInspector({
   activeSlideShaderDetail: number;
   activeSlideTextColor: string;
   activeSlideTheme: string;
-  addSlideWithLayout: (layoutSource: string) => void;
+  applyLayoutToActiveSlide: (layoutSource: string, layoutId: string) => void;
   isGridVisible: boolean;
   onOpenMdxEditor: () => void;
+  pushUndoSnapshot: () => void;
   selectedBlockIndex: number | null;
   selectedBlockIndices?: number[];
   setIsGridVisible: (value: boolean) => void;
-  setSelectedBlockIndex: (index: number | null) => void;
   updateAllSlidesStyle: (updates: PropRecord) => void;
   updateActiveSlideStyle: (updates: PropRecord) => void;
-  updateBlock: (blockIndex: number, newProps: PropRecord, newText?: string) => void;
+  updateBlock: BlockUpdater;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
   uploadVideoForBlock: (blockIndex: number, file: File | undefined) => void;
 }) {
   const isMultiSelection = selectedBlockIndices.length >= 2;
 
-  // Try to determine the layout ID of the current slide, fallback to 'blank' or null
-  // We can just use the first block to guess or let the selector use default if layout name unknown.
-  // We can pass activeSlideLayout to it or just pass null.
-  // Actually, we can add layoutId tracking later. For now, pass null so it says "Slide Layout".
-  
   return (
-    <div id="inspector-v4" className="flex w-full sm:w-[290px] md:w-[320px] shrink-0 flex-col overflow-hidden border border-white/[0.06] rounded-[2rem] mr-4 mb-4 bg-[#050505]/45 backdrop-blur-[32px] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.15),0_20px_40px_-10px_rgba(0,0,0,0.8)] select-none h-full relative z-10 transition-all duration-700">
+    <div id="inspector-v4" className="flex w-full sm:w-[300px] md:w-[320px] shrink-0 flex-col overflow-hidden border-l border-white/[0.12] bg-[#111111] select-none h-full relative z-10 transition-all duration-700 font-sans antialiased">
       
       {/* Inspector Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-white/[0.04] px-5 py-4 bg-white/[0.01]">
-        <span className="text-[10px] tracking-[0.2em] font-bold text-neutral-400">Properties</span>
+      <div className="flex shrink-0 items-center justify-between px-5 h-[52px]">
+        <span className="text-[14px] font-medium text-neutral-200">
+          {isMultiSelection ? "Multiple Items" : selectedBlockIndex === null ? "Slide" : activeSlide?.blocks[selectedBlockIndex]?.type || "Element"}
+        </span>
         <button
-          className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-white/[0.1] bg-white/[0.05] hover:bg-white/[0.1] text-white px-2.5 text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-400 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.1)]"
+          className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-transparent hover:bg-white/[0.05] text-neutral-500 hover:text-white px-2 text-xs font-medium transition-colors cursor-pointer"
           onClick={onOpenMdxEditor}
           type="button"
+          title="MDX Editor"
         >
-          <Code2 size={11} />
-          MDX Editor
+          <Code2 size={14} />
         </button>
       </div>
 
-      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
-        <div className="flex flex-col gap-4 p-4">
+      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5">
+        <div className="flex flex-col">
           {isMultiSelection ? (
-            <div className="rounded-xl border border-white/[0.04] bg-neutral-900/20 px-3.5 py-3 text-sm font-semibold text-neutral-300">
-              {selectedBlockIndices.length} layers selected
+            <div className="mb-5 rounded-lg bg-white/[0.03] px-3 py-3 text-sm font-medium text-neutral-300 text-center">
+              {selectedBlockIndices.length} items selected
             </div>
           ) : selectedBlockIndex === null ? (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
               <SlideLayoutSelector 
-                currentLayoutId={null} 
-                onSelectLayout={(source) => addSlideWithLayout(source)} 
+                currentLayoutId={activeSlideLayoutPreset}
+                onSelectLayout={applyLayoutToActiveSlide}
               />
               <SlideSettings
                 accent={activeSlideAccent}
@@ -180,8 +184,10 @@ export function PitchInspector({
                 shaderSoftness={activeSlideShaderSoftness}
                 shaderScale={activeSlideShaderScale}
                 shaderDetail={activeSlideShaderDetail}
+                slideTransition={activeSlide?.props.slideTransition}
                 textColor={activeSlideTextColor}
                 theme={activeSlideTheme}
+                transitionDuration={activeSlide?.props.transitionDuration}
                 updateAllSlidesStyle={updateAllSlidesStyle}
                 updateActiveSlideStyle={updateActiveSlideStyle}
               />
@@ -189,8 +195,8 @@ export function PitchInspector({
           ) : (
             <ElementSettings
               activeSlide={activeSlide}
+              pushUndoSnapshot={pushUndoSnapshot}
               selectedBlockIndex={selectedBlockIndex as number}
-              setSelectedBlockIndex={setSelectedBlockIndex}
               updateBlock={updateBlock}
               uploadImageForBlock={uploadImageForBlock}
               uploadVideoForBlock={uploadVideoForBlock}
@@ -204,16 +210,16 @@ export function PitchInspector({
 
 function ElementSettings({
   activeSlide,
+  pushUndoSnapshot,
   selectedBlockIndex,
-  setSelectedBlockIndex,
   updateBlock,
   uploadImageForBlock,
   uploadVideoForBlock
 }: {
   activeSlide: MotionDocScene | undefined;
+  pushUndoSnapshot: () => void;
   selectedBlockIndex: number;
-  setSelectedBlockIndex: (index: number | null) => void;
-  updateBlock: (blockIndex: number, newProps: PropRecord, newText?: string) => void;
+  updateBlock: BlockUpdater;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
   uploadVideoForBlock: (blockIndex: number, file: File | undefined) => void;
 }) {
@@ -235,29 +241,11 @@ function ElementSettings({
     ? defaultCardBackground(slideTheme, slideBackground)
     : "transparent";
   return (
-    <div className="flex flex-col gap-4 animate-[bubble-appear_0.2s_ease-out]">
-      <div className="flex items-center justify-between px-1">
-          <h3 className="text-sm font-bold text-neutral-400">Element Properties</h3>
-        <button
-          className="rounded-lg border border-white/[0.04] bg-white/[0.01] px-2.5 py-1 text-xs font-medium text-neutral-400 transition-all hover:border-white/[0.08] hover:bg-white/[0.02] hover:text-white cursor-pointer active:scale-95 duration-150"
-          onClick={() => setSelectedBlockIndex(null)}
-          type="button"
-        >
-          Deselect
-        </button>
-      </div>
-
-      <div className="flex flex-col gap-3.5">
-        {/* Layer active type display badge */}
-        <div className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-neutral-900/20 px-3.5 py-2.5">
-          <span className="flex items-center gap-2.5 text-sm font-bold text-neutral-200">
-            <BlockLayerIcon block={block} className="text-[#788bfd]" />
-            {block.type} Layer
-          </span>
-        </div>
+    <div className="flex flex-col gap-0 animate-[bubble-appear_0.2s_ease-out]">
+      <div className="flex flex-col gap-0">
 
         {isTextType && (
-          <AccordionSection title="Text" icon={<Type size={13} className="text-white" />} defaultOpen={true}>
+          <Section title="Text" defaultOpen={true}>
             {"props" in block ? (
               <TextTypeFields
                 block={block}
@@ -266,13 +254,26 @@ function ElementSettings({
               />
             ) : null}
             <textarea
-              className="w-full resize-none rounded-xl border border-white/[0.04] bg-neutral-950/45 px-3.5 py-2.5 text-sm leading-relaxed text-neutral-200 outline-none transition-all placeholder:text-neutral-700 hover:border-white/[0.08] focus:border-[#788bfd]/50 focus:ring-1 focus:ring-[#788bfd]/15 font-medium shadow-inner"
+              className="w-full resize-none rounded-lg bg-white/[0.03] px-3 py-2 text-[13px] leading-relaxed text-neutral-200 outline-none transition-colors placeholder:text-neutral-600 hover:bg-white/[0.05] focus:bg-white/[0.06] focus:ring-1 focus:ring-white/[0.12]"
               onChange={(event) => {
                 event.target.style.height = "auto";
                 event.target.style.height = `${event.target.scrollHeight}px`;
-                updateBlock(selectedBlockIndex, "props" in block ? block.props : {}, event.target.value);
+                updateBlock(selectedBlockIndex, "props" in block ? block.props : {}, event.target.value, { transient: true });
+              }}
+              onBlur={(event) => {
+                if (!("props" in block)) {
+                  return;
+                }
+
+                updateBlock(
+                  selectedBlockIndex,
+                  autoSizeTextFrameProps({ props: block.props, type: block.type }, event.currentTarget.value, { props: block.props }),
+                  event.currentTarget.value,
+                  { transient: true }
+                );
               }}
               onFocus={(event) => {
+                pushUndoSnapshot();
                 event.target.style.height = "auto";
                 event.target.style.height = `${event.target.scrollHeight}px`;
               }}
@@ -280,11 +281,11 @@ function ElementSettings({
               style={{ minHeight: block.type === "Title" ? "64px" : "100px", overflow: "hidden" }}
               value={textValue}
             />
-          </AccordionSection>
+          </Section>
         )}
 
         {(block.type === "Card" || block.type === "Chart" || block.type === "Icon" || block.type === "ImageBlock" || block.type === "Metric" || block.type === "Shape" || block.type === "Stack" || block.type === "VideoBlock") && (
-          <AccordionSection title={`${block.type} Properties`} icon={<Sliders size={13} className="text-[#8ea5ff]" />} defaultOpen={true}>
+          <Section title={`${block.type} properties`} defaultOpen={true}>
             <div className="flex flex-col gap-4">
               {block.type === "Card" && <CardFields block={block} selectedBlockIndex={selectedBlockIndex} updateBlock={updateBlock} />}
               {block.type === "ImageBlock" && <ImageFields block={block} selectedBlockIndex={selectedBlockIndex} updateBlock={updateBlock} uploadImageForBlock={uploadImageForBlock} />}
@@ -295,7 +296,7 @@ function ElementSettings({
               {block.type === "Shape" && <ShapeFields block={block} selectedBlockIndex={selectedBlockIndex} updateBlock={updateBlock} />}
               {block.type === "Stack" && <StackFields block={block} selectedBlockIndex={selectedBlockIndex} updateBlock={updateBlock} />}
             </div>
-          </AccordionSection>
+          </Section>
         )}
 
         {"props" in block && (
@@ -363,12 +364,15 @@ function TextTypeFields({
 }: {
   block: { type: string; props?: Record<string, string | number>; text?: string };
   selectedBlockIndex: number;
-  updateBlock: (blockIndex: number, newProps: Record<string, string | number>, newText?: string) => void;
+  updateBlock: BlockUpdater;
 }) {
   const props = "props" in block && block.props ? block.props : {};
   const text = "text" in block ? (block as { text: string }).text : "";
   const currentRole = String(props.role || (block.type === "Title" ? "title" : "content"));
   const currentFontSize = Number(props.fontSize) || (block.type === "Title" ? 72 : 24);
+  const fontFamily = String(props.fontFamily ?? "");
+  
+  useDynamicFont(fontFamily);
 
   const currentValue = `${currentRole}_${currentFontSize}`;
   
@@ -393,7 +397,7 @@ function TextTypeFields({
       lineHeight: isTitle ? (size >= 60 ? 1 : 1.12) : (Number(props.lineHeight) || 1.45),
       role
     };
-    updateBlock(selectedBlockIndex, nextProps, text);
+    updateBlock(selectedBlockIndex, autoSizeTextFrameProps({ props, type: block.type }, text, { props: nextProps }), text);
   }
 
   function toggleList() {
@@ -414,43 +418,76 @@ function TextTypeFields({
       nextProps.listType = "bullet";
     }
 
-    updateBlock(selectedBlockIndex, nextProps, nextText);
+    updateBlock(selectedBlockIndex, autoSizeTextFrameProps({ props, type: block.type }, nextText, { props: nextProps }), nextText);
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <Field label="Text Style">
+      <Field label="Style">
         <div className="flex items-center gap-2">
-          <div className="flex-1 relative rounded-[1rem] border border-white/[0.05] bg-[#020202] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.03)] transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.1] focus-within:border-white/[0.2] focus-within:ring-1 focus-within:ring-white/[0.1]">
+          <div className="flex-1 relative rounded-lg bg-white/[0.03] transition-colors hover:bg-white/[0.05] focus-within:bg-white/[0.06] focus-within:ring-1 focus-within:ring-white/[0.12]">
             <select
-              className="w-full cursor-pointer appearance-none bg-transparent pl-3.5 pr-8 py-2.5 text-sm font-semibold text-neutral-300 outline-none"
+              className="w-full cursor-pointer appearance-none bg-transparent pl-3 pr-8 py-1.5 text-[13px] text-neutral-200 outline-none"
               onChange={(event) => setTextStyle(event.target.value)}
               value={displayValue}
             >
               {selectOptions.map((option) => (
-                <option key={option.value} value={option.value} className="bg-[#0e0e12] text-neutral-200">
+                <option key={option.value} value={option.value} className="bg-neutral-900 text-neutral-200">
                   {option.label}
                 </option>
               ))}
             </select>
             <ChevronDown
               aria-hidden="true"
-              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400"
-              size={12}
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500"
+              size={14}
             />
           </div>
           <button
             type="button"
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[1rem] border transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-105 active:scale-95 ${
+            className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg transition-colors cursor-pointer ${
               props.listType === "bullet"
-                ? "border-[#0ea5e9]/50 bg-[#0ea5e9]/20 text-[#0ea5e9] shadow-[0_0_12px_-2px_rgba(14,165,233,0.3)]"
-                : "border-white/[0.05] bg-[#020202] text-neutral-400 hover:border-white/[0.1] hover:text-white"
+                ? "bg-white/[0.08] text-white"
+                : "bg-white/[0.03] text-neutral-500 hover:bg-white/[0.05] hover:text-neutral-300"
             }`}
             onClick={toggleList}
             title="Toggle Bulleted List"
           >
-            <List size={16} />
+            <List size={14} />
           </button>
+        </div>
+      </Field>
+
+      <Field label="Typography">
+        <div className="flex flex-col gap-1.5">
+          <FontPicker
+            onChange={(value) => {
+              const nextProps = { ...props, fontFamily: value === "" ? "" : value };
+              updateBlock(selectedBlockIndex, autoSizeTextFrameProps({ props, type: block.type }, text, { props: nextProps }), text);
+            }}
+            value={fontFamily}
+          />
+          <div className="grid grid-cols-[1fr_auto] gap-1.5">
+            <NumberInput prefix={<span className="text-[10px] font-semibold text-neutral-500 w-8">Size</span>} min="8" max="180" onChange={(value) => {
+              const nextProps = { ...props, fontSize: value === "" ? "" : value };
+              updateBlock(selectedBlockIndex, autoSizeTextFrameProps({ props, type: block.type }, text, { props: nextProps }), text);
+            }} placeholder={block.type === "Title" ? "72" : "24"} step="1" suffix="px" value={props.fontSize ?? ""} />
+            <div className="w-[104px]">
+              <IconSegmentedControl
+                label=""
+                onChange={(value) => {
+                  const nextProps = { ...props, textAlign: value };
+                  updateBlock(selectedBlockIndex, autoSizeTextFrameProps({ props, type: block.type }, text, { props: nextProps }), text);
+                }}
+                options={[
+                  { icon: <AlignLeft size={14} />, label: "Align left", value: "left" },
+                  { icon: <AlignCenter size={14} />, label: "Align center", value: "center" },
+                  { icon: <AlignRight size={14} />, label: "Align right", value: "right" }
+                ]}
+                value={String(props.textAlign ?? "left")}
+              />
+            </div>
+          </div>
         </div>
       </Field>
     </div>

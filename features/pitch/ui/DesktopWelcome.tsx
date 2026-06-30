@@ -85,7 +85,7 @@ export function DesktopWelcome({ newProject }: DesktopWelcomeProps) {
                 onClick={() => setStep(2)}
                 className="group mt-4 flex items-center gap-3 rounded-full bg-white text-black px-8 py-4 font-bold text-lg transition-transform hover:scale-[1.02] active:scale-[0.98] shadow-lg cursor-pointer"
               >
-                Let's get started
+                Let&apos;s get started
                 <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
               </button>
             </motion.div>

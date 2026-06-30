@@ -3,8 +3,8 @@ export const snippetTemplates = [
     id: "slide",
     label: "Slide",
     code: `<Slide duration={5} theme="dark" background="#050505" accent="#ffffff">
-  <Text enter="fadeUp" fontSize={72} fontWeight={800} radius={0} x={8} y={12} w={64} h={18}>New slide title</Text>
-  <Text enter="fadeUp" delay={0.25} fontSize={24} radius={0} x={8} y={38} w={52} h={16}>
+  <Text fontSize={72} fontWeight={800} x={8} y={12} w={64} h={18}>New slide title</Text>
+  <Text fontSize={24} x={8} y={38} w={52} h={9}>
     Add supporting copy here.
   </Text>
 </Slide>`
@@ -12,12 +12,12 @@ export const snippetTemplates = [
   {
     id: "snip-title",
     label: "Display Title",
-    code: `<Text enter="fadeUp" fontSize={96} fontWeight={700} lineHeight={1} radius={0} x={7} y={16} w={76} h={24}>Display headline</Text>`
+    code: `<Text fontSize={96} fontWeight={700} lineHeight={1} x={7} y={16} w={76} h={24}>Display headline</Text>`
   },
   {
     id: "snip-body",
     label: "Body Text",
-    code: `<Text enter="fadeUp" delay={0.2} fontSize={24} fontWeight={560} lineHeight={1.12} radius={0} x={10} y={44} w={46} h={14}>Body copy</Text>`
+    code: `<Text fontSize={24} fontWeight={560} lineHeight={1.12} x={10} y={44} w={46} h={9}>Body copy</Text>`
   },
   {
     id: "snip-card",

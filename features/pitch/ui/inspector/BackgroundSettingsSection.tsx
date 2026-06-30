@@ -50,7 +50,7 @@ export function BackgroundSettingsSection({
   const [activeTab, setActiveTab] = useState<"standard" | "dynamic">(shader ? "dynamic" : "standard");
 
   return (
-    <AccordionSection title="Background" icon={<Layers size={13} className="text-[#8ea5ff]" />} defaultOpen>
+    <AccordionSection title="Background" defaultOpen>
       <div className="mb-2">
         <IconSegmentedControl
           label="Background Type"

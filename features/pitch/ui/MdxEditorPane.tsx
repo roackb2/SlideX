@@ -11,7 +11,6 @@ import { EditorView, highlightActiveLine, highlightActiveLineGutter, keymap } fr
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { snippetTemplates } from "@/core/motion-doc/presets/templates";
 import { slidexDarkTheme, slidexHighlight } from "@/features/pitch/ui/editor/codeMirrorTheme";
 
 export function MdxEditorPane({
@@ -121,18 +120,19 @@ export function MdxEditorPane({
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-transparent">
-      <div className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.02] px-4 py-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="rounded-md border border-white/[0.08] bg-black/40 px-2 py-1 font-mono text-[10px] tracking-wider text-neutral-400">
+    <div className="flex min-h-0 flex-1 flex-col bg-[#0A0A0A] font-sans antialiased">
+      {/* Header Info */}
+      <div className="flex items-center justify-between border-b border-white/[0.04] px-5 py-4">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="rounded bg-white/[0.03] px-2 py-0.5 font-mono text-[11px] font-medium text-neutral-400">
             {editorScope === "selection" ? selectionLabel : "deck.mdx"}
           </span>
-          <span className="text-[11px] font-medium text-neutral-500">{lineCount} lines</span>
-          <span className="text-[11px] text-neutral-600">/</span>
-          <span className="text-[11px] font-medium text-neutral-500">{sceneCount} scenes</span>
+          <span className="text-[12px] font-medium text-neutral-500">{lineCount} lines</span>
+          <span className="text-[12px] text-neutral-700">/</span>
+          <span className="text-[12px] font-medium text-neutral-500">{sceneCount} scenes</span>
         </div>
         <button
-          className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.02] px-2.5 py-1.5 text-[11px] font-semibold tracking-wide text-neutral-300 transition-all hover:bg-white/10 hover:text-white"
+          className="flex h-7 items-center justify-center gap-1.5 rounded-md bg-white/[0.03] px-3 text-[12px] font-medium text-neutral-300 transition-colors hover:bg-white/[0.05] hover:text-white"
           onClick={copySource}
           type="button"
         >
@@ -140,14 +140,15 @@ export function MdxEditorPane({
           Copy MDX
         </button>
       </div>
-      <div className="flex items-center justify-between border-b border-white/[0.06] bg-black/20 px-4 py-3">
-        <div className="flex gap-1 rounded-lg border border-white/[0.08] bg-black/40 p-1">
+      {/* Mode Tabs */}
+      <div className="flex items-center border-b border-white/[0.04] px-5 py-3">
+        <div className="flex gap-4">
           {(["selection", "deck"] as const).map((scope) => (
             <button
-              className={`rounded-md px-3 py-1.5 text-xs font-semibold tracking-wide transition-all ${
+              className={`text-[13px] font-medium transition-colors ${
                 editorScope === scope
-                  ? "bg-[#8b5cf6]/20 text-[#c4b5fd] shadow-[inset_0_0_0_1px_rgba(139,92,246,0.3)]"
-                  : "text-neutral-500 hover:bg-white/5 hover:text-neutral-300"
+                  ? "text-white"
+                  : "text-neutral-500 hover:text-neutral-300"
               }`}
               key={scope}
               onClick={() => setEditorScope(scope)}
@@ -158,21 +159,7 @@ export function MdxEditorPane({
           ))}
         </div>
       </div>
-      <div className="border-b border-white/[0.06] bg-black/20 px-4 py-3">
-        <div className="mb-2.5 px-1 text-[10px] font-bold tracking-widest text-neutral-500">Insert Blocks</div>
-        <div className="flex flex-wrap gap-2">
-          {snippetTemplates.map((snippet) => (
-            <button
-              className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-1.5 text-[11px] font-medium tracking-wide text-neutral-400 transition-all hover:bg-white/10 hover:text-white active:scale-95"
-              key={snippet.id}
-              onClick={() => handleInsertSnippet(snippet.code)}
-              type="button"
-            >
-              + {snippet.label}
-            </button>
-          ))}
-        </div>
-      </div>
+
       <div className="relative flex-1 overflow-hidden bg-transparent">
         <CodeMirror
           basicSetup={false}
@@ -188,9 +175,9 @@ export function MdxEditorPane({
           value={localSource}
         />
       </div>
-      <div className="flex items-center justify-between border-t border-white/[0.06] bg-white/[0.02] px-5 py-3 font-mono text-[11px] text-neutral-500">
+      <div className="flex items-center justify-between border-t border-white/[0.04] px-5 py-3 font-mono text-[11px] text-neutral-500">
         <span>Ln {cursorInfo.line}, Col {cursorInfo.column}</span>
-        <span className="font-semibold">{editorScope === "selection" ? "Selection MDX" : "Full MDX"}</span>
+        <span className="font-medium">{editorScope === "selection" ? "Selection MDX" : "Full MDX"}</span>
       </div>
     </div>
   );

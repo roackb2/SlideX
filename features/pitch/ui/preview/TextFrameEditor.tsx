@@ -3,27 +3,34 @@
 import { AlignCenter, AlignLeft, AlignRight, Bold, List, Minus, Plus } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { CSSProperties, CompositionEvent } from "react";
+import * as Toolbar from "@radix-ui/react-toolbar";
 import { numberValue } from "@/core/motion-doc/domain/frame";
 import { hexColorValue } from "@/features/pitch/application/colorPalettes";
-import { CANVAS_HEIGHT, CANVAS_WIDTH, stringValue, type EditableTextBlock } from "@/features/pitch/application/previewCanvas";
+import { stringValue, type EditableTextBlock } from "@/features/pitch/application/previewCanvas";
+import { autoSizeTextFrameProps } from "@/features/pitch/application/textFrameSizing";
+import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
+import { useDynamicFont } from "@/features/pitch/ui/hooks/useDynamicFont";
+import { FontPicker } from "@/features/pitch/ui/preview/controls/FontPicker";
 
 type TextFrameEditorProps = {
   block: EditableTextBlock;
   blockIndex: number;
   canvasScale: number;
+  onBeginTextEdit: () => void;
   onSelectBlock: (index: number) => void;
-  onUpdateBlock: (blockIndex: number, newProps: Record<string, string | number>, newText?: string) => void;
+  onUpdateBlock: BlockUpdater;
 };
 
 export function TextFrameEditor({
   block,
   blockIndex,
   canvasScale,
+  onBeginTextEdit,
   onSelectBlock,
   onUpdateBlock
 }: TextFrameEditorProps) {
-  const dragEdge = Math.max(14, Math.round(12 / canvasScale));
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const editStartedRef = useRef(false);
   const isComposingRef = useRef(false);
   const lastTextRef = useRef("");
 
@@ -38,91 +45,85 @@ export function TextFrameEditor({
     lastTextRef.current = block.text;
   }, [block.text]);
 
-  function commitText(text: string) {
-    const nextProps = autoSizeTextFrameProps(block, text);
+  function beginTextEdit() {
+    if (editStartedRef.current) {
+      return;
+    }
+
+    onBeginTextEdit();
+    editStartedRef.current = true;
+  }
+
+  function syncText(text: string, resizeFrame = false) {
+    beginTextEdit();
+
+    const nextProps = resizeFrame ? autoSizeTextFrameProps(block, text) : block.props;
     lastTextRef.current = text;
-    onUpdateBlock(blockIndex, nextProps, text);
+    onUpdateBlock(blockIndex, nextProps, text, { transient: true });
+  }
+
+  function finishTextEdit() {
+    if (!editStartedRef.current) {
+      return;
+    }
+
+    syncText(editorRef.current?.textContent ?? "", true);
+    editStartedRef.current = false;
   }
 
   return (
     <>
       <TextStyleToolbar block={block} blockIndex={blockIndex} onUpdateBlock={onUpdateBlock} />
       <div
-        aria-label={`Edit ${block.type} text`}
-        className="absolute z-10 cursor-text overflow-hidden border-0 bg-transparent p-0 text-current outline-none selection:bg-sky-500/30"
-        contentEditable="plaintext-only"
+        className="absolute z-10 cursor-text overflow-hidden border-0 bg-transparent p-0 text-current outline-none"
         onClick={(event) => event.stopPropagation()}
-        onCompositionEnd={(event: CompositionEvent<HTMLDivElement>) => {
-          isComposingRef.current = false;
-          commitText(event.currentTarget.textContent ?? "");
+        onDoubleClick={(event) => {
+          event.stopPropagation();
         }}
-        onCompositionStart={() => {
-          isComposingRef.current = true;
-        }}
-        onDoubleClick={(event) => event.stopPropagation()}
-        onInput={(event) => {
-          if (isComposingRef.current) {
-            lastTextRef.current = event.currentTarget.textContent ?? "";
-            return;
-          }
-
-          commitText(event.currentTarget.textContent ?? "");
-        }}
-        onKeyDown={(event) => event.stopPropagation()}
         onPointerDown={(event) => {
           event.stopPropagation();
           onSelectBlock(blockIndex);
         }}
-        ref={editorRef}
-        role="textbox"
-        spellCheck={false}
         style={{
-          ...editableTextStyle(block, canvasScale),
-          top: dragEdge,
-          left: dragEdge,
-          right: dragEdge,
-          bottom: dragEdge,
+          ...editableFrameStyle(block),
+          inset: 0,
           width: "auto",
           height: "auto"
         }}
-        suppressContentEditableWarning
-      />
+      >
+        <div
+          aria-label={`Edit ${block.type} text`}
+          className="w-full outline-none selection:bg-violet-500/35 selection:text-inherit"
+          contentEditable="plaintext-only"
+          onBeforeInput={beginTextEdit}
+          onBlur={finishTextEdit}
+          onCompositionEnd={(event: CompositionEvent<HTMLDivElement>) => {
+            isComposingRef.current = false;
+            syncText(event.currentTarget.textContent ?? "");
+          }}
+          onCompositionStart={() => {
+            beginTextEdit();
+            isComposingRef.current = true;
+          }}
+          onInput={(event) => {
+            if (isComposingRef.current) {
+              lastTextRef.current = event.currentTarget.textContent ?? "";
+              return;
+            }
+
+            syncText(event.currentTarget.textContent ?? "");
+          }}
+          onKeyDown={(event) => event.stopPropagation()}
+          onPaste={beginTextEdit}
+          ref={editorRef}
+          role="textbox"
+          spellCheck={false}
+          style={editableTextStyle(block, canvasScale)}
+          suppressContentEditableWarning
+        />
+      </div>
     </>
   );
-}
-
-function autoSizeTextFrameProps(block: EditableTextBlock, text: string) {
-  const fontSize = numberValue(block.props.fontSize) ?? (block.type === "Title" ? 72 : 24);
-  const lineHeight = numberValue(block.props.lineHeight) ?? (block.type === "Title" ? 1.02 : 1.45);
-  const lines = text.split("\n");
-  const longestLineWidth = Math.max(...lines.map((line) => estimatedLineWidth(line, fontSize)), fontSize * 2);
-  const paddingPx = stringValue(block.props.background ?? block.props.backgroundColor ?? block.props.bg, "") ? fontSize * 0.4 : 0;
-  const nextWidth = Math.min(Math.max(((longestLineWidth + paddingPx) / CANVAS_WIDTH) * 100, 8), 96);
-  const widthPx = Math.max((nextWidth / 100) * CANVAS_WIDTH, fontSize * 2);
-  const visualLineCount = lines.reduce((count, line) =>
-    count + Math.max(1, Math.ceil(estimatedLineWidth(line || " ", fontSize) / widthPx)),
-  0);
-  const nextHeight = Math.min(Math.max(((visualLineCount * fontSize * lineHeight + paddingPx) / CANVAS_HEIGHT) * 100, 4), 96);
-
-  return {
-    ...block.props,
-    h: Math.round(nextHeight * 10) / 10,
-    w: Math.round(nextWidth * 10) / 10
-  };
-}
-
-function estimatedLineWidth(line: string, fontSize: number) {
-  return Array.from(line || " ").reduce((sum, char) => {
-    if (/[\u3000-\u9fff\uff00-\uffef]/.test(char)) {
-      return sum + fontSize;
-    }
-
-    if (char === " ") {
-      return sum + fontSize * 0.32;
-    }
-
-    return sum + fontSize * 0.56;
-  }, 0);
 }
 
 function TextStyleToolbar({
@@ -132,7 +133,7 @@ function TextStyleToolbar({
 }: {
   block: EditableTextBlock;
   blockIndex: number;
-  onUpdateBlock: (blockIndex: number, newProps: Record<string, string | number>, newText?: string) => void;
+  onUpdateBlock: BlockUpdater;
 }) {
   const fontSize = numberValue(block.props.fontSize) ?? (block.type === "Title" ? 72 : 24);
   const lineHeight = numberValue(block.props.lineHeight) ?? (block.type === "Title" ? 1.02 : 1.45);
@@ -141,14 +142,21 @@ function TextStyleToolbar({
   const pickerColor = hexColorValue(color) ?? "#ffffff";
   const textAlign = stringValue(block.props.textAlign, "left");
   const listType = stringValue(block.props.listType, "");
+  const fontFamily = stringValue(block.props.fontFamily, "");
+  useDynamicFont(fontFamily);
+
   const isBold = fontWeight >= 700 || block.props.fontWeight === "bold";
   const isBulletList = listType === "bullet";
 
-  function updateProps(nextProps: Record<string, string | number>) {
-    onUpdateBlock(blockIndex, nextProps, block.text);
+  function updateProps(nextProps: Record<string, string | number>, resizeFrame = false) {
+    const resolvedProps = resizeFrame
+      ? autoSizeTextFrameProps(block, block.text, { props: nextProps })
+      : nextProps;
+
+    onUpdateBlock(blockIndex, resolvedProps, block.text);
   }
 
-  function setProp(key: string, value: string | number | "") {
+  function setProp(key: string, value: string | number | "", resizeFrame = false) {
     const nextProps = { ...block.props };
 
     delete nextProps[key];
@@ -157,11 +165,11 @@ function TextStyleToolbar({
       nextProps[key] = value;
     }
 
-    updateProps(nextProps);
+    updateProps(nextProps, resizeFrame);
   }
 
   function adjustFontSize(delta: number) {
-    setProp("fontSize", Math.min(Math.max(Math.round(fontSize + delta), 8), 180));
+    setProp("fontSize", Math.min(Math.max(Math.round(fontSize + delta), 8), 180), true);
   }
 
   function toggleList() {
@@ -179,52 +187,73 @@ function TextStyleToolbar({
       nextProps.listType = "bullet";
     }
 
-    onUpdateBlock(blockIndex, nextProps, nextText);
+    onUpdateBlock(blockIndex, autoSizeTextFrameProps(block, nextText, { props: nextProps }), nextText);
   }
 
   return (
-    <div
-      className="absolute -top-11 left-0 z-30 flex max-w-[min(520px,90vw)] items-center gap-1 overflow-hidden rounded-md border border-white/15 bg-[#111] p-1 shadow-2xl shadow-black/50"
+    <Toolbar.Root
+      className="absolute -top-14 left-0 z-30 flex items-center gap-1 rounded-lg border border-white/[0.08] bg-[#18181b]/95 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl"
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
       onKeyDown={(event) => event.stopPropagation()}
       onPointerDown={(event) => event.stopPropagation()}
     >
-      <button aria-label="Decrease font size" className={toolbarButtonClass(false)} onClick={() => adjustFontSize(-1)} type="button">
-        <Minus size={13} />
-      </button>
-      <input
-        aria-label="Font size"
-        className="h-7 w-12 rounded border border-neutral-700 bg-black px-1.5 text-center font-mono text-[11px] text-neutral-100 outline-none focus:border-neutral-400"
-        max={180}
-        min={8}
-        onChange={(event) => setProp("fontSize", event.target.value === "" ? "" : Number(event.target.value))}
-        type="number"
-        value={fontSize}
-      />
-      <button aria-label="Increase font size" className={toolbarButtonClass(false)} onClick={() => adjustFontSize(1)} type="button">
-        <Plus size={13} />
-      </button>
-      <span className="mx-0.5 h-5 w-px bg-white/10" />
-      <button aria-label="Bold" className={toolbarButtonClass(isBold)} onClick={() => setProp("fontWeight", isBold ? "" : 700)} type="button">
-        <Bold size={14} />
-      </button>
-      <button aria-label="Bullet list" className={toolbarButtonClass(isBulletList)} onClick={toggleList} type="button">
-        <List size={14} />
-      </button>
-      <span className="mx-0.5 h-5 w-px bg-white/10" />
-      <button aria-label="Align left" className={toolbarButtonClass(textAlign === "left")} onClick={() => setProp("textAlign", "left")} type="button">
-        <AlignLeft size={14} />
-      </button>
-      <button aria-label="Align center" className={toolbarButtonClass(textAlign === "center")} onClick={() => setProp("textAlign", "center")} type="button">
-        <AlignCenter size={14} />
-      </button>
-      <button aria-label="Align right" className={toolbarButtonClass(textAlign === "right")} onClick={() => setProp("textAlign", "right")} type="button">
-        <AlignRight size={14} />
-      </button>
-      <span className="mx-0.5 h-5 w-px bg-white/10" />
-      <label className="flex h-7 w-7 cursor-pointer items-center justify-center overflow-hidden rounded border border-neutral-700 bg-black" title="Text color">
-        <span className="h-4 w-4 rounded-sm border border-white/30" style={{ background: color }} />
+      {/* Font Family Selector */}
+      <FontPicker onChange={(val) => setProp("fontFamily", val, true)} value={fontFamily} />
+
+      <Toolbar.Separator className="mx-0.5 h-4 w-px bg-white/10 shrink-0" />
+
+      {/* Font Size Group */}
+      <div className="flex items-center h-7 rounded border border-white/[0.06] bg-black/20 overflow-hidden shrink-0">
+        <Toolbar.Button aria-label="Decrease font size" className="flex h-full w-7 items-center justify-center text-neutral-400 hover:bg-white/10 hover:text-white transition-colors outline-none focus-visible:ring-1 focus-visible:ring-white/50" onClick={() => adjustFontSize(-1)}>
+          <Minus size={12} />
+        </Toolbar.Button>
+        <input
+          aria-label="Font size"
+          className="h-full w-9 bg-transparent px-1 text-center font-mono text-[11px] text-neutral-200 outline-none focus:bg-white/5"
+          max={180}
+          min={8}
+          onChange={(event) => setProp("fontSize", event.target.value === "" ? "" : Number(event.target.value), true)}
+          type="number"
+          value={fontSize}
+        />
+        <Toolbar.Button aria-label="Increase font size" className="flex h-full w-7 items-center justify-center text-neutral-400 hover:bg-white/10 hover:text-white transition-colors outline-none focus-visible:ring-1 focus-visible:ring-white/50" onClick={() => adjustFontSize(1)}>
+          <Plus size={12} />
+        </Toolbar.Button>
+      </div>
+
+      <Toolbar.Separator className="mx-0.5 h-4 w-px bg-white/10 shrink-0" />
+
+      {/* Styling */}
+      <div className="flex items-center gap-0.5 shrink-0">
+        <Toolbar.Button aria-label="Bold" className={toolbarButtonClass(isBold)} onClick={() => setProp("fontWeight", isBold ? "" : 700, true)}>
+          <Bold size={13} />
+        </Toolbar.Button>
+        <Toolbar.Button aria-label="Bullet list" className={toolbarButtonClass(isBulletList)} onClick={toggleList}>
+          <List size={13} />
+        </Toolbar.Button>
+      </div>
+
+      <Toolbar.Separator className="mx-0.5 h-4 w-px bg-white/10 shrink-0" />
+
+      {/* Alignment */}
+      <div className="flex items-center gap-0.5 bg-black/20 rounded p-0.5 border border-white/[0.04] shrink-0">
+        <Toolbar.Button aria-label="Align left" className={toolbarButtonClass(textAlign === "left")} onClick={() => setProp("textAlign", "left")}>
+          <AlignLeft size={13} />
+        </Toolbar.Button>
+        <Toolbar.Button aria-label="Align center" className={toolbarButtonClass(textAlign === "center")} onClick={() => setProp("textAlign", "center")}>
+          <AlignCenter size={13} />
+        </Toolbar.Button>
+        <Toolbar.Button aria-label="Align right" className={toolbarButtonClass(textAlign === "right")} onClick={() => setProp("textAlign", "right")}>
+          <AlignRight size={13} />
+        </Toolbar.Button>
+      </div>
+
+      <Toolbar.Separator className="mx-0.5 h-4 w-px bg-white/10 shrink-0" />
+
+      {/* Color */}
+      <label className="group flex h-7 w-7 cursor-pointer items-center justify-center overflow-hidden rounded border border-white/10 bg-black/40 hover:border-white/30 transition-colors shrink-0" title="Text color">
+        <span className="h-4 w-4 rounded-[3px] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] group-hover:scale-110 transition-transform" style={{ backgroundColor: color }} />
         <input
           aria-label="Text color"
           className="sr-only"
@@ -233,25 +262,39 @@ function TextStyleToolbar({
           value={pickerColor}
         />
       </label>
-      <span className="ml-1 font-mono text-[10px] text-neutral-500">LH</span>
-      <input
-        aria-label="Line height"
-        className="h-7 w-14 rounded border border-neutral-700 bg-black px-1.5 text-center font-mono text-[11px] text-neutral-100 outline-none focus:border-neutral-400"
-        max={2.5}
-        min={0.8}
-        onChange={(event) => setProp("lineHeight", event.target.value === "" ? "" : Number(event.target.value))}
-        step={0.05}
-        type="number"
-        value={lineHeight}
-      />
-    </div>
+
+      {/* Line Height */}
+      <div className="ml-0.5 flex h-7 items-center rounded border border-white/[0.06] bg-black/20 px-1.5 hover:border-white/20 transition-colors focus-within:border-white/30 focus-within:bg-black/40 shrink-0">
+        <span className="font-mono text-[9px] text-neutral-500 font-semibold mr-1">LH</span>
+        <input
+          aria-label="Line height"
+          className="h-full w-9 bg-transparent text-center font-mono text-[11px] text-neutral-200 outline-none"
+          max={2.5}
+          min={0.8}
+          onChange={(event) => setProp("lineHeight", event.target.value === "" ? "" : Number(event.target.value), true)}
+          step={0.05}
+          type="number"
+          value={lineHeight}
+        />
+      </div>
+    </Toolbar.Root>
   );
+}
+
+function editableFrameStyle(block: EditableTextBlock): CSSProperties {
+  const verticalAlign = stringValue(block.props.textVerticalAlign, "top");
+
+  return {
+    alignItems: "stretch",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: verticalAlign === "bottom" ? "flex-end" : verticalAlign === "middle" || verticalAlign === "center" ? "center" : "flex-start"
+  };
 }
 
 function editableTextStyle(block: EditableTextBlock, canvasScale: number): CSSProperties {
   const fontSize = Number(block.props.fontSize) || (block.type === "Title" ? 72 : 24);
   const textAlign = stringValue(block.props.textAlign, "left") as CSSProperties["textAlign"];
-  const verticalAlign = stringValue(block.props.textVerticalAlign, "top");
   const color = stringValue(block.props.color ?? block.props.textColor, "inherit");
   const hasSurface = Boolean(stringValue(block.props.background ?? block.props.backgroundColor ?? block.props.bg, ""));
   const fontWeight = numberValue(block.props.fontWeight) ?? (block.type === "Title" ? 600 : 400);
@@ -263,26 +306,24 @@ function editableTextStyle(block: EditableTextBlock, canvasScale: number): CSSPr
     boxSizing: "border-box",
     caretColor: color === "inherit" ? "currentColor" : color,
     color,
-    alignItems: "stretch",
-    display: "flex",
-    flexDirection: "column",
+    display: "block",
     fontFamily: fontFamily ? `"${fontFamily}", var(--font-geist-sans, sans-serif)` : "inherit",
     fontSize: `${fontSize * canvasScale}px`,
     fontWeight,
-    height: "100%",
     letterSpacing: 0,
     lineHeight,
     margin: 0,
+    minHeight: "1em",
     padding: hasSurface ? "0.12em 0.18em" : 0,
-    justifyContent: verticalAlign === "bottom" ? "flex-end" : verticalAlign === "middle" || verticalAlign === "center" ? "center" : "flex-start",
     textAlign,
+    userSelect: "text",
     whiteSpace: "pre-wrap",
     width: "100%"
   };
 }
 
 function toolbarButtonClass(active: boolean) {
-  return `flex h-7 w-7 items-center justify-center rounded transition-colors ${
-    active ? "bg-white text-black" : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
+  return `flex h-7 w-7 items-center justify-center rounded-[5px] transition-all outline-none focus-visible:ring-1 focus-visible:ring-white/50 ${
+    active ? "bg-white text-black shadow-sm" : "text-neutral-400 hover:bg-white/10 hover:text-white"
   }`;
 }

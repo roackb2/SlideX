@@ -1,5 +1,7 @@
 import type {
   BriefAttachment,
+  BriefBudgetItem,
+  BriefDecisionItem,
   BriefFaqItem,
   BriefImage,
   BriefLink,
@@ -15,8 +17,12 @@ import {
   richTextToMdx,
   richTextToPlainText
 } from "@/features/briefly/application/richTextFormat";
-import type { Locale } from "@/common/lib/i18n";
-import { getBrieflyCopy, getOptionLabel, getSectionCopy } from "@/features/briefly/ui/brieflyCopy";
+import {
+  getBrieflyCopy,
+  getOptionLabel,
+  getSectionCopy,
+  type BrieflyLocale
+} from "@/features/briefly/application/brieflyCopy";
 
 const SECTION_TITLES: Record<SectionType, string> = {
   cover: "Cover / Snapshot",
@@ -76,6 +82,20 @@ function isAttachmentArray(value: unknown): value is BriefAttachment[] {
   return (
     Array.isArray(value) &&
     value.every((item) => item && typeof item === "object" && "dataUrl" in item)
+  );
+}
+
+function isBudgetItemArray(value: unknown): value is BriefBudgetItem[] {
+  return (
+    Array.isArray(value) &&
+    value.every((item) => item && typeof item === "object" && "category" in item)
+  );
+}
+
+function isDecisionItemArray(value: unknown): value is BriefDecisionItem[] {
+  return (
+    Array.isArray(value) &&
+    value.every((item) => item && typeof item === "object" && "decision" in item)
   );
 }
 
@@ -228,7 +248,7 @@ export function getExportBaseName(brief: ProjectBrief) {
   return normalized || "project-brief";
 }
 
-export function generateMdx(brief: ProjectBrief, locale?: Locale) {
+export function generateMdx(brief: ProjectBrief, locale?: BrieflyLocale) {
   const sections = orderedSections(brief);
 
   if (!sections.length) {
@@ -463,7 +483,7 @@ function sectionHtml(title: string, body: string, index?: number, layout?: strin
   return `<section class="brief-section${layoutClass}">${index ? `<span class="section-number">${String(index).padStart(2, "0")}</span>` : ""}<h2>${escapeHtml(title)}</h2>${body || "<p class=\"placeholder\">Add details here.</p>"}</section>`;
 }
 
-export function generateHtml(brief: ProjectBrief, locale: Locale = "en") {
+export function generateHtml(brief: ProjectBrief, locale: BrieflyLocale = "en") {
   const cover = getCoverSection(brief);
   const title = getBriefDisplayTitle(brief);
   const sections = orderedSections(brief).filter((section) => section.type !== "cover");
@@ -986,7 +1006,7 @@ export function generateHtml(brief: ProjectBrief, locale: Locale = "en") {
 </html>`;
 }
 
-function renderSectionHtml(section: BriefSection, index?: number, locale: Locale = "en") {
+function renderSectionHtml(section: BriefSection, index?: number, locale: BrieflyLocale = "en") {
   const sectionTitle = getSectionCopy(section.type, locale).title;
   
   switch (section.type) {
@@ -1150,12 +1170,12 @@ function renderReferencesHtml(section: BriefSection) {
   return linkHtml + imageHtml;
 }
 
-function getBudgetItems(section: BriefSection): import("@/features/briefly/domain/briefTypes").BriefBudgetItem[] {
+function getBudgetItems(section: BriefSection): BriefBudgetItem[] {
   const items = section.data.budget_items;
-  return Array.isArray(items) ? (items as any) : [];
+  return isBudgetItemArray(items) ? items : [];
 }
 
-function renderBudgetHtml(section: BriefSection, locale: Locale) {
+function renderBudgetHtml(section: BriefSection, locale: BrieflyLocale) {
   const items = getBudgetItems(section);
   const copy = getBrieflyCopy(locale).sectionEditor;
   if (!items.length) return "";
@@ -1174,12 +1194,12 @@ function renderBudgetHtml(section: BriefSection, locale: Locale) {
   </table>`;
 }
 
-function getDecisionItems(section: BriefSection): import("@/features/briefly/domain/briefTypes").BriefDecisionItem[] {
+function getDecisionItems(section: BriefSection): BriefDecisionItem[] {
   const items = section.data.decision_items;
-  return Array.isArray(items) ? (items as any) : [];
+  return isDecisionItemArray(items) ? items : [];
 }
 
-function renderDecisionHtml(section: BriefSection, locale: Locale) {
+function renderDecisionHtml(section: BriefSection, locale: BrieflyLocale) {
   const items = getDecisionItems(section);
   const copy = getBrieflyCopy(locale).sectionEditor;
   if (!items.length) return "";

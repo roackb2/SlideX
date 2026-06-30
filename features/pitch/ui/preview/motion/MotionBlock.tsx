@@ -1,9 +1,11 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { motion, type MotionProps } from "framer-motion";
+import { motion } from "framer-motion";
+import type { EnterAnimation } from "@/features/pitch/application/motionPresets";
+import { elementMotionProps } from "@/features/pitch/ui/preview/motion/framerMotionProps";
 
-export type EnterAnimation = "fadeIn" | "fadeUp" | "none" | "zoomIn" | "slideLeft";
+export type { EnterAnimation };
 
 export type AnimationProps = {
   delay?: number;
@@ -41,48 +43,29 @@ export function MotionBlock({
   style,
   ...animation
 }: MotionBlockProps) {
+  const blockStyle = {
+    ...radiusStyle({ borderRadius, radius }),
+    ...(fillFrame ? { height: "100%", maxWidth: "none", width: "100%" } : {}),
+    ...style
+  };
+
+  if (animation.enter === undefined || animation.enter === "none") {
+    return (
+      <div className={className} style={blockStyle}>
+        {children}
+      </div>
+    );
+  }
+
   return (
     <motion.div
       className={className}
-      style={{
-        ...radiusStyle({ borderRadius, radius }),
-        ...(fillFrame ? { height: "100%", maxWidth: "none", width: "100%" } : {}),
-        ...style
-      }}
-      {...getMotionProps(animation)}
+      style={blockStyle}
+      {...elementMotionProps(animation)}
     >
       {children}
     </motion.div>
   );
-}
-
-function getMotionProps({
-  delay = 0,
-  duration = 0.6,
-  enter = "fadeUp"
-}: AnimationProps): MotionProps {
-  if (enter === "none") {
-    return { initial: false };
-  }
-
-  const shared = {
-    animate: { opacity: 1, scale: 1, x: 0, y: 0 },
-    transition: { delay, duration, ease: [0.22, 1, 0.36, 1] }
-  } satisfies MotionProps;
-
-  if (enter === "fadeIn") {
-    return { ...shared, initial: { opacity: 0 } };
-  }
-
-  if (enter === "zoomIn") {
-    return { ...shared, initial: { opacity: 0, scale: 0.88 } };
-  }
-
-  if (enter === "slideLeft") {
-    return { ...shared, initial: { opacity: 0, x: 54 } };
-  }
-
-  return { ...shared, initial: { opacity: 0, y: 28 } };
 }
 
 function radiusStyle({ borderRadius, radius }: RadiusProps): CSSProperties | undefined {

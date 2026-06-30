@@ -41,7 +41,7 @@ import {
 } from "@/features/briefly/domain/briefTypes";
 import type { AppearanceMode } from "@/features/briefly/infrastructure/builderAppearance";
 import { IMAGE_UPLOAD_PRESETS, processImageFile } from "@/features/briefly/infrastructure/imageUpload";
-import { getBrieflyCopy, getSectionCopy, getSectionGroupLabel } from "@/features/briefly/ui/brieflyCopy";
+import { getBrieflyCopy, getSectionCopy, getSectionGroupLabel } from "@/features/briefly/application/brieflyCopy";
 import { BuilderPreferencesPanel } from "@/features/briefly/ui/builder/BuilderPreferencesPanel";
 import { getLeftToolLabel, getLeftToolTitle } from "@/features/briefly/ui/builder/layout";
 import { IconButton } from "@/features/briefly/ui/builder/BuilderShared";

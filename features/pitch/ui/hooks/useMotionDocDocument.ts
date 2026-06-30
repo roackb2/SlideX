@@ -21,6 +21,7 @@ export function useMotionDocDocument({
   const activeSlideAccent = stringValue(activeSlide?.props.accent) ?? "#7c3aed";
   const activeSlideTheme = stringValue(activeSlide?.props.theme) ?? "dark";
   const activeSlideLayout = stringValue(activeSlide?.props.layout) ?? "default";
+  const activeSlideLayoutPreset = stringValue(activeSlide?.props.layoutPreset) ?? "blank";
   const activeSlideAlignX = stringValue(activeSlide?.props.alignX) ?? "left";
   const activeSlideAlignY = stringValue(activeSlide?.props.alignY) ?? "center";
   const activeSlideTextColor = stringValue(activeSlide?.props.textColor ?? activeSlide?.props.foreground ?? activeSlide?.props.color) ?? "";
@@ -53,6 +54,7 @@ export function useMotionDocDocument({
     activeSlideAlignY,
     activeSlideBackground,
     activeSlideLayout,
+    activeSlideLayoutPreset,
     activeSlideMutedColor,
     activeSlideShader,
     activeSlideShaderColor1,

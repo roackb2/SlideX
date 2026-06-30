@@ -50,6 +50,74 @@ export function buildMotionDocHtml(source: string, customTitle?: string) {
 </html>`;
 }
 
+/**
+ * Build a lightweight HTML document optimized for PDF printing.
+ * Strips the shader runtime, disables GPU-heavy effects, and renders all slides
+ * statically without any JavaScript animation loops.
+ */
+export function buildMotionDocPdfHtml(source: string, customTitle?: string) {
+  const document = parseMotionDoc(source);
+  const displayTitle = customTitle || document.title;
+  const slidesHtml = document.scenes
+    .map((scene) => renderSceneHtml(materializeFreeformScene(scene)))
+    .join("\n");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${escapeHtml(displayTitle)}</title>
+    <style>${motionDocExportStyles}</style>
+    <style>
+      /* PDF-specific overrides: strip GPU-heavy effects */
+      * { animation: none !important; transition: none !important; }
+      .shader-bg { display: none !important; }
+      .slide::before { display: none !important; }
+      .controls { display: none !important; }
+      .player { display: block; height: auto; padding: 0; }
+      .stage { display: block; height: auto; }
+      .viewport { width: 100%; max-width: none; height: auto; aspect-ratio: auto; border-radius: 0; background: transparent; box-shadow: none; overflow: visible; }
+      .frame { position: relative; width: 100%; height: auto; transform: none; overflow: visible; }
+      .slide {
+        position: relative; display: block !important;
+        width: 1024px; height: 576px;
+        page-break-after: always; page-break-inside: avoid;
+        overflow: hidden;
+      }
+      .motion-block {
+        opacity: 1 !important;
+        transform: translate3d(0,0,0) scale(1) !important;
+        filter: none !important;
+        clip-path: none !important;
+      }
+      .block-card, .block-metric, .block-chart, .block-image, .block-icon, .block-stack {
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        box-shadow: none !important;
+        filter: none !important;
+      }
+      @page { size: 1024px 576px; margin: 0; }
+      html, body {
+        width: 1024px; margin: 0; padding: 0;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        overflow: visible;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="player" data-slide-count="${document.scenes.length}">
+      <div class="stage">
+        <div class="viewport">
+          <div class="frame">
+            ${slidesHtml}
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>`;
+}
+
 function renderSceneHtml(
   scene: ReturnType<typeof materializeFreeformScene>
 ) {
@@ -63,16 +131,27 @@ function renderSceneHtml(
   });
   const shader = stringProp(props.shader);
   const shaderHtml = shader ? `<canvas class="shader-bg" data-shader="${escapeAttribute(shader)}" data-shader-engine="${escapeAttribute(themeColors.shaderEngine)}" data-shader-variant="${shaderVariantForId(shader)}" data-shader-color1="${escapeAttribute(themeColors.shaderColor1)}" data-shader-color2="${escapeAttribute(themeColors.shaderColor2)}" data-shader-color3="${escapeAttribute(themeColors.shaderColor3)}" data-shader-intensity="${numberProp(props.shaderIntensity, 0.5)}" data-shader-speed="${numberProp(props.shaderSpeed, 1)}" data-shader-softness="${numberProp(props.shaderSoftness, 0.5)}" data-shader-scale="${numberProp(props.shaderScale, 0.5)}" data-shader-detail="${numberProp(props.shaderDetail, 0.5)}"></canvas>` : '';
+  const backgroundImage = stringProp(props.backgroundImage);
+  const backgroundImageHtml = backgroundImage
+    ? `<div class="slide-bg-image" style="${escapeAttribute(inlineCss({
+        "background-image": cssImageUrl(backgroundImage),
+        "background-size": backgroundSizeFromFit(stringProp(props.backgroundFit))
+      }))}"></div>`
+    : "";
+  const slideTransition = slideTransitionClass(props.slideTransition);
+  const transitionDuration = numberProp(props.transitionDuration, 0.72);
 
-  return `<section class="slide" data-duration="${Math.max(duration, 1)}" data-has-shader="${shader ? "true" : "false"}" data-theme-tone="${themeColors.tone}" style="${escapeAttribute(inlineCss({
+  return `<section class="slide ${slideTransition}" data-duration="${Math.max(duration, 1)}" data-has-shader="${shader ? "true" : "false"}" data-theme-tone="${themeColors.tone}" style="${escapeAttribute(inlineCss({
     "--slide-accent": themeColors.accent,
     "--slide-bg": themeColors.background,
     "--slide-border": themeColors.borderColor,
     "--slide-card": themeColors.cardBackground,
     "--slide-fg": themeColors.foreground,
     "--slide-muted": themeColors.muted,
-    "--slide-overlay-opacity": shader ? "0.3" : "0.72"
+    "--slide-overlay-opacity": shader ? "0.3" : "0.72",
+    "--slide-transition-duration": `${transitionDuration}s`
   }))}">
+    ${backgroundImageHtml}
     ${shaderHtml}
     ${blocks.map((block, index) => renderBlock(block, index)).join("")}
   </section>`;
@@ -245,11 +324,27 @@ function flexAlignVars(props: Record<string, string | number>): Record<string, s
 }
 
 function animationClass(value: string | number | undefined) {
+  if (value === "none" || value === "") return "enter-none";
+  if (value === "blurIn") return "enter-blur-in";
   if (value === "fadeIn") return "enter-fade-in";
+  if (value === "pop") return "enter-pop";
+  if (value === "reveal") return "enter-reveal";
+  if (value === "rise") return "enter-rise";
   if (value === "zoomIn") return "enter-zoom-in";
   if (value === "slideLeft") return "enter-slide-left";
 
   return "enter-fade-up";
+}
+
+function slideTransitionClass(value: string | number | undefined) {
+  if (value === "curtain") return "slide-transition-curtain";
+  if (value === "fade") return "slide-transition-fade";
+  if (value === "pushLeft") return "slide-transition-push-left";
+  if (value === "rise") return "slide-transition-rise";
+  if (value === "scale") return "slide-transition-scale";
+  if (value === "wipe") return "slide-transition-wipe";
+
+  return "slide-transition-none";
 }
 
 function numberProp(value: string | number | undefined, fallback: number) {
@@ -499,6 +594,22 @@ function fitProp(value: string | number | undefined) {
   }
 
   return "cover";
+}
+
+function backgroundSizeFromFit(value: string | undefined) {
+  if (value === "contain" || value === "scale-down") {
+    return "contain";
+  }
+
+  if (value === "fill") {
+    return "100% 100%";
+  }
+
+  return "cover";
+}
+
+function cssImageUrl(value: string) {
+  return `url("${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")`;
 }
 
 function renderShapeSvg(props: Record<string, string | number>, blockIndex: number) {

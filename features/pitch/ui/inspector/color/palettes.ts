@@ -2,34 +2,64 @@ import type { HexColor, ThemePalette } from "@/features/pitch/application/colorP
 
 export const slidePalettePresets = [
   {
-    id: "midnight",
-    name: "Midnight",
-    colors: { background: "#030303", text: "#ffffff", muted: "#cbd5e1", accent: "#7dd3fc" }
+    id: "blank-white",
+    name: "Blank",
+    colors: { background: "#ffffff", text: "#111827", muted: "#71717a", accent: "#111111" }
   },
   {
-    id: "editorial",
-    name: "Editorial",
-    colors: { background: "#f8fafc", text: "#111827", muted: "#475569", accent: "#2563eb" }
+    id: "black-boardroom",
+    name: "Black Boardroom",
+    colors: { background: "#030303", text: "#ffffff", muted: "#a1a1aa", accent: "#ffffff" }
   },
   {
-    id: "portfolio",
-    name: "Portfolio",
-    colors: { background: "#101820", text: "#f8fafc", muted: "#b7c4c9", accent: "#f2aa4c" }
+    id: "white-executive",
+    name: "White Executive",
+    colors: { background: "#f8f9fa", text: "#111111", muted: "#71717a", accent: "#111111" }
   },
   {
-    id: "sage",
-    name: "Sage",
-    colors: { background: "#eef4ef", text: "#102018", muted: "#52685c", accent: "#2f855a" }
+    id: "revenue-command",
+    name: "Revenue Command",
+    colors: { background: "#07111f", text: "#f8fbff", muted: "#9fb7d8", accent: "#72a7ff" }
   },
   {
-    id: "plum",
-    name: "Plum",
-    colors: { background: "#1d1425", text: "#fff7ed", muted: "#d8c6e2", accent: "#fb7185" }
+    id: "investor-update",
+    name: "Investor Update",
+    colors: { background: "#fff8ef", text: "#2f2418", muted: "#8b7358", accent: "#7a4f24" }
   },
   {
-    id: "steel",
-    name: "Steel",
-    colors: { background: "#e7eef5", text: "#172033", muted: "#64748b", accent: "#0f766e" }
+    id: "product-launch",
+    name: "Product Launch",
+    colors: { background: "#07120f", text: "#f4fff8", muted: "#9bb7aa", accent: "#7dd3a8" }
+  },
+  {
+    id: "customer-success",
+    name: "Mist QBR",
+    colors: { background: "#f6faf8", text: "#10251f", muted: "#5d746c", accent: "#145c49" }
+  },
+  {
+    id: "saas-review",
+    name: "Electric Slate",
+    colors: { background: "#081018", text: "#f5fbff", muted: "#99b5c5", accent: "#7dd3fc" }
+  },
+  {
+    id: "market-entry",
+    name: "Consulting Blue",
+    colors: { background: "#f7fbff", text: "#10233c", muted: "#607895", accent: "#183b68" }
+  },
+  {
+    id: "brand-pitch",
+    name: "Luxury Plum",
+    colors: { background: "#120815", text: "#fff7fb", muted: "#c49ab4", accent: "#f0a6ca" }
+  },
+  {
+    id: "digital-transformation",
+    name: "Signal White",
+    colors: { background: "#f8faff", text: "#111827", muted: "#64748b", accent: "#3157ff" }
+  },
+  {
+    id: "talent-strategy",
+    name: "Forest Green",
+    colors: { background: "#05110d", text: "#ffffff", muted: "#6b8e7d", accent: "#67e8a3" }
   }
 ] satisfies readonly ThemePalette[];
 

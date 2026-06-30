@@ -6,12 +6,12 @@ import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWor
 type WorkspaceLayerSidebarProps = Pick<
   PitchWorkspaceProps,
   | "activeSlideIndex"
+  | "addSlide"
   | "deleteBlock"
   | "deleteSlide"
   | "draggedBlockIndex"
   | "dragOverBlockIndex"
   | "isMobileSidebarOpen"
-  | "isTemplateModalOpen"
   | "moveBlock"
   | "reorderBlock"
   | "reorderSlide"
@@ -22,7 +22,6 @@ type WorkspaceLayerSidebarProps = Pick<
   | "setDraggedBlockIndex"
   | "setDragOverBlockIndex"
   | "setIsMobileSidebarOpen"
-  | "setIsTemplateModalOpen"
   | "slideRows"
 > & {
   onSelectSlide: (index: number) => void;
@@ -58,11 +57,11 @@ export function WorkspaceLayerSidebar(props: WorkspaceLayerSidebarProps) {
 
 function LayerSidebarContent({
   activeSlideIndex,
+  addSlide,
   deleteBlock,
   deleteSlide,
   draggedBlockIndex,
   dragOverBlockIndex,
-  isTemplateModalOpen,
   moveBlock,
   onSelectSlide,
   reorderBlock,
@@ -73,19 +72,21 @@ function LayerSidebarContent({
   selectedBlockIndices,
   setDraggedBlockIndex,
   setDragOverBlockIndex,
-  setIsTemplateModalOpen,
+  setIsMobileSidebarOpen,
   slideRows
 }: WorkspaceLayerSidebarProps) {
   return (
     <LayerSidebar
       activeSlideIndex={activeSlideIndex}
+      onAddSlide={() => {
+        addSlide();
+        setIsMobileSidebarOpen(false);
+      }}
       deleteBlock={deleteBlock}
       deleteSlide={deleteSlide}
       draggedBlockIndex={draggedBlockIndex}
       dragOverBlockIndex={dragOverBlockIndex}
-      isTemplateModalOpen={isTemplateModalOpen}
       moveBlock={moveBlock}
-      onOpenTemplates={() => setIsTemplateModalOpen(true)}
       onSelectBlock={selectBlockFromLayer}
       onSelectSlide={onSelectSlide}
       reorderBlock={reorderBlock}

@@ -409,5 +409,56 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { title: "02 Pilot", text: "Run three bounded pilots with human review and measured outcomes." },
       { title: "03 Govern", text: "Scale through approved patterns, reusable playbooks, and operating controls." }
     ]
+  }),
+  createBusinessTemplate({
+    id: "talent-strategy-review",
+    name: "Talent Strategy Review",
+    category: "Graphite Green",
+    theme: "dark",
+    background: "#05110d",
+    mutedBackground: "#0b1a14",
+    surfaceBackground: "#07140f",
+    accent: "#67e8a3",
+    description: "An executive review for organizational design, headcount planning, performance metrics, and culture investments.",
+    useCase: "HR leadership, talent strategy, headcount planning",
+    hero: "Talent Strategy Review",
+    subtitle: "A leadership view on organizational health, performance density, and where we need to deploy headcount next.",
+    metrics: [
+      { label: "Performance density", value: "82%", caption: "High-performers as a percentage of critical roles." },
+      { label: "Time to hire", value: "34d", caption: "Average days to close priority engineering and sales reqs." },
+      { label: "Voluntary attrition", value: "4.2%", caption: "Quarterly churn, stable within expected bands." }
+    ],
+    thesis: [
+      { icon: "Users", title: "Talent is our constraint", text: "Capital is available, but shipping velocity depends on filling the remaining critical nodes." },
+      { icon: "TrendingUp", title: "Internal mobility works", text: "We are seeing faster ramp times from internal transfers than external senior hires." }
+    ],
+    chart: { title: "Headcount by function", labels: "Eng,Sales,Product,G&A", values: "142,88,45,31" },
+    evidence: [
+      { icon: "MessageSquare", title: "Engagement scores", text: "Teams report high clarity on goals, but friction in cross-functional execution." },
+      { icon: "Award", title: "Manager quality", text: "Retention correlates heavily with manager tenure and training completion." }
+    ],
+    strategy: [
+      { icon: "Target", title: "Focus hiring", text: "Concentrate recruiting capacity on the top 5 critical gaps." },
+      { icon: "Layers", title: "Develop leaders", text: "Roll out the management accelerator program to new front-line managers." },
+      { icon: "ShieldCheck", title: "Protect culture", text: "Maintain strict hiring bars even as growth pressure increases." }
+    ],
+    image: {
+      src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1200",
+      alt: "Team collaboration"
+    },
+    proofText: "Use this slide for org charts, engagement survey data, or recruiting pipeline reviews.",
+    economics: [
+      { label: "Cost per hire", value: "-12%", caption: "Efficiency gained from internal recruiting motion." },
+      { label: "Ramp time", value: "45d", caption: "Faster productivity from standardized onboarding." }
+    ],
+    risks: [
+      { icon: "CircleAlert", title: "Burnout risk", text: "High utilization in core engineering teams needs immediate balancing." },
+      { icon: "Lock", title: "Comp compression", text: "Monitor market bands to prevent retention risks in key roles." }
+    ],
+    plan: [
+      { title: "01 Assess", text: "Review Q2 performance and promotion cycle outcomes." },
+      { title: "02 Plan", text: "Finalize Q3 headcount allocation by department." },
+      { title: "03 Execute", text: "Launch the targeted leadership development program." }
+    ]
   })
 ];

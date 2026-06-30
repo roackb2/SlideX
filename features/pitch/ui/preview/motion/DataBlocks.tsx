@@ -278,16 +278,15 @@ function PieChartBody({
   const cx = size / 2;
   const cy = size / 2;
   
-  // Calculate SVG arc paths
-  let currentAngle = 0;
   const slices = values.map((value, index) => {
+    const currentAngle = values
+      .slice(0, index)
+      .reduce((angle, previousValue) => angle + (previousValue / total) * 360, 0);
     const sweepAngle = (value / total) * 360;
     // Leave a small gap between slices for premium look
     const gap = sweepAngle > 5 ? 2.5 : 0;
     const startAngle = currentAngle + (gap / 2);
     const endAngle = currentAngle + sweepAngle - (gap / 2);
-    
-    currentAngle += sweepAngle;
     
     // Donut chart uses thick stroke, Pie chart uses filled wedges
     if (mode === "donut") {

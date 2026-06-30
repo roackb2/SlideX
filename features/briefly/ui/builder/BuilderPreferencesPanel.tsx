@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { Locale } from "@/common/lib/i18n";
 import type { AppearanceMode } from "@/features/briefly/infrastructure/builderAppearance";
-import { getBrieflyCopy } from "@/features/briefly/ui/brieflyCopy";
+import { getBrieflyCopy } from "@/features/briefly/application/brieflyCopy";
 import { Languages, Monitor, Moon, Settings, Sun } from "lucide-react";
 
 interface BuilderPreferencesPanelProps {

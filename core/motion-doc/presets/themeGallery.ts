@@ -269,8 +269,8 @@ export function createBlankDocumentSource(config: BlankDocumentSourceConfig) {
   return `# Untitled
 
 <Slide duration={5} theme="${config.theme}" background="${config.background}" accent="${config.accent}" textColor="${config.textColor}" mutedColor="${config.mutedColor}" alignX="${config.textAlign}" alignY="center" textAlign="${config.textAlign}">
-  <Text fontSize={${titleFontSize}} fontWeight={${titleWeight}} radius={0} textAlign="${config.textAlign}" x={${titleFrame.x}} y={${titleFrame.y}} w={${titleFrame.w}} h={${titleFrame.h}}>${escapeText(config.titlePlaceholder)}</Text>
-  <Text fontSize={${bodyFontSize}} lineHeight={${lineHeight}} radius={0} textAlign="${config.textAlign}" x={${bodyFrame.x}} y={${bodyFrame.y}} w={${bodyFrame.w}} h={${bodyFrame.h}}>${escapeText(config.bodyPlaceholder)}</Text>
+  <Text fontSize={${titleFontSize}} fontWeight={${titleWeight}} textAlign="${config.textAlign}" x={${titleFrame.x}} y={${titleFrame.y}} w={${titleFrame.w}} h={${titleFrame.h}}>${escapeText(config.titlePlaceholder)}</Text>
+  <Text fontSize={${bodyFontSize}} lineHeight={${lineHeight}} textAlign="${config.textAlign}" x={${bodyFrame.x}} y={${bodyFrame.y}} w={${bodyFrame.w}} h={${bodyFrame.h}}>${escapeText(config.bodyPlaceholder)}</Text>
 </Slide>`;
 }
 

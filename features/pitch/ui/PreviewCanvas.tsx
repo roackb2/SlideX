@@ -19,51 +19,76 @@ import {
   type MarqueeSelection,
   type ResizeHandle
 } from "@/features/pitch/application/previewCanvas";
-import type { AddBlockOptions } from "@/features/pitch/application/motionDocCommands";
+import { isPositionLocked, type AddBlockOptions } from "@/features/pitch/application/motionDocCommands";
 import type { SlideRow } from "@/features/pitch/ui/LayerSidebar";
-import { CanvasBlockDock, CanvasSlideNav, CanvasTimeline } from "@/features/pitch/ui/preview/CanvasChrome";
+import { CanvasBlockDock, CanvasSlideNav } from "@/features/pitch/ui/preview/CanvasChrome";
+import { CanvasContextMenu } from "@/features/pitch/ui/preview/CanvasContextMenu";
 import { CanvasSelectionLayer } from "@/features/pitch/ui/preview/CanvasSelectionLayer";
 import { PreviewPane } from "@/features/pitch/ui/preview/PreviewPane";
+import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
 import type { AddBlockType } from "@/features/pitch/ui/pitchOptions";
 
 type FramePatch = { h?: number; w?: number; x?: number; y?: number };
+type CanvasContextMenuState = {
+  blockIndex: number | null;
+  position: { x: number; y: number };
+};
 
 type PreviewCanvasProps = {
+  zoomLevel: number | "fit";
+  onFitScaleChange?: (scale: number) => void;
   activeSlide: MotionDocScene | undefined;
   activeSlideIndex: number;
+  canPasteBlock: boolean;
   isGridVisible: boolean;
   onAddBlock: (type: AddBlockType, options?: AddBlockOptions) => void;
   onAddTextAtPosition: (position: { x: number; y: number }) => void;
   onBeginBlockTransform: () => void;
   onClearSelection: () => void;
+  onCopySelectedBlock: () => void;
+  onDeleteSelectedBlocks: () => void;
+  onDuplicateSelectedBlock: () => void;
   onNextSlide: () => void;
+  onPasteCopiedBlock: () => void;
   onPreviousSlide: () => void;
   onSelectBlock: (index: number, options?: { additive?: boolean; range?: boolean }) => void;
   onSelectBlocks: (indices: number[], options?: { additive?: boolean }) => void;
   onSelectSlide: (index: number) => void;
-  onUpdateBlock: (blockIndex: number, newProps: Record<string, string | number>, newText?: string) => void;
+  onToggleSelectedBlocksPositionLock: () => void;
+  onUpdateBlock: BlockUpdater;
   onUpdateBlockFrames: (updates: Array<{ blockIndex: number; frame: FramePatch }>, commit?: boolean) => void;
+  onUseSelectedImageAsBackground: () => void;
   replayNonce: number;
   sceneCount: number;
   selectedBlockIndex: number | null;
   selectedBlockIndices: number[];
+  selectedBlocksLocked: boolean;
   slideRows: SlideRow[];
   source: string;
   totalDuration: number;
 };
 
 export function PreviewCanvas({
+  zoomLevel,
+  onFitScaleChange,
   activeSlide,
   activeSlideIndex,
+  canPasteBlock,
   isGridVisible,
   onAddBlock,
   onAddTextAtPosition,
   onBeginBlockTransform,
   onClearSelection,
+  onCopySelectedBlock,
+  onDeleteSelectedBlocks,
+  onDuplicateSelectedBlock,
+  onPasteCopiedBlock,
   onSelectBlock,
   onSelectBlocks,
+  onToggleSelectedBlocksPositionLock,
   onUpdateBlock,
   onUpdateBlockFrames,
+  onUseSelectedImageAsBackground,
   onNextSlide,
   onPreviousSlide,
   onSelectSlide,
@@ -71,6 +96,7 @@ export function PreviewCanvas({
   sceneCount,
   selectedBlockIndex,
   selectedBlockIndices,
+  selectedBlocksLocked,
   slideRows,
   source,
   totalDuration
@@ -78,9 +104,11 @@ export function PreviewCanvas({
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const interactionRef = useRef<CanvasInteraction | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
+  const actualScale = zoomLevel === "fit" ? canvasScale : zoomLevel;
   const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([]);
   const [interactionBlockIndex, setInteractionBlockIndex] = useState<number | null>(null);
   const [marqueeSelection, setMarqueeSelection] = useState<MarqueeSelection | null>(null);
+  const [contextMenu, setContextMenu] = useState<CanvasContextMenuState | null>(null);
   const gridColor = gridLineColor(activeSlide);
   const hiddenPreviewBlockIndices = useMemo(
     () => hiddenEditablePreviewBlockIndices(activeSlide?.blocks ?? [], selectedBlockIndex, selectedBlockIndices),
@@ -96,7 +124,9 @@ export function PreviewCanvas({
 
     const updateScale = () => {
       const rect = canvas.getBoundingClientRect();
-      setCanvasScale(rect.width > 0 ? rect.width / CANVAS_WIDTH : 1);
+      const scale = rect.width > 0 ? rect.width / CANVAS_WIDTH : 1;
+      setCanvasScale(scale);
+      onFitScaleChange?.(scale);
     };
 
     updateScale();
@@ -106,6 +136,34 @@ export function PreviewCanvas({
 
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!contextMenu) {
+      return;
+    }
+
+    function closeContextMenu() {
+      setContextMenu(null);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeContextMenu();
+      }
+    }
+
+    window.addEventListener("pointerdown", closeContextMenu);
+    window.addEventListener("resize", closeContextMenu);
+    window.addEventListener("scroll", closeContextMenu, true);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("pointerdown", closeContextMenu);
+      window.removeEventListener("resize", closeContextMenu);
+      window.removeEventListener("scroll", closeContextMenu, true);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [contextMenu]);
 
   function getCanvasPosition(event: { clientX: number; clientY: number }) {
     return canvasPointFromRect(event, canvasRef.current?.getBoundingClientRect());
@@ -144,12 +202,22 @@ export function PreviewCanvas({
   }
 
   function startMove(event: PointerEvent<HTMLDivElement>, blockIndex: number, frame: Frame) {
+    if (event.button !== 0) {
+      return;
+    }
+
     event.preventDefault();
     const additive = event.metaKey || event.ctrlKey;
     const range = event.shiftKey;
+    const block = activeSlide?.blocks[blockIndex];
 
     if (additive || range) {
       onSelectBlock(blockIndex, { additive, range });
+      return;
+    }
+
+    if (block && isPositionLocked(block)) {
+      onSelectBlock(blockIndex);
       return;
     }
 
@@ -176,8 +244,18 @@ export function PreviewCanvas({
   }
 
   function startResize(event: PointerEvent<HTMLSpanElement>, blockIndex: number, handle: ResizeHandle, frame: Frame) {
+    if (event.button !== 0) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
+    const block = activeSlide?.blocks[blockIndex];
+
+    if (block && isPositionLocked(block)) {
+      return;
+    }
+
     const frameControl = event.currentTarget.closest("[data-frame-control]");
 
     if (frameControl instanceof HTMLElement) {
@@ -225,6 +303,10 @@ export function PreviewCanvas({
   }
 
   function startMarquee(event: PointerEvent<HTMLDivElement>) {
+    if (event.button !== 0) {
+      return;
+    }
+
     if (event.target !== event.currentTarget) {
       return;
     }
@@ -283,10 +365,49 @@ export function PreviewCanvas({
     }
   }
 
+  function openLayerContextMenu(event: MouseEvent<HTMLDivElement>, blockIndex: number | null) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (blockIndex !== null && !selectedBlockIndices.includes(blockIndex) && selectedBlockIndex !== blockIndex) {
+      onSelectBlock(blockIndex);
+    }
+
+    setContextMenu({
+      blockIndex,
+      position: clampedMenuPosition(event)
+    });
+  }
+
+  function handleCanvasContextMenu(event: MouseEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const target = event.target;
+
+    if (!(target instanceof HTMLElement) || target.closest("[data-canvas-context-menu]")) {
+      return;
+    }
+
+    const frameControl = target.closest("[data-frame-control][data-block-index]");
+
+    if (frameControl instanceof HTMLElement) {
+      const blockIndex = Number(frameControl.dataset.blockIndex);
+
+      if (Number.isInteger(blockIndex)) {
+        openLayerContextMenu(event, blockIndex);
+        return;
+      }
+    }
+
+    openLayerContextMenu(event, selectedBlockIndex ?? selectedBlockIndices[selectedBlockIndices.length - 1] ?? null);
+  }
+
   return (
     <div
-      className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-[#070709]"
+      className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-[#000000]"
       id="canvas-v4"
+      onContextMenuCapture={handleCanvasContextMenu}
     >
       <CanvasSlideNav
         activeSlideIndex={activeSlideIndex}
@@ -296,7 +417,7 @@ export function PreviewCanvas({
       />
 
       <div
-        className="custom-scrollbar relative z-0 flex min-h-0 flex-1 items-start justify-center overflow-y-auto p-3 pb-14 pt-9 sm:p-4 sm:pb-20 sm:pt-12 md:p-8 md:pb-24 md:pt-16 bg-[#070709] bg-[radial-gradient(#ffffff04_1px,transparent_1px)] [background-size:16px_16px]"
+        className="custom-scrollbar relative z-0 flex min-h-0 flex-1 items-start justify-center overflow-auto p-3 pb-14 pt-9 sm:p-4 sm:pb-20 sm:pt-12 md:p-8 md:pb-24 md:pt-16 bg-[#000000] bg-[radial-gradient(#ffffff30_1.5px,transparent_1.5px)] [background-size:24px_24px]"
         onPointerDown={(event) => {
           if (event.target === event.currentTarget) {
             onClearSelection();
@@ -305,7 +426,8 @@ export function PreviewCanvas({
       >
         <div
           aria-label={`16:9 canvas ${CANVAS_WIDTH} by ${CANVAS_HEIGHT}`}
-          className="group relative aspect-video w-full max-w-[64rem] overflow-hidden bg-black shadow-xl ring-1 ring-neutral-800"
+          className={`group relative overflow-hidden bg-black shadow-xl ring-1 ring-neutral-800 shrink-0 ${zoomLevel === "fit" ? "aspect-video w-full max-w-[799px]" : ""}`}
+          style={zoomLevel === "fit" ? undefined : { width: CANVAS_WIDTH * zoomLevel, height: CANVAS_HEIGHT * zoomLevel }}
           onDoubleClick={handleCanvasDoubleClick}
           onDragOver={handleToolDragOver}
           onDrop={handleToolDrop}
@@ -315,7 +437,7 @@ export function PreviewCanvas({
             className="absolute left-0 top-0 overflow-hidden"
             style={{
               height: CANVAS_HEIGHT,
-              transform: `scale(${canvasScale})`,
+              transform: `scale(${actualScale})`,
               transformOrigin: "left top",
               width: CANVAS_WIDTH
             }}
@@ -333,20 +455,21 @@ export function PreviewCanvas({
               className="pointer-events-none absolute inset-0 z-30"
               style={{
                 backgroundImage: `linear-gradient(to right, ${gridColor} 1px, transparent 1px), linear-gradient(to bottom, ${gridColor} 1px, transparent 1px)`,
-                backgroundSize: `${40 * canvasScale}px ${40 * canvasScale}px`
+                backgroundSize: `${40 * actualScale}px ${40 * actualScale}px`
               }}
             />
           ) : null}
           <CanvasSelectionLayer
             activeSlide={activeSlide}
             alignmentGuides={alignmentGuides}
-            canvasScale={canvasScale}
+            canvasScale={actualScale}
             interactionBlockIndex={interactionBlockIndex}
             marqueeSelection={marqueeSelection}
             onCancelMarquee={cancelMarquee}
             onEndInteraction={endInteraction}
             onEndMarquee={endMarquee}
             onSelectBlock={onSelectBlock}
+            onBeginTextEdit={onBeginBlockTransform}
             onStartMarquee={startMarquee}
             onStartMove={startMove}
             onStartResize={startResize}
@@ -356,17 +479,36 @@ export function PreviewCanvas({
             selectedBlockIndex={selectedBlockIndex}
             selectedBlockIndices={selectedBlockIndices}
           />
+          {contextMenu ? (
+            <CanvasContextMenu
+              canPaste={canPasteBlock}
+              onClose={() => setContextMenu(null)}
+              onCopy={onCopySelectedBlock}
+              onDelete={onDeleteSelectedBlocks}
+              onDuplicate={onDuplicateSelectedBlock}
+              onPaste={onPasteCopiedBlock}
+              onToggleLock={onToggleSelectedBlocksPositionLock}
+              onUseAsBackground={onUseSelectedImageAsBackground}
+              position={contextMenu.position}
+              selectedBlock={contextMenu.blockIndex === null ? undefined : activeSlide?.blocks[contextMenu.blockIndex]}
+              selectedBlocksLocked={selectedBlocksLocked}
+            />
+          ) : null}
         </div>
 
         <CanvasBlockDock onAddBlock={onAddBlock} />
       </div>
-
-      <CanvasTimeline
-        activeSlideIndex={activeSlideIndex}
-        onSelectSlide={onSelectSlide}
-        slideRows={slideRows}
-        totalDuration={totalDuration}
-      />
     </div>
   );
+}
+
+function clampedMenuPosition(event: MouseEvent<HTMLDivElement>) {
+  const menuWidth = 224;
+  const menuHeight = 264;
+  const margin = 12;
+
+  return {
+    x: Math.max(margin, Math.min(event.clientX, window.innerWidth - menuWidth - margin)),
+    y: Math.max(margin, Math.min(event.clientY, window.innerHeight - menuHeight - margin))
+  };
 }

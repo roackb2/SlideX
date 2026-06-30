@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { MotionBlock, type AnimationProps, type ColorProps, type RadiusProps } from "@/features/pitch/ui/preview/motion/MotionBlock";
 import { surfaceStyle, textStyle } from "@/features/pitch/ui/preview/motion/blockStyles";
+import { useDynamicFont } from "@/features/pitch/ui/hooks/useDynamicFont";
 
 type TextBlockProps = AnimationProps & {
   children: ReactNode;
@@ -29,6 +30,8 @@ export function Title({
   listType,
   ...animation
 }: TextBlockProps) {
+  useDynamicFont(fontFamily);
+
   return (
     <MotionBlock
       className={`w-full text-5xl font-semibold leading-[1.02] tracking-normal text-[var(--slide-fg)] md:text-7xl`}
@@ -59,6 +62,8 @@ export function Text({
   listType,
   ...animation
 }: TextBlockProps) {
+  useDynamicFont(fontFamily);
+
   return (
     <MotionBlock
       className={`w-full text-lg leading-8 text-[var(--slide-muted)] md:text-2xl md:leading-9`}

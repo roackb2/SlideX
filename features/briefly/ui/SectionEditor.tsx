@@ -23,7 +23,7 @@ import {
 } from "@/features/briefly/domain/briefTypes";
 import { IMAGE_UPLOAD_PRESETS, processImageFile } from "@/features/briefly/infrastructure/imageUpload";
 import { FILE_UPLOAD_LIMITS, processAttachmentFile } from "@/features/briefly/infrastructure/fileUpload";
-import { getBrieflyCopy, getOptionLabel, getSectionCopy } from "@/features/briefly/ui/brieflyCopy";
+import { getBrieflyCopy, getOptionLabel, getSectionCopy } from "@/features/briefly/application/brieflyCopy";
 import {
   attachmentsValue,
   faqValue,
@@ -47,6 +47,28 @@ interface SectionEditorProps {
 
 type SectionEditorCopy = ReturnType<typeof getBrieflyCopy>["sectionEditor"];
 type SectionEditorFieldKey = keyof SectionEditorCopy["fields"];
+
+function toRaciType(value: string): BriefTeamMember["raci_type"] {
+  switch (value) {
+    case "responsible":
+    case "accountable":
+    case "consulted":
+    case "informed":
+      return value;
+    default:
+      return "";
+  }
+}
+
+function toDecisionStatus(value: string): BriefDecisionItem["status"] {
+  switch (value) {
+    case "approved":
+    case "rejected":
+      return value;
+    default:
+      return "pending";
+  }
+}
 
 function field(copy: SectionEditorCopy, key: SectionEditorFieldKey) {
   const [label, helper] = copy.fields[key];
@@ -930,7 +952,7 @@ function TeamEditor({
                 />
                 <select
                   value={member.raci_type || ""}
-                  onChange={(event) => updateMember(member.id, { raci_type: event.target.value as any })}
+                  onChange={(event) => updateMember(member.id, { raci_type: toRaciType(event.target.value) })}
                   className={inputClass()}
                   aria-label={copy.raciType}
                 >
@@ -1386,7 +1408,7 @@ function DecisionEditor({
               <div className="relative">
                 <select
                   value={item.status}
-                  onChange={(e) => updateItem(item.id, { status: e.target.value as any })}
+                  onChange={(e) => updateItem(item.id, { status: toDecisionStatus(e.target.value) })}
                   className={`${inputClass()} appearance-none pr-8`}
                 >
                   <option value="approved">{copy.decisionApproved}</option>

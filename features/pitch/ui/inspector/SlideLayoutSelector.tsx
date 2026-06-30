@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { ChevronDown } from "lucide-react";
 import { slideLayouts } from "@/core/motion-doc/presets/templates/slideLayouts";
 import { createPortal } from "react-dom";
@@ -29,7 +29,7 @@ export function SlideLayoutSelector({ currentLayoutId, onSelectLayout }: SlideLa
             <LayoutThumbnail layoutId={currentLayout.id} />
           </div>
           <div className="flex flex-col items-start">
-            <span className="text-[10px] font-bold text-neutral-500 mb-0.5">Add New Slide</span>
+            <span className="text-[10px] font-bold text-neutral-500 mb-0.5">Apply Layout</span>
             <span className="text-sm font-semibold text-neutral-200">{currentLayout.name}</span>
           </div>
         </div>
@@ -48,7 +48,7 @@ function SlideLayoutsPopover({
 }: {
   onClose: () => void;
   onSelectLayout: (source: string, id: string) => void;
-  buttonRef: React.RefObject<HTMLButtonElement | null>;
+  buttonRef: RefObject<HTMLButtonElement | null>;
 }) {
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -71,7 +71,7 @@ function SlideLayoutsPopover({
         className="relative flex flex-col w-full max-w-[800px] max-h-[80vh] overflow-hidden rounded-[24px] border border-white/[0.1] bg-[#1a1a1a]/95 backdrop-blur-3xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.8),inset_0_1px_1px_0_rgba(255,255,255,0.15)]"
       >
         <div className="flex items-center justify-center px-6 py-4 border-b border-white/[0.05]">
-          <h2 className="text-sm font-bold tracking-wide text-neutral-200">Select Layout</h2>
+          <h2 className="text-[13px] font-semibold text-neutral-200">Apply Layout</h2>
           <button onClick={onClose} className="absolute right-4 top-4 text-neutral-400 hover:text-white transition">
             ✕
           </button>
@@ -102,19 +102,29 @@ function SlideLayoutsPopover({
   );
 }
 
-function LayoutThumbnail({ layoutId }: { layoutId: string }) {
-  // Common reusable styled blocks for the thumbnails
-  const Block = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
-    <div className={`absolute rounded-sm ${className || ''}`} style={style} />
-  );
-  const TextLine = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
-    <div className={`absolute rounded-full bg-black/80 ${className || ''}`} style={style} />
-  );
-  const ImgBlock = ({ className, style, children }: { className?: string; style?: React.CSSProperties; children?: React.ReactNode }) => (
-    <div className={`absolute rounded-[4px] bg-neutral-300 overflow-hidden ${className || ''}`} style={style}>
-      {children || <div className="w-full h-full bg-gradient-to-br from-neutral-200 to-neutral-400" />}
+type ThumbnailPrimitiveProps = {
+  children?: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+};
+
+function Block({ className, style }: ThumbnailPrimitiveProps) {
+  return <div className={`absolute rounded-sm ${className ?? ""}`} style={style} />;
+}
+
+function TextLine({ className, style }: ThumbnailPrimitiveProps) {
+  return <div className={`absolute rounded-full bg-black/80 ${className ?? ""}`} style={style} />;
+}
+
+function ImgBlock({ className, style, children }: ThumbnailPrimitiveProps) {
+  return (
+    <div className={`absolute overflow-hidden rounded-[4px] bg-neutral-300 ${className ?? ""}`} style={style}>
+      {children ?? <div className="h-full w-full bg-gradient-to-br from-neutral-200 to-neutral-400" />}
     </div>
   );
+}
+
+function LayoutThumbnail({ layoutId }: { layoutId: string }) {
 
   switch (layoutId) {
     case "title":

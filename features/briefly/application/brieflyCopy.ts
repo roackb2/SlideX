@@ -1,5 +1,6 @@
-import type { Locale } from "@/common/lib/i18n";
 import type { SectionGroup, SectionType } from "@/features/briefly/domain/briefTypes";
+
+export type BrieflyLocale = "zh-TW" | "en";
 
 export const brieflyCopy = {
   "zh-TW": {
@@ -604,7 +605,7 @@ export const brieflyCopy = {
   }
 } as const;
 
-const sectionGroupLabels: Record<Locale, Record<SectionGroup, string>> = {
+const sectionGroupLabels: Record<BrieflyLocale, Record<SectionGroup, string>> = {
   "zh-TW": {
     "Essential Blocks": "核心區塊",
     "Project Details": "專案細節",
@@ -617,7 +618,7 @@ const sectionGroupLabels: Record<Locale, Record<SectionGroup, string>> = {
   }
 };
 
-const sectionLabels: Record<Locale, Record<SectionType, { title: string; description: string }>> = {
+const sectionLabels: Record<BrieflyLocale, Record<SectionType, { title: string; description: string }>> = {
   "zh-TW": {
     cover: { title: "封面與簡介", description: "專案名稱、一句話介紹、分類、階段與狀態。" },
     background: { title: "背景與問題陳述", description: "為什麼要啟動這個專案？有哪些重要的背景資訊？" },
@@ -648,7 +649,7 @@ const sectionLabels: Record<Locale, Record<SectionType, { title: string; descrip
   }
 };
 
-const optionLabels: Record<Locale, Record<string, string>> = {
+const optionLabels: Record<BrieflyLocale, Record<string, string>> = {
   "zh-TW": {
     "internal": "內部",
     "confidential": "機密",
@@ -748,18 +749,18 @@ const optionLabels: Record<Locale, Record<string, string>> = {
   }
 };
 
-export function getBrieflyCopy(locale: Locale) {
+export function getBrieflyCopy(locale: BrieflyLocale) {
   return brieflyCopy[locale];
 }
 
-export function getSectionGroupLabel(group: SectionGroup, locale: Locale) {
+export function getSectionGroupLabel(group: SectionGroup, locale: BrieflyLocale) {
   return sectionGroupLabels[locale][group] ?? group;
 }
 
-export function getSectionCopy(type: SectionType, locale: Locale) {
+export function getSectionCopy(type: SectionType, locale: BrieflyLocale) {
   return sectionLabels[locale][type];
 }
 
-export function getOptionLabel(value: string, locale: Locale) {
+export function getOptionLabel(value: string, locale: BrieflyLocale) {
   return optionLabels[locale][value] ?? value;
 }

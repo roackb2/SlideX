@@ -1,5 +1,5 @@
 import { createMotionDocBlock, type AddBlockType } from "@/core/motion-doc/application/motionDocBlockFactory";
-import { cloneBlock, generateSlideString, replaceSlideContent, replaceSlideOpeningTag } from "@/core/motion-doc/application/motionDocSerialize";
+import { cloneBlock, generateBlockString, generateSlideString, replaceSlideContent, replaceSlideOpeningTag } from "@/core/motion-doc/application/motionDocSerialize";
 import { clampFramePosition, defaultBlockHeight, defaultBlockWidth, defaultBlockX, defaultBlockY, percentFrameValue } from "@/core/motion-doc/domain/frame";
 import { parseMotionDoc, type MotionDocBlock, type MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 
@@ -91,7 +91,53 @@ export function appendLayoutSlideSource(source: string, slideIndex: number, layo
   const startTag = `<Slide duration={5} theme="${theme}" background="${bg}" accent="${acc}"${txtAttr}>`;
   const endTag = '</Slide>';
 
-  return `${source.trimEnd()}\n\n${startTag}\n${layoutSource}\n${endTag}`;
+  return `${source.trimEnd()}\n\n${startTag}\n${normalizeLayoutSourceTextMotion(layoutSource)}\n${endTag}`;
+}
+
+export function applyLayoutToSlide(slide: MotionDocScene, layoutSource: string, layoutId: string) {
+  const parsed = parseMotionDoc(`<Slide duration={${slide.duration}}>\n${layoutSource}\n</Slide>`);
+  const layoutSlide = parsed.scenes[0];
+
+  return {
+    ...slide,
+    blocks: normalizeLayoutBlocksTextMotion(layoutSlide?.blocks ?? []),
+    props: {
+      ...slide.props,
+      layoutPreset: layoutId
+    }
+  };
+}
+
+function normalizeLayoutSourceTextMotion(layoutSource: string) {
+  const parsed = parseMotionDoc(`<Slide duration={5}>\n${layoutSource}\n</Slide>`);
+  const layoutSlide = parsed.scenes[0];
+
+  if (!layoutSlide) {
+    return layoutSource;
+  }
+
+  return normalizeLayoutBlocksTextMotion(layoutSlide.blocks)
+    .map((block) => generateBlockString(block))
+    .join("\n");
+}
+
+function normalizeLayoutBlocksTextMotion(blocks: MotionDocBlock[]) {
+  return blocks.map((block) => {
+    if ((block.type !== "Title" && block.type !== "Text") || !("props" in block)) {
+      return block;
+    }
+
+    const nextProps: Record<string, string | number> = { ...block.props, enter: "none" };
+    delete nextProps.borderRadius;
+    delete nextProps.delay;
+    delete nextProps.duration;
+    delete nextProps.radius;
+
+    return {
+      ...block,
+      props: nextProps
+    } as MotionDocBlock;
+  });
 }
 
 export function deleteSlideSource(source: string, slideIndex: number) {
@@ -161,6 +207,25 @@ export function deleteBlocks(slide: MotionDocScene, blockIndices: number[]) {
   return { ...slide, blocks };
 }
 
+export function duplicateBlockAt(slide: MotionDocScene, blockIndex: number) {
+  const block = slide.blocks[blockIndex];
+
+  if (!block) {
+    return null;
+  }
+
+  const blocks = [...slide.blocks];
+  const duplicate = offsetDuplicatedBlock(cloneBlock(block));
+  const insertIndex = Math.min(blockIndex + 1, blocks.length);
+
+  blocks.splice(insertIndex, 0, duplicate);
+
+  return {
+    blockIndex: insertIndex,
+    slide: { ...slide, blocks }
+  };
+}
+
 export function moveBlockByDirection(slide: MotionDocScene, blockIndex: number, direction: -1 | 1) {
   const nextIndex = blockIndex + direction;
 
@@ -200,6 +265,75 @@ export function reorderBlocks(slide: MotionDocScene, fromIndex: number, toIndex:
   return { ...slide, blocks };
 }
 
+export function toggleBlocksPositionLock(slide: MotionDocScene, blockIndices: number[]) {
+  const blocks = [...slide.blocks];
+  const shouldLock = blockIndices.some((blockIndex) => {
+    const block = blocks[blockIndex];
+    return block && "props" in block && !isPositionLocked(block);
+  });
+  let didUpdate = false;
+
+  for (const blockIndex of blockIndices) {
+    const currentBlock = blocks[blockIndex];
+
+    if (!currentBlock || !("props" in currentBlock)) {
+      continue;
+    }
+
+    const nextProps = { ...currentBlock.props };
+
+    if (shouldLock) {
+      nextProps.lockPosition = "true";
+    } else {
+      delete nextProps.lockPosition;
+      delete nextProps.locked;
+    }
+
+    blocks[blockIndex] = {
+      ...currentBlock,
+      props: nextProps
+    } as MotionDocBlock;
+    didUpdate = true;
+  }
+
+  return {
+    didUpdate,
+    locked: shouldLock,
+    slide: { ...slide, blocks }
+  };
+}
+
+export function imageBlockAsSlideBackground(slide: MotionDocScene, blockIndex: number) {
+  const block = slide.blocks[blockIndex];
+
+  if (!block || block.type !== "ImageBlock") {
+    return null;
+  }
+
+  const src = typeof block.props.src === "string" ? block.props.src.trim() : "";
+
+  if (!src) {
+    return null;
+  }
+
+  const fit = typeof block.props.fit === "string" && block.props.fit ? block.props.fit : "cover";
+  const blocks = [...slide.blocks];
+  blocks.splice(blockIndex, 1);
+
+  return {
+    slide: {
+      ...slide,
+      blocks,
+      props: {
+        ...slide.props,
+        backgroundFit: fit,
+        backgroundImage: src,
+        shader: ""
+      }
+    }
+  };
+}
+
 export function appendBlockToSlide(slide: MotionDocScene, type: AddBlockType, options: AddBlockOptions = {}) {
   const blocks = [...slide.blocks];
   const block = blockWithOptions(createMotionDocBlock(type), options);
@@ -232,9 +366,9 @@ export function appendTextBlockAtPosition(slide: MotionDocScene, position: { x: 
   const block: MotionDocBlock = {
     type: "Text",
     props: {
-      enter: "fadeIn",
+      enter: "none",
       fontSize: 24,
-      radius: 0,
+      h: 9,
       x: Math.min(Math.max(position.x, 0), 70),
       y: Math.min(Math.max(position.y, 0), 88),
       w: 30
@@ -256,7 +390,7 @@ export function updatePositionedBlockFrames(slide: MotionDocScene, updates: Fram
   for (const { blockIndex, frame } of updates) {
     const currentBlock = blocks[blockIndex];
 
-    if (!currentBlock || !("props" in currentBlock)) {
+    if (!currentBlock || !("props" in currentBlock) || isPositionLocked(currentBlock)) {
       continue;
     }
 
@@ -281,7 +415,7 @@ export function nudgeBlocks(slide: MotionDocScene, blockIndices: number[], delta
   for (const blockIndex of blockIndices) {
     const currentBlock = blocks[blockIndex];
 
-    if (!currentBlock || !("props" in currentBlock)) {
+    if (!currentBlock || !("props" in currentBlock) || isPositionLocked(currentBlock)) {
       continue;
     }
 
@@ -306,6 +440,40 @@ export function nudgeBlocks(slide: MotionDocScene, blockIndices: number[], delta
   return {
     didMove,
     slide: { ...slide, blocks }
+  };
+}
+
+export function isPositionLocked(block: MotionDocBlock) {
+  if (!("props" in block)) {
+    return false;
+  }
+
+  return block.props.lockPosition === "true" || block.props.lockPosition === 1 || block.props.locked === "true" || block.props.locked === 1;
+}
+
+function offsetDuplicatedBlock(block: MotionDocBlock): MotionDocBlock {
+  if (!("props" in block)) {
+    return block;
+  }
+
+  const frame = blockFrameFromProps(block);
+
+  return {
+    ...block,
+    props: {
+      ...block.props,
+      x: clampFramePosition(frame.x + 3, frame.w),
+      y: clampFramePosition(frame.y + 3, frame.h)
+    }
+  } as MotionDocBlock;
+}
+
+function blockFrameFromProps(block: Extract<MotionDocBlock, { props: Record<string, string | number> }>) {
+  return {
+    h: percentFrameValue(block.props.h, defaultBlockHeight(block.type)),
+    w: percentFrameValue(block.props.w, defaultBlockWidth(block.type)),
+    x: percentFrameValue(block.props.x, defaultBlockX(block.type)),
+    y: percentFrameValue(block.props.y, defaultBlockY(block.type))
   };
 }
 
@@ -337,9 +505,11 @@ export function updateBlockInSlide(
   }
 
   if (currentBlock.type === "Title" || currentBlock.type === "Text" || currentBlock.type === "heading") {
+    const nextProps = withoutTextFrameOnlyProps(newProps);
+
     blocks[blockIndex] = {
       type: currentBlock.type,
-      props: newProps,
+      props: nextProps,
       text: newText ?? ("text" in currentBlock ? currentBlock.text : "")
     } as MotionDocBlock;
   } else {
@@ -353,6 +523,14 @@ export function updateBlockInSlide(
     ...slide,
     blocks
   };
+}
+
+function withoutTextFrameOnlyProps(props: Record<string, string | number>) {
+  const { borderRadius, radius, ...rest } = props;
+  void borderRadius;
+  void radius;
+
+  return rest;
 }
 
 export function applySelectionMdxSource({

@@ -98,16 +98,16 @@ export function ColorControl({
       <div>
         <button
           aria-expanded={isOpen}
-          className="flex w-full items-center justify-between rounded-xl border border-neutral-800 bg-black/30 px-3.5 py-2.5 text-left transition-colors hover:border-neutral-600 hover:bg-neutral-900/70"
+          className="flex w-full items-center justify-between rounded-lg bg-white/[0.03] px-2.5 py-1.5 text-left transition-colors hover:bg-white/[0.05] focus-visible:bg-white/[0.06] focus-visible:ring-1 focus-visible:ring-white/[0.12]"
           onClick={() => setIsOpen((current) => !current)}
           ref={buttonRef}
           type="button"
         >
-          <span className="flex min-w-0 items-center gap-2">
-            <span className="h-5 w-5 shrink-0 rounded border border-white/20 shadow-inner" style={swatchStyle} />
-            <span className="truncate font-mono text-xs text-neutral-200">{colorValue || displayValue || "Default"}</span>
+          <span className="flex min-w-0 items-center gap-2.5">
+            <span className="h-4 w-4 shrink-0 rounded-[4px] border border-white/20 shadow-inner" style={swatchStyle} />
+            <span className="truncate font-mono text-[13px] text-neutral-200">{colorValue || displayValue || "Default"}</span>
           </span>
-          <span className="text-xs text-neutral-500">{isOpen ? "Close" : "Edit"}</span>
+          <span className="text-[12px] text-neutral-500">{isOpen ? "Close" : "Edit"}</span>
         </button>
 
         {isOpen && typeof document !== "undefined" ? createPortal(
@@ -129,7 +129,7 @@ export function ColorControl({
             <div className="flex items-center gap-2">
               <span className="h-9 w-9 shrink-0 rounded-md border border-white/15 shadow-inner" style={swatchStyle} />
               <div className="min-w-0 flex-1">
-                <label className="mb-1.5 block text-[11px] font-semibold tracking-wider text-neutral-500">CSS Color</label>
+                <label className="mb-1.5 block text-[11px] font-medium text-neutral-500">CSS Color</label>
                 <input
                   className="w-full rounded border border-neutral-800 bg-black px-2 py-1.5 font-mono text-xs text-neutral-200 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-500"
                   onChange={(event) => onChange(event.target.value)}
@@ -143,7 +143,7 @@ export function ColorControl({
               </div>
             </div>
             <div className="mt-3.5">
-              <label className="mb-1.5 block text-[11px] font-semibold tracking-wider text-neutral-500">Picker</label>
+              <label className="mb-1.5 block text-[11px] font-medium text-neutral-500">Picker</label>
               <div className="flex items-center gap-2">
                 <input
                   aria-label={`${label} picker`}
@@ -156,7 +156,7 @@ export function ColorControl({
               </div>
             </div>
             <div className="mt-3.5">
-              <label className="mb-1.5 block text-[11px] font-semibold tracking-wider text-neutral-500">Presets</label>
+              <label className="mb-1.5 block text-[11px] font-medium text-neutral-500">Presets</label>
               <div className="grid grid-cols-8 gap-1">
                 <button
                   aria-label="Use transparent"

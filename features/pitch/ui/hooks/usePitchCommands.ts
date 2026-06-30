@@ -10,11 +10,15 @@ import {
   appendBlockToSlide,
   appendTextBlockAtPosition,
   applyAllSlidesStyleSource,
+  applyLayoutToSlide,
   applySelectionMdxSource,
   applySlideStyleSource,
   deleteBlockAt,
   deleteBlocks,
   deleteSlideSource,
+  duplicateBlockAt,
+  imageBlockAsSlideBackground,
+  isPositionLocked,
   moveBlockByDirection,
   nudgeBlocks,
   pasteBlockIntoSlide,
@@ -22,11 +26,13 @@ import {
   reorderSlideSource,
   replaceSlideSource,
   selectedLayerIndices,
+  toggleBlocksPositionLock,
   updateBlockInSlide,
   updatePositionedBlockFrames as buildPositionedBlockFramesSlide,
   type AddBlockOptions,
   type FrameUpdate
 } from "@/features/pitch/application/motionDocCommands";
+import type { BlockUpdateOptions } from "@/features/pitch/ui/pitchCommandTypes";
 import { type AddBlockType } from "@/features/pitch/ui/pitchOptions";
 import { stringValue } from "@/common/util/valueUtils";
 
@@ -48,6 +54,10 @@ type UsePitchCommandsArgs = {
   setSelectedTemplateId: Dispatch<SetStateAction<string>>;
   setSource: Dispatch<SetStateAction<string>>;
   source: string;
+};
+
+type SlideXLocalFilesWindow = Window & {
+  __slidexLocalFiles?: Map<string, File>;
 };
 
 export function usePitchCommands({
@@ -134,6 +144,18 @@ export function usePitchCommands({
     setNotice("Slide added with layout");
   }
 
+  function applyLayoutToActiveSlide(layoutSource: string, layoutId: string) {
+    if (!activeSlide) {
+      return;
+    }
+
+    const nextSlide = applyLayoutToSlide(activeSlide, layoutSource, layoutId);
+    commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
+    selectSingleBlock(null);
+    setReplayNonce((value) => value + 1);
+    setNotice("Layout applied");
+  }
+
   function deleteSlide(slideIndex: number) {
     if (scenes.length <= 1) {
       setNotice("Cannot delete last slide");
@@ -186,6 +208,42 @@ export function usePitchCommands({
     setNotice(indices.length > 1 ? "Layers deleted" : "Layer deleted");
   }
 
+  function cutSelectedBlocks() {
+    if (!activeSlide || selectedBlockIndex === null) {
+      return;
+    }
+
+    copySelectedBlock();
+    const indices = selectedLayerIndices(selectedBlockIndices, selectedBlockIndex, "desc");
+
+    if (indices.length === 0) {
+      return;
+    }
+
+    const nextSlide = deleteBlocks(activeSlide, indices);
+    commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
+    selectSingleBlock(null);
+    setReplayNonce((value) => value + 1);
+    setNotice(indices.length > 1 ? "Layers cut" : "Layer cut");
+  }
+
+  function duplicateSelectedBlock() {
+    if (!activeSlide || selectedBlockIndex === null) {
+      return;
+    }
+
+    const result = duplicateBlockAt(activeSlide, selectedBlockIndex);
+
+    if (!result) {
+      return;
+    }
+
+    commitSource((current) => replaceSlideSource(current, activeSlideIndex, result.slide));
+    selectSingleBlock(result.blockIndex);
+    setReplayNonce((value) => value + 1);
+    setNotice("Layer duplicated");
+  }
+
   function moveBlock(blockIndex: number, direction: -1 | 1) {
     if (!activeSlide) return;
     const nextSlide = moveBlockByDirection(activeSlide, blockIndex, direction);
@@ -231,6 +289,46 @@ export function usePitchCommands({
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
     setReplayNonce((value) => value + 1);
     setNotice("Layer reordered");
+  }
+
+  function toggleSelectedBlocksPositionLock() {
+    if (!activeSlide) {
+      return;
+    }
+
+    const indices = selectedLayerIndices(selectedBlockIndices, selectedBlockIndex);
+
+    if (indices.length === 0) {
+      return;
+    }
+
+    const { didUpdate, locked, slide } = toggleBlocksPositionLock(activeSlide, indices);
+
+    if (!didUpdate) {
+      return;
+    }
+
+    commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
+    setReplayNonce((value) => value + 1);
+    setNotice(locked ? "Layer position locked" : "Layer position unlocked");
+  }
+
+  function useSelectedImageAsBackground() {
+    if (!activeSlide || selectedBlockIndex === null) {
+      return;
+    }
+
+    const result = imageBlockAsSlideBackground(activeSlide, selectedBlockIndex);
+
+    if (!result) {
+      setNotice("Select an image layer first");
+      return;
+    }
+
+    commitSource((current) => replaceSlideSource(current, activeSlideIndex, result.slide));
+    selectSingleBlock(null);
+    setReplayNonce((value) => value + 1);
+    setNotice("Image used as background");
   }
 
   function addBlockToActiveSlide(type: AddBlockType, options?: AddBlockOptions) {
@@ -303,11 +401,17 @@ export function usePitchCommands({
     setNotice("Theme applied to all slides");
   }
 
-  function updateBlock(blockIndex: number, newProps: Record<string, string | number>, newText?: string) {
+  function updateBlock(blockIndex: number, newProps: Record<string, string | number>, newText?: string, options?: BlockUpdateOptions) {
     if (!activeSlide) return;
 
     const nextSlide = updateBlockInSlide(activeSlide, blockIndex, newProps, newText);
     if (!nextSlide) return;
+
+    if (options?.transient) {
+      setSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
+      markProjectDirty();
+      return;
+    }
 
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
     setReplayNonce((value) => value + 1);
@@ -332,8 +436,7 @@ export function usePitchCommands({
 
     try {
       const url = URL.createObjectURL(file);
-      (window as any).__slidexLocalFiles = (window as any).__slidexLocalFiles || new Map();
-      (window as any).__slidexLocalFiles.set(url, file);
+      localFileStore().set(url, file);
       
       updateBlock(blockIndex, {
         ...block.props,
@@ -342,7 +445,7 @@ export function usePitchCommands({
         src: url
       });
       setNotice("Local image loaded");
-    } catch (e) {
+    } catch {
       setNotice("Failed to load local image");
     }
   }
@@ -366,8 +469,7 @@ export function usePitchCommands({
     try {
       setNotice("Loading video...");
       const url = URL.createObjectURL(file);
-      (window as any).__slidexLocalFiles = (window as any).__slidexLocalFiles || new Map();
-      (window as any).__slidexLocalFiles.set(url, file);
+      localFileStore().set(url, file);
       
       updateBlock(blockIndex, {
         ...block.props,
@@ -376,7 +478,7 @@ export function usePitchCommands({
         src: url
       });
       setNotice("Local video loaded");
-    } catch (e) {
+    } catch {
       setNotice("Failed to load local video");
     }
   }
@@ -419,14 +521,18 @@ export function usePitchCommands({
     addSlide,
     addSlideWithLayout,
     addTextAtPosition,
+    applyLayoutToActiveSlide,
     applyTemplate,
     beginBlockTransform,
     copySelectedBlock,
+    cutSelectedBlocks,
     deleteBlock,
     deleteSelectedBlocks,
     deleteSlide,
+    duplicateSelectedBlock,
     goToNextSlide,
     goToPreviousSlide,
+    hasCopiedBlock: copiedBlock !== null,
     insertSnippet,
     moveBlock,
     nudgeSelectedBlocks,
@@ -434,12 +540,25 @@ export function usePitchCommands({
     reorderBlock,
     reorderSlide,
     selectBlockFromLayer,
+    selectedBlocksLocked: selectedLayerIndices(selectedBlockIndices, selectedBlockIndex).some((index) => {
+      const block = activeSlide?.blocks[index];
+      return Boolean(block && isPositionLocked(block));
+    }),
+    toggleSelectedBlocksPositionLock,
     updateActiveSlideStyle,
     updateAllSlidesStyle,
     updateBlock,
     updatePositionedBlockFrames,
     updateSelectionMdx,
+    useSelectedImageAsBackground,
     uploadImageForBlock,
     uploadVideoForBlock
   };
+}
+
+function localFileStore() {
+  const localWindow = window as SlideXLocalFilesWindow;
+  localWindow.__slidexLocalFiles ??= new Map<string, File>();
+
+  return localWindow.__slidexLocalFiles;
 }

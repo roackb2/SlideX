@@ -23,7 +23,7 @@ export function SlideLayoutSection({
   updateActiveSlideStyle
 }: SlideLayoutSectionProps) {
   return (
-    <AccordionSection title="Canvas Grid & Layout" icon={<Sliders size={13} className="text-[#8ea5ff]" />} defaultOpen>
+    <AccordionSection title="Canvas Grid & Layout" defaultOpen>
       <Field label="Canvas grid">
         <button
           aria-pressed={isGridVisible}

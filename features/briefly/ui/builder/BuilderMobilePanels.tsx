@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import type { Locale } from "@/common/lib/i18n";
 import { useI18n } from "@/common/lib/I18nProvider";
-import { getBrieflyCopy } from "@/features/briefly/ui/brieflyCopy";
+import { getBrieflyCopy } from "@/features/briefly/application/brieflyCopy";
 import { ExportAction, PanelHeader } from "@/features/briefly/ui/builder/BuilderShared";
 import type { ExportKind, MobileTab } from "@/features/briefly/ui/builder/types";
 

@@ -7,11 +7,11 @@ type WorkspaceInspectorPanelProps = Pick<
   PitchWorkspaceProps,
   | "activeSlide"
   | "activeSlideAccent"
-  | "addSlideWithLayout"
   | "activeSlideAlignX"
   | "activeSlideAlignY"
   | "activeSlideBackground"
   | "activeSlideLayout"
+  | "activeSlideLayoutPreset"
   | "activeSlideMutedColor"
   | "activeSlideShader"
   | "activeSlideShaderColor1"
@@ -25,9 +25,10 @@ type WorkspaceInspectorPanelProps = Pick<
   | "activeSlideShaderSpeed"
   | "activeSlideTextColor"
   | "activeSlideTheme"
+  | "applyLayoutToActiveSlide"
   | "isCanvasGridVisible"
   | "isMobileInspectorOpen"
-  | "selectSingleBlock"
+  | "pushUndoSnapshot"
   | "selectedBlockIndex"
   | "selectedBlockIndices"
   | "setIsCanvasGridVisible"
@@ -60,12 +61,6 @@ export function WorkspaceInspectorPanel(props: WorkspaceInspectorPanelProps) {
                 props.setIsMobileInspectorOpen(false);
                 props.setIsCodeEditorOpen(true);
               }}
-              setSelectedBlockIndex={(index) => {
-                props.selectSingleBlock(index);
-                if (index !== null) {
-                  props.setIsMobileInspectorOpen(false);
-                }
-              }}
             />
           </div>
         </>
@@ -76,7 +71,6 @@ export function WorkspaceInspectorPanel(props: WorkspaceInspectorPanelProps) {
 
 type PitchInspectorContentProps = WorkspaceInspectorPanelProps & {
   onOpenMdxEditor?: () => void;
-  setSelectedBlockIndex?: (index: number | null) => void;
 };
 
 function PitchInspectorContent({
@@ -86,7 +80,7 @@ function PitchInspectorContent({
   activeSlideAlignY,
   activeSlideBackground,
   activeSlideLayout,
-  addSlideWithLayout,
+  activeSlideLayoutPreset,
   activeSlideMutedColor,
   activeSlideShader,
   activeSlideShaderColor1,
@@ -100,14 +94,14 @@ function PitchInspectorContent({
   activeSlideShaderSpeed,
   activeSlideTextColor,
   activeSlideTheme,
+  applyLayoutToActiveSlide,
   isCanvasGridVisible,
   onOpenMdxEditor,
-  selectSingleBlock,
+  pushUndoSnapshot,
   selectedBlockIndex,
   selectedBlockIndices,
   setIsCanvasGridVisible,
   setIsCodeEditorOpen,
-  setSelectedBlockIndex,
   updateActiveSlideStyle,
   updateAllSlidesStyle,
   updateBlock,
@@ -122,7 +116,7 @@ function PitchInspectorContent({
       activeSlideAlignY={activeSlideAlignY}
       activeSlideBackground={activeSlideBackground}
       activeSlideLayout={activeSlideLayout}
-      addSlideWithLayout={addSlideWithLayout}
+      activeSlideLayoutPreset={activeSlideLayoutPreset}
       activeSlideMutedColor={activeSlideMutedColor}
       activeSlideShader={activeSlideShader}
       activeSlideShaderColor1={activeSlideShaderColor1}
@@ -136,12 +130,13 @@ function PitchInspectorContent({
       activeSlideShaderSpeed={activeSlideShaderSpeed}
       activeSlideTextColor={activeSlideTextColor}
       activeSlideTheme={activeSlideTheme}
+      applyLayoutToActiveSlide={applyLayoutToActiveSlide}
       isGridVisible={isCanvasGridVisible}
       onOpenMdxEditor={onOpenMdxEditor ?? (() => setIsCodeEditorOpen(true))}
+      pushUndoSnapshot={pushUndoSnapshot}
       selectedBlockIndex={selectedBlockIndex}
       selectedBlockIndices={selectedBlockIndices}
       setIsGridVisible={setIsCanvasGridVisible}
-      setSelectedBlockIndex={setSelectedBlockIndex ?? selectSingleBlock}
       updateActiveSlideStyle={updateActiveSlideStyle}
       updateAllSlidesStyle={updateAllSlidesStyle}
       updateBlock={updateBlock}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Cpu, Droplets, EyeOff, Gauge, Layers, Maximize2, Palette, Sparkles, Zap } from "lucide-react";
+import { Droplets, Gauge, Layers, Maximize2, Sparkles, Zap } from "lucide-react";
 import type { PropRecord } from "@/features/pitch/application/themeColors";
 import { shaderPresets } from "@/core/motion-doc/presets/shaderPresets";
 import { Field } from "@/features/pitch/ui/inspector/InspectorControls";
@@ -162,27 +162,25 @@ export function ShaderBackgroundSectionContent({
       <Field label="Shader Preset">
         <div className="grid grid-cols-2 gap-2">
           <button
-            className={`group relative overflow-hidden rounded-xl border aspect-[16/10] flex flex-col items-center justify-center transition-all duration-300 cursor-pointer active:scale-95 ${
+            className={`group relative overflow-hidden rounded-lg aspect-[16/10] flex flex-col items-center justify-center transition-all duration-300 cursor-pointer active:scale-95 ${
               !shader
-                ? "border-[#a855f7]/70 bg-[#a855f7]/10 text-white ring-1 ring-[#a855f7]/25 shadow-[0_0_18px_rgba(168,85,247,0.14)]"
-                : "border-white/[0.06] bg-[#0a090d] text-neutral-500 hover:border-white/[0.14] hover:text-neutral-300"
+                ? "bg-white/[0.15] ring-2 ring-white/[0.4] text-white"
+                : "bg-white/[0.04] ring-1 ring-white/[0.08] text-neutral-500 hover:bg-white/[0.08] hover:text-neutral-300 hover:ring-white/[0.15]"
             }`}
             onClick={() => updateActiveSlideStyle(emptyShaderUpdates())}
             type="button"
           >
-            <div className="absolute inset-0 bg-[radial-gradient(#ffffff03_1px,transparent_1px)] [background-size:8px_8px] opacity-60" />
-            <EyeOff size={15} className={`mb-1 transition-transform group-hover:scale-110 duration-300 ${!shader ? "text-[#8ea5ff]" : "text-neutral-500"}`} />
-            <span className="text-xs font-semibold">Disable Effect</span>
+            <span className="text-[11px] font-medium">None</span>
           </button>
 
           {shaderPresets.map((preset) => {
             const isActive = shader === preset.id;
             return (
               <button
-                className={`group relative overflow-hidden rounded-xl border aspect-[16/10] text-left transition-all duration-300 cursor-pointer active:scale-95 ${
+                className={`group relative overflow-hidden rounded-lg aspect-[16/10] text-left transition-all duration-300 cursor-pointer active:scale-95 ${
                   isActive
-                    ? "border-[#a855f7]/75 ring-1 ring-[#a855f7]/30 shadow-[0_0_22px_rgba(168,85,247,0.20)]"
-                    : "border-white/[0.06] hover:border-white/[0.14]"
+                    ? "ring-2 ring-white/[0.4]"
+                    : "ring-1 ring-white/[0.08] hover:ring-white/[0.15]"
                 }`}
                 key={preset.id}
                 onClick={() => updateActiveSlideStyle(shaderPresetUpdates(preset.id))}
@@ -192,19 +190,10 @@ export function ShaderBackgroundSectionContent({
                   className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-105"
                   style={{ background: preset.thumbnail }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/20 opacity-80 group-hover:opacity-70 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 transition-opacity duration-300" />
 
-                {isActive ? (
-                  <div className="absolute top-2 right-2 p-0.5 rounded-full bg-[#a855f7] text-white shadow-[0_0_10px_rgba(168,85,247,0.75)]">
-                    <Sparkles size={8} />
-                  </div>
-                ) : null}
-
-                <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/55 backdrop-blur-md border border-white/[0.08] text-[9.5px] font-mono font-semibold text-neutral-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                  {preset.category}
-                </div>
-                <div className="absolute bottom-2 left-2.5 right-2.5 flex flex-col gap-0.5">
-                  <span className="text-[10px] font-bold text-white tracking-wide truncate group-hover:translate-x-0.5 transition-transform duration-300">
+                <div className="absolute bottom-2 left-2 right-2">
+                  <span className="text-[11px] font-medium text-white/90 truncate block group-hover:translate-x-0.5 transition-transform duration-300">
                     {preset.name}
                   </span>
                 </div>
@@ -267,21 +256,10 @@ function StandardShaderControls({
 }: Omit<ShaderBackgroundSectionProps, "shader" | "shaderEngine">) {
   return (
     <>
-      <div className="p-1.5 rounded-[1.25rem] border border-white/[0.03] bg-[#0A0A0C]/50 shadow-[0_4px_24px_rgba(0,0,0,0.15)] backdrop-blur-xl">
-        <div className="rounded-[1rem] border border-white/[0.03] bg-black/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden">
-          <div className="flex items-center justify-between border-b border-white/[0.03] px-3.5 py-3 bg-white/[0.01]">
-            <span className="text-xs font-semibold text-neutral-300 flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#a855f7]/10 text-[#a855f7] border border-[#a855f7]/20 shadow-[0_0_10px_rgba(168,85,247,0.1)]">
-                <Palette size={10} />
-              </span>
-              Background Pitch
-            </span>
-            <span className="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-xs font-mono tracking-wide text-neutral-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-              Three
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-4 px-3.5 py-4">
+      <div className="flex flex-col gap-4">
+        {/* Colors Section */}
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <ColorRow
               fallback="#120f17"
               label="Canvas BG"
@@ -289,30 +267,27 @@ function StandardShaderControls({
               value={background}
             />
 
-            <div className="flex flex-col gap-2.5">
-              <div className="pb-1">
-                <span className="text-xs font-semibold text-neutral-500">Color Stops</span>
-              </div>
-              {shaderColorKeys.map((key, index) => {
-                const value = key === "shaderColor1" ? shaderColor1 : key === "shaderColor2" ? shaderColor2 : shaderColor3;
-                const fallback = key === "shaderColor1" ? (accent || "#7c3aed") : key === "shaderColor2" ? (background || "#120f17") : "#06b6d4";
+            {shaderColorKeys.map((key, index) => {
+              const value = key === "shaderColor1" ? shaderColor1 : key === "shaderColor2" ? shaderColor2 : shaderColor3;
+              const fallback = key === "shaderColor1" ? (accent || "#7c3aed") : key === "shaderColor2" ? (background || "#120f17") : "#06b6d4";
 
-                return (
-                  <ColorRow
-                    fallback={fallback}
-                    key={key}
-                    label={shaderColorNames[index]}
-                    onChange={(color) => updateActiveSlideStyle({ [key]: color })}
-                    value={value}
-                  />
-                );
-              })}
-            </div>
+              return (
+                <ColorRow
+                  fallback={fallback}
+                  key={key}
+                  label={shaderColorNames[index]}
+                  onChange={(color) => updateActiveSlideStyle({ [key]: color })}
+                  value={value}
+                />
+              );
+            })}
           </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 gap-2.5">
+        <div className="h-[1px] w-full bg-white/[0.06]" />
+
+        {/* Sliders Section */}
+        <div className="grid grid-cols-1 gap-1">
         <ShaderRangeControl
           ariaLabel="Shader intensity"
           badge={shaderIntensity.toFixed(2)}
@@ -369,6 +344,7 @@ function StandardShaderControls({
           value={shaderDetail}
         />
       </div>
+    </div>
     </>
   );
 }
@@ -388,13 +364,16 @@ function ColorRow({
   const hexValue = hexColorValue(displayValue, fallback);
 
   return (
-    <label className="group flex h-10 cursor-pointer items-center justify-between gap-2.5 rounded-xl border border-white/[0.03] bg-white/[0.015] px-3.5 text-left transition-all duration-300 hover:border-white/[0.08] hover:bg-white/[0.03]">
-      <span className="text-xs font-semibold text-neutral-400 transition-colors group-hover:text-neutral-200 shrink-0 w-18 truncate">
+    <label className="group flex h-8 cursor-pointer items-center justify-between gap-3 text-left">
+      <span className="text-[12px] font-medium text-neutral-400 group-hover:text-neutral-300 transition-colors shrink-0">
         {label}
       </span>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
+        <span className="font-mono text-[11px] text-neutral-500 group-hover:text-neutral-400 transition-colors">
+          {hexValue}
+        </span>
         <span
-          className="relative h-5 w-5 shrink-0 overflow-hidden rounded-full border border-white/[0.15] shadow-md transition-transform duration-300 group-hover:scale-110"
+          className="relative h-4 w-4 shrink-0 overflow-hidden rounded border border-white/[0.15] transition-transform duration-300 group-hover:scale-110"
           style={{ background: displayValue }}
         >
           <input
@@ -404,9 +383,6 @@ function ColorRow({
             type="color"
             value={hexValue}
           />
-        </span>
-        <span className="w-16 shrink-0 rounded-lg border border-white/[0.04] bg-black/40 py-0.5 text-center font-mono text-xs font-medium text-neutral-400 transition-colors group-hover:border-white/[0.1] group-hover:text-neutral-200">
-          {hexValue}
         </span>
       </div>
     </label>

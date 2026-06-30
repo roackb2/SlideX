@@ -47,10 +47,10 @@ Pitch 由幾個核心區域組成：
 
 ### `<Slide>`
 
-Timed page container。每個 Slide 應該有 `duration`，也可以設定 `theme`、`background`、`accent` 等外觀屬性。
+Timed page container。每個 Slide 應該有 `duration`，也可以設定 `theme`、`background`、`accent`、`slideTransition` 等外觀與投影片動畫屬性。
 
 ```mdx
-<Slide duration={6} theme="light" background="#f8fafc" accent="#2563eb">
+<Slide duration={6} theme="light" background="#f8fafc" accent="#2563eb" slideTransition="rise" transitionDuration={0.72}>
   ...
 </Slide>
 ```
@@ -101,9 +101,11 @@ Timed page container。每個 Slide 應該有 `duration`，也可以設定 `them
 
 | Prop | Type | Description |
 | :--- | :--- | :--- |
-| `enter` | `string` | 進場動畫，例如 `fadeIn`、`fadeUp`、`zoomIn`、`slideLeft`。 |
+| `enter` | `string` | 區塊進場動畫，例如 `fadeIn`、`fadeUp`、`zoomIn`、`slideLeft`、`rise`、`pop`、`reveal`、`blurIn`，設為 `none` 可取消動畫。 |
 | `delay` | `number` | 進場延遲秒數。 |
 | `duration` | `number` | Slide 長度或區塊動畫時間。 |
+| `slideTransition` | `string` | 投影片轉場動畫，例如 `fade`、`rise`、`pushLeft`、`scale`、`wipe`、`curtain`，設為 `none` 可取消動畫。 |
+| `transitionDuration` | `number` | 投影片轉場動畫時間。 |
 | `x` / `y` | `number` | 百分比座標位置。 |
 | `w` / `h` | `number` | 百分比寬高。 |
 | `fontSize` | `number` | 文字尺寸。 |

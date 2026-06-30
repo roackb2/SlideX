@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Layers, Plus, Trash2 } from "lucide-react";
+import { Layers, Plus, Trash2 } from "lucide-react";
 import type { MouseEvent } from "react";
 import { useState } from "react";
 import { LayerRow } from "@/features/pitch/ui/LayerRow";
@@ -19,10 +19,9 @@ export function LayerSidebar({
   deleteSlide,
   draggedBlockIndex,
   dragOverBlockIndex,
-  isTemplateModalOpen,
   moveBlock,
+  onAddSlide,
   onSelectBlock,
-  onOpenTemplates,
   onSelectSlide,
   reorderBlock,
   reorderSlide,
@@ -38,10 +37,9 @@ export function LayerSidebar({
   deleteSlide: (index: number) => void;
   draggedBlockIndex: number | null;
   dragOverBlockIndex: number | null;
-  isTemplateModalOpen: boolean;
   moveBlock: (index: number, direction: -1 | 1) => void;
+  onAddSlide: () => void;
   onSelectBlock: (index: number, event: MouseEvent<HTMLDivElement>) => void;
-  onOpenTemplates: () => void;
   onSelectSlide: (index: number) => void;
   reorderBlock: (fromIndex: number, toIndex: number) => void;
   reorderSlide: (fromIndex: number, toIndex: number) => void;
@@ -57,11 +55,11 @@ export function LayerSidebar({
   const [dragOverSlideIndex, setDragOverSlideIndex] = useState<number | null>(null);
 
   return (
-    <div id="sidebar-v4" className="flex w-[265px] shrink-0 flex-col overflow-hidden border border-white/[0.06] rounded-[2rem] ml-4 mb-4 bg-[#050505]/45 backdrop-blur-[32px] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.15),0_20px_40px_-10px_rgba(0,0,0,0.8)] select-none h-full relative z-10 transition-all duration-700">
+    <div id="sidebar-v4" className="flex w-[265px] shrink-0 flex-col overflow-hidden border-r border-white/[0.12] bg-[#111111] select-none h-full relative z-10 transition-all duration-700">
       {/* Sidebar Header / Tabs */}
-      <div className="flex shrink-0 items-center border-b border-white/[0.04] p-1.5 bg-white/[0.01]">
+      <div className="flex shrink-0 items-center border-b border-white/[0.08] p-1.5 bg-white/[0.01]">
         <button
-          className={`flex-1 rounded-xl py-2 text-xs font-semibold capitalize tracking-wide transition-all duration-300 ${
+          className={`flex-1 rounded-xl py-2 text-xs font-semibold capitalize transition-all duration-300 ${
             activeTab === "slides"
               ? "bg-white/10 text-white shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.1)]"
               : "text-neutral-500 hover:bg-white/[0.04] hover:text-neutral-300"
@@ -71,7 +69,7 @@ export function LayerSidebar({
           Slides
         </button>
         <button
-          className={`flex-1 rounded-xl py-2 text-xs font-semibold capitalize tracking-wide transition-all duration-300 ${
+          className={`flex-1 rounded-xl py-2 text-xs font-semibold capitalize transition-all duration-300 ${
             activeTab === "layers"
               ? "bg-white/10 text-white shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.1)]"
               : "text-neutral-500 hover:bg-white/[0.04] hover:text-neutral-300"
@@ -87,12 +85,8 @@ export function LayerSidebar({
           
           {/* New Slide Button */}
           <button
-            className={`group mb-6 flex items-center justify-between rounded-[1rem] border p-3.5 text-left transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer active:scale-[0.96] ${
-              isTemplateModalOpen
-                ? "border-white/20 bg-white/10 text-white shadow-inner"
-                : "border border-white/[0.04] bg-white/[0.02] text-neutral-400 hover:bg-white/[0.06] hover:text-white shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.05)]"
-            }`}
-            onClick={onOpenTemplates}
+            className="group mb-6 flex items-center justify-between rounded-[1rem] border border-white/[0.04] bg-white/[0.02] p-3.5 text-left text-neutral-400 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.05)] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/[0.06] hover:text-white active:scale-[0.96]"
+            onClick={onAddSlide}
             type="button"
           >
             <span className="flex items-center gap-3.5">
@@ -100,19 +94,16 @@ export function LayerSidebar({
                 <Plus size={14} className="stroke-[2]" />
               </span>
               <span className="flex flex-col gap-1">
-                <span className="text-xs font-bold tracking-wider text-white leading-none">New Slide</span>
-                <span className="text-[10px] text-neutral-500 leading-none">Choose templates...</span>
+                <span className="text-xs font-bold text-white leading-none">New Slide</span>
+                <span className="text-[10px] text-neutral-500 leading-none">Blank slide</span>
               </span>
-            </span>
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-black/20 group-hover:bg-black/40 transition-colors">
-              <ChevronDown size={12} className="text-neutral-400 group-hover:translate-y-[1px] transition-transform" />
             </span>
           </button>
 
           {/* Section Indicator */}
           <div className="mb-2 flex items-center justify-between px-1.5">
-            <span className="text-sm font-bold text-neutral-400">Scenes</span>
-            <span className="font-mono text-sm font-bold text-neutral-500">{scenes.length}</span>
+            <span className="text-xs font-semibold text-neutral-400">Scenes</span>
+            <span className="font-mono text-xs font-medium text-neutral-500">{scenes.length}</span>
           </div>
 
           {/* Slides List Grid */}
@@ -128,14 +119,14 @@ export function LayerSidebar({
                     <div
                       className={`group/item flex cursor-pointer items-center justify-between rounded-[0.85rem] px-3 py-2.5 transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97] relative ${
                         isActive
-                          ? "bg-white/[0.06] text-white shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.05)] border border-white/[0.04]"
+                          ? "bg-white/[0.08] text-white shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.05)] border border-white/[0.04]"
                           : "text-neutral-400 hover:bg-white/[0.03] hover:text-neutral-200 border border-transparent"
                       }`}
                       onClick={() => onSelectSlide(slide.index)}
                     >
                       <div className="flex items-center gap-2.5 overflow-hidden">
-                        <Layers size={13} className={isActive ? "text-white" : "text-neutral-500 group-hover:text-neutral-300 transition-colors"} />
-                        <span className={`truncate text-sm font-semibold tracking-wide ${isActive ? "text-white" : "text-neutral-400 group-hover:text-neutral-200"}`}>
+                        <Layers size={13} className={isActive ? "text-[#8ea5ff]" : "text-neutral-500 group-hover:text-neutral-300 transition-colors"} />
+                        <span className={`truncate text-sm font-medium ${isActive ? "text-white" : "text-neutral-400 group-hover:text-neutral-200"}`}>
                           Slide {slide.index + 1}
                         </span>
                       </div>
@@ -188,15 +179,16 @@ export function LayerSidebar({
                         setDraggedSlideIndex(null);
                         setDragOverSlideIndex(null);
                       }}
-                      className={`relative flex flex-col p-2.5 pb-6 mb-2 rounded-xl transition-all cursor-pointer ${
-                        isActive ? "bg-sky-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)]" : "hover:bg-white/[0.04]"
-                      } ${dragOverSlideIndex === slide.index ? (draggedSlideIndex! < slide.index ? "border-b-2 border-b-sky-400 border-b-solid" : "border-t-2 border-t-sky-400 border-t-solid") : ""}`}
+                      className={`relative flex flex-col p-2 pb-6 mb-2 rounded-xl transition-all cursor-pointer ${
+                        isActive ? "bg-white/[0.06] shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" : "hover:bg-white/[0.04]"
+                      } ${dragOverSlideIndex === slide.index ? (draggedSlideIndex! < slide.index ? "border-b-2 border-b-[#8ea5ff] border-b-solid" : "border-t-2 border-t-[#8ea5ff] border-t-solid") : ""}`}
                       onClick={() => onSelectSlide(slide.index)}
                     >
-                      <div className={`relative aspect-video w-full rounded-[4px] shadow-sm overflow-hidden flex items-center justify-center ${isActive ? "bg-white border border-black/10" : "bg-neutral-800 border border-white/10"}`}>
-                        {/* Optionally, we can render the LayoutThumbnail here if we know the layout. For now, white box */}
+                      {isActive && <div className="absolute left-0 top-3 bottom-8 w-[3px] rounded-r bg-[#8ea5ff] z-10" />}
+                      <div className={`relative aspect-video w-full rounded-lg shadow-sm overflow-hidden flex items-center justify-center border transition-colors ${isActive ? "border-white/20 bg-black/60" : "border-white/5 bg-black/40 hover:border-white/10"}`}>
+                        {/* Optionally, we can render the LayoutThumbnail here if we know the layout. For now, empty dark box */}
                       </div>
-                      <span className={`absolute bottom-1.5 left-3 text-[11px] font-bold tracking-wider ${isActive ? "text-white" : "text-neutral-500"}`}>
+                      <span className={`absolute bottom-1.5 left-2.5 text-[11px] font-medium ${isActive ? "text-[#8ea5ff]" : "text-neutral-500"}`}>
                         {slide.index + 1}
                       </span>
                       {scenes.length > 1 && (

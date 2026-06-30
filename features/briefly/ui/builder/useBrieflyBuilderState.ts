@@ -20,7 +20,7 @@ import {
   type ResolvedAppearance
 } from "@/features/briefly/infrastructure/builderAppearance";
 import { downloadTextFile } from "@/features/briefly/infrastructure/browserExport";
-import { getBrieflyCopy } from "@/features/briefly/ui/brieflyCopy";
+import { getBrieflyCopy } from "@/features/briefly/application/brieflyCopy";
 import { getDesktopGridClass } from "@/features/briefly/ui/builder/layout";
 import type { ExportKind, LeftTool, MobileTab, PreviewMode } from "@/features/briefly/ui/builder/types";
 

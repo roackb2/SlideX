@@ -1,9 +1,12 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import { motion } from "framer-motion";
 import { resolveSlideThemeColors } from "@/core/motion-doc/application/slideTheme";
+import { normalizeSlideTransition } from "@/features/pitch/application/motionPresets";
 import { ThreeShaderCanvas } from "@/features/pitch/ui/preview/ThreeShaderCanvas";
 import { alignXToFlex, alignYToFlex } from "@/features/pitch/ui/preview/motion/blockStyles";
+import { slideMotionProps } from "@/features/pitch/ui/preview/motion/framerMotionProps";
 
 type SceneProps = {
   accent?: string;
@@ -11,6 +14,8 @@ type SceneProps = {
   alignY?: "top" | "center" | "bottom";
   autoHeight?: boolean;
   background?: string;
+  backgroundFit?: string;
+  backgroundImage?: string;
   children: ReactNode;
   duration: number;
   freeform?: boolean;
@@ -26,9 +31,11 @@ type SceneProps = {
   shaderScale?: number;
   shaderSoftness?: number;
   shaderSpeed?: number;
+  slideTransition?: string;
   textAlign?: "left" | "center" | "right";
   textColor?: string;
   theme?: string;
+  transitionDuration?: number;
 };
 
 export function Scene({
@@ -37,6 +44,8 @@ export function Scene({
   alignY = "center",
   autoHeight = false,
   background,
+  backgroundFit,
+  backgroundImage,
   children,
   duration,
   freeform = false,
@@ -52,9 +61,11 @@ export function Scene({
   shaderScale,
   shaderSoftness,
   shaderSpeed,
+  slideTransition,
   textAlign = "left",
   textColor,
-  theme = "dark"
+  theme = "dark",
+  transitionDuration
 }: SceneProps) {
   const themeColors = resolveSlideThemeColors(
     {
@@ -74,7 +85,7 @@ export function Scene({
   );
 
   return (
-    <section
+    <motion.section
       data-duration={duration}
       data-motion-scene
       data-theme-tone={themeColors.tone}
@@ -88,7 +99,7 @@ export function Scene({
           "--slide-muted": themeColors.muted,
           "--slide-text-align": textAlign,
           background: themeColors.background,
-          borderRadius: 20,
+          borderRadius: 0,
           display: "flex",
           flexDirection: "column",
           height: autoHeight ? "auto" : undefined,
@@ -99,7 +110,26 @@ export function Scene({
           position: autoHeight ? "relative" : "absolute"
         } as CSSProperties
       }
+      {...slideMotionProps({
+        duration: transitionDuration,
+        slideTransition: normalizeSlideTransition(slideTransition)
+      })}
     >
+      {backgroundImage ? (
+        <div
+          aria-hidden="true"
+          style={{
+            backgroundImage: cssImageUrl(backgroundImage),
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: backgroundSizeFromFit(backgroundFit),
+            inset: 0,
+            pointerEvents: "none",
+            position: "absolute",
+            zIndex: 0
+          }}
+        />
+      ) : null}
       {shader ? (
         <ThreeShaderCanvas
           color1={themeColors.shaderColor1}
@@ -111,7 +141,7 @@ export function Scene({
           scale={shaderScale ?? 0.5}
           softness={shaderSoftness ?? 0.5}
           speed={shaderSpeed ?? 1}
-          style={{ borderRadius: 20, inset: 0, position: "absolute", zIndex: 0 }}
+          style={{ borderRadius: 0, inset: 0, position: "absolute", zIndex: 0 }}
         />
       ) : null}
       <div
@@ -142,6 +172,22 @@ export function Scene({
       >
         {children}
       </div>
-    </section>
+    </motion.section>
   );
+}
+
+function backgroundSizeFromFit(value: string | undefined): CSSProperties["backgroundSize"] {
+  if (value === "contain" || value === "scale-down") {
+    return "contain";
+  }
+
+  if (value === "fill") {
+    return "100% 100%";
+  }
+
+  return "cover";
+}
+
+function cssImageUrl(value: string) {
+  return `url("${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")`;
 }

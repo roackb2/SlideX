@@ -9,8 +9,10 @@ type UsePitchShortcutsArgs = {
   closeMobileSidebar: () => void;
   closeTemplateModal: () => void;
   copySelectedBlock: () => void;
+  cutSelectedBlocks: () => void;
   deleteSelectedBlocks: () => void;
   deleteSlide: (slideIndex: number) => void;
+  duplicateSelectedBlock: () => void;
   exportHtmlFile: () => void;
   exportMdxFile: () => void;
   goToNextSlide: () => void;
@@ -36,8 +38,10 @@ export function usePitchShortcuts({
   closeMobileSidebar,
   closeTemplateModal,
   copySelectedBlock,
+  cutSelectedBlocks,
   deleteSelectedBlocks,
   deleteSlide,
+  duplicateSelectedBlock,
   goToNextSlide,
   goToPreviousSlide,
   isCodeEditorOpen,
@@ -97,6 +101,18 @@ export function usePitchShortcuts({
         return;
       }
 
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "x") {
+        event.preventDefault();
+        cutSelectedBlocks();
+        return;
+      }
+
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        duplicateSelectedBlock();
+        return;
+      }
+
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z" && !event.shiftKey) {
         event.preventDefault();
         undoLastChange();
@@ -148,8 +164,10 @@ export function usePitchShortcuts({
     closeMobileSidebar,
     closeTemplateModal,
     copySelectedBlock,
+    cutSelectedBlocks,
     deleteSelectedBlocks,
     deleteSlide,
+    duplicateSelectedBlock,
     goToNextSlide,
     goToPreviousSlide,
     isCodeEditorOpen,

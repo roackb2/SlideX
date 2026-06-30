@@ -32,7 +32,7 @@ import type {
 } from "@/features/briefly/domain/briefTypes";
 import { richTextToHtml } from "@/features/briefly/application/richTextFormat";
 import { IMAGE_UPLOAD_PRESETS, processImageFile } from "@/features/briefly/infrastructure/imageUpload";
-import { getBrieflyCopy, getOptionLabel, getSectionCopy } from "@/features/briefly/ui/brieflyCopy";
+import { getBrieflyCopy, getOptionLabel, getSectionCopy } from "@/features/briefly/application/brieflyCopy";
 import {
   attachmentsValue,
   faqValue,

@@ -1,11 +1,11 @@
-// @ts-nocheck
 "use client";
 
 import { motion } from "framer-motion";
 import { Plus, Type, Triangle, Search, ChevronDown, Layers, Box } from "lucide-react";
+import { BorderBeam } from "border-beam";
 import type { Dictionary } from "@/common/lib/i18n";
 import { springTransition } from "@/features/marketing/ui/home/homeMotion";
-import { BorderBeamCard } from "@/common/ui";
+
 export function HeroPitch({ copy }: { copy: Dictionary["home"]["heroPitch"] }) {
   return (
     <div className="relative mx-auto">
@@ -16,11 +16,13 @@ export function HeroPitch({ copy }: { copy: Dictionary["home"]["heroPitch"] }) {
         className="pointer-events-none absolute -inset-x-14 -inset-y-16 rounded-[5rem] bg-[radial-gradient(ellipse_at_18%_0%,rgba(190,232,255,0.2),transparent_38%),radial-gradient(ellipse_at_76%_18%,rgba(43,88,190,0.14),transparent_54%),linear-gradient(180deg,rgba(55,90,180,0.1),transparent_74%)] blur-[82px]"
       />
 
-      <BorderBeamCard 
-        radius="2.85rem"
-        borderWidth="1px"
-        beamColor="#00d2ff, #3a7bd5, #ff007f, #00d2ff"
-        speed="5s"
+      <BorderBeam
+        size="pulse-outside"
+        colorVariant="ocean"
+        theme="dark"
+        duration={5}
+        borderRadius={46}
+        strength={0.9}
         className="shadow-[0_42px_140px_rgba(0,0,0,0.72),0_0_86px_rgba(37,99,235,0.12)]"
       >
         <div className="pointer-events-none absolute inset-0 z-20 rounded-[2.85rem] shadow-[inset_0_1px_1px_rgba(255,255,255,0.7),inset_11px_0_26px_rgba(190,232,255,0.18),inset_-1px_-18px_44px_rgba(0,0,0,0.42)]" />
@@ -151,7 +153,7 @@ export function HeroPitch({ copy }: { copy: Dictionary["home"]["heroPitch"] }) {
             </motion.div>
           </div>
         </div>
-      </BorderBeamCard>
+      </BorderBeam>
     </div>
   );
 }

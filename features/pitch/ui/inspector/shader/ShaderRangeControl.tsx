@@ -27,32 +27,34 @@ export function ShaderRangeControl({
   surfaceClassName = "p-1.5 rounded-[1.25rem] border border-white/[0.03] bg-[#0A0A0C]/50 shadow-[0_4px_24px_rgba(0,0,0,0.15)]",
   value
 }: ShaderRangeControlProps) {
+  const percentage = ((value - Number(min)) / (Number(max) - Number(min))) * 100;
+
   return (
-    <div className={`backdrop-blur-xl flex flex-col ${surfaceClassName}`}>
-      <div className="p-3.5 rounded-[1rem] border border-white/[0.03] bg-black/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] flex flex-col gap-3.5 relative overflow-hidden">
-        <div className="flex items-center justify-between relative z-10">
-          <span className="text-xs font-semibold text-neutral-300 flex items-center gap-2">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#a855f7]/10 text-[#a855f7] border border-[#a855f7]/20 shadow-[0_0_10px_rgba(168,85,247,0.1)]">
-              <Icon size={10} />
-            </span>
-            {label}
-          </span>
-          <span className="px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.06] font-mono text-xs text-neutral-300 tracking-wide shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-            {badge}
-          </span>
-        </div>
-        <div className="flex items-center gap-3 relative z-10">
-          <input
-            aria-label={ariaLabel}
-            className="h-1 flex-1 cursor-pointer appearance-none rounded-full bg-white/[0.05] accent-[#a855f7] [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#a855f7] [&::-webkit-slider-thumb]:shadow-[0_0_14px_rgba(168,85,247,0.6),inset_0_1px_0_rgba(255,255,255,0.4)] transition-all [&::-webkit-slider-thumb]:hover:scale-110"
-            max={max}
-            min={min}
-            onChange={(event) => onChange(Number(event.target.value))}
-            step={step}
-            type="range"
-            value={value}
-          />
-        </div>
+    <div className="flex flex-col gap-2 py-2 group">
+      <div className="flex items-center justify-between">
+        <span className="text-[12px] font-medium text-neutral-400 group-hover:text-neutral-300 transition-colors">
+          {label}
+        </span>
+        <span className="font-mono text-[11px] text-neutral-500 group-hover:text-neutral-400 transition-colors">
+          {badge}
+        </span>
+      </div>
+      <div className="flex items-center h-4 relative">
+        <input
+          aria-label={ariaLabel}
+          className="absolute inset-0 w-full h-1 m-auto cursor-pointer appearance-none rounded-full outline-none transition-all
+                     [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-neutral-400 [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:transition-all
+                     group-hover:[&::-webkit-slider-thumb]:scale-[1.3] group-hover:[&::-webkit-slider-thumb]:bg-white"
+          style={{
+            background: `linear-gradient(to right, rgba(255,255,255,0.4) ${percentage}%, rgba(255,255,255,0.08) ${percentage}%)`
+          }}
+          max={max}
+          min={min}
+          onChange={(event) => onChange(Number(event.target.value))}
+          step={step}
+          type="range"
+          value={value}
+        />
       </div>
     </div>
   );

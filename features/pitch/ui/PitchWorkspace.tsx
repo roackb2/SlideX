@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { PreviewCanvas } from "@/features/pitch/ui/PreviewCanvas";
 import { PitchHeader } from "@/features/pitch/ui/PitchHeader";
 import { WorkspaceCodeEditorOverlay } from "@/features/pitch/ui/workspace/WorkspaceCodeEditorOverlay";
@@ -11,6 +12,8 @@ import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWor
 
 export function PitchWorkspace(props: PitchWorkspaceProps) {
   const sceneCount = props.scenes.length;
+  const [zoomLevel, setZoomLevel] = useState<number | "fit">("fit");
+  const [fitScale, setFitScale] = useState(1);
 
   function selectSlide(index: number) {
     props.setActiveSlideIndex(index);
@@ -19,14 +22,16 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
   }
 
   return (
-    <main className="flex h-screen flex-col overflow-hidden bg-transparent font-sans text-neutral-300">
-      <div className="fluid-aurora-bg" />
+    <main className="flex h-screen flex-col overflow-hidden bg-[#000000] font-sans text-neutral-300">
       <PitchHeader
         exportMenuRef={props.exportMenuRef}
         isExportMenuOpen={props.isExportMenuOpen}
         isMobileInspectorOpen={props.isMobileInspectorOpen}
         isMobileSidebarOpen={props.isMobileSidebarOpen}
         notice={props.notice}
+        zoomLevel={zoomLevel}
+        setZoomLevel={setZoomLevel}
+        actualScale={zoomLevel === "fit" ? fitScale : zoomLevel}
         onExportHtml={props.exportHtmlFile}
         onExportMdx={props.exportMdxFile}
         onExportPdf={props.exportPdfFile}
@@ -44,28 +49,38 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
         setIsExportMenuOpen={props.setIsExportMenuOpen}
       />
 
-      <div className="relative flex flex-1 animate-[bubble-appear_0.3s_ease-out] overflow-hidden bg-transparent" id="workspace-v4">
+      <div className="relative flex flex-1 animate-[bubble-appear_0.3s_ease-out] overflow-hidden bg-[#000000]" id="workspace-v4">
         <WorkspaceLayerSidebar {...props} onSelectSlide={selectSlide} />
 
         <PreviewCanvas
+          zoomLevel={zoomLevel}
+          onFitScaleChange={setFitScale}
           activeSlide={props.activeSlide}
           activeSlideIndex={props.activeSlideIndex}
+          canPasteBlock={props.hasCopiedBlock}
           isGridVisible={props.isCanvasGridVisible}
           onAddBlock={props.addBlockToActiveSlide}
           onAddTextAtPosition={props.addTextAtPosition}
           onBeginBlockTransform={props.beginBlockTransform}
           onClearSelection={props.clearBlockSelection}
+          onCopySelectedBlock={props.copySelectedBlock}
+          onDeleteSelectedBlocks={props.deleteSelectedBlocks}
+          onDuplicateSelectedBlock={props.duplicateSelectedBlock}
           onNextSlide={props.goToNextSlide}
+          onPasteCopiedBlock={props.pasteCopiedBlock}
           onPreviousSlide={props.goToPreviousSlide}
           onSelectBlock={props.selectBlock}
           onSelectBlocks={props.selectBlocks}
           onSelectSlide={props.setActiveSlideIndex}
+          onToggleSelectedBlocksPositionLock={props.toggleSelectedBlocksPositionLock}
           onUpdateBlock={props.updateBlock}
           onUpdateBlockFrames={props.updatePositionedBlockFrames}
+          onUseSelectedImageAsBackground={props.useSelectedImageAsBackground}
           replayNonce={props.replayNonce}
           sceneCount={sceneCount}
           selectedBlockIndex={props.selectedBlockIndex}
           selectedBlockIndices={props.selectedBlockIndices}
+          selectedBlocksLocked={props.selectedBlocksLocked}
           slideRows={props.slideRows}
           source={props.canvasSource}
           totalDuration={props.totalDuration}

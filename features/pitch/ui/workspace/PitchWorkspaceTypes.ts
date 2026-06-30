@@ -2,6 +2,7 @@ import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 import type { AddBlockOptions, FrameUpdate } from "@/features/pitch/application/motionDocCommands";
 import type { SlideRow } from "@/features/pitch/ui/LayerSidebar";
+import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
 import type { AddBlockType } from "@/features/pitch/ui/pitchOptions";
 
 export type SelectionMdx = { label: string; source: string };
@@ -14,6 +15,7 @@ export type PitchWorkspaceProps = {
   activeSlideBackground: string;
   activeSlideIndex: number;
   activeSlideLayout: string;
+  activeSlideLayoutPreset: string;
   activeSlideMutedColor: string;
   activeSlideShader: string;
   activeSlideShaderColor1: string;
@@ -29,7 +31,7 @@ export type PitchWorkspaceProps = {
   activeSlideTheme: string;
   addBlockToActiveSlide: (type: AddBlockType, options?: AddBlockOptions) => void;
   addSlide: () => void;
-  addSlideWithLayout: (layoutSource: string) => void;
+  applyLayoutToActiveSlide: (layoutSource: string, layoutId: string) => void;
   addTextAtPosition: (position: { x: number; y: number }) => void;
   applyTemplate: (templateId: string) => void;
   beginBlockTransform: () => void;
@@ -37,8 +39,11 @@ export type PitchWorkspaceProps = {
   clearBlockSelection: () => void;
   commitMdxSource: (value: string) => void;
   copySource: () => Promise<void>;
+  copySelectedBlock: () => void;
   deleteBlock: (blockIndex: number) => void;
+  deleteSelectedBlocks: () => void;
   deleteSlide: (slideIndex: number) => void;
+  duplicateSelectedBlock: () => void;
   draggedBlockIndex: number | null;
   dragOverBlockIndex: number | null;
   exportHtmlFile: () => void;
@@ -55,11 +60,13 @@ export type PitchWorkspaceProps = {
   isMobileSidebarOpen: boolean;
   isProjectDirty: boolean;
   isTemplateModalOpen: boolean;
+  hasCopiedBlock: boolean;
   moveBlock: (blockIndex: number, direction: -1 | 1) => void;
   newProject: () => void;
   notice: string;
   projectName: string;
   pushUndoSnapshot: () => void;
+  pasteCopiedBlock: () => void;
   reorderBlock: (fromIndex: number, toIndex: number) => void;
   reorderSlide: (fromIndex: number, toIndex: number) => void;
   replayNonce: number;
@@ -69,6 +76,7 @@ export type PitchWorkspaceProps = {
   selectBlocks: (indices: number[], options?: { additive?: boolean }) => void;
   selectedBlockIndex: number | null;
   selectedBlockIndices: number[];
+  selectedBlocksLocked: boolean;
   selectedTemplateId: string;
   selectionMdx: SelectionMdx;
   selectSingleBlock: (index: number | null) => void;
@@ -84,6 +92,7 @@ export type PitchWorkspaceProps = {
   setReplayNonce: Dispatch<SetStateAction<number>>;
   slideRows: SlideRow[];
   source: string;
+  toggleSelectedBlocksPositionLock: () => void;
   totalDuration: number;
   undoLastChange: () => void;
   updateActiveSlideStyle: (updates: {
@@ -91,9 +100,10 @@ export type PitchWorkspaceProps = {
     theme?: string;
   }) => void;
   updateAllSlidesStyle: (updates: Record<string, string | number>) => void;
-  updateBlock: (blockIndex: number, newProps: Record<string, string | number>, newText?: string) => void;
+  updateBlock: BlockUpdater;
   updatePositionedBlockFrames: (updates: FrameUpdate[], commit?: boolean) => void;
   updateSelectionMdx: (value: string) => void;
+  useSelectedImageAsBackground: () => void;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
   uploadVideoForBlock: (blockIndex: number, file: File | undefined) => void;
 };

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import type { RefObject } from "react";
-import { Download, FileCode2, FileText, Layers, PanelRight, RotateCcw, Undo2 } from "lucide-react";
+import { useState, type RefObject } from "react";
+import * as Popover from "@radix-ui/react-popover";
+import { Download, FileCode2, FileText, Layers, PanelRight, RotateCcw, Undo2, Search, ChevronDown, Check } from "lucide-react";
 
 export function PitchHeader({
   exportMenuRef,
@@ -11,6 +12,9 @@ export function PitchHeader({
   isMobileSidebarOpen,
   notice,
   projectName,
+  zoomLevel,
+  setZoomLevel,
+  actualScale,
   onExportHtml,
   onExportMdx,
   onExportPdf,
@@ -26,6 +30,9 @@ export function PitchHeader({
   isMobileSidebarOpen: boolean;
   notice: string;
   projectName: string;
+  zoomLevel: number | "fit";
+  setZoomLevel: (z: number | "fit") => void;
+  actualScale: number;
   onExportHtml: () => void;
   onExportMdx: () => void;
   onExportPdf: () => void;
@@ -35,8 +42,11 @@ export function PitchHeader({
   onToggleSidebar: () => void;
   setIsExportMenuOpen: (updater: (current: boolean) => boolean) => void;
 }) {
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const zoomOptions = ["fit", 0.5, 0.75, 1, 1.25, 1.5] as const;
+
   return (
-    <header className="z-50 mx-4 mt-4 mb-2 flex shrink-0 items-center justify-between rounded-[2rem] border border-white/[0.06] bg-[#050505]/45 backdrop-blur-[32px] px-4 py-2.5 sm:px-6 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.15),0_20px_40px_-10px_rgba(0,0,0,0.8)] select-none transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]">
+    <header className="z-50 flex shrink-0 items-center justify-between border-b border-white/[0.12] bg-[#111111] px-4 py-2.5 sm:px-6 select-none transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] h-[52px]">
       
       {/* Left side actions */}
       <div className="flex shrink-0 items-center gap-3">
@@ -65,7 +75,44 @@ export function PitchHeader({
 
       {/* Right side actions */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-3.5">
-        <span className="hidden sm:block font-mono text-sm text-neutral-400/80 font-medium">{notice}</span>
+        <Popover.Root onOpenChange={setIsZoomOpen} open={isZoomOpen}>
+          <Popover.Trigger asChild>
+            <button
+              className="hidden sm:flex h-8.5 min-w-[76px] items-center justify-between gap-1 rounded-xl bg-white/[0.04] px-2.5 text-xs font-semibold text-neutral-300 transition-colors hover:bg-white/[0.08] hover:text-white outline-none focus-visible:ring-1 focus-visible:ring-white/50"
+              title="Zoom Level"
+              type="button"
+            >
+              <span>{zoomLevel === "fit" ? "Fit" : `${zoomLevel * 100}%`}</span>
+              <ChevronDown className="shrink-0 text-neutral-500" size={14} />
+            </button>
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content
+              align="end"
+              className="z-[100] flex w-[140px] flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-[#18181b] p-1 shadow-2xl animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
+              sideOffset={8}
+            >
+              <div className="flex flex-col">
+                {zoomOptions.map((option) => (
+                  <button
+                    key={option}
+                    className={`flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-xs transition-colors hover:bg-white/10 ${
+                      zoomLevel === option ? "bg-white/5 text-white font-medium" : "text-neutral-300"
+                    }`}
+                    onClick={() => {
+                      setZoomLevel(option);
+                      setIsZoomOpen(false);
+                    }}
+                    type="button"
+                  >
+                    <span>{option === "fit" ? "Fit to Screen" : `${option * 100}%`}</span>
+                    {zoomLevel === option && <Check size={14} />}
+                  </button>
+                ))}
+              </div>
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
 
         {/* Undo action button */}
         <button

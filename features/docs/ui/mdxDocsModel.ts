@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { BookOpen, Code2, FileCode2, MonitorPlay, SlidersHorizontal, Sparkles, Terminal, type LucideIcon } from "lucide-react";
 import type { Dictionary } from "@/common/lib/i18n";
 

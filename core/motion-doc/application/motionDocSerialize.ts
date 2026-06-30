@@ -53,7 +53,7 @@ export function generateBlockString(block: MotionDocBlock) {
 
 function generateBlockStringWithProps(block: MotionDocBlock, overrideProps: Record<string, string | number> | undefined) {
   if (block.type === "Title" || block.type === "Text") {
-    const propsStr = formatProps(overrideProps ?? block.props);
+    const propsStr = formatTextProps(overrideProps ?? block.props);
     return `<${block.type}${propsStr ? " " + propsStr : ""}>${block.text}</${block.type}>`;
   }
 
@@ -118,6 +118,18 @@ function formatProps(props: Record<string, string | number>) {
   return entries
     .map(([key, value]) => (typeof value === "number" ? `${key}={${value}}` : `${key}="${value}"`))
     .join(" ");
+}
+
+function formatTextProps(props: Record<string, string | number>) {
+  return formatProps(withoutTextFrameOnlyProps(props));
+}
+
+function withoutTextFrameOnlyProps(props: Record<string, string | number>) {
+  const { borderRadius, radius, ...rest } = props;
+  void borderRadius;
+  void radius;
+
+  return rest;
 }
 
 function formatSlideTag(props: Record<string, string | number>) {

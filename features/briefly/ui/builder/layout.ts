@@ -1,5 +1,5 @@
 import type { Locale } from "@/common/lib/i18n";
-import { getBrieflyCopy } from "@/features/briefly/ui/brieflyCopy";
+import { getBrieflyCopy } from "@/features/briefly/application/brieflyCopy";
 import type { LeftTool } from "@/features/briefly/ui/builder/types";
 
 export function getDesktopGridClass(leftDrawerOpen: boolean, inspectorVisible: boolean) {

@@ -22,7 +22,7 @@ export function defaultBlockWidth(type: MotionDocBlock["type"]) {
 
 export function defaultBlockHeight(type: MotionDocBlock["type"]) {
   if (type === "Title") return 18;
-  if (type === "Text") return 16;
+  if (type === "Text") return 9;
   if (type === "Icon") return 28;
   if (type === "Metric") return 36;
   if (type === "Chart") return 42;

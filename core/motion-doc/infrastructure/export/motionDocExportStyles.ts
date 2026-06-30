@@ -90,6 +90,24 @@ export const motionDocExportStyles = `      :root {
       .slide.is-active {
         display: block;
       }
+      .slide-transition-fade.is-active {
+        animation: slide-enter-fade var(--slide-transition-duration, 0.72s) cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .slide-transition-rise.is-active {
+        animation: slide-enter-rise var(--slide-transition-duration, 0.72s) cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .slide-transition-push-left.is-active {
+        animation: slide-enter-push-left var(--slide-transition-duration, 0.72s) cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .slide-transition-scale.is-active {
+        animation: slide-enter-scale var(--slide-transition-duration, 0.72s) cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .slide-transition-wipe.is-active {
+        animation: slide-enter-wipe var(--slide-transition-duration, 0.72s) cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .slide-transition-curtain.is-active {
+        animation: slide-enter-curtain var(--slide-transition-duration, 0.72s) cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
       .slide::before {
         content: "";
         position: absolute;
@@ -107,6 +125,14 @@ export const motionDocExportStyles = `      :root {
         height: 100%;
         z-index: 0;
         display: block;
+        pointer-events: none;
+      }
+      .slide-bg-image {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background-position: center;
+        background-repeat: no-repeat;
         pointer-events: none;
       }
       .motion-block {
@@ -132,8 +158,29 @@ export const motionDocExportStyles = `      :root {
       .slide.is-active .motion-block {
         animation: enter-motion var(--motion-duration, 0.6s) cubic-bezier(0.22, 1, 0.36, 1) var(--motion-delay, 0s) both;
       }
+      .slide.is-active .motion-block.enter-none {
+        animation: none;
+      }
+      .enter-none {
+        opacity: 1;
+        transform: none;
+      }
+      .enter-blur-in {
+        filter: blur(14px);
+        transform: scale(1.04);
+      }
       .enter-fade-in {
         transform: none;
+      }
+      .enter-pop {
+        transform: scale(0.72);
+      }
+      .enter-reveal {
+        clip-path: inset(0 100% 0 0);
+        transform: translate3d(0, 10px, 0) scale(0.98);
+      }
+      .enter-rise {
+        transform: translate3d(0, 42px, 0) rotate(-1.2deg);
       }
       .enter-zoom-in {
         transform: scale(0.88);
@@ -146,8 +193,68 @@ export const motionDocExportStyles = `      :root {
       }
       @keyframes enter-motion {
         to {
+          clip-path: inset(0 0 0 0);
+          filter: blur(0);
+          opacity: 1;
+          transform: translate3d(0, 0, 0) scale(1) rotate(0);
+        }
+      }
+      @keyframes slide-enter-fade {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes slide-enter-rise {
+        from {
+          opacity: 0;
+          transform: translate3d(0, 36px, 0) scale(0.985);
+        }
+        to {
           opacity: 1;
           transform: translate3d(0, 0, 0) scale(1);
+        }
+      }
+      @keyframes slide-enter-push-left {
+        from {
+          opacity: 0;
+          transform: translate3d(96px, 0, 0);
+        }
+        to {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+      }
+      @keyframes slide-enter-scale {
+        from {
+          filter: blur(8px);
+          opacity: 0;
+          transform: scale(1.08);
+        }
+        to {
+          filter: blur(0);
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      @keyframes slide-enter-wipe {
+        from {
+          clip-path: inset(0 100% 0 0);
+        }
+        to {
+          clip-path: inset(0 0 0 0);
+        }
+      }
+      @keyframes slide-enter-curtain {
+        from {
+          clip-path: inset(0 0 100% 0);
+          transform: translate3d(0, 18px, 0);
+        }
+        to {
+          clip-path: inset(0 0 0 0);
+          transform: translate3d(0, 0, 0);
         }
       }
       .block-title {
@@ -656,5 +763,16 @@ export const motionDocExportStyles = `      :root {
         .motion-block {
           opacity: 1 !important;
           transform: translate3d(0, 0, 0) scale(1) !important;
+        }
+        .shader-bg {
+          display: none !important;
+        }
+        .slide-bg-image {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .slide::before {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
       }`;

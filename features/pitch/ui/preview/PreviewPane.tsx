@@ -60,6 +60,8 @@ export function PreviewPane({
         alignY={alignYProp(activeSlide.props.alignY)}
         autoHeight={autoHeight}
         background={stringProp(activeSlide.props.background)}
+        backgroundFit={stringProp(activeSlide.props.backgroundFit)}
+        backgroundImage={stringProp(activeSlide.props.backgroundImage)}
         duration={activeSlide.duration}
         freeform={hasPositionedBlocks}
         key={`${replayNonce}-${activeSlideIndex}-${activeSlide.duration}`}
@@ -75,9 +77,11 @@ export function PreviewPane({
         shaderScale={numberProp(activeSlide.props.shaderScale)}
         shaderSoftness={numberProp(activeSlide.props.shaderSoftness)}
         shaderSpeed={numberProp(activeSlide.props.shaderSpeed)}
+        slideTransition={stringProp(activeSlide.props.slideTransition)}
         textAlign={textAlignProp(activeSlide.props.textAlign)}
         textColor={stringProp(activeSlide.props.textColor ?? activeSlide.props.foreground ?? activeSlide.props.color)}
         theme={stringProp(activeSlide.props.theme)}
+        transitionDuration={numberProp(activeSlide.props.transitionDuration)}
       >
         {shouldSplit ? (
           <>
@@ -88,7 +92,7 @@ export function PreviewPane({
                   items={contentItems}
                 />
               ) : (
-                <Text enter="fadeIn">Add a text layer for this side.</Text>
+                <Text>Add a text layer for this side.</Text>
               )}
             </div>
             <div style={{ ...splitImageStyle, order: imageOrder }}>

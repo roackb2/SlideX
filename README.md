@@ -168,9 +168,11 @@ features/pitch/
 常用 motion props：
 
 ```tsx
-enter?: "fadeIn" | "fadeUp" | "zoomIn" | "slideLeft";
+enter?: "blurIn" | "fadeIn" | "fadeUp" | "none" | "pop" | "reveal" | "rise" | "slideLeft" | "zoomIn";
 delay?: number;
 duration?: number;
+slideTransition?: "curtain" | "fade" | "none" | "pushLeft" | "rise" | "scale" | "wipe";
+transitionDuration?: number;
 x?: number;
 y?: number;
 w?: number;

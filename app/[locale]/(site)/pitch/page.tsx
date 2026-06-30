@@ -6,10 +6,23 @@ import { FileCode2, PlayCircle, Layout, MonitorPlay, Sparkles, Building2, Briefc
 import { useI18n } from "@/common/lib/I18nProvider";
 import { BorderBeam } from "border-beam";
 
+type PitchWorkflowStep = {
+  body: string;
+  label: string;
+  title: string;
+};
+
+type PitchUseCase = {
+  body: string;
+  title: string;
+};
+
 const fadeUpVariant = {
   hidden: { opacity: 0, y: 40 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
 };
+
+const useCaseIcons = [Briefcase, Sparkles, Frame] as const;
 
 export default function PitchLandingPage() {
   const { t } = useI18n();
@@ -171,7 +184,7 @@ export default function PitchLandingPage() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {page.workflow.steps.map((step: any, index: number) => (
+          {page.workflow.steps.map((step: PitchWorkflowStep, index: number) => (
             <motion.div 
               key={index}
               initial="hidden"
@@ -219,9 +232,8 @@ export default function PitchLandingPage() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {page.useCases.cases.map((useCase: any, index: number) => {
-            const icons = [Briefcase, Sparkles, Frame];
-            const Icon = icons[index];
+          {page.useCases.cases.map((useCase: PitchUseCase, index: number) => {
+            const Icon = useCaseIcons[index % useCaseIcons.length] ?? Briefcase;
             return (
               <motion.div 
                 key={index}

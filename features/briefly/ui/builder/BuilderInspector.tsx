@@ -4,17 +4,28 @@ import {
   getBlockDefinition,
   isCoreSectionType,
   type BriefSection,
-  type SectionData
+  type SectionData,
+  type SectionLayout
 } from "@/features/briefly/domain/briefTypes";
-import { getBrieflyCopy, getSectionCopy } from "@/features/briefly/ui/brieflyCopy";
+import { getBrieflyCopy, getSectionCopy } from "@/features/briefly/application/brieflyCopy";
 import { SectionEditor } from "@/features/briefly/ui/SectionEditor";
 
 interface SectionInspectorPanelProps {
   section: BriefSection;
   mobile?: boolean;
   onChangeSectionData: (sectionId: string, patch: SectionData) => void;
-  onChangeSectionLayout: (sectionId: string, layout: import("@/features/briefly/domain/briefTypes").SectionLayout) => void;
+  onChangeSectionLayout: (sectionId: string, layout: SectionLayout) => void;
   onClose: () => void;
+}
+
+function toSectionLayout(value: string): SectionLayout {
+  switch (value) {
+    case "half-left":
+    case "half-right":
+      return value;
+    default:
+      return "full";
+  }
 }
 
 export function SectionInspectorPanel({
@@ -77,7 +88,7 @@ export function SectionInspectorPanel({
           <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#0a0a0a] p-1">
             <select
               value={section.layout || "full"}
-              onChange={(e) => onChangeSectionLayout(section.id, e.target.value as any)}
+              onChange={(e) => onChangeSectionLayout(section.id, toSectionLayout(e.target.value))}
               className="w-full bg-transparent px-2 py-1 text-xs text-white/90 outline-none"
             >
               <option value="full">{copy.layoutFull}</option>

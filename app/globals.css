@@ -91,3 +91,95 @@ button {
     print-color-adjust: exact !important;
   }
 }
+
+@keyframes motion-thumb-fade {
+  0%, 20% {
+    opacity: 0;
+  }
+  55%, 100% {
+    opacity: 1;
+  }
+}
+
+@keyframes motion-thumb-up {
+  0%, 18% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  58%, 100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes motion-thumb-left {
+  0%, 18% {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  58%, 100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes motion-thumb-zoom {
+  0%, 18% {
+    opacity: 0;
+    transform: scale(0.76);
+  }
+  58%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes motion-thumb-rise {
+  0%, 18% {
+    opacity: 0;
+    transform: translateY(14px) rotate(-3deg);
+  }
+  58%, 100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes motion-thumb-pop {
+  0%, 18% {
+    opacity: 0;
+    transform: scale(0.58);
+  }
+  48% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  68%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes motion-thumb-wipe {
+  0%, 18% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 1;
+  }
+  62%, 100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+@keyframes motion-thumb-blur {
+  0%, 18% {
+    filter: blur(8px);
+    opacity: 0;
+    transform: scale(1.12);
+  }
+  62%, 100% {
+    filter: blur(0);
+    opacity: 1;
+    transform: scale(1);
+  }
+}

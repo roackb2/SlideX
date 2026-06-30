@@ -1,16 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import {
-  hexColorValue,
-  type HexColor,
   type PaletteScope,
   type ThemePaletteColors
 } from "@/features/pitch/application/colorPalettes";
-import { Field, type PropValue } from "@/features/pitch/ui/inspector/controls/BaseControls";
-import { colorSwatchStyle } from "@/features/pitch/ui/inspector/color/colorSwatchStyle";
+import type { PropValue } from "@/features/pitch/ui/inspector/controls/BaseControls";
 import { slidePalettePresets } from "@/features/pitch/ui/inspector/color/palettes";
-import { useCustomSwatches } from "@/features/pitch/ui/inspector/color/useCustomSwatches";
 
 type ColorSetItem = {
   id: string;
@@ -27,10 +24,8 @@ type ColorSetControlProps = {
 };
 
 export function ColorSetControl({ items, label, onApplyPalette }: ColorSetControlProps) {
-  const [isFineTuneOpen, setIsFineTuneOpen] = useState(false);
-  const [isSwatchesOpen, setIsSwatchesOpen] = useState(false);
-  const [swatchValue, setSwatchValue] = useState("#ffffff");
-  const { customSwatches, persistSwatches } = useCustomSwatches();
+  const [isPresetsOpen, setIsPresetsOpen] = useState(false);
+  const [isColorsOpen, setIsColorsOpen] = useState(false);
 
   function applyPalette(colors: ThemePaletteColors, scope: PaletteScope) {
     if (onApplyPalette) {
@@ -44,167 +39,110 @@ export function ColorSetControl({ items, label, onApplyPalette }: ColorSetContro
     items[3]?.onChange(colors.accent);
   }
 
-  function addSwatch(value = swatchValue) {
-    const normalized = hexColorValue(value);
-
-    if (!normalized) {
-      return;
-    }
-
-    persistSwatches([normalized, ...customSwatches]);
-    setSwatchValue(normalized);
-  }
-
-  function addCurrentThemeSwatches() {
-    const currentColors = items
-      .map((item) => String(item.value ?? item.placeholder ?? ""))
-      .map((color) => hexColorValue(color))
-      .filter((color): color is HexColor => Boolean(color));
-
-    persistSwatches([...currentColors, ...customSwatches]);
-  }
-
-  function deleteSwatch(color: string) {
-    persistSwatches(customSwatches.filter((item) => item.toLowerCase() !== color.toLowerCase()));
-  }
-
   return (
-    <Field label={label}>
-      <div className="grid gap-1 rounded-md border border-neutral-800 bg-black p-1">
-        {slidePalettePresets.map((palette) => (
-          <div
-            className="grid grid-cols-[1fr_auto] items-center gap-1 rounded border border-transparent transition-colors hover:border-neutral-700 hover:bg-neutral-900"
-            key={palette.id}
-          >
-            <button
-              aria-label={`Use ${palette.name} theme on current slide`}
-              className="flex min-w-0 items-center justify-between gap-2 px-2 py-1.5 text-left"
-              onClick={() => applyPalette(palette.colors, "slide")}
-              title={palette.name}
-              type="button"
-            >
-              <span className="truncate text-xs font-medium text-neutral-200">{palette.name}</span>
-              <span className="flex -space-x-1">
-                {Object.values(palette.colors).map((color) => (
-                  <span
-                    aria-hidden="true"
-                    className="h-5 w-5 rounded border border-white/20 shadow-inner"
-                    key={color}
-                    style={colorSwatchStyle(color)}
-                  />
-                ))}
-              </span>
-            </button>
-            <button
-              aria-label={`Use ${palette.name} theme on all slides`}
-              className="mr-1 rounded border border-neutral-800 px-2 py-1 text-xs font-semibold text-neutral-400 transition-colors hover:border-neutral-600 hover:text-white"
-              onClick={() => applyPalette(palette.colors, "deck")}
-              type="button"
-            >
-              All
-            </button>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-2 rounded-md border border-neutral-800 bg-black/30">
+    <div className="flex flex-col gap-2">
+      {/* Current Theme Colors */}
+      <div className="flex flex-col">
         <button
-          className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-xs text-neutral-300 transition-colors hover:bg-neutral-900"
-          onClick={() => setIsFineTuneOpen((current) => !current)}
           type="button"
+          onClick={() => setIsColorsOpen(!isColorsOpen)}
+          className="group flex w-full items-center justify-between rounded-lg border border-white/[0.04] bg-[#0c0c0c] p-3 text-left transition-colors hover:bg-white/[0.02]"
         >
-          <span>Theme colors</span>
-          <span className="text-xs text-neutral-500">{isFineTuneOpen ? "Hide" : "Show"}</span>
+          <span className="text-[12px] font-medium text-neutral-300">Theme Colors</span>
+          <ChevronDown 
+            size={14} 
+            className={`text-neutral-500 transition-transform duration-300 ${isColorsOpen ? "rotate-180" : ""}`} 
+          />
         </button>
-        {isFineTuneOpen ? (
-          <div className="grid gap-1 border-t border-neutral-800 p-2">
-            {items.map((item) => {
-              const colorValue = String(item.value ?? "");
-              const pickerValue = hexColorValue(colorValue) ?? hexColorValue(item.placeholder ?? "") ?? "#ffffff";
-
-              return (
-                <div className="grid grid-cols-[1fr_auto] items-center gap-2 rounded border border-neutral-800 bg-black/40 px-2 py-1.5" key={item.id}>
-                  <span className="flex min-w-0 items-center gap-2">
-                    <span className="h-4 w-4 rounded border border-white/20 shadow-inner" style={colorSwatchStyle(colorValue)} />
-                    <span className="truncate text-xs text-neutral-300">{item.label}</span>
-                  </span>
-                  <input
-                    aria-label={`${item.label} picker`}
-                    className="h-6 w-8 cursor-pointer rounded border border-neutral-800 bg-transparent p-0"
-                    onChange={(event) => item.onChange(event.target.value)}
-                    type="color"
-                    value={pickerValue}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="mt-2 rounded-md border border-neutral-800 bg-black/30">
-        <button
-          className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-xs text-neutral-300 transition-colors hover:bg-neutral-900"
-          onClick={() => setIsSwatchesOpen((current) => !current)}
-          type="button"
+        <div
+          className="grid transition-all duration-300 ease-in-out"
+          style={{ gridTemplateRows: isColorsOpen ? "1fr" : "0fr", opacity: isColorsOpen ? 1 : 0 }}
         >
-          <span>Saved swatches</span>
-          <span className="text-xs text-neutral-500">{isSwatchesOpen ? "Hide" : "Show"}</span>
-        </button>
-        {isSwatchesOpen ? (
-          <div className="border-t border-neutral-800 p-2">
-            <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
-              <input
-                className="min-w-0 rounded border border-neutral-800 bg-black px-2 py-1.5 font-mono text-xs text-neutral-200 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-500"
-                onChange={(event) => setSwatchValue(event.target.value)}
-                placeholder="#ffffff"
-                type="text"
-                value={swatchValue}
-              />
-              <input
-                aria-label="Swatch color picker"
-                className="h-8 w-9 cursor-pointer rounded border border-neutral-800 bg-transparent p-0"
-                onChange={(event) => setSwatchValue(event.target.value)}
-                type="color"
-                value={hexColorValue(swatchValue) ?? "#ffffff"}
-              />
-              <button
-                className="rounded border border-neutral-800 px-2.5 py-1.5 text-xs text-neutral-300 transition-colors hover:border-neutral-600 hover:text-white"
-                onClick={() => addSwatch()}
-                type="button"
-              >
-                Add
-              </button>
+          <div className="overflow-hidden">
+            <div className="mt-1 flex flex-col gap-1 rounded-xl border border-white/[0.04] bg-[#050505] p-1.5 shadow-inner">
+              {items.map((item) => {
+                const colorValue = String(item.value || item.placeholder || "#ffffff");
+                return (
+                  <label key={item.id} className="group flex cursor-pointer items-center justify-between rounded-lg p-2 transition-colors hover:bg-white/[0.04]">
+                    <span className="text-[11.5px] font-medium text-neutral-400 group-hover:text-neutral-200">
+                      {item.label}
+                    </span>
+                    <div className="relative flex items-center justify-center">
+                      <span 
+                        className="absolute h-5 w-5 rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] pointer-events-none" 
+                        style={{ backgroundColor: colorValue }} 
+                      />
+                      <input
+                        className="h-5 w-5 cursor-pointer opacity-0"
+                        onChange={(event) => item.onChange(event.target.value)}
+                        type="color"
+                        value={colorValue}
+                      />
+                    </div>
+                  </label>
+                );
+              })}
             </div>
-            <button
-              className="mt-2 w-full rounded border border-neutral-800 px-2.5 py-1.5 text-xs text-neutral-400 transition-colors hover:border-neutral-600 hover:bg-neutral-900 hover:text-white"
-              onClick={addCurrentThemeSwatches}
-              type="button"
-            >
-              Add current theme colors
-            </button>
-            {customSwatches.length > 0 ? (
-              <div className="mt-3 grid grid-cols-8 gap-1">
-                {customSwatches.map((swatch) => (
-                  <button
-                    aria-label={`Remove ${swatch}`}
-                    className="group relative h-6 rounded border border-neutral-700 transition-transform hover:scale-110"
-                    key={swatch}
-                    onClick={() => deleteSwatch(swatch)}
-                    style={{ background: swatch }}
-                    title={`${swatch} - click to remove`}
-                    type="button"
-                  >
-                    <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-semibold text-white group-hover:flex">×</span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-3 rounded border border-dashed border-neutral-800 px-2.5 py-2 text-xs text-neutral-500">No saved swatches yet.</p>
-            )}
           </div>
-        ) : null}
+        </div>
       </div>
-    </Field>
+
+      {/* Color Presets */}
+      <div className="flex flex-col">
+        <button
+          type="button"
+          onClick={() => setIsPresetsOpen(!isPresetsOpen)}
+          className="group flex w-full items-center justify-between rounded-lg border border-white/[0.04] bg-[#0c0c0c] p-3 text-left transition-colors hover:bg-white/[0.02]"
+        >
+          <span className="text-[12px] font-medium text-neutral-300">{label}</span>
+          <ChevronDown 
+            size={14} 
+            className={`text-neutral-500 transition-transform duration-300 ${isPresetsOpen ? "rotate-180" : ""}`} 
+          />
+        </button>
+
+        <div
+          className="grid transition-all duration-300 ease-in-out"
+          style={{ gridTemplateRows: isPresetsOpen ? "1fr" : "0fr", opacity: isPresetsOpen ? 1 : 0 }}
+        >
+          <div className="overflow-hidden">
+            <div className="mt-1 grid grid-cols-4 gap-1.5 rounded-xl border border-white/[0.04] bg-[#050505] p-2 shadow-inner">
+              {slidePalettePresets.map((palette) => (
+                <button
+                  key={palette.id}
+                  aria-label={`Use ${palette.name} theme`}
+                  className="group relative aspect-square w-full cursor-pointer overflow-hidden rounded-lg border border-white/[0.08] outline-none transition-all duration-300 hover:scale-105 hover:border-white/20 active:scale-95 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]"
+                  onClick={() => applyPalette(palette.colors, "deck")}
+                  style={{ backgroundColor: palette.colors.background }}
+                  title={palette.name}
+                  type="button"
+                >
+                  {/* Abstract layout representation of the theme */}
+                  <div 
+                    className="absolute top-1.5 left-1.5 h-1.5 w-6 rounded-full opacity-80" 
+                    style={{ backgroundColor: palette.colors.text }} 
+                  />
+                  <div 
+                    className="absolute top-4 left-1.5 h-1 w-4 rounded-full opacity-50" 
+                    style={{ backgroundColor: palette.colors.muted }} 
+                  />
+                  <div 
+                    className="absolute bottom-1.5 right-1.5 h-3 w-3 rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]" 
+                    style={{ backgroundColor: palette.colors.accent }} 
+                  />
+                  
+                  {/* Tooltip hover effect */}
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100">
+                    <span className="text-center text-[9px] font-semibold leading-tight text-white drop-shadow-md px-1">
+                      {palette.name}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

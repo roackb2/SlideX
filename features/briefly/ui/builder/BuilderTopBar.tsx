@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/common/lib/I18nProvider";
 import type { ResolvedAppearance } from "@/features/briefly/infrastructure/builderAppearance";
-import { getBrieflyCopy } from "@/features/briefly/ui/brieflyCopy";
+import { getBrieflyCopy } from "@/features/briefly/application/brieflyCopy";
 import type { ExportKind, PreviewMode } from "@/features/briefly/ui/builder/types";
 import { SegmentButton } from "@/features/briefly/ui/builder/BuilderShared";
 

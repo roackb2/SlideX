@@ -17,7 +17,7 @@ import {
   Check
 } from "lucide-react";
 import { useI18n } from "@/common/lib/I18nProvider";
-import { getBrieflyCopy } from "@/features/briefly/ui/brieflyCopy";
+import { getBrieflyCopy } from "@/features/briefly/application/brieflyCopy";
 import { motion } from "framer-motion";
 import { BorderBeam } from "border-beam";
 

@@ -1,12 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Check, Plus, X } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import {
   deckTemplateItems,
-  templateChooserCategories,
-  templateTagFromCategoryId,
-  type TemplateChooserCategoryId,
   type TemplateChooserItem
 } from "@/core/motion-doc/presets/templateChooser";
 
@@ -21,26 +18,27 @@ export function TemplateModal({
   onClose: () => void;
   selectedTemplateId: string;
 }) {
-  const [selectedCategory, setSelectedCategory] = useState<TemplateChooserCategoryId>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const visibleTemplates = useMemo(() => {
-    const tag = templateTagFromCategoryId(selectedCategory);
-
-    return tag ? deckTemplateItems.filter((item) => item.tag === tag) : deckTemplateItems;
-  }, [selectedCategory]);
-  const templateCategories = templateChooserCategories.filter((category) => category.source === "template");
+    if (!searchQuery.trim()) return deckTemplateItems;
+    
+    const query = searchQuery.toLowerCase();
+    return deckTemplateItems.filter((item) => 
+      item.name.toLowerCase().includes(query) || 
+      item.description.toLowerCase().includes(query) ||
+      item.tagLabel.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/60 px-6 pt-16 backdrop-blur-[32px] transition-all duration-700" onMouseDown={onClose}>
       <div
-        className="w-full max-w-6xl overflow-hidden rounded-[2rem] border border-white/[0.08] bg-[#050505]/80 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.1),0_40px_80px_-20px_rgba(0,0,0,1)] animate-[bubble-appear_0.3s_ease-out]"
+        className="w-full max-w-5xl overflow-hidden rounded-2xl border border-white/[0.04] bg-[#0A0A0A] shadow-[0_40px_80px_-20px_rgba(0,0,0,1)] animate-[bubble-appear_0.3s_ease-out] font-sans antialiased"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="relative flex h-14 items-center justify-center border-b border-white/[0.06] bg-transparent px-6">
-          <span className="text-sm font-bold text-white tracking-wide">Template Gallery</span>
+        <div className="relative flex h-14 items-center justify-center px-6">
+          <span className="text-[14px] font-medium text-white">Template Gallery</span>
           <div className="absolute right-4 flex items-center gap-3">
-            <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] font-bold tracking-[0.15em] text-neutral-400 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.05)]">
-              Decks
-            </span>
             <button
               aria-label="Close templates"
               className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/[0.06] hover:text-white active:scale-95"
@@ -52,46 +50,34 @@ export function TemplateModal({
           </div>
         </div>
 
-        <div className="border-b border-white/[0.04] px-6 py-4 bg-white/[0.01]">
-          <div className="custom-scrollbar flex gap-1.5 overflow-x-auto">
-            <button
-              className={categoryButtonClass(selectedCategory === "all")}
-              onClick={() => setSelectedCategory("all")}
-              type="button"
-            >
-              All
-            </button>
-            {templateCategories.map((category) => (
-              <button
-                className={categoryButtonClass(selectedCategory === category.id)}
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                type="button"
-              >
-                {category.label}
-              </button>
-            ))}
+        <div className="px-6 py-4 border-b border-white/[0.04]">
+          <div className="relative flex items-center">
+            <Search size={16} className="absolute left-3 text-neutral-500" />
+            <input
+              type="text"
+              placeholder="Search templates..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] py-2.5 pl-10 pr-4 text-[13px] text-white placeholder-neutral-500 outline-none transition-all focus:border-white/20 focus:bg-white/[0.04] focus:ring-1 focus:ring-white/10"
+              autoFocus
+            />
           </div>
         </div>
 
-        <div className="grid max-h-[70vh] gap-5 overflow-y-auto p-6 custom-scrollbar sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid max-h-[70vh] gap-6 overflow-y-auto p-6 pt-4 custom-scrollbar sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <button
-            className="group flex flex-col overflow-hidden rounded-[1.25rem] border border-white/[0.04] bg-[#0a0a0a]/40 text-left transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:border-white/[0.1] hover:bg-white/[0.02] hover:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.8)]"
+            className="group flex flex-col text-left transition-all"
             onClick={onAddBlankSlide}
             type="button"
           >
-            <div className="aspect-video border-b border-white/[0.04] bg-[#050505] p-3 shadow-[inset_0_-1px_0_0_rgba(255,255,255,0.02)]">
-              <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-white/[0.08] bg-black/50 transition-colors duration-500 group-hover:border-white/[0.15] group-hover:bg-white/[0.02]">
-                <Plus size={24} className="text-neutral-500 transition-colors duration-500 group-hover:text-white" />
+            <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.01] transition-all duration-300 group-hover:border-white/20 group-hover:bg-white/[0.03]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-dashed border-white/[0.15] bg-white/[0.02] transition-colors group-hover:border-white/30 group-hover:bg-white/[0.05]">
+                <Plus size={18} className="text-neutral-500 transition-colors group-hover:text-white" />
               </div>
             </div>
-            <div className="flex min-h-[112px] flex-col gap-2.5 p-4">
-              <div className="flex items-center justify-between gap-2">
-                <span className="truncate text-[13px] font-bold text-white tracking-wide">Blank Slide</span>
-                <span className="shrink-0 rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-mono font-bold text-neutral-400 border border-white/[0.06]">5s</span>
-              </div>
-              <span className="line-clamp-3 text-[11px] leading-relaxed text-neutral-500">Add a completely empty slide using the current theme, background, and accent.</span>
-              <span className="mt-auto text-[10px] font-bold tracking-[0.15em] text-neutral-600 group-hover:text-neutral-400 transition-colors">Scene</span>
+            <div className="flex flex-col gap-1.5 mt-4 w-full px-1">
+              <span className="truncate text-[13px] font-semibold text-neutral-200 transition-colors group-hover:text-white">Blank Slide</span>
+              <span className="text-[12px] leading-relaxed text-neutral-500">Add a completely empty slide using the current theme.</span>
             </div>
           </button>
 
@@ -120,29 +106,25 @@ function TemplateModalCard({
 }) {
   return (
     <button
-      className={`group flex flex-col overflow-hidden rounded-[1.25rem] border text-left transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 relative ${
-        isActive
-          ? "border-white/[0.25] bg-white/[0.03] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.1),0_8px_32px_rgba(255,255,255,0.06)]"
-          : "border-white/[0.04] bg-[#0a0a0a]/40 hover:border-white/[0.1] hover:bg-white/[0.02] hover:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.8)]"
-      }`}
+      className="group flex flex-col text-left transition-all"
       onClick={() => onApplyTemplate(item.templateId)}
       type="button"
     >
-      <div className={`relative aspect-video border-b p-3 transition-colors duration-500 ${isActive ? "border-white/[0.1]" : "border-white/[0.04] shadow-[inset_0_-1px_0_0_rgba(255,255,255,0.02)]"}`} style={{ background: item.preview.shell }}>
-        <TemplatePreview item={item} />
-        {isActive && (
-          <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-white text-black shadow-[0_4px_12px_rgba(255,255,255,0.25)] animate-[bubble-appear_0.3s_ease-out]">
-            <Check size={14} strokeWidth={3} />
-          </span>
-        )}
-      </div>
-      <div className="flex min-h-[112px] flex-col gap-2.5 p-4">
-        <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-[13px] font-bold text-white tracking-wide">{item.name}</span>
-          <span className="shrink-0 rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-mono font-bold text-neutral-400 border border-white/[0.06]">{item.slideCount}p</span>
+      <div className={`relative w-full aspect-video rounded-xl overflow-hidden transition-all duration-300 ${
+        isActive
+          ? "ring-2 ring-[#8ea5ff] ring-offset-2 ring-offset-[#0A0A0A]"
+          : "border border-white/[0.08] group-hover:border-white/20"
+      }`}>
+        <div className="absolute inset-0 transition-colors" style={{ background: item.preview.shell }}>
+          <TemplatePreview item={item} />
         </div>
-        <span className="line-clamp-3 text-[11px] leading-relaxed text-neutral-500 group-hover:text-neutral-400 transition-colors duration-500">{item.description}</span>
-        <span className="mt-auto text-[10px] font-bold tracking-[0.15em] text-neutral-600 group-hover:text-neutral-400 transition-colors duration-500">{item.tagLabel}</span>
+      </div>
+      <div className="flex flex-col gap-1.5 mt-4 w-full px-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className={`truncate text-[13px] font-semibold transition-colors ${isActive ? "text-white" : "text-neutral-200 group-hover:text-white"}`}>{item.name}</span>
+          <span className="shrink-0 text-[10px] font-mono font-medium text-neutral-500 bg-white/[0.04] px-1.5 py-0.5 rounded">{item.slideCount}p</span>
+        </div>
+        <span className="line-clamp-2 text-[12px] leading-relaxed text-neutral-500">{item.description}</span>
       </div>
     </button>
   );
@@ -151,57 +133,96 @@ function TemplateModalCard({
 function TemplatePreview({ item }: { item: Extract<TemplateChooserItem, { kind: "deck" }> }) {
   return (
     <div
-      className="relative h-full overflow-hidden rounded border shadow-sm"
+      className="relative h-full w-full overflow-hidden"
       style={{
-        background: `linear-gradient(135deg, ${item.preview.secondary}, ${item.preview.primary})`,
-        borderColor: item.preview.border,
+        background: item.preview.primary,
         color: item.preview.foreground
       }}
     >
-      <div
-        className="absolute inset-0 opacity-80"
+      {/* Dynamic Background Mesh */}
+      <div 
+        className="absolute -left-1/4 -top-1/4 h-[150%] w-[150%] opacity-40 blur-[40px] transition-transform duration-1000 group-hover:scale-110 group-hover:opacity-60"
         style={{
-          background: `radial-gradient(circle at 18% 14%, ${item.preview.accent}55, transparent 38%), radial-gradient(circle at 88% 78%, ${item.preview.accent}33, transparent 34%)`
+          background: `conic-gradient(from 90deg at 50% 50%, ${item.preview.secondary}, ${item.preview.primary}, ${item.preview.accent}44, ${item.preview.primary}, ${item.preview.secondary})`
         }}
       />
-      <div className="relative z-10 flex h-full flex-col justify-between p-3">
-        <div>
-          <div className="mb-1.5 h-1 w-9 rounded-full" style={{ background: item.preview.accent }} />
-          <div className="h-2.5 w-[72%] rounded-sm" style={{ background: item.preview.foreground }} />
-          <div className="mt-1.5 h-1.5 w-[48%] rounded-sm" style={{ background: item.preview.muted }} />
-        </div>
-        <div className="grid grid-cols-[1.1fr_0.9fr] gap-2">
-          <div className="space-y-1.5">
-            <div className="h-8 rounded border" style={{ background: `${item.preview.foreground}12`, borderColor: item.preview.border }} />
-            <div className="grid grid-cols-3 gap-1">
-              {[0, 1, 2].map((index) => (
-                <div
-                  className="h-4 rounded-sm border"
-                  key={index}
-                  style={{ background: `${item.preview.accent}${index === 1 ? "44" : "22"}`, borderColor: item.preview.border }}
-                />
-              ))}
-            </div>
+      <div 
+        className="absolute right-[-10%] top-[-10%] h-[70%] w-[70%] rounded-full blur-[40px] opacity-40 mix-blend-normal transition-all duration-1000 group-hover:opacity-70 group-hover:scale-110"
+        style={{ background: item.preview.accent }}
+      />
+      
+      {/* Glassmorphic Shell */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-transparent mix-blend-overlay" />
+      
+      <div className="relative z-10 flex h-full flex-col justify-between p-3.5">
+        {/* Top Header */}
+        <div className="flex w-full items-start justify-between">
+          <div className="flex flex-col gap-1.5">
+            <div className="h-1 w-6 rounded-full" style={{ background: item.preview.accent }} />
+            <div className="h-2 w-28 rounded-sm shadow-sm" style={{ background: item.preview.foreground }} />
+            <div className="h-1.5 w-16 rounded-sm opacity-50" style={{ background: item.preview.foreground }} />
           </div>
-          <div className="flex items-end gap-1 rounded border p-1.5" style={{ background: `${item.preview.foreground}10`, borderColor: item.preview.border }}>
-            {[48, 74, 58, 88].map((height, index) => (
-              <div className="flex-1 rounded-sm" key={index} style={{ background: index === 3 ? item.preview.accent : item.preview.muted, height: `${height}%` }} />
-            ))}
+          <div className="flex gap-1">
+             <div className="h-1.5 w-1.5 rounded-full opacity-30" style={{ background: item.preview.foreground }} />
+             <div className="h-1.5 w-1.5 rounded-full opacity-30" style={{ background: item.preview.foreground }} />
           </div>
         </div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-[8px] font-semibold leading-none" style={{ color: item.preview.muted }}>{item.name}</span>
-          <span className="h-1.5 w-7 rounded-full" style={{ background: `${item.preview.accent}cc` }} />
+        
+        {/* Center/Bottom Layout Grid */}
+        <div className="flex flex-col gap-2">
+          {/* Main Hero Block */}
+          <div 
+            className="relative h-10 w-[85%] overflow-hidden rounded-[10px] border shadow-sm backdrop-blur-md" 
+            style={{ 
+              background: `linear-gradient(135deg, ${item.preview.secondary}ee, ${item.preview.primary}ee)`, 
+              borderColor: `${item.preview.border}88` 
+            }}
+          >
+             <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] to-transparent pointer-events-none" />
+             <div className="flex h-full items-center px-3">
+                <div className="flex flex-col gap-1">
+                  <div className="h-2 w-16 rounded-sm shadow-sm" style={{ background: item.preview.accent }} />
+                  <div className="h-1 w-10 rounded-sm opacity-40" style={{ background: item.preview.foreground }} />
+                </div>
+             </div>
+          </div>
+          
+          {/* Two Columns */}
+          <div className="grid grid-cols-[1fr_1.2fr] gap-2">
+             <div 
+               className="relative h-10 overflow-hidden rounded-[8px] border shadow-sm backdrop-blur-md" 
+               style={{ 
+                 background: `${item.preview.secondary}dd`, 
+                 borderColor: `${item.preview.border}66` 
+               }}
+             >
+                <div className="absolute inset-0 bg-gradient-to-b from-white/[0.05] to-transparent pointer-events-none" />
+                <div className="flex h-full items-end gap-1 p-2">
+                  <div className="w-full rounded-sm opacity-30" style={{ height: '40%', background: item.preview.foreground }} />
+                  <div className="w-full rounded-sm opacity-50" style={{ height: '70%', background: item.preview.foreground }} />
+                  <div className="w-full rounded-sm shadow-sm" style={{ height: '100%', background: item.preview.accent }} />
+                </div>
+             </div>
+             
+             <div 
+               className="relative flex h-10 flex-col justify-center gap-1.5 rounded-[8px] border p-2.5 shadow-sm backdrop-blur-md" 
+               style={{ 
+                 background: `${item.preview.secondary}dd`, 
+                 borderColor: `${item.preview.border}66` 
+               }}
+             >
+                <div className="absolute inset-0 bg-gradient-to-b from-white/[0.05] to-transparent pointer-events-none" />
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full opacity-60" style={{ background: item.preview.accent }} />
+                  <div className="h-1.5 flex-1 rounded-sm opacity-60" style={{ background: item.preview.foreground }} />
+                </div>
+                <div className="h-1 w-full rounded-sm opacity-30" style={{ background: item.preview.foreground }} />
+                <div className="h-1 w-[80%] rounded-sm opacity-30" style={{ background: item.preview.foreground }} />
+             </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function categoryButtonClass(active: boolean) {
-  return `shrink-0 rounded-full border px-4 py-1.5 text-[11px] font-semibold transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-    active
-      ? "border-white/[0.15] bg-white/[0.08] text-white shadow-[0_2px_8px_rgba(0,0,0,0.5),inset_0_1px_1px_0_rgba(255,255,255,0.1)]"
-      : "border-transparent bg-transparent text-neutral-500 hover:border-white/[0.06] hover:bg-white/[0.03] hover:text-neutral-300"
-  }`;
-}

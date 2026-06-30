@@ -266,7 +266,6 @@ function createCoverScene(
           fontSize: 76,
           fontWeight: 800,
           h: 22,
-          radius: 0,
           w: 82,
           x: 8,
           y: subtitle ? 20 : 30
@@ -283,7 +282,6 @@ function createCoverScene(
                 fontSize: 24,
                 h: 18,
                 lineHeight: 1.45,
-                radius: 0,
                 w: 66,
                 x: 8,
                 y: 51
@@ -313,7 +311,6 @@ function createContentScene(
         fontSize: 23,
         h: hasBullets ? 15 : 30,
         lineHeight: 1.45,
-        radius: 0,
         w: 62,
         x: 8,
         y: 33
@@ -332,7 +329,6 @@ function createContentScene(
         h: 30,
         lineHeight: 1.48,
         listType: "bullet",
-        radius: 0,
         w: 64,
         x: 8,
         y: slide.body ? 52 : 38
@@ -356,7 +352,6 @@ function createContentScene(
           fontSize: 54,
           fontWeight: 760,
           h: 16,
-          radius: 0,
           w: 82,
           x: 8,
           y: 12

@@ -80,7 +80,7 @@ export function CanvasBlockDock({ onAddBlock }: { onAddBlock: (type: AddBlockTyp
       {activeGroup?.modal ? (
         <ToolModal group={activeGroup} onAddTool={addTool} onClose={() => setOpenGroupId(null)} />
       ) : null}
-      <div className="absolute bottom-3 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1.5 rounded-xl border border-white/[0.04] bg-neutral-950/60 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.7)] backdrop-blur-xl sm:bottom-5 md:bottom-7 transition-all duration-300 hover:shadow-black/85">
+      <div className="absolute bottom-3 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1.5 rounded-xl border border-white/[0.12] bg-neutral-900/80 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:bottom-5 md:bottom-7 transition-all duration-300 hover:shadow-black/85">
         {toolGroups.map((group) => {
           const isOpen = openGroupId === group.id;
           const isSingleTool = group.tools.length === 1 && group.id !== "icon";
@@ -88,7 +88,7 @@ export function CanvasBlockDock({ onAddBlock }: { onAddBlock: (type: AddBlockTyp
             <button
               aria-label={isSingleTool ? `Add ${group.label}` : `Open ${group.label} tools`}
               className={`group relative flex h-8 w-8 cursor-pointer flex-col items-center justify-center overflow-visible rounded-lg transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.06] active:scale-[0.93] sm:h-9.5 sm:w-9.5 md:h-10.5 md:w-10.5 ${
-                isOpen ? "bg-white/[0.08] text-white border border-white/[0.05]" : "text-neutral-400 hover:bg-white/[0.03] hover:text-white"
+                isOpen ? "bg-white/[0.12] text-white border border-white/[0.1]" : "text-neutral-300 hover:bg-white/[0.06] hover:text-white"
               }`}
               key={group.id}
               onClick={() => {
@@ -101,7 +101,7 @@ export function CanvasBlockDock({ onAddBlock }: { onAddBlock: (type: AddBlockTyp
               type="button"
             >
               <span className="scale-80 sm:scale-95 md:scale-105">{group.icon}</span>
-              <span className="pointer-events-none absolute -top-9 origin-bottom scale-90 whitespace-nowrap rounded-lg border border-white/[0.04] bg-[#0c0c0e] px-2.5 py-1 text-xs font-bold text-white opacity-0 shadow-xl transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 sm:-top-10">
+              <span className="pointer-events-none absolute -top-9 origin-bottom scale-90 whitespace-nowrap rounded-lg border border-white/[0.08] bg-[#111113] px-2.5 py-1 text-xs font-bold text-white opacity-0 shadow-xl transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 sm:-top-10">
                 {group.label}
               </span>
             </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Droplets, Gauge, Layers, Maximize2, Palette, Sliders, Sparkles, Zap } from "lucide-react";
+import { Droplets, Gauge, Layers, Maximize2, Palette, Zap } from "lucide-react";
 import type { PropRecord } from "@/features/pitch/application/themeColors";
 import { Field } from "@/features/pitch/ui/inspector/InspectorControls";
 import { ShaderRangeControl } from "@/features/pitch/ui/inspector/shader/ShaderRangeControl";
@@ -63,7 +63,7 @@ export function WatercolorPitchPanel({
   return (
     <div className="flex flex-col gap-4.5 animate-[bubble-appear_0.3s_ease-out]">
       <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
-        <span className="text-[10px] font-bold tracking-[0.15em] text-[#8ea5ff] flex items-center gap-1.5">
+        <span className="text-[10px] font-bold text-[#8ea5ff] flex items-center gap-1.5">
           <Palette size={12} className="text-[#8ea5ff]" />
           Watercolor Pitch
         </span>
@@ -78,10 +78,10 @@ export function WatercolorPitchPanel({
             const isSelected = shader === variant.id;
             return (
               <button
-                className={`group relative overflow-hidden rounded-xl border aspect-[1/1] text-left transition-all duration-300 active:scale-95 cursor-pointer flex flex-col justify-end p-2 ${
+                className={`group relative overflow-hidden rounded-lg aspect-[1/1] text-left transition-all duration-300 active:scale-95 cursor-pointer flex flex-col justify-end p-2 ${
                   isSelected
-                    ? "border-[#8ea5ff] bg-white/[0.03] shadow-[0_0_12px_rgba(142,165,255,0.15)]"
-                    : "border-white/[0.05] bg-black/40 hover:border-white/[0.12] hover:bg-white/[0.02]"
+                    ? "ring-2 ring-white/[0.4]"
+                    : "ring-1 ring-white/[0.08] hover:ring-white/[0.15]"
                 }`}
                 key={variant.id}
                 onClick={() => updateActiveSlideStyle({ shader: variant.id })}
@@ -93,14 +93,8 @@ export function WatercolorPitchPanel({
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/60 to-transparent opacity-90" />
 
-                {isSelected ? (
-                  <div className="absolute top-1.5 right-1.5 p-0.5 rounded-full bg-[#8ea5ff] text-black">
-                    <Sparkles size={8} />
-                  </div>
-                ) : null}
-
                 <div className="relative z-10 flex flex-col">
-                  <span className="text-[9px] font-bold text-white tracking-wide truncate">{variant.name}</span>
+                  <span className="text-[9px] font-bold text-white truncate">{variant.name}</span>
                   <span className="text-[7.5px] text-neutral-400 font-medium truncate mt-0.5">{variant.cn}</span>
                 </div>
               </button>
@@ -109,23 +103,16 @@ export function WatercolorPitchPanel({
         </div>
       </Field>
 
-      <div className="p-1.5 rounded-[1.25rem] border border-white/[0.03] bg-[#0A0A0C]/50 shadow-[0_4px_24px_rgba(0,0,0,0.15)] backdrop-blur-xl">
-        <div className="rounded-[1rem] border border-white/[0.03] bg-black/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden">
-          <div className="flex items-center justify-between border-b border-white/[0.03] px-3.5 py-3 bg-white/[0.01]">
-            <span className="text-[10px] font-bold tracking-[0.16em] text-neutral-400 flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#8ea5ff]/10 text-[#8ea5ff] border border-[#8ea5ff]/20 shadow-[0_0_10px_rgba(142,165,255,0.1)]">
-                <Palette size={10} />
-              </span>
+      <div className="flex flex-col gap-4">
+        {/* Presets Section */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between pb-1">
+            <span className="text-[12px] font-medium text-neutral-300">
               Curated Pigments
-            </span>
-            <span className="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[9px] font-mono tracking-wider text-neutral-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-              PRESET
             </span>
           </div>
 
-          <div className="p-3.5">
-
-            <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2">
               {watercolorPalettes.map((palette) => (
                 <button
                   className="flex items-center justify-between rounded-[1rem] border border-white/[0.03] bg-white/[0.015] p-2 hover:border-white/[0.08] hover:bg-white/[0.03] hover:shadow-[0_4px_12px_rgba(0,0,0,0.2)] transition-all duration-300 text-left group cursor-pointer active:scale-95"
@@ -156,38 +143,32 @@ export function WatercolorPitchPanel({
                   </div>
                 </button>
               ))}
-            </div>
           </div>
         </div>
-      </div>
 
-      <div className="p-1.5 rounded-[1.25rem] border border-white/[0.03] bg-[#0A0A0C]/50 shadow-[0_4px_24px_rgba(0,0,0,0.15)] backdrop-blur-xl">
-        <div className="rounded-[1rem] border border-white/[0.03] bg-black/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden">
-          <div className="flex items-center justify-between border-b border-white/[0.03] px-3.5 py-3 bg-white/[0.01]">
-            <span className="text-[10px] font-bold tracking-[0.16em] text-neutral-400 flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#8ea5ff]/10 text-[#8ea5ff] border border-[#8ea5ff]/20 shadow-[0_0_10px_rgba(142,165,255,0.1)]">
-                <Sliders size={10} />
-              </span>
+        <div className="h-[1px] w-full bg-white/[0.06]" />
+
+        {/* Manual Tuning Section */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between pb-1">
+            <span className="text-[12px] font-medium text-neutral-300">
               Spectrum Tuning
             </span>
-            <span className="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[9px] font-mono tracking-wider text-neutral-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-              MANUAL
-            </span>
           </div>
-          <div className="p-3.5">
-            <WatercolorColorInputs
-              accent={accent}
-              background={background}
-              shaderColor1={shaderColor1}
-              shaderColor2={shaderColor2}
-              shaderColor3={shaderColor3}
-              updateActiveSlideStyle={updateActiveSlideStyle}
-            />
-          </div>
+          <WatercolorColorInputs
+            accent={accent}
+            background={background}
+            shaderColor1={shaderColor1}
+            shaderColor2={shaderColor2}
+            shaderColor3={shaderColor3}
+            updateActiveSlideStyle={updateActiveSlideStyle}
+          />
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 gap-2.5">
+        <div className="h-[1px] w-full bg-white/[0.06]" />
+
+        {/* Sliders Section */}
+        <div className="grid grid-cols-1 gap-1">
         <ShaderRangeControl
           ariaLabel="Shader intensity"
           badge={`${Math.round(shaderIntensity * 100)}%`}
@@ -250,6 +231,7 @@ export function WatercolorPitchPanel({
         />
       </div>
     </div>
+  </div>
   );
 }
 
@@ -274,14 +256,13 @@ function WatercolorColorInputs({
 
         return (
           <label className="group flex flex-col items-center gap-1.5 cursor-pointer relative" key={key}>
-            <span className="text-[8px] font-bold text-neutral-500 group-hover:text-neutral-400 transition-colors tracking-wider text-center w-full truncate">
+            <span className="text-[10px] font-medium text-neutral-400 group-hover:text-neutral-300 transition-colors text-center w-full truncate">
               {watercolorColorNames[index]}
             </span>
             <span
-              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] shadow-md transition-all duration-300 group-hover:border-white/[0.15] group-hover:scale-105 group-active:scale-95 overflow-hidden"
+              className="relative flex h-8 w-8 items-center justify-center rounded border border-white/[0.15] transition-transform duration-300 group-hover:scale-110 overflow-hidden"
               style={{ background: displayValue }}
             >
-              <span className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-transparent opacity-60" />
               <input
                 aria-label={`Shader color ${index + 1}`}
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
@@ -290,7 +271,7 @@ function WatercolorColorInputs({
                 value={hexValue}
               />
             </span>
-            <span className="text-[8px] font-mono text-neutral-500 bg-white/[0.02] border border-white/[0.04] px-1.5 py-0.5 rounded group-hover:text-neutral-300 transition-colors">
+            <span className="text-[10px] font-mono text-neutral-500 group-hover:text-neutral-400 transition-colors">
               {displayValue.slice(0, 7)}
             </span>
           </label>

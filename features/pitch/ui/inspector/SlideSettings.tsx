@@ -3,7 +3,7 @@
 import type { PropRecord } from "@/features/pitch/application/themeColors";
 import { BackgroundSettingsSection } from "@/features/pitch/ui/inspector/BackgroundSettingsSection";
 import { SlideLayoutSection } from "@/features/pitch/ui/inspector/slide/SlideLayoutSection";
-import { SlideTimelineSection } from "@/features/pitch/ui/inspector/slide/SlideTimelineSection";
+import { SlideTransitionSection } from "@/features/pitch/ui/inspector/slide/SlideTransitionSection";
 
 type SlideSettingsProps = {
   accent: string;
@@ -27,6 +27,8 @@ type SlideSettingsProps = {
   shaderSpeed: number;
   textColor: string;
   theme: string;
+  slideTransition?: string | number;
+  transitionDuration?: string | number;
   updateActiveSlideStyle: (updates: PropRecord) => void;
   updateAllSlidesStyle: (updates: PropRecord) => void;
 };
@@ -53,11 +55,13 @@ export function SlideSettings({
   shaderSpeed,
   textColor,
   theme,
+  slideTransition,
+  transitionDuration,
   updateActiveSlideStyle,
   updateAllSlidesStyle
 }: SlideSettingsProps) {
   return (
-    <div className="flex flex-col gap-4 animate-[bubble-appear_0.2s_ease-out]">
+    <div className="flex flex-col gap-0 animate-[bubble-appear_0.2s_ease-out]">
       <BackgroundSettingsSection
         accent={accent}
         background={background}
@@ -87,7 +91,12 @@ export function SlideSettings({
         updateActiveSlideStyle={updateActiveSlideStyle}
       />
 
-      <SlideTimelineSection duration={duration} updateActiveSlideStyle={updateActiveSlideStyle} />
+      <SlideTransitionSection
+        duration={duration}
+        slideTransition={slideTransition}
+        transitionDuration={transitionDuration}
+        updateActiveSlideStyle={updateActiveSlideStyle}
+      />
     </div>
   );
 }

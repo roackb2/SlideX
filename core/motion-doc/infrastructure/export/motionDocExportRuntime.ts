@@ -376,6 +376,18 @@ ${runtimePremiumShaderBody}
           }
         };
 
+        // Stop all shaders before print to prevent GPU overload during PDF export
+        window.addEventListener('beforeprint', () => {
+          shaderStates.forEach((_, canvas) => stopShader(canvas));
+        });
+        window.addEventListener('afterprint', () => {
+          const active = slides[index];
+          if (active) {
+            const shaderCanvas = active.querySelector('.shader-bg');
+            if (shaderCanvas) startShader(shaderCanvas);
+          }
+        });
+
         // Initial shader start
         if (slides[0]) {
           const sc = slides[0].querySelector('.shader-bg');

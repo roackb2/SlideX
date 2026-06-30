@@ -39,6 +39,7 @@ export function MotionDocApp() {
     activeSlideAlignY,
     activeSlideBackground,
     activeSlideLayout,
+    activeSlideLayoutPreset,
     activeSlideMutedColor,
     activeSlideShader,
     activeSlideShaderColor1,
@@ -164,8 +165,10 @@ export function MotionDocApp() {
     closeMobileSidebar: () => setIsMobileSidebarOpen(false),
     closeTemplateModal: () => setIsTemplateModalOpen(false),
     copySelectedBlock: pitchCommands.copySelectedBlock,
+    cutSelectedBlocks: pitchCommands.cutSelectedBlocks,
     deleteSelectedBlocks: pitchCommands.deleteSelectedBlocks,
     deleteSlide: pitchCommands.deleteSlide,
+    duplicateSelectedBlock: pitchCommands.duplicateSelectedBlock,
     exportHtmlFile,
     exportMdxFile,
     goToNextSlide: pitchCommands.goToNextSlide,
@@ -204,6 +207,7 @@ export function MotionDocApp() {
       activeSlideBackground={activeSlideBackground}
       activeSlideIndex={activeSlideIndex}
       activeSlideLayout={activeSlideLayout}
+      activeSlideLayoutPreset={activeSlideLayoutPreset}
       activeSlideMutedColor={activeSlideMutedColor}
       activeSlideShader={activeSlideShader}
       activeSlideShaderColor1={activeSlideShaderColor1}
@@ -219,8 +223,8 @@ export function MotionDocApp() {
       activeSlideTheme={activeSlideTheme}
       addBlockToActiveSlide={pitchCommands.addBlockToActiveSlide}
       addSlide={pitchCommands.addSlide}
-      addSlideWithLayout={pitchCommands.addSlideWithLayout}
       addTextAtPosition={pitchCommands.addTextAtPosition}
+      applyLayoutToActiveSlide={pitchCommands.applyLayoutToActiveSlide}
       applyTemplate={pitchCommands.applyTemplate}
       beginBlockTransform={pitchCommands.beginBlockTransform}
       canvasSource={canvasSource}
@@ -230,8 +234,11 @@ export function MotionDocApp() {
         markProjectDirty();
       }}
       copySource={copySource}
+      copySelectedBlock={pitchCommands.copySelectedBlock}
       deleteBlock={pitchCommands.deleteBlock}
+      deleteSelectedBlocks={pitchCommands.deleteSelectedBlocks}
       deleteSlide={pitchCommands.deleteSlide}
+      duplicateSelectedBlock={pitchCommands.duplicateSelectedBlock}
       draggedBlockIndex={draggedBlockIndex}
       dragOverBlockIndex={dragOverBlockIndex}
       exportHtmlFile={exportHtmlFile}
@@ -248,11 +255,13 @@ export function MotionDocApp() {
       isMobileSidebarOpen={isMobileSidebarOpen}
       isProjectDirty={isProjectDirty}
       isTemplateModalOpen={isTemplateModalOpen}
+      hasCopiedBlock={pitchCommands.hasCopiedBlock}
       moveBlock={pitchCommands.moveBlock}
       newProject={startNewProject}
       notice={notice}
       projectName={projectName}
       pushUndoSnapshot={pushUndoSnapshot}
+      pasteCopiedBlock={pitchCommands.pasteCopiedBlock}
       reorderBlock={pitchCommands.reorderBlock}
       reorderSlide={pitchCommands.reorderSlide}
       replayNonce={replayNonce}
@@ -262,6 +271,7 @@ export function MotionDocApp() {
       selectBlocks={selectBlocks}
       selectedBlockIndex={selectedBlockIndex}
       selectedBlockIndices={selectedBlockIndices}
+      selectedBlocksLocked={pitchCommands.selectedBlocksLocked}
       selectedTemplateId={selectedTemplateId}
       selectionMdx={selectionMdx}
       selectSingleBlock={selectSingleBlock}
@@ -277,6 +287,7 @@ export function MotionDocApp() {
       setReplayNonce={setReplayNonce}
       slideRows={slideRows}
       source={source}
+      toggleSelectedBlocksPositionLock={pitchCommands.toggleSelectedBlocksPositionLock}
       totalDuration={stats.totalDuration}
       undoLastChange={undoLastChange}
       updateActiveSlideStyle={pitchCommands.updateActiveSlideStyle}
@@ -284,6 +295,7 @@ export function MotionDocApp() {
       updateBlock={pitchCommands.updateBlock}
       updatePositionedBlockFrames={pitchCommands.updatePositionedBlockFrames}
       updateSelectionMdx={pitchCommands.updateSelectionMdx}
+      useSelectedImageAsBackground={pitchCommands.useSelectedImageAsBackground}
       uploadImageForBlock={pitchCommands.uploadImageForBlock}
       uploadVideoForBlock={pitchCommands.uploadVideoForBlock}
     />
