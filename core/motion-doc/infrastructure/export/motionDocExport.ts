@@ -6,9 +6,6 @@ import { resolveSlideThemeColors } from "@/core/motion-doc/application/slideThem
 import { motionDocExportRuntime } from "@/core/motion-doc/infrastructure/export/motionDocExportRuntime";
 import { motionDocExportStyles } from "@/core/motion-doc/infrastructure/export/motionDocExportStyles";
 
-const FRAME_WIDTH = 1024;
-const FRAME_HEIGHT = 576;
-
 export function buildMotionDocHtml(source: string, customTitle?: string) {
   const document = parseMotionDoc(source);
   const displayTitle = customTitle || document.title;
@@ -370,10 +367,10 @@ function positionVars(props: Record<string, string | number>): Record<string, st
   }
 
   return {
-    "--motion-h": `${framePx(props.h, FRAME_HEIGHT, 18)}px`,
-    "--motion-x": `${framePx(props.x, FRAME_WIDTH, 8)}px`,
-    "--motion-y": `${framePx(props.y, FRAME_HEIGHT, 12)}px`,
-    "--motion-w": `${framePx(props.w, FRAME_WIDTH, 42)}px`
+    "--motion-h": `${framePercent(props.h, 18)}%`,
+    "--motion-x": `${framePercent(props.x, 8)}%`,
+    "--motion-y": `${framePercent(props.y, 12)}%`,
+    "--motion-w": `${framePercent(props.w, 42)}%`
   };
 }
 
@@ -445,17 +442,17 @@ function stringProp(value: string | number | undefined) {
   return stringValue || undefined;
 }
 
-function framePx(value: string | number | undefined, dimension: number, fallbackPercent: number) {
+function framePercent(value: string | number | undefined, fallbackPercent: number) {
   const parsed = typeof value === "number" ? value : Number(value);
 
   if (!Number.isFinite(parsed)) {
-    return roundPx((fallbackPercent / 100) * dimension);
+    return roundValue(fallbackPercent);
   }
 
-  return roundPx((Math.min(Math.max(parsed, 0), 100) / 100) * dimension);
+  return roundValue(Math.min(Math.max(parsed, 0), 100));
 }
 
-function roundPx(value: number) {
+function roundValue(value: number) {
   return Math.round(value * 100) / 100;
 }
 

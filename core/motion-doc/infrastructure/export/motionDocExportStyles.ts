@@ -68,20 +68,17 @@ export const motionDocExportStyles = `      :root {
       }
       .frame {
         position: absolute;
-        left: 0;
-        top: 0;
-        width: 1024px;
-        height: 576px;
+        inset: 0;
+        width: 100%;
+        height: 100%;
         overflow: hidden;
-        transform: scale(var(--frame-scale, 1));
-        transform-origin: left top;
       }
       .slide {
         position: absolute;
         left: 0;
         top: 0;
-        width: 1024px;
-        height: 576px;
+        width: 100%;
+        height: 100%;
         display: none;
         overflow: hidden;
         background: var(--slide-bg);
@@ -137,13 +134,13 @@ export const motionDocExportStyles = `      :root {
       }
       .motion-block {
         position: absolute;
-        left: var(--motion-x, 82px);
-        top: var(--motion-y, 69px);
-        width: var(--motion-w, 430px);
+        left: var(--motion-x, 8%);
+        top: var(--motion-y, 12%);
+        width: var(--motion-w, 42%);
         height: var(--motion-h, auto);
         z-index: 2;
         opacity: 0;
-        transform: translate3d(0, 28px, 0);
+        transform: translate3d(0, calc(28px * var(--frame-scale, 1)), 0);
       }
       .motion-block > * {
         width: 100%;
@@ -177,19 +174,19 @@ export const motionDocExportStyles = `      :root {
       }
       .enter-reveal {
         clip-path: inset(0 100% 0 0);
-        transform: translate3d(0, 10px, 0) scale(0.98);
+        transform: translate3d(0, calc(10px * var(--frame-scale, 1)), 0) scale(0.98);
       }
       .enter-rise {
-        transform: translate3d(0, 42px, 0) rotate(-1.2deg);
+        transform: translate3d(0, calc(42px * var(--frame-scale, 1)), 0) rotate(-1.2deg);
       }
       .enter-zoom-in {
         transform: scale(0.88);
       }
       .enter-slide-left {
-        transform: translate3d(54px, 0, 0);
+        transform: translate3d(calc(54px * var(--frame-scale, 1)), 0, 0);
       }
       .enter-fade-up {
-        transform: translate3d(0, 28px, 0);
+        transform: translate3d(0, calc(28px * var(--frame-scale, 1)), 0);
       }
       @keyframes enter-motion {
         to {
@@ -210,7 +207,7 @@ export const motionDocExportStyles = `      :root {
       @keyframes slide-enter-rise {
         from {
           opacity: 0;
-          transform: translate3d(0, 36px, 0) scale(0.985);
+          transform: translate3d(0, calc(36px * var(--frame-scale, 1)), 0) scale(0.985);
         }
         to {
           opacity: 1;
@@ -220,7 +217,7 @@ export const motionDocExportStyles = `      :root {
       @keyframes slide-enter-push-left {
         from {
           opacity: 0;
-          transform: translate3d(96px, 0, 0);
+          transform: translate3d(calc(96px * var(--frame-scale, 1)), 0, 0);
         }
         to {
           opacity: 1;
@@ -250,7 +247,7 @@ export const motionDocExportStyles = `      :root {
       @keyframes slide-enter-curtain {
         from {
           clip-path: inset(0 0 100% 0);
-          transform: translate3d(0, 18px, 0);
+          transform: translate3d(0, calc(18px * var(--frame-scale, 1)), 0);
         }
         to {
           clip-path: inset(0 0 0 0);
@@ -261,7 +258,7 @@ export const motionDocExportStyles = `      :root {
         margin: 0;
         max-width: 48rem;
         border-radius: var(--motion-radius, 0);
-        font-size: var(--motion-font-size, 72px);
+        font-size: calc(var(--motion-font-size, 72px) * var(--frame-scale, 1));
         font-weight: var(--motion-font-weight, 650);
         letter-spacing: 0;
         line-height: var(--motion-line-height, 1.02);
@@ -274,7 +271,7 @@ export const motionDocExportStyles = `      :root {
         margin: 0;
         max-width: 46rem;
         border-radius: var(--motion-radius, 0);
-        font-size: var(--motion-font-size, 24px);
+        font-size: calc(var(--motion-font-size, 24px) * var(--frame-scale, 1));
         font-weight: var(--motion-font-weight, 400);
         line-height: var(--motion-line-height, 1.45);
         padding: var(--motion-text-padding, 0);
@@ -573,8 +570,8 @@ export const motionDocExportStyles = `      :root {
         backdrop-filter: blur(16px);
       }
       .block-icon svg {
-        width: var(--icon-size, 96px);
-        height: var(--icon-size, 96px);
+        width: calc(var(--icon-size, 96px) * var(--frame-scale, 1));
+        height: calc(var(--icon-size, 96px) * var(--frame-scale, 1));
       }
       .block-shape,
       .block-shape svg {
@@ -617,6 +614,9 @@ export const motionDocExportStyles = `      :root {
         inset: 0;
         z-index: 0;
         margin: 0;
+      }
+      .motion-block--positioned > * {
+        max-width: none;
       }
       .motion-block--full .block-image {
         width: 100%;

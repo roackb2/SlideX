@@ -1,5 +1,6 @@
 import type { MotionProps } from "framer-motion";
 import type { EnterAnimation, SlideTransition } from "@/features/pitch/application/motionPresets";
+import { normalizeElementMotion, normalizeSlideMotion } from "@/features/pitch/application/motionModel";
 
 const springEase = [0.22, 1, 0.36, 1] as const;
 const swiftEase = [0.16, 1, 0.3, 1] as const;
@@ -13,6 +14,12 @@ export function elementMotionProps({
   duration?: number;
   enter?: EnterAnimation;
 }): MotionProps {
+  const motion = normalizeElementMotion({ delay, duration, enter });
+
+  enter = motion.enter;
+  delay = motion.delay ?? 0;
+  duration = motion.duration ?? 0.6;
+
   if (enter === "none") {
     return {};
   }
@@ -64,6 +71,11 @@ export function slideMotionProps({
   duration?: number;
   slideTransition?: SlideTransition;
 }): MotionProps {
+  const motion = normalizeSlideMotion({ slideTransition, transitionDuration: duration });
+
+  slideTransition = motion.slideTransition;
+  duration = motion.duration ?? 0.72;
+
   if (slideTransition === "none") {
     return { initial: false };
   }

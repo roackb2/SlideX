@@ -2,19 +2,12 @@
 
 import { useState } from "react";
 import { Code2, ChevronDown, ChevronRight, List, AlignCenter, AlignLeft, AlignRight } from "lucide-react";
-import { CardFields } from "@/features/pitch/ui/inspector/CardFields";
-import { ChartFields } from "@/features/pitch/ui/inspector/ChartFields";
-import { IconFields } from "@/features/pitch/ui/inspector/IconFields";
-import { ImageFields } from "@/features/pitch/ui/inspector/ImageFields";
-import { MetricFields } from "@/features/pitch/ui/inspector/MetricFields";
 import { MotionFields } from "@/features/pitch/ui/inspector/MotionFields";
-import { ShapeFields } from "@/features/pitch/ui/inspector/ShapeFields";
 import { SlideSettings } from "@/features/pitch/ui/inspector/SlideSettings";
 import { SlideLayoutSelector } from "@/features/pitch/ui/inspector/SlideLayoutSelector";
-import { StackFields } from "@/features/pitch/ui/inspector/StackFields";
-import { VideoFields } from "@/features/pitch/ui/inspector/VideoFields";
 import { autoSizeTextFrameProps } from "@/features/pitch/application/textFrameSizing";
 import { Field, IconSegmentedControl, NumberInput, type PropRecord } from "@/features/pitch/ui/inspector/InspectorControls";
+import { getBlockFieldRegistryEntry } from "@/features/pitch/ui/inspector/blockFieldRegistry";
 import { FontPicker } from "@/features/pitch/ui/preview/controls/FontPicker";
 import { useDynamicFont } from "@/features/pitch/ui/hooks/useDynamicFont";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
@@ -237,10 +230,12 @@ function ElementSettings({
     stringValue(activeSlide?.props.textColor ?? activeSlide?.props.foreground ?? activeSlide?.props.color) ??
     (slideTheme === "light" || slideTheme === "paper" ? "#111827" : "#ffffff");
   const inheritedMutedColor = stringValue(activeSlide?.props.mutedColor) ?? (slideTheme === "light" || slideTheme === "paper" ? "#475569" : "#cbd5e1");
-  const inheritedBackgroundColor = block.type === "Card" || block.type === "Metric" || block.type === "Chart" || block.type === "Stack"
-    ? defaultCardBackground(slideTheme, slideBackground)
-    : "transparent";
-  return (
+	  const inheritedBackgroundColor = block.type === "Card" || block.type === "Metric" || block.type === "Chart" || block.type === "Stack"
+	    ? defaultCardBackground(slideTheme, slideBackground)
+	    : "transparent";
+	  const blockFieldEntry = getBlockFieldRegistryEntry(block.type);
+
+	  return (
     <div className="flex flex-col gap-0 animate-[bubble-appear_0.2s_ease-out]">
       <div className="flex flex-col gap-0">
 
@@ -284,20 +279,19 @@ function ElementSettings({
           </Section>
         )}
 
-        {(block.type === "Card" || block.type === "Chart" || block.type === "Icon" || block.type === "ImageBlock" || block.type === "Metric" || block.type === "Shape" || block.type === "Stack" || block.type === "VideoBlock") && (
-          <Section title={`${block.type} properties`} defaultOpen={true}>
-            <div className="flex flex-col gap-4">
-              {block.type === "Card" && <CardFields block={block} selectedBlockIndex={selectedBlockIndex} updateBlock={updateBlock} />}
-              {block.type === "ImageBlock" && <ImageFields block={block} selectedBlockIndex={selectedBlockIndex} updateBlock={updateBlock} uploadImageForBlock={uploadImageForBlock} />}
-              {block.type === "Metric" && <MetricFields block={block} selectedBlockIndex={selectedBlockIndex} updateBlock={updateBlock} />}
-              {block.type === "Chart" && <ChartFields block={block} selectedBlockIndex={selectedBlockIndex} updateBlock={updateBlock} />}
-              {block.type === "VideoBlock" && <VideoFields block={block} selectedBlockIndex={selectedBlockIndex} updateBlock={updateBlock} uploadVideoForBlock={uploadVideoForBlock} />}
-              {block.type === "Icon" && <IconFields block={block} selectedBlockIndex={selectedBlockIndex} updateBlock={updateBlock} />}
-              {block.type === "Shape" && <ShapeFields block={block} selectedBlockIndex={selectedBlockIndex} updateBlock={updateBlock} />}
-              {block.type === "Stack" && <StackFields block={block} selectedBlockIndex={selectedBlockIndex} updateBlock={updateBlock} />}
-            </div>
-          </Section>
-        )}
+	        {blockFieldEntry && "props" in block ? (
+	          <Section title={blockFieldEntry.title} defaultOpen={true}>
+	            <div className="flex flex-col gap-4">
+	              {blockFieldEntry.render({
+	                block,
+	                selectedBlockIndex,
+	                updateBlock,
+	                uploadImageForBlock,
+	                uploadVideoForBlock
+	              })}
+	            </div>
+	          </Section>
+	        ) : null}
 
         {"props" in block && (
           <MotionFields

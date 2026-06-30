@@ -14,6 +14,7 @@ import {
   type MarqueeSelection,
   type ResizeHandle
 } from "@/features/pitch/application/previewCanvas";
+import type { CanvasInteractionMode } from "@/features/pitch/ui/preview/interaction/useCanvasInteractionEngine";
 import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
 import { TextFrameEditor } from "@/features/pitch/ui/preview/TextFrameEditor";
 
@@ -22,11 +23,12 @@ type CanvasSelectionLayerProps = {
   alignmentGuides: AlignmentGuide[];
   canvasScale: number;
   interactionBlockIndex: number | null;
+  interactionMode: CanvasInteractionMode;
   marqueeSelection: MarqueeSelection | null;
   onCancelMarquee: (event: PointerEvent<HTMLDivElement>) => void;
   onEndInteraction: (event: PointerEvent<HTMLDivElement>, blockIndex: number) => void;
   onEndMarquee: (event: PointerEvent<HTMLDivElement>) => void;
-  onBeginTextEdit: () => void;
+  onBeginTextEdit: (blockIndex: number) => void;
   onSelectBlock: (index: number) => void;
   onStartMarquee: (event: PointerEvent<HTMLDivElement>) => void;
   onStartMove: (event: PointerEvent<HTMLDivElement>, blockIndex: number, frame: Frame) => void;
@@ -43,6 +45,7 @@ export function CanvasSelectionLayer({
   alignmentGuides,
   canvasScale,
   interactionBlockIndex,
+  interactionMode,
   marqueeSelection,
   onCancelMarquee,
   onEndInteraction,
@@ -61,6 +64,7 @@ export function CanvasSelectionLayer({
   return (
     <div
       className="absolute inset-0 z-40"
+      data-canvas-interaction-mode={interactionMode}
       onPointerCancel={onCancelMarquee}
       onPointerDown={onStartMarquee}
       onPointerMove={onUpdateMarquee}
@@ -109,10 +113,10 @@ export function CanvasSelectionLayer({
             {isSelected && !isLocked ? <FrameInteractionHalo isTextBlock={isTextBlock} /> : null}
             {isSelected && isTextBlock ? (
               <TextFrameEditor
-                block={block}
-                blockIndex={blockIndex}
-                canvasScale={canvasScale}
-                onBeginTextEdit={onBeginTextEdit}
+	                block={block}
+	                blockIndex={blockIndex}
+	                canvasScale={canvasScale}
+	                onBeginTextEdit={() => onBeginTextEdit(blockIndex)}
                 onSelectBlock={onSelectBlock}
                 onUpdateBlock={onUpdateBlock}
               />

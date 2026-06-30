@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  normalizeSlideTransition,
   slideTransitionPresets,
   type SlideTransition
 } from "@/features/pitch/application/motionPresets";
+import { applySlideTransitionProps, normalizeSlideMotion } from "@/features/pitch/application/motionModel";
 import type { PropRecord } from "@/features/pitch/application/themeColors";
 import { Field, NumberInput } from "@/features/pitch/ui/inspector/InspectorControls";
 import { AccordionSection } from "@/features/pitch/ui/inspector/controls/AccordionSection";
@@ -23,13 +23,10 @@ export function SlideTransitionSection({
   transitionDuration,
   updateActiveSlideStyle
 }: SlideTransitionSectionProps) {
-  const selectedTransition = normalizeSlideTransition(slideTransition);
+  const selectedTransition = normalizeSlideMotion({ slideTransition, transitionDuration }).slideTransition;
 
   function updateTransition(value: SlideTransition) {
-    updateActiveSlideStyle({
-      slideTransition: value,
-      transitionDuration: value === "none" ? "" : transitionDuration || 0.72
-    });
+    updateActiveSlideStyle(applySlideTransitionProps({ transitionDuration: transitionDuration ?? "" }, value));
   }
 
   return (

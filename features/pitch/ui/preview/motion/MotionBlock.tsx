@@ -2,6 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { motion } from "framer-motion";
+import { hasElementMotion } from "@/features/pitch/application/motionModel";
 import type { EnterAnimation } from "@/features/pitch/application/motionPresets";
 import { elementMotionProps } from "@/features/pitch/ui/preview/motion/framerMotionProps";
 
@@ -49,7 +50,7 @@ export function MotionBlock({
     ...style
   };
 
-  if (animation.enter === undefined || animation.enter === "none") {
+  if (!hasElementMotion(animation)) {
     return (
       <div className={className} style={blockStyle}>
         {children}

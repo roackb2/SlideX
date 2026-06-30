@@ -3,7 +3,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { motion } from "framer-motion";
 import { resolveSlideThemeColors } from "@/core/motion-doc/application/slideTheme";
-import { normalizeSlideTransition } from "@/features/pitch/application/motionPresets";
+import { normalizeSlideMotion } from "@/features/pitch/application/motionModel";
 import { ThreeShaderCanvas } from "@/features/pitch/ui/preview/ThreeShaderCanvas";
 import { alignXToFlex, alignYToFlex } from "@/features/pitch/ui/preview/motion/blockStyles";
 import { slideMotionProps } from "@/features/pitch/ui/preview/motion/framerMotionProps";
@@ -67,6 +67,7 @@ export function Scene({
   theme = "dark",
   transitionDuration
 }: SceneProps) {
+  const slideMotion = normalizeSlideMotion({ slideTransition, transitionDuration });
   const themeColors = resolveSlideThemeColors(
     {
       accent,
@@ -111,8 +112,8 @@ export function Scene({
         } as CSSProperties
       }
       {...slideMotionProps({
-        duration: transitionDuration,
-        slideTransition: normalizeSlideTransition(slideTransition)
+        duration: slideMotion.duration,
+        slideTransition: slideMotion.slideTransition
       })}
     >
       {backgroundImage ? (

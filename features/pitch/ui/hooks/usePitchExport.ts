@@ -15,23 +15,32 @@ type SlideXLocalFilesWindow = Window & {
   __slidexLocalFiles?: Map<string, File>;
 };
 
-/**
- * Compress an image File to JPEG via OffscreenCanvas.
- * Returns a data URL string. Falls back to raw base64 if OffscreenCanvas is unavailable.
- */
-async function compressImageToDataUrl(file: File, maxWidth = 1920, quality = 0.85): Promise<string> {
-  // Fast path: if the file is already small (<200KB), just read as-is
-  if (file.size < 200 * 1024) {
-    return readFileAsDataUrl(file);
-  }
+const HTML_EXPORT_IMAGE_MAX_DIMENSION = 4096;
+const HTML_EXPORT_IMAGE_QUALITY = 0.94;
 
+/**
+ * Embed a local image with enough source pixels for fullscreen HTML playback.
+ * We preserve the original bytes unless the image is larger than the export cap.
+ */
+async function imageFileToDataUrl(
+  file: File,
+  maxDimension = HTML_EXPORT_IMAGE_MAX_DIMENSION,
+  quality = HTML_EXPORT_IMAGE_QUALITY
+): Promise<string> {
   try {
     const bitmap = await createImageBitmap(file);
-    const scale = bitmap.width > maxWidth ? maxWidth / bitmap.width : 1;
+    const largestDimension = Math.max(bitmap.width, bitmap.height);
+
+    if (largestDimension <= maxDimension) {
+      bitmap.close();
+      return readFileAsDataUrl(file);
+    }
+
+    const scale = maxDimension / largestDimension;
     const width = Math.round(bitmap.width * scale);
     const height = Math.round(bitmap.height * scale);
+    const mimeType = imageExportMimeType(file.type);
 
-    // Use OffscreenCanvas for non-blocking compression
     if (typeof OffscreenCanvas !== "undefined") {
       const canvas = new OffscreenCanvas(width, height);
       const ctx = canvas.getContext("2d");
@@ -40,12 +49,11 @@ async function compressImageToDataUrl(file: File, maxWidth = 1920, quality = 0.8
         ctx.drawImage(bitmap, 0, 0, width, height);
         bitmap.close();
 
-        const blob = await canvas.convertToBlob({ type: "image/jpeg", quality });
+        const blob = await canvas.convertToBlob({ type: mimeType, quality });
         return readFileAsDataUrl(blob);
       }
     }
 
-    // Fallback: use regular canvas
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -54,15 +62,23 @@ async function compressImageToDataUrl(file: File, maxWidth = 1920, quality = 0.8
     if (ctx) {
       ctx.drawImage(bitmap, 0, 0, width, height);
       bitmap.close();
-      return canvas.toDataURL("image/jpeg", quality);
+      return canvas.toDataURL(mimeType, quality);
     }
 
     bitmap.close();
   } catch {
-    // Compression failed, fall back to raw data URL
+    // Bitmap decoding can fail for some browser-supported image containers.
   }
 
   return readFileAsDataUrl(file);
+}
+
+function imageExportMimeType(fileType: string) {
+  if (fileType === "image/jpeg" || fileType === "image/png" || fileType === "image/webp") {
+    return fileType;
+  }
+
+  return "image/jpeg";
 }
 
 function readFileAsDataUrl(fileOrBlob: File | Blob): Promise<string> {
@@ -81,14 +97,14 @@ export function usePitchExport({
   setNotice
 }: UsePitchExportArgs) {
   /**
-   * Embed and compress local blob images into base64 data URLs.
+   * Embed local blob files into base64 data URLs.
    * Used only for MDX/HTML exports that need to be self-contained offline files.
    * PDF export skips this entirely since blob URLs work same-origin.
    */
-  const embedAndCompressLocalFiles = async (sourceText: string) => {
+  const embedLocalFiles = async (sourceText: string) => {
     const localFiles = (window as SlideXLocalFilesWindow).__slidexLocalFiles;
     if (!localFiles) return sourceText;
-    
+
     const blobRegex = /src="(blob:[^"]+)"/g;
     const matches = [...sourceText.matchAll(blobRegex)];
     if (matches.length === 0) return sourceText;
@@ -102,7 +118,9 @@ export function usePitchExport({
         const file = localFiles.get(url);
         if (!file) return;
         try {
-          const dataUrl = await compressImageToDataUrl(file);
+          const dataUrl = file.type.startsWith("image/")
+            ? await imageFileToDataUrl(file)
+            : await readFileAsDataUrl(file);
           replacements.set(url, dataUrl);
         } catch (e) {
           console.warn("Failed to embed local file", url, e);
@@ -138,7 +156,7 @@ export function usePitchExport({
 
     try {
       setNotice("Preparing export...");
-      const finalSource = await embedAndCompressLocalFiles(canvasSource);
+      const finalSource = await embedLocalFiles(canvasSource);
 
       downloadFile(defaultFilename, finalSource, "text/markdown;charset=utf-8");
       setIsExportMenuOpen(false);
@@ -161,7 +179,7 @@ export function usePitchExport({
 
     try {
       setNotice("Preparing export...");
-      const finalSource = await embedAndCompressLocalFiles(canvasSource);
+      const finalSource = await embedLocalFiles(canvasSource);
       const html = buildMotionDocHtml(finalSource, finalTitle);
 
       downloadFile(defaultFilename, html, "text/html;charset=utf-8");

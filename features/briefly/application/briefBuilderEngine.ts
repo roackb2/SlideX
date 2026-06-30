@@ -19,6 +19,7 @@ import {
 import { parseMdx } from "@/features/briefly/application/briefParser";
 
 type BrieflyBuilderLocale = "en" | "zh-TW";
+type SectionDataObjectArray = Exclude<SectionDataValue, string | string[] | undefined>;
 
 export type BrieflyBuilderSectionInput = {
   data?: Record<string, unknown>;
@@ -272,8 +273,8 @@ function coerceSectionDataValue(value: unknown): SectionDataValue {
       return value;
     }
 
-    if (value.every((item) => isPlainObject(item))) {
-      return value as unknown as SectionDataValue;
+    if (isSectionDataObjectArray(value)) {
+      return value;
     }
 
     return value.map((item) => String(item));
@@ -284,6 +285,10 @@ function coerceSectionDataValue(value: unknown): SectionDataValue {
   }
 
   return JSON.stringify(value);
+}
+
+function isSectionDataObjectArray(value: unknown[]): value is SectionDataObjectArray {
+  return value.every((item) => isPlainObject(item));
 }
 
 function cloneBrief(brief: ProjectBrief): ProjectBrief {

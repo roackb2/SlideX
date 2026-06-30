@@ -5,6 +5,7 @@ import {
   normalizeEnterAnimation,
   type EnterAnimation
 } from "@/features/pitch/application/motionPresets";
+import { applyElementAnimationProps } from "@/features/pitch/application/motionModel";
 import { autoSizeTextFrameProps } from "@/features/pitch/application/textFrameSizing";
 import { ColorControl, NumberInput, type BlockFieldProps, type PropRecord } from "@/features/pitch/ui/inspector/InspectorControls";
 import { AccordionSection } from "@/features/pitch/ui/inspector/controls/AccordionSection";
@@ -53,16 +54,7 @@ export function MotionFields({
   const selectedAnimation = normalizeEnterAnimation(block.props.enter);
 
   function updateAnimation(value: EnterAnimation) {
-    const nextProps: PropRecord = { ...block.props, enter: value };
-
-    if (value === "none") {
-      delete nextProps.delay;
-      delete nextProps.duration;
-    } else {
-      nextProps.duration = block.props.duration || 0.6;
-    }
-
-    updateProps(nextProps);
+    updateProps(applyElementAnimationProps(block.props, value));
   }
 
   return (

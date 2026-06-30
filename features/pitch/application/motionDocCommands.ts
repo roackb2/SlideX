@@ -2,6 +2,7 @@ import { createMotionDocBlock, type AddBlockType } from "@/core/motion-doc/appli
 import { cloneBlock, generateBlockString, generateSlideString, replaceSlideContent, replaceSlideOpeningTag } from "@/core/motion-doc/application/motionDocSerialize";
 import { clampFramePosition, defaultBlockHeight, defaultBlockWidth, defaultBlockX, defaultBlockY, percentFrameValue } from "@/core/motion-doc/domain/frame";
 import { parseMotionDoc, type MotionDocBlock, type MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import { normalizeElementMotionProps } from "@/features/pitch/application/motionModel";
 
 export type FrameUpdate = {
   blockIndex: number;
@@ -127,7 +128,7 @@ function normalizeLayoutBlocksTextMotion(blocks: MotionDocBlock[]) {
       return block;
     }
 
-    const nextProps: Record<string, string | number> = { ...block.props, enter: "none" };
+    const nextProps: Record<string, string | number> = normalizeElementMotionProps({ ...block.props, enter: "none" });
     delete nextProps.borderRadius;
     delete nextProps.delay;
     delete nextProps.duration;
@@ -505,7 +506,7 @@ export function updateBlockInSlide(
   }
 
   if (currentBlock.type === "Title" || currentBlock.type === "Text" || currentBlock.type === "heading") {
-    const nextProps = withoutTextFrameOnlyProps(newProps);
+    const nextProps = withoutTextFrameOnlyProps(normalizeElementMotionProps(newProps));
 
     blocks[blockIndex] = {
       type: currentBlock.type,
@@ -515,7 +516,7 @@ export function updateBlockInSlide(
   } else {
     blocks[blockIndex] = {
       type: currentBlock.type,
-      props: newProps
+      props: normalizeElementMotionProps(newProps)
     } as MotionDocBlock;
   }
 

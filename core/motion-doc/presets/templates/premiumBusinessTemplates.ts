@@ -35,7 +35,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "Rocket", title: "Accelerate commits", text: "Move exec-facing proposals earlier and reduce the cost of late-stage review." }
     ],
     image: {
-      src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=80&w=1200",
+      src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=85&w=2400",
       alt: "Revenue team reviewing a dashboard"
     },
     proofText: "Use this slide for deal room evidence, customer proof, stakeholder maps, or a focused executive discussion.",
@@ -86,7 +86,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "Presentation", title: "Clarify asks", text: "Use every board cycle to decide one resource tradeoff and one growth unlock." }
     ],
     image: {
-      src: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=1200",
+      src: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=85&w=2400",
       alt: "Financial model and operating review"
     },
     proofText: "Use this frame for financial context, market evidence, customer logos, or the board discussion that needs visual grounding.",
@@ -137,7 +137,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "Layers", title: "Enable the field", text: "Package demos, proof points, objections, and rollout assets into one system." }
     ],
     image: {
-      src: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=1200",
+      src: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=85&w=2400",
       alt: "Product team planning a launch"
     },
     proofText: "Use this frame for product screenshots, beta evidence, launch creative, or a focused readiness discussion.",
@@ -188,7 +188,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "ArrowUpRight", title: "Open expansion", text: "Connect new team adoption to a quantified operating outcome." }
     ],
     image: {
-      src: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=1200",
+      src: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=85&w=2400",
       alt: "Customer team in a planning session"
     },
     proofText: "Use this page for usage screenshots, executive quotes, workflow evidence, or the renewal conversation that needs context.",
@@ -239,7 +239,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "ShieldCheck", title: "Protect margin", text: "Use infrastructure and support signals to contain operational drag." }
     ],
     image: {
-      src: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1200",
+      src: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=85&w=2400",
       alt: "SaaS analytics dashboard"
     },
     proofText: "Use this frame for dashboard evidence, cohort analysis, customer context, or one operating discussion.",
@@ -290,7 +290,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "Calendar", title: "Stage investment", text: "Release resources as validation milestones are met." }
     ],
     image: {
-      src: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1200",
+      src: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=85&w=2400",
       alt: "Modern business district"
     },
     proofText: "Use this page for market maps, customer interviews, competitor evidence, or launch geography context.",
@@ -341,7 +341,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "Trophy", title: "Measure shared value", text: "Track attention, leads, pipeline, and relationship depth." }
     ],
     image: {
-      src: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=1200",
+      src: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=85&w=2400",
       alt: "Partnership workshop"
     },
     proofText: "Use this slide for campaign mockups, audience evidence, partner logos, or creative direction.",
@@ -392,7 +392,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "Rocket", title: "Scale what works", text: "Move from pilots to shared capabilities only after adoption and quality are proven." }
     ],
     image: {
-      src: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=1200",
+      src: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=85&w=2400",
       alt: "Technology hardware detail"
     },
     proofText: "Use this frame for workflow maps, pilot evidence, risk controls, or executive workshop context.",
@@ -443,7 +443,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "ShieldCheck", title: "Protect culture", text: "Maintain strict hiring bars even as growth pressure increases." }
     ],
     image: {
-      src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1200",
+      src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=85&w=2400",
       alt: "Team collaboration"
     },
     proofText: "Use this slide for org charts, engagement survey data, or recruiting pipeline reviews.",

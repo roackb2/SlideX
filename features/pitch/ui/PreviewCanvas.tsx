@@ -10,13 +10,11 @@ import {
   findAlignmentGuides,
   gridLineColor,
   hiddenEditablePreviewBlockIndices,
-  interactionFrameUpdates,
   marqueeRect,
   selectedMovableBlockIndices,
   type AlignmentGuide,
   type CanvasInteraction,
   type Frame,
-  type MarqueeSelection,
   type ResizeHandle
 } from "@/features/pitch/application/previewCanvas";
 import { isPositionLocked, type AddBlockOptions } from "@/features/pitch/application/motionDocCommands";
@@ -25,6 +23,7 @@ import { CanvasBlockDock, CanvasSlideNav } from "@/features/pitch/ui/preview/Can
 import { CanvasContextMenu } from "@/features/pitch/ui/preview/CanvasContextMenu";
 import { CanvasSelectionLayer } from "@/features/pitch/ui/preview/CanvasSelectionLayer";
 import { PreviewPane } from "@/features/pitch/ui/preview/PreviewPane";
+import { useCanvasInteractionEngine } from "@/features/pitch/ui/preview/interaction/useCanvasInteractionEngine";
 import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
 import type { AddBlockType } from "@/features/pitch/ui/pitchOptions";
 
@@ -102,12 +101,10 @@ export function PreviewCanvas({
   totalDuration
 }: PreviewCanvasProps) {
   const canvasRef = useRef<HTMLDivElement | null>(null);
-  const interactionRef = useRef<CanvasInteraction | null>(null);
+  const canvasInteraction = useCanvasInteractionEngine();
   const [canvasScale, setCanvasScale] = useState(1);
   const actualScale = zoomLevel === "fit" ? canvasScale : zoomLevel;
   const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([]);
-  const [interactionBlockIndex, setInteractionBlockIndex] = useState<number | null>(null);
-  const [marqueeSelection, setMarqueeSelection] = useState<MarqueeSelection | null>(null);
   const [contextMenu, setContextMenu] = useState<CanvasContextMenuState | null>(null);
   const gridColor = gridLineColor(activeSlide);
   const hiddenPreviewBlockIndices = useMemo(
@@ -164,6 +161,15 @@ export function PreviewCanvas({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [contextMenu]);
+
+  useEffect(() => {
+    canvasInteraction.syncSelection({
+      primaryIndex: selectedBlockIndex,
+      selectedIndices: selectedBlockIndices.length > 0
+        ? selectedBlockIndices
+        : selectedBlockIndex === null ? [] : [selectedBlockIndex]
+    });
+  }, [canvasInteraction.syncSelection, selectedBlockIndex, selectedBlockIndices]);
 
   function getCanvasPosition(event: { clientX: number; clientY: number }) {
     return canvasPointFromRect(event, canvasRef.current?.getBoundingClientRect());
@@ -229,7 +235,7 @@ export function PreviewCanvas({
     
     const moveIndices = selectedBlockIndices.includes(blockIndex) ? selectedBlockIndices : [blockIndex];
 
-    interactionRef.current = {
+    const interaction: CanvasInteraction = {
       blockIndex,
       mode: "move",
       startFrame: frame,
@@ -239,8 +245,8 @@ export function PreviewCanvas({
       })),
       startPointer: getCanvasPosition(event)
     };
+    canvasInteraction.beginDragging(interaction);
     onBeginBlockTransform();
-    setInteractionBlockIndex(blockIndex);
   }
 
   function startResize(event: PointerEvent<HTMLSpanElement>, blockIndex: number, handle: ResizeHandle, frame: Frame) {
@@ -262,7 +268,7 @@ export function PreviewCanvas({
       frameControl.setPointerCapture(event.pointerId);
     }
 
-    interactionRef.current = {
+    const interaction: CanvasInteraction = {
       blockIndex,
       handle,
       mode: "resize",
@@ -270,36 +276,31 @@ export function PreviewCanvas({
       startFrames: [{ blockIndex, frame }],
       startPointer: getCanvasPosition(event)
     };
+    canvasInteraction.beginResizing(interaction);
     onBeginBlockTransform();
-    setInteractionBlockIndex(blockIndex);
     onSelectBlock(blockIndex);
   }
 
   function updateInteraction(event: PointerEvent<HTMLDivElement>, commit = false) {
-    const interaction = interactionRef.current;
+    const updates = canvasInteraction.frameUpdatesForPointer(getCanvasPosition(event));
 
-    if (!interaction) {
+    if (!updates) {
       return;
     }
-
-    const updates = interactionFrameUpdates(interaction, getCanvasPosition(event));
 
     setAlignmentGuides(findAlignmentGuides(activeSlide?.blocks ?? [], updates));
     onUpdateBlockFrames(updates, commit);
   }
 
   function endInteraction(event: PointerEvent<HTMLDivElement>, blockIndex: number) {
-    const interaction = interactionRef.current;
-
-    if (!interaction || interaction.blockIndex !== blockIndex) {
+    if (!canvasInteraction.isTransformingBlock(blockIndex)) {
       return;
     }
 
     updateInteraction(event, true);
     event.currentTarget.releasePointerCapture(event.pointerId);
-    interactionRef.current = null;
     setAlignmentGuides([]);
-    setInteractionBlockIndex(null);
+    canvasInteraction.finishTransform();
   }
 
   function startMarquee(event: PointerEvent<HTMLDivElement>) {
@@ -314,7 +315,7 @@ export function PreviewCanvas({
     event.preventDefault();
     const pointer = getCanvasPosition(event);
     event.currentTarget.setPointerCapture(event.pointerId);
-    setMarqueeSelection({
+    canvasInteraction.beginMarquee({
       additive: event.metaKey || event.ctrlKey || event.shiftKey,
       current: pointer,
       pointerId: event.pointerId,
@@ -323,21 +324,12 @@ export function PreviewCanvas({
   }
 
   function updateMarquee(event: PointerEvent<HTMLDivElement>) {
-    setMarqueeSelection((current) => {
-      if (!current || current.pointerId !== event.pointerId) {
-        return current;
-      }
-
-      return {
-        ...current,
-        current: getCanvasPosition(event)
-      };
-    });
+    canvasInteraction.updateMarquee(event.pointerId, getCanvasPosition(event));
   }
 
   function endMarquee(event: PointerEvent<HTMLDivElement>) {
-    const selection = marqueeSelection
-      ? { ...marqueeSelection, current: getCanvasPosition(event) }
+    const selection = canvasInteraction.marqueeSelection
+      ? { ...canvasInteraction.marqueeSelection, current: getCanvasPosition(event) }
       : null;
 
     if (!selection || selection.pointerId !== event.pointerId) {
@@ -349,20 +341,22 @@ export function PreviewCanvas({
     const isClick = rect.w < 0.6 && rect.h < 0.6;
 
     event.currentTarget.releasePointerCapture(event.pointerId);
-    setMarqueeSelection(null);
 
     if (isClick) {
+      canvasInteraction.clearInteraction();
       onClearSelection();
       return;
     }
 
+    canvasInteraction.select({
+      primaryIndex: selectedIndices[0] ?? null,
+      selectedIndices
+    });
     onSelectBlocks(selectedIndices, { additive: selection.additive });
   }
 
   function cancelMarquee(event: PointerEvent<HTMLDivElement>) {
-    if (marqueeSelection?.pointerId === event.pointerId) {
-      setMarqueeSelection(null);
-    }
+    canvasInteraction.cancelMarquee(event.pointerId);
   }
 
   function openLayerContextMenu(event: MouseEvent<HTMLDivElement>, blockIndex: number | null) {
@@ -420,6 +414,7 @@ export function PreviewCanvas({
         className="custom-scrollbar relative z-0 flex min-h-0 flex-1 items-start justify-center overflow-auto p-3 pb-14 pt-9 sm:p-4 sm:pb-20 sm:pt-12 md:p-8 md:pb-24 md:pt-16 bg-[#000000] bg-[radial-gradient(#ffffff30_1.5px,transparent_1.5px)] [background-size:24px_24px]"
         onPointerDown={(event) => {
           if (event.target === event.currentTarget) {
+            canvasInteraction.clearInteraction();
             onClearSelection();
           }
         }}
@@ -463,13 +458,17 @@ export function PreviewCanvas({
             activeSlide={activeSlide}
             alignmentGuides={alignmentGuides}
             canvasScale={actualScale}
-            interactionBlockIndex={interactionBlockIndex}
-            marqueeSelection={marqueeSelection}
+            interactionBlockIndex={canvasInteraction.transform?.blockIndex ?? null}
+            interactionMode={canvasInteraction.mode}
+            marqueeSelection={canvasInteraction.marqueeSelection}
             onCancelMarquee={cancelMarquee}
             onEndInteraction={endInteraction}
             onEndMarquee={endMarquee}
             onSelectBlock={onSelectBlock}
-            onBeginTextEdit={onBeginBlockTransform}
+            onBeginTextEdit={(blockIndex) => {
+              canvasInteraction.beginEditingText(blockIndex);
+              onBeginBlockTransform();
+            }}
             onStartMarquee={startMarquee}
             onStartMove={startMove}
             onStartResize={startResize}

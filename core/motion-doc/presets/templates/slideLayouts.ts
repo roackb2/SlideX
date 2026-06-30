@@ -7,12 +7,12 @@ export const slideLayouts = [
   {
     id: "title-photo",
     name: "Title & Photo",
-    source: `<Text fontSize={72} fontWeight={800} x={8} y={40} w={40} h={20}>Title</Text>\n<ImageBlock src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=1200" alt="Photo" x={50} y={10} w={42} h={80} fit="cover" radius={24} enter="fadeIn" />`
+    source: `<Text fontSize={72} fontWeight={800} x={8} y={40} w={40} h={20}>Title</Text>\n<ImageBlock src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=85&w=2400" alt="Photo" x={50} y={10} w={42} h={80} fit="cover" radius={24} enter="fadeIn" />`
   },
   {
     id: "title-alt-photo",
     name: "Title & Alternate Photo",
-    source: `<ImageBlock src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=1200" alt="Alternate Photo" x={8} y={10} w={42} h={80} fit="cover" radius={24} enter="fadeIn" />\n<Text fontSize={72} fontWeight={800} x={54} y={40} w={40} h={20}>Title</Text>`
+    source: `<ImageBlock src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=85&w=2400" alt="Alternate Photo" x={8} y={10} w={42} h={80} fit="cover" radius={24} enter="fadeIn" />\n<Text fontSize={72} fontWeight={800} x={54} y={40} w={40} h={20}>Title</Text>`
   },
   {
     id: "title-bullets",
@@ -27,7 +27,7 @@ export const slideLayouts = [
   {
     id: "title-bullets-photo",
     name: "Title, Bullets & Photo",
-    source: `<Text fontSize={54} fontWeight={700} x={8} y={10} w={84} h={15}>Title</Text>\n<Text listType="bullet" fontSize={20} lineHeight={1.6} x={8} y={30} w={40} h={60}>• First point\n• Second point</Text>\n<ImageBlock src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=1200" alt="Photo" x={52} y={30} w={40} h={60} fit="cover" radius={24} enter="fadeIn" />`
+    source: `<Text fontSize={54} fontWeight={700} x={8} y={10} w={84} h={15}>Title</Text>\n<Text listType="bullet" fontSize={20} lineHeight={1.6} x={8} y={30} w={40} h={60}>• First point\n• Second point</Text>\n<ImageBlock src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=85&w=2400" alt="Photo" x={52} y={30} w={40} h={60} fit="cover" radius={24} enter="fadeIn" />`
   },
   {
     id: "title-bullets-small-video",
@@ -72,12 +72,12 @@ export const slideLayouts = [
   {
     id: "photos-3",
     name: "Photos - 3 on a page",
-    source: `<ImageBlock src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=800" alt="Photo 1" x={8} y={10} w={40} h={80} fit="cover" radius={24} enter="fadeIn" />\n<ImageBlock src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=800" alt="Photo 2" x={52} y={10} w={40} h={38} fit="cover" radius={24} enter="fadeIn" delay={0.1} />\n<ImageBlock src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=800" alt="Photo 3" x={52} y={52} w={40} h={38} fit="cover" radius={24} enter="fadeIn" delay={0.2} />`
+    source: `<ImageBlock src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=85&w=2400" alt="Photo 1" x={8} y={10} w={40} h={80} fit="cover" radius={24} enter="fadeIn" />\n<ImageBlock src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=85&w=2400" alt="Photo 2" x={52} y={10} w={40} h={38} fit="cover" radius={24} enter="fadeIn" delay={0.1} />\n<ImageBlock src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=85&w=2400" alt="Photo 3" x={52} y={52} w={40} h={38} fit="cover" radius={24} enter="fadeIn" delay={0.2} />`
   },
   {
     id: "photo",
     name: "Photo",
-    source: `<ImageBlock src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=1200" alt="Full Photo" x={0} y={0} w={100} h={100} fit="cover" radius={0} enter="fadeIn" />`
+    source: `<ImageBlock src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=85&w=2400" alt="Full Photo" x={0} y={0} w={100} h={100} fit="cover" radius={0} enter="fadeIn" />`
   },
   {
     id: "blank",

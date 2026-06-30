@@ -41,6 +41,6 @@ export const snippetTemplates = [
   {
     id: "snip-image",
     label: "Cover Image",
-    code: `<ImageBlock fit="cover" src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800" alt="Retro Setup" enter="fadeIn" delay={0.2} radius={16} x={10} y={20} w={80} h={54} />`
+    code: `<ImageBlock fit="cover" src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=85&w=2400" alt="Retro Setup" enter="fadeIn" delay={0.2} radius={16} x={10} y={20} w={80} h={54} />`
   }
 ];

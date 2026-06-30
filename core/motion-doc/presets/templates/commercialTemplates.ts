@@ -49,7 +49,7 @@ export const commercialTemplates: MotionTemplate[] = [
 </Slide>
 
 <Slide duration={5} theme="dark" background="#030303" accent="#ffffff">
-  <ImageBlock fit="cover" src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=1200" alt="Commercial team reviewing data" enter="fadeIn" delay={0.15} radius={32} h={64} w={46} x={7} y={18} />
+  <ImageBlock fit="cover" src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=85&w=2400" alt="Commercial team reviewing data" enter="fadeIn" delay={0.15} radius={32} h={64} w={46} x={7} y={18} />
   <Text enter="fadeUp" delay={0.2} fontSize={28} lineHeight={1.6} h={52} w={36} x={57} y={26}>Use this frame for product evidence, account context, customer proof, or a leadership working session.</Text>
 </Slide>
 
@@ -139,7 +139,7 @@ export const commercialTemplates: MotionTemplate[] = [
 </Slide>
 
 <Slide duration={5} theme="light" background="#ffffff" accent="#111111">
-  <ImageBlock fit="cover" src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=1200" alt="Clean architectural detail" enter="fadeIn" delay={0.15} radius={32} h={64} w={46} x={7} y={18} />
+  <ImageBlock fit="cover" src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=85&w=2400" alt="Clean architectural detail" enter="fadeIn" delay={0.15} radius={32} h={64} w={46} x={7} y={18} />
   <Text enter="fadeUp" delay={0.2} fontSize={28} lineHeight={1.6} h={52} w={36} x={57} y={26}>Use this page for product evidence, market imagery, customer context, or a quiet visual pause between data-heavy sections.</Text>
 </Slide>
 
