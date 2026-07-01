@@ -41,12 +41,12 @@ export const motionDocExportRuntime = `      (() => {
         function stop() {
           window.clearTimeout(timer);
           timer = null;
-          if (playButton) playButton.textContent = "▶";
+          if (playButton) playButton.innerHTML = '<svg viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>';
         }
 
         function play() {
           stop();
-          if (playButton) playButton.textContent = "Ⅱ";
+          if (playButton) playButton.innerHTML = '<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
           const tick = () => {
             const duration = Number(slides[index]?.dataset.duration || 5);
             timer = window.setTimeout(() => {

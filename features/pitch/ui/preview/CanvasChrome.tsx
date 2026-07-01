@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
-import type { AddBlockOptions } from "@/features/pitch/application/motionDocCommands";
+import { ChevronDown, ChevronLeft, ChevronRight, Hand, MousePointer2, Plus, X, ZoomIn, ZoomOut } from "lucide-react";
+import { canvasToolOptions, type CanvasTool } from "@/features/pitch/application/canvasTools";
+import type { AddBlockOptions, InsertSlidePlacement } from "@/features/pitch/application/motionDocCommands";
 import { lucideIconLabels, lucideIconPaths, slidexIconNames, type SlideXIconName } from "@/core/motion-doc/domain/lucideIconRegistry";
 import type { SlideRow } from "@/features/pitch/ui/LayerSidebar";
 import { toolGroups, type AddBlockType, type PitchBlockTool, type PitchToolGroup } from "@/features/pitch/ui/pitchOptions";
+
+export type CanvasZoomDirection = "in" | "out";
 
 type CanvasSlideNavProps = {
   activeSlideIndex: number;
@@ -47,32 +50,41 @@ export function CanvasSlideNav({
   );
 }
 
-export function CanvasBlockDock({ onAddBlock }: { onAddBlock: (type: AddBlockType, options?: AddBlockOptions) => void }) {
+export function CanvasBlockDock({
+  activeCanvasTool,
+  onAddBlock,
+  onCanvasToolChange,
+  zoomDirection
+}: {
+  activeCanvasTool: CanvasTool;
+  onAddBlock: (type: AddBlockType, options?: AddBlockOptions) => void;
+  onCanvasToolChange: (tool: CanvasTool) => void;
+  zoomDirection: CanvasZoomDirection;
+}) {
   const [openGroupId, setOpenGroupId] = useState<PitchToolGroup["id"] | null>(null);
-  const [activeShapeTool, setActiveShapeTool] = useState<AddBlockType>("ShapeLine");
+  const [isCanvasToolMenuOpen, setIsCanvasToolMenuOpen] = useState(false);
   const activeGroup = toolGroups.find((group) => group.id === openGroupId) ?? null;
 
   function addTool(type: AddBlockType, options?: AddBlockOptions) {
-    if (String(type).startsWith("Shape")) {
-      setActiveShapeTool(type);
-    }
     onAddBlock(type, options);
     setOpenGroupId(null);
   }
 
   return (
     <>
-      {activeGroup ? (
+      {activeGroup || isCanvasToolMenuOpen ? (
         <button
           aria-label="Close tool menu"
           className="fixed inset-0 z-[55] cursor-default bg-transparent"
-          onClick={() => setOpenGroupId(null)}
+          onClick={() => {
+            setOpenGroupId(null);
+            setIsCanvasToolMenuOpen(false);
+          }}
           type="button"
         />
       ) : null}
       {activeGroup && !activeGroup.modal && (activeGroup.tools.length > 1 || activeGroup.id === "icon") ? (
         <ToolFlyout
-          activeShapeTool={activeShapeTool}
           group={activeGroup}
           onAddTool={addTool}
         />
@@ -80,7 +92,35 @@ export function CanvasBlockDock({ onAddBlock }: { onAddBlock: (type: AddBlockTyp
       {activeGroup?.modal ? (
         <ToolModal group={activeGroup} onAddTool={addTool} onClose={() => setOpenGroupId(null)} />
       ) : null}
+      {isCanvasToolMenuOpen ? (
+        <CanvasToolMenu
+          activeCanvasTool={activeCanvasTool}
+          onSelectTool={(tool) => {
+            onCanvasToolChange(tool);
+            setIsCanvasToolMenuOpen(false);
+          }}
+          zoomDirection={zoomDirection}
+        />
+      ) : null}
       <div className="absolute bottom-3 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1.5 rounded-xl border border-white/[0.12] bg-neutral-900/80 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:bottom-5 md:bottom-7 transition-all duration-300 hover:shadow-black/85">
+        <button
+          aria-label="Open canvas tools"
+          className={`group relative flex h-8 w-10 cursor-pointer items-center justify-center overflow-visible rounded-lg transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.06] active:scale-[0.93] sm:h-9.5 sm:w-11 md:h-10.5 md:w-12 ${
+            isCanvasToolMenuOpen ? "bg-white/[0.12] text-white border border-white/[0.1]" : "text-neutral-300 hover:bg-white/[0.06] hover:text-white"
+          }`}
+          onClick={() => {
+            setOpenGroupId(null);
+            setIsCanvasToolMenuOpen((current) => !current);
+          }}
+          title={`${canvasToolLabel(activeCanvasTool, zoomDirection)} (${canvasToolShortcut(activeCanvasTool)})`}
+          type="button"
+        >
+          <span className="scale-80 sm:scale-95 md:scale-105">{canvasToolIcon(activeCanvasTool, 17, zoomDirection)}</span>
+          <ChevronDown className="ml-0.5 text-neutral-500" size={12} />
+          <span className="pointer-events-none absolute -top-9 origin-bottom scale-90 whitespace-nowrap rounded-lg border border-white/[0.08] bg-[#111113] px-2.5 py-1 text-xs font-bold text-white opacity-0 shadow-xl transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 sm:-top-10">
+            {canvasToolLabel(activeCanvasTool, zoomDirection)}
+          </span>
+        </button>
         {toolGroups.map((group) => {
           const isOpen = openGroupId === group.id;
           const isSingleTool = group.tools.length === 1 && group.id !== "icon";
@@ -92,6 +132,7 @@ export function CanvasBlockDock({ onAddBlock }: { onAddBlock: (type: AddBlockTyp
               }`}
               key={group.id}
               onClick={() => {
+                setIsCanvasToolMenuOpen(false);
                 if (isSingleTool) {
                   addTool(group.tools[0].type);
                 } else {
@@ -113,11 +154,9 @@ export function CanvasBlockDock({ onAddBlock }: { onAddBlock: (type: AddBlockTyp
 }
 
 function ToolFlyout({
-  activeShapeTool,
   group,
   onAddTool
 }: {
-  activeShapeTool: AddBlockType;
   group: PitchToolGroup;
   onAddTool: (type: AddBlockType, options?: AddBlockOptions) => void;
 }) {
@@ -126,6 +165,109 @@ function ToolFlyout({
   }
 
   return <CommandToolMenu group={group} onAddTool={onAddTool} />;
+}
+
+function CanvasToolMenu({
+  activeCanvasTool,
+  onSelectTool,
+  zoomDirection
+}: {
+  activeCanvasTool: CanvasTool;
+  onSelectTool: (tool: CanvasTool) => void;
+  zoomDirection: CanvasZoomDirection;
+}) {
+  return (
+    <div className="absolute bottom-[4.25rem] left-1/2 z-[60] w-[220px] -translate-x-1/2 overflow-hidden rounded-xl border border-white/[0.04] bg-neutral-950/90 p-[6px] shadow-[0_20px_50px_rgba(0,0,0,0.75)] backdrop-blur-2xl sm:bottom-[5rem]">
+      <div className="px-2.5 pb-1.5 pt-1 text-sm font-bold text-neutral-400">
+        Canvas tool
+      </div>
+      {canvasToolOptions.map((tool) => {
+        const isActive = tool.id === activeCanvasTool;
+
+        return (
+          <button
+            className={`grid h-9.5 w-full grid-cols-[22px_1fr_auto] items-center gap-2 rounded-lg px-2.5 text-left text-sm font-semibold transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.96] ${
+              isActive ? "bg-white/[0.07] text-white" : "text-neutral-200 hover:bg-white/[0.04] hover:text-white"
+            }`}
+            key={tool.id}
+            onClick={() => onSelectTool(tool.id)}
+            type="button"
+          >
+            <span className="flex items-center justify-center text-neutral-300">{canvasToolIcon(tool.id, 16, zoomDirection)}</span>
+            <span className="truncate">{tool.id === "zoom" ? canvasToolLabel(tool.id, zoomDirection) : tool.label}</span>
+            <span className="font-mono text-xs text-neutral-500">{tool.shortcut}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function CanvasSlideAddControls({
+  onInsertSlideNearActive
+}: {
+  onInsertSlideNearActive: (placement: InsertSlidePlacement) => void;
+}) {
+  return (
+    <>
+      <CanvasSlideAddButton
+        className="-left-5 top-1/2 -translate-y-1/2"
+        label="Add slide left"
+        onClick={() => onInsertSlideNearActive("before")}
+      />
+      <CanvasSlideAddButton
+        className="-right-5 top-1/2 -translate-y-1/2"
+        label="Add slide right"
+        onClick={() => onInsertSlideNearActive("after")}
+      />
+    </>
+  );
+}
+
+function CanvasSlideAddButton({
+  className,
+  label,
+  onClick
+}: {
+  className: string;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      aria-label={label}
+      className={`absolute z-50 flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.12] bg-neutral-950/80 text-neutral-300 shadow-[0_10px_30px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-all duration-200 hover:scale-110 hover:border-white/25 hover:bg-white hover:text-black active:scale-95 ${className}`}
+      onClick={onClick}
+      title={label}
+      type="button"
+    >
+      <Plus size={16} strokeWidth={2.4} />
+    </button>
+  );
+}
+
+function canvasToolIcon(tool: CanvasTool, size: number, zoomDirection: CanvasZoomDirection) {
+  if (tool === "hand") {
+    return <Hand size={size} />;
+  }
+
+  if (tool === "zoom") {
+    return zoomDirection === "out" ? <ZoomOut size={size} /> : <ZoomIn size={size} />;
+  }
+
+  return <MousePointer2 size={size} />;
+}
+
+function canvasToolLabel(tool: CanvasTool, zoomDirection: CanvasZoomDirection) {
+  if (tool === "zoom" && zoomDirection === "out") {
+    return "Zoom out";
+  }
+
+  return canvasToolOptions.find((option) => option.id === tool)?.label ?? "Select";
+}
+
+function canvasToolShortcut(tool: CanvasTool) {
+  return canvasToolOptions.find((option) => option.id === tool)?.shortcut ?? "V";
 }
 
 function CommandToolMenu({

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { canvasToolFromShortcut, type CanvasTool } from "@/features/pitch/application/canvasTools";
 import { arrowDelta, isArrowKey } from "@/features/pitch/application/keyboard";
 
 type UsePitchShortcutsArgs = {
@@ -27,6 +28,7 @@ type UsePitchShortcutsArgs = {
   pasteCopiedBlock: () => void;
   selectedBlockIndex: number | null;
   selectedBlockIndices: number[];
+  setActiveCanvasTool: (tool: CanvasTool) => void;
   undoLastChange: () => void;
 };
 
@@ -53,6 +55,7 @@ export function usePitchShortcuts({
   pasteCopiedBlock,
   selectedBlockIndex,
   selectedBlockIndices,
+  setActiveCanvasTool,
   undoLastChange
 }: UsePitchShortcutsArgs) {
   useEffect(() => {
@@ -131,6 +134,16 @@ export function usePitchShortcuts({
         return;
       }
 
+      const nextCanvasTool = !event.metaKey && !event.ctrlKey && !event.altKey
+        ? canvasToolFromShortcut(event.key)
+        : null;
+
+      if (nextCanvasTool) {
+        event.preventDefault();
+        setActiveCanvasTool(nextCanvasTool);
+        return;
+      }
+
       if (event.key === "Delete" || event.key === "Backspace") {
         event.preventDefault();
         deleteSlide(activeSlideIndex);
@@ -179,6 +192,7 @@ export function usePitchShortcuts({
     pasteCopiedBlock,
     selectedBlockIndex,
     selectedBlockIndices,
+    setActiveCanvasTool,
     undoLastChange
   ]);
 }

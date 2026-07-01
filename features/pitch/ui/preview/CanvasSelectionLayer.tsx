@@ -2,6 +2,7 @@
 
 import type { PointerEvent } from "react";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import type { CanvasTool } from "@/features/pitch/application/canvasTools";
 import { isPositionLocked } from "@/features/pitch/application/motionDocCommands";
 import {
   blockFrame,
@@ -19,6 +20,7 @@ import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
 import { TextFrameEditor } from "@/features/pitch/ui/preview/TextFrameEditor";
 
 type CanvasSelectionLayerProps = {
+  activeCanvasTool: CanvasTool;
   activeSlide: MotionDocScene | undefined;
   alignmentGuides: AlignmentGuide[];
   canvasScale: number;
@@ -41,6 +43,7 @@ type CanvasSelectionLayerProps = {
 };
 
 export function CanvasSelectionLayer({
+  activeCanvasTool,
   activeSlide,
   alignmentGuides,
   canvasScale,
@@ -63,7 +66,8 @@ export function CanvasSelectionLayer({
 }: CanvasSelectionLayerProps) {
   return (
     <div
-      className="absolute inset-0 z-40"
+      className={`absolute inset-0 z-40 ${activeCanvasTool === "select" ? "" : "pointer-events-none"}`}
+      data-canvas-tool={activeCanvasTool}
       data-canvas-interaction-mode={interactionMode}
       onPointerCancel={onCancelMarquee}
       onPointerDown={onStartMarquee}

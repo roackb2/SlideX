@@ -14,6 +14,7 @@ import { usePitchProject, type NewPitchProjectOptions } from "@/features/pitch/u
 import { usePitchShortcuts } from "@/features/pitch/ui/hooks/usePitchShortcuts";
 import { usePitchUndo } from "@/features/pitch/ui/hooks/usePitchUndo";
 import { defaultTemplate } from "@/core/motion-doc/presets/templates";
+import { defaultCanvasTool, type CanvasTool } from "@/features/pitch/application/canvasTools";
 
 export function MotionDocApp() {
   const [source, setSource] = useState(defaultMdx);
@@ -27,6 +28,7 @@ export function MotionDocApp() {
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [isCanvasGridVisible, setIsCanvasGridVisible] = useState(false);
+  const [activeCanvasTool, setActiveCanvasTool] = useState<CanvasTool>(defaultCanvasTool);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
   const undoStackRef = useRef<string[]>([]);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -183,6 +185,7 @@ export function MotionDocApp() {
     pasteCopiedBlock: pitchCommands.pasteCopiedBlock,
     selectedBlockIndex,
     selectedBlockIndices,
+    setActiveCanvasTool,
     undoLastChange
   });
 
@@ -221,6 +224,7 @@ export function MotionDocApp() {
       activeSlideShaderSpeed={activeSlideShaderSpeed}
       activeSlideTextColor={activeSlideTextColor}
       activeSlideTheme={activeSlideTheme}
+      activeCanvasTool={activeCanvasTool}
       addBlockToActiveSlide={pitchCommands.addBlockToActiveSlide}
       addSlide={pitchCommands.addSlide}
       addTextAtPosition={pitchCommands.addTextAtPosition}
@@ -248,6 +252,7 @@ export function MotionDocApp() {
       goToNextSlide={pitchCommands.goToNextSlide}
       goToPreviousSlide={pitchCommands.goToPreviousSlide}
       insertSnippet={pitchCommands.insertSnippet}
+      insertSlideNearActive={pitchCommands.insertSlideNearActive}
       isCanvasGridVisible={isCanvasGridVisible}
       isCodeEditorOpen={isCodeEditorOpen}
       isExportMenuOpen={isExportMenuOpen}
@@ -276,6 +281,7 @@ export function MotionDocApp() {
       selectionMdx={selectionMdx}
       selectSingleBlock={selectSingleBlock}
       setActiveSlideIndex={setActiveSlideIndex}
+      setActiveCanvasTool={setActiveCanvasTool}
       setDraggedBlockIndex={setDraggedBlockIndex}
       setDragOverBlockIndex={setDragOverBlockIndex}
       setIsCanvasGridVisible={setIsCanvasGridVisible}

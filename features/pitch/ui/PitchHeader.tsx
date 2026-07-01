@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, type RefObject } from "react";
 import * as Popover from "@radix-ui/react-popover";
-import { Download, FileCode2, FileText, Layers, PanelRight, RotateCcw, Undo2, Search, ChevronDown, Check } from "lucide-react";
+import { Check, ChevronDown, Download, FileCode2, FileText, Layers, PanelRight, RotateCcw, Undo2 } from "lucide-react";
 
 export function PitchHeader({
   exportMenuRef,
@@ -43,7 +43,7 @@ export function PitchHeader({
   setIsExportMenuOpen: (updater: (current: boolean) => boolean) => void;
 }) {
   const [isZoomOpen, setIsZoomOpen] = useState(false);
-  const zoomOptions = ["fit", 0.5, 0.75, 1, 1.25, 1.5] as const;
+  const zoomOptions = ["fit", 0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
   return (
     <header className="z-50 flex shrink-0 items-center justify-between border-b border-white/[0.12] bg-[#111111] px-4 py-2.5 sm:px-6 select-none transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] h-[52px]">
@@ -82,7 +82,7 @@ export function PitchHeader({
               title="Zoom Level"
               type="button"
             >
-              <span>{zoomLevel === "fit" ? "Fit" : `${zoomLevel * 100}%`}</span>
+              <span>{zoomDisplayLabel(zoomLevel, actualScale)}</span>
               <ChevronDown className="shrink-0 text-neutral-500" size={14} />
             </button>
           </Popover.Trigger>
@@ -188,4 +188,22 @@ export function PitchHeader({
       </div>
     </header>
   );
+}
+
+function zoomDisplayLabel(zoomLevel: number | "fit", actualScale: number) {
+  if (zoomLevel === "fit") {
+    return `Fit ${formatZoomPercent(actualScale)}`;
+  }
+
+  return formatZoomPercent(zoomLevel);
+}
+
+function formatZoomPercent(scale: number) {
+  const percent = scale * 100;
+
+  if (percent < 10) {
+    return `${Math.round(percent * 10) / 10}%`;
+  }
+
+  return `${Math.round(percent)}%`;
 }

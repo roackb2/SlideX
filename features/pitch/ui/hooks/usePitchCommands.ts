@@ -18,6 +18,7 @@ import {
   deleteSlideSource,
   duplicateBlockAt,
   imageBlockAsSlideBackground,
+  insertBlankSlideSource,
   isPositionLocked,
   moveBlockByDirection,
   nudgeBlocks,
@@ -30,7 +31,8 @@ import {
   updateBlockInSlide,
   updatePositionedBlockFrames as buildPositionedBlockFramesSlide,
   type AddBlockOptions,
-  type FrameUpdate
+  type FrameUpdate,
+  type InsertSlidePlacement
 } from "@/features/pitch/application/motionDocCommands";
 import type { BlockUpdateOptions } from "@/features/pitch/ui/pitchCommandTypes";
 import { type AddBlockType } from "@/features/pitch/ui/pitchOptions";
@@ -134,6 +136,14 @@ export function usePitchCommands({
     selectSingleBlock(null);
     setReplayNonce((value) => value + 1);
     setNotice("Blank slide added");
+  }
+
+  function insertSlideNearActive(placement: InsertSlidePlacement) {
+    commitSource((current) => insertBlankSlideSource(current, activeSlideIndex, placement));
+    setActiveSlideIndex(placement === "before" ? activeSlideIndex : activeSlideIndex + 1);
+    selectSingleBlock(null);
+    setReplayNonce((value) => value + 1);
+    setNotice(placement === "before" ? "Slide inserted before" : "Slide inserted after");
   }
 
   function addSlideWithLayout(layoutSource: string) {
@@ -534,6 +544,7 @@ export function usePitchCommands({
     goToPreviousSlide,
     hasCopiedBlock: copiedBlock !== null,
     insertSnippet,
+    insertSlideNearActive,
     moveBlock,
     nudgeSelectedBlocks,
     pasteCopiedBlock,

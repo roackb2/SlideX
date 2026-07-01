@@ -24,6 +24,8 @@ export type AddBlockOptions = {
   props?: Record<string, string | number>;
 };
 
+export type InsertSlidePlacement = "after" | "before";
+
 type ApplySelectionMdxResult =
   | {
       error: string;
@@ -34,34 +36,25 @@ type ApplySelectionMdxResult =
     };
 
 export function appendBlankSlideSource(source: string, slideIndex: number) {
-  const pattern = /<(Slide|Scene)\b([^>]*)>([\s\S]*?)<\/\1>/g;
-  let currentIndex = 0;
-  let theme = "dark";
-  let bg = "#050505";
-  let acc = "#ffffff";
-  let txt = "";
+  return `${source.trimEnd()}\n\n${blankSlideSourceFromReference(source, slideIndex)}`;
+}
 
-  for (const match of source.matchAll(pattern)) {
-    if (currentIndex === slideIndex && match.index !== undefined) {
-      const attrsStr = match[2];
-      const getAttr = (name: string) => {
-        const m = attrsStr.match(new RegExp(`\\b${name}="([^"]*)"`));
-        return m ? m[1] : null;
-      };
-      theme = getAttr("theme") ?? theme;
-      bg = getAttr("background") ?? bg;
-      acc = getAttr("accent") ?? acc;
-      txt = getAttr("textColor") ?? txt;
-      break;
-    }
-    currentIndex += 1;
+export function insertBlankSlideSource(source: string, slideIndex: number, placement: InsertSlidePlacement) {
+  const pattern = /<(Slide|Scene)\b([^>]*)>([\s\S]*?)<\/\1>/g;
+  const matches = [...source.matchAll(pattern)];
+  const blankSlide = blankSlideSourceFromReference(source, slideIndex);
+
+  if (matches.length === 0) {
+    return `${source.trimEnd()}\n\n${blankSlide}`;
   }
 
-  const txtAttr = txt ? ` textColor="${txt}"` : "";
-  const startTag = `<Slide duration={5} theme="${theme}" background="${bg}" accent="${acc}"${txtAttr}>`;
-  const endTag = '</Slide>';
+  const targetIndex = Math.max(0, Math.min(slideIndex, matches.length - 1));
+  const targetMatch = matches[targetIndex];
+  const insertIndex = placement === "before"
+    ? targetMatch.index ?? 0
+    : (targetMatch.index ?? source.length) + targetMatch[0].length;
 
-  return `${source.trimEnd()}\n\n${startTag}\n${endTag}`;
+  return `${source.slice(0, insertIndex).trimEnd()}\n\n${blankSlide}\n\n${source.slice(insertIndex).trimStart()}`.trim();
 }
 
 export function appendLayoutSlideSource(source: string, slideIndex: number, layoutSource: string) {
@@ -93,6 +86,34 @@ export function appendLayoutSlideSource(source: string, slideIndex: number, layo
   const endTag = '</Slide>';
 
   return `${source.trimEnd()}\n\n${startTag}\n${normalizeLayoutSourceTextMotion(layoutSource)}\n${endTag}`;
+}
+
+function blankSlideSourceFromReference(source: string, slideIndex: number) {
+  const pattern = /<(Slide|Scene)\b([^>]*)>([\s\S]*?)<\/\1>/g;
+  let currentIndex = 0;
+  let theme = "dark";
+  let bg = "#050505";
+  let acc = "#ffffff";
+  let txt = "";
+
+  for (const match of source.matchAll(pattern)) {
+    if (currentIndex === slideIndex && match.index !== undefined) {
+      const attrsStr = match[2];
+      const getAttr = (name: string) => {
+        const m = attrsStr.match(new RegExp(`\\b${name}="([^"]*)"`));
+        return m ? m[1] : null;
+      };
+      theme = getAttr("theme") ?? theme;
+      bg = getAttr("background") ?? bg;
+      acc = getAttr("accent") ?? acc;
+      txt = getAttr("textColor") ?? txt;
+      break;
+    }
+    currentIndex += 1;
+  }
+
+  const txtAttr = txt ? ` textColor="${txt}"` : "";
+  return `<Slide duration={5} theme="${theme}" background="${bg}" accent="${acc}"${txtAttr}>\n</Slide>`;
 }
 
 export function applyLayoutToSlide(slide: MotionDocScene, layoutSource: string, layoutId: string) {

@@ -32,14 +32,16 @@ export function buildMotionDocHtml(source: string, customTitle?: string) {
       </div>
       <nav class="controls" aria-label="Slide controls">
         <div class="button-group">
-          <button class="control-button" data-action="prev" type="button" aria-label="Previous slide">←</button>
-          <button class="control-button" data-action="next" type="button" aria-label="Next slide">→</button>
-          <button class="control-button" data-action="replay" type="button" aria-label="Replay slide">↻</button>
-          <button class="control-button" data-action="play" type="button" aria-label="Play slides">▶</button>
-          <button class="control-button" data-action="fullscreen" type="button" aria-label="Toggle fullscreen">⛶</button>
+          <button class="control-button" data-action="prev" type="button" aria-label="Previous slide" title="Previous"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+          <button class="control-button" data-action="next" type="button" aria-label="Next slide" title="Next"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+          <button class="control-button" data-action="replay" type="button" aria-label="Replay slide" title="Replay"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+          <button class="control-button" data-action="play" type="button" aria-label="Play slides" title="Play"><svg viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg></button>
         </div>
+        <div class="counter" aria-hidden="true"><span data-current>1</span> / <span data-total>${document.scenes.length}</span></div>
         <div class="progress" aria-hidden="true"><span></span></div>
-        <div class="counter"><span data-current>1</span> / <span data-total>${document.scenes.length}</span></div>
+        <div class="button-group">
+          <button class="control-button" data-action="fullscreen" type="button" aria-label="Toggle fullscreen" title="Fullscreen"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+        </div>
       </nav>
     </main>
     <script>${motionDocExportRuntime}</script>

@@ -53,8 +53,10 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
         <WorkspaceLayerSidebar {...props} onSelectSlide={selectSlide} />
 
         <PreviewCanvas
+          activeCanvasTool={props.activeCanvasTool}
           zoomLevel={zoomLevel}
           onFitScaleChange={setFitScale}
+          onSetZoomLevel={setZoomLevel}
           activeSlide={props.activeSlide}
           activeSlideIndex={props.activeSlideIndex}
           canPasteBlock={props.hasCopiedBlock}
@@ -69,6 +71,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
           onNextSlide={props.goToNextSlide}
           onPasteCopiedBlock={props.pasteCopiedBlock}
           onPreviousSlide={props.goToPreviousSlide}
+          onInsertSlideNearActive={props.insertSlideNearActive}
           onSelectBlock={props.selectBlock}
           onSelectBlocks={props.selectBlocks}
           onSelectSlide={props.setActiveSlideIndex}
@@ -84,6 +87,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
           slideRows={props.slideRows}
           source={props.canvasSource}
           totalDuration={props.totalDuration}
+          onCanvasToolChange={props.setActiveCanvasTool}
         />
 
         <WorkspaceInspectorPanel {...props} />

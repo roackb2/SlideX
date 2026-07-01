@@ -1,6 +1,7 @@
 import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction } from "react";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
-import type { AddBlockOptions, FrameUpdate } from "@/features/pitch/application/motionDocCommands";
+import type { CanvasTool } from "@/features/pitch/application/canvasTools";
+import type { AddBlockOptions, FrameUpdate, InsertSlidePlacement } from "@/features/pitch/application/motionDocCommands";
 import type { SlideRow } from "@/features/pitch/ui/LayerSidebar";
 import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
 import type { AddBlockType } from "@/features/pitch/ui/pitchOptions";
@@ -29,6 +30,7 @@ export type PitchWorkspaceProps = {
   activeSlideShaderSpeed: number;
   activeSlideTextColor: string;
   activeSlideTheme: string;
+  activeCanvasTool: CanvasTool;
   addBlockToActiveSlide: (type: AddBlockType, options?: AddBlockOptions) => void;
   addSlide: () => void;
   applyLayoutToActiveSlide: (layoutSource: string, layoutId: string) => void;
@@ -53,6 +55,7 @@ export type PitchWorkspaceProps = {
   goToNextSlide: () => void;
   goToPreviousSlide: () => void;
   insertSnippet: (code: string) => void;
+  insertSlideNearActive: (placement: InsertSlidePlacement) => void;
   isCanvasGridVisible: boolean;
   isCodeEditorOpen: boolean;
   isExportMenuOpen: boolean;
@@ -81,6 +84,7 @@ export type PitchWorkspaceProps = {
   selectionMdx: SelectionMdx;
   selectSingleBlock: (index: number | null) => void;
   setActiveSlideIndex: Dispatch<SetStateAction<number>>;
+  setActiveCanvasTool: Dispatch<SetStateAction<CanvasTool>>;
   setDraggedBlockIndex: Dispatch<SetStateAction<number | null>>;
   setDragOverBlockIndex: Dispatch<SetStateAction<number | null>>;
   setIsCanvasGridVisible: Dispatch<SetStateAction<boolean>>;

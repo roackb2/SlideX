@@ -156,7 +156,7 @@ function BarChartBody({
 }) {
   const gridLines = 4;
   return (
-    <div className="relative mt-6 flex flex-1 flex-col justify-end" style={{ minHeight: chartHeight + 48 }}>
+    <div className="relative mt-6 flex flex-1 flex-col justify-end min-h-0">
       <div className="absolute inset-0 flex flex-col justify-between pb-8">
         {Array.from({ length: gridLines }).map((_, i) => (
           <div key={i} className="h-px w-full bg-[var(--slide-border)] opacity-40" />
@@ -229,7 +229,7 @@ function LineChartBody({
   const gridLines = 4;
 
   return (
-    <div className="relative mt-6 flex flex-1 flex-col gap-3">
+    <div className="relative mt-6 flex flex-1 flex-col gap-3 min-h-0">
       <div className="absolute inset-0 flex flex-col justify-between pb-8">
         {Array.from({ length: gridLines }).map((_, i) => (
           <div key={i} className="h-px w-full bg-[var(--slide-border)] opacity-40" />
@@ -242,8 +242,8 @@ function LineChartBody({
             <stop offset="100%" stopColor="currentColor" stopOpacity="0.0" />
           </linearGradient>
         </defs>
-        {mode === "area" ? <path d={areaPath} fill={`url(#chart-area-fill-${mode})`} /> : null}
-        <path d={smoothPath} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6" />
+        {mode === "area" ? <path d={areaPath} fill={`url(#chart-area-fill-${mode})`} vectorEffect="nonScalingStroke" /> : null}
+        <path d={smoothPath} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6" vectorEffect="nonScalingStroke" />
         {points.map((point, index) => (
           <g key={`point-${index}`}>
             <circle cx={point.x} cy={point.y} fill="var(--slide-card)" r="7" stroke="currentColor" strokeWidth="4" />
@@ -303,8 +303,8 @@ function PieChartBody({
   });
 
   return (
-    <div className="mt-5 grid flex-1 items-center gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-      <div className="relative mx-auto flex items-center justify-center drop-shadow-xl" style={{ height: size, width: size }}>
+    <div className="relative mt-6 flex flex-1 items-center justify-between gap-8 min-h-0">
+      <div className="relative flex aspect-square w-full max-w-[220px] items-center justify-center rounded-full shadow-[0_24px_60px_rgba(0,0,0,0.3)]">
         <svg viewBox={`0 0 ${size} ${size}`} className="overflow-visible" style={{ transform: "rotate(-90deg)" }}>
           {slices.map((slice, index) => (
             <path 

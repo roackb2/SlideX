@@ -11,7 +11,7 @@ export const motionDocExportStyles = `      :root {
       }
       body {
         margin: 0;
-        background: #050505;
+        background: radial-gradient(circle at center, #18181b 0%, #000 100%);
         color: #ffffff;
         overflow: hidden;
       }
@@ -19,52 +19,40 @@ export const motionDocExportStyles = `      :root {
         font: inherit;
       }
       .player {
-        display: grid;
-        grid-template-rows: minmax(0, 1fr) auto;
+        position: relative;
+        display: flex;
+        flex-direction: column;
         height: 100vh;
-        padding: clamp(14px, 2vw, 28px);
-        gap: 14px;
-      }
-      .player:fullscreen {
-        background: #050505;
+        width: 100%;
         padding: 0;
       }
-      .player:fullscreen .stage {
-        padding: min(3vh, 28px);
-      }
-      .player:fullscreen .viewport {
-        width: min(100vw, 177.777vh);
-        max-width: none;
-        border-radius: 0;
-        border-color: transparent;
-        box-shadow: none;
-      }
-      .player:fullscreen .controls {
-        position: fixed;
-        right: 18px;
-        bottom: 18px;
-        left: 18px;
-        width: auto;
-        opacity: 0.18;
-        transition: opacity 160ms ease;
-      }
-      .player:fullscreen .controls:hover {
-        opacity: 1;
+      .player:fullscreen {
+        background: #000;
       }
       .stage {
-        display: grid;
+        display: flex;
+        flex: 1;
         min-height: 0;
-        place-items: center;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+      }
+      .player:fullscreen .stage {
+        padding: 0;
       }
       .viewport {
         position: relative;
-        width: min(100%, calc((100vh - 98px) * 16 / 9));
-        max-width: 1024px;
-        aspect-ratio: 16 / 9;
+        width: min(100%, calc((100vh - 160px) * 1024 / 576));
+        aspect-ratio: 1024 / 576;
         overflow: hidden;
-        border-radius: 20px;
-        background: #0a0a0a;
-        box-shadow: 0 28px 90px rgba(0,0,0,0.58);
+        border-radius: 12px;
+        background: #000;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 32px 120px rgba(0, 0, 0, 0.6), 0 0 80px rgba(255, 255, 255, 0.02);
+      }
+      .player:fullscreen .viewport {
+        width: min(100vw, 177.777vh);
+        border-radius: 0;
+        box-shadow: none;
       }
       .frame {
         position: absolute;
@@ -350,17 +338,27 @@ export const motionDocExportStyles = `      :root {
         line-height: 1.75;
         color: var(--motion-muted, var(--slide-muted));
       }
-      .block-metric,
-      .block-chart {
+      .block-metric {
         margin: 0;
         width: 100%;
-        max-width: 54rem;
-        padding: 20px;
+        max-width: calc(54rem * var(--frame-scale, 1));
+        padding: calc(20px * var(--frame-scale, 1));
         border-radius: var(--motion-radius, 16px);
         border: 1px solid var(--slide-border);
-        background: var(--motion-bg, var(--slide-card));
-        box-shadow: 0 20px 60px rgba(0,0,0,0.18);
-        backdrop-filter: blur(16px);
+        background: var(--motion-bg, rgba(255,255,255,0.06));
+        box-shadow: 0 calc(24px * var(--frame-scale, 1)) calc(72px * var(--frame-scale, 1)) rgba(0,0,0,0.24);
+      }
+      .block-chart {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        width: 100%;
+        max-width: calc(54rem * var(--frame-scale, 1));
+        padding: calc(20px * var(--frame-scale, 1));
+        border-radius: var(--motion-radius, 16px);
+        border: 1px solid var(--slide-border);
+        background: var(--motion-bg, rgba(255,255,255,0.06));
+        box-shadow: 0 calc(24px * var(--frame-scale, 1)) calc(72px * var(--frame-scale, 1)) rgba(0,0,0,0.24);
       }
       .block-metric {
         max-width: 24rem;
@@ -397,7 +395,7 @@ export const motionDocExportStyles = `      :root {
       }
       .block-chart h3 {
         margin: 0;
-        font-size: 20px;
+        font-size: calc(20px * var(--frame-scale, 1));
         color: var(--motion-fg, var(--slide-fg));
       }
       .block-chart--sm {
@@ -411,10 +409,11 @@ export const motionDocExportStyles = `      :root {
       }
       .block-chart__bars {
         display: flex;
-        align-items: end;
-        gap: 12px;
-        min-height: calc(var(--chart-height, 156px) + 54px);
-        margin-top: 24px;
+        flex: 1;
+        min-height: 0;
+        align-items: stretch;
+        gap: calc(12px * var(--frame-scale, 1));
+        margin-top: calc(24px * var(--frame-scale, 1));
       }
       .block-chart__bar-wrap {
         display: flex;
@@ -422,12 +421,13 @@ export const motionDocExportStyles = `      :root {
         flex: 1;
         flex-direction: column;
         align-items: center;
-        gap: 10px;
+        gap: calc(10px * var(--frame-scale, 1));
       }
       .block-chart__track {
         display: flex;
         width: 100%;
-        height: var(--chart-height, 156px);
+        flex: 1;
+        min-height: 0;
         align-items: end;
         overflow: hidden;
         border-radius: 8px;
@@ -442,7 +442,7 @@ export const motionDocExportStyles = `      :root {
         max-width: 100%;
         overflow: hidden;
         color: var(--motion-muted, var(--slide-muted));
-        font-size: 10px;
+        font-size: calc(10px * var(--frame-scale, 1));
         letter-spacing: 0.1em;
         text-overflow: ellipsis;
         text-transform: uppercase;
@@ -450,14 +450,16 @@ export const motionDocExportStyles = `      :root {
       }
       .block-chart__line {
         display: flex;
-        min-height: calc(var(--chart-height, 156px) + 54px);
+        flex: 1;
+        min-height: 0;
         flex-direction: column;
-        gap: 14px;
-        margin-top: 24px;
+        gap: calc(14px * var(--frame-scale, 1));
+        margin-top: calc(24px * var(--frame-scale, 1));
       }
       .block-chart__line svg {
         width: 100%;
-        min-height: var(--chart-height, 156px);
+        flex: 1;
+        min-height: 0;
         overflow: visible;
       }
       .block-chart__line polyline {
@@ -465,12 +467,12 @@ export const motionDocExportStyles = `      :root {
         stroke: var(--motion-fg, var(--slide-fg));
         stroke-linecap: round;
         stroke-linejoin: round;
-        stroke-width: 8px;
+        stroke-width: calc(8px * var(--frame-scale, 1));
       }
       .block-chart__line circle {
         fill: var(--slide-card);
         stroke: var(--motion-fg, var(--slide-fg));
-        stroke-width: 5px;
+        stroke-width: calc(5px * var(--frame-scale, 1));
       }
       .block-chart__area {
         fill: color-mix(in srgb, var(--motion-fg, var(--slide-fg)) 28%, transparent);
@@ -479,23 +481,25 @@ export const motionDocExportStyles = `      :root {
         display: grid;
         grid-auto-columns: 1fr;
         grid-auto-flow: column;
-        gap: 8px;
+        gap: calc(8px * var(--frame-scale, 1));
       }
       .block-chart__pie {
         display: grid;
+        flex: 1;
+        min-height: 0;
         grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
         align-items: center;
-        gap: 28px;
-        min-height: calc(var(--chart-height, 156px) + 28px);
-        margin-top: 22px;
+        gap: calc(28px * var(--frame-scale, 1));
+        margin-top: calc(22px * var(--frame-scale, 1));
       }
       .block-chart__pie-graphic {
         position: relative;
-        width: min(var(--chart-height, 156px), 220px);
+        width: 100%;
+        max-width: calc(220px * var(--frame-scale, 1));
         aspect-ratio: 1;
         margin: 0 auto;
         border-radius: 999px;
-        box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+        box-shadow: 0 calc(24px * var(--frame-scale, 1)) calc(60px * var(--frame-scale, 1)) rgba(0,0,0,0.3);
       }
       .block-chart__pie-graphic--donut::after {
         content: "";
@@ -636,47 +640,97 @@ export const motionDocExportStyles = `      :root {
         max-width: none;
         margin: 0;
       }
+      .player:fullscreen .controls {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+        transition: opacity 300ms ease, transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .player:fullscreen .controls:hover,
+      .player:fullscreen.controls-visible .controls {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
       .controls {
-        display: grid;
-        grid-template-columns: auto minmax(160px, 1fr) auto;
+        position: absolute;
+        left: 50%;
+        bottom: 32px;
+        transform: translateX(-50%);
+        z-index: 100;
+        display: flex;
         align-items: center;
-        gap: 12px;
-        width: min(100%, 64rem);
-        margin: 0 auto;
+        justify-content: space-between;
+        gap: 20px;
+        width: auto;
+        min-width: 440px;
+        padding: 10px 24px;
+        border-radius: 999px;
+        background: rgba(15, 15, 15, 0.65);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 16px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255,255,255,0.06);
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        transition: opacity 300ms ease, transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
       }
       .button-group {
         display: flex;
-        gap: 8px;
+        align-items: center;
+        gap: 6px;
       }
       .control-button {
-        min-width: 38px;
-        height: 34px;
-        border: 1px solid rgba(255,255,255,0.14);
-        border-radius: 8px;
-        background: rgba(255,255,255,0.06);
-        color: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border: 1px solid transparent;
+        border-radius: 50%;
+        background: transparent;
+        color: #a3a3a3;
         cursor: pointer;
+        transition: all 150ms ease;
       }
       .control-button:hover {
-        background: rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.1);
+        color: #ffffff;
+        border-color: rgba(255,255,255,0.05);
+        transform: scale(1.05);
+      }
+      .control-button:active {
+        transform: scale(0.95);
+      }
+      .control-button svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
       .counter {
         color: #a3a3a3;
-        font: 12px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+        font: 14px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-weight: 500;
         white-space: nowrap;
+        margin: 0 4px;
+      }
+      .counter [data-current] {
+        color: #ffffff;
       }
       .progress {
-        height: 6px;
+        flex: 1;
+        height: 5px;
         overflow: hidden;
         border-radius: 999px;
-        background: rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.12);
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
       }
       .progress span {
         display: block;
         width: var(--progress, 0%);
         height: 100%;
         border-radius: inherit;
-        background: #ffffff;
+        background: #0ea5e9;
         transition: width 220ms ease;
       }
       @media (max-width: 760px) {
