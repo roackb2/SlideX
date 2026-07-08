@@ -5,37 +5,34 @@ import { useI18n } from "@/common/lib/I18nProvider";
 
 export function SiteFooter() {
   const { t, localePath } = useI18n();
-  
+
+  const links = [
+    { href: "/pitch", label: "Pitch" },
+    { href: "/briefly", label: "Briefly" },
+    { href: "/docs", label: "Docs" }
+  ];
+
   return (
-    <footer className="bg-[#070707] border-t border-white/5 pt-20 pb-10">
-      <div className="max-w-7xl mx-auto px-4 grid gap-12 lg:grid-cols-4">
-        <div className="lg:col-span-2 pr-8">
-          <Link href={localePath("/")} className="font-bold text-2xl tracking-tight text-white block mb-6 flex items-center gap-2">
-            <img src="/logo.png" alt="SlideX Logo" className="w-[70px] h-auto object-contain" />
+    <footer className="border-t border-white/10 bg-[#08090a] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+          <Link href={localePath("/")} className="inline-flex items-center">
+            <img src="/logo.png" alt="SlideX Logo" className="h-auto w-[68px] object-contain" />
           </Link>
-          <p className="text-white/40 text-[15px] leading-relaxed max-w-sm">
-            {t.footer.description}
-          </p>
-        </div>
-        
-        <div>
-          <h4 className="text-white font-semibold mb-6 tracking-wide text-sm">{t.nav.products}</h4>
-          <ul className="space-y-4 text-[14px]">
-            <li><Link href={localePath("/pitch")} className="text-white/50 hover:text-white transition-colors">SlideX Pitch</Link></li>
-            <li><Link href={localePath("/briefly")} className="text-white/50 hover:text-white transition-colors">SlideX Briefly</Link></li>
-          </ul>
+          <p className="text-[13px] text-white/42">{t.footer.rights}</p>
         </div>
 
-        <div>
-          <h4 className="text-white font-semibold mb-6 tracking-wide text-sm">{t.nav.resources}</h4>
-          <ul className="space-y-4 text-[14px]">
-            <li><Link href={localePath("/docs")} className="text-white/50 hover:text-white transition-colors">Docs Hub</Link></li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 mt-20 pt-8 border-t border-white/5 text-white/40 text-[13px]">
-        <p>{t.footer.rights}</p>
+        <nav aria-label="Footer navigation" className="flex flex-wrap items-center gap-4 text-[13px] font-medium">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={localePath(link.href)}
+              className="text-white/52 transition-colors duration-300 hover:text-[#9ad7ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#9ad7ff]"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </footer>
   );
