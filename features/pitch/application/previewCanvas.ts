@@ -8,9 +8,10 @@ import {
   type MotionDocFrame
 } from "@/core/motion-doc/domain/frame";
 import type { MotionDocBlock, MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import { MOTION_DOC_CANVAS_HEIGHT, MOTION_DOC_CANVAS_WIDTH } from "@/core/motion-doc/domain/viewport";
 
-export const CANVAS_WIDTH = 1024;
-export const CANVAS_HEIGHT = 576;
+export const CANVAS_WIDTH = MOTION_DOC_CANVAS_WIDTH;
+export const CANVAS_HEIGHT = MOTION_DOC_CANVAS_HEIGHT;
 
 const MIN_FRAME_WIDTH = 2;
 const MIN_FRAME_HEIGHT = 2;
@@ -41,6 +42,7 @@ export type AlignmentGuide = {
 
 export type MovableBlock = Extract<MotionDocBlock, { props: Record<string, string | number> }>;
 export type EditableTextBlock = Extract<MotionDocBlock, { props: Record<string, string | number>; text: string }>;
+export type EditableTableBlock = { props: Record<string, string | number>; type: "Table" };
 
 export const resizeHandles = ["nw", "n", "ne", "e", "se", "s", "sw", "w"] as const satisfies ReadonlyArray<ResizeHandle>;
 
@@ -74,7 +76,7 @@ export function hiddenEditablePreviewBlockIndices(
 
   return blocks
     .map((block, blockIndex) => ({ block, blockIndex }))
-    .filter(({ block, blockIndex }) => selectedIndices.has(blockIndex) && isMovableBlock(block) && isEditableTextBlock(block))
+    .filter(({ block, blockIndex }) => selectedIndices.has(blockIndex) && isMovableBlock(block) && (isEditableTextBlock(block) || isEditableTableBlock(block)))
     .map(({ blockIndex }) => blockIndex);
 }
 
@@ -87,6 +89,10 @@ export function isMovableBlock(block: MotionDocScene["blocks"][number]): block i
 
 export function isEditableTextBlock(block: MotionDocScene["blocks"][number]): block is EditableTextBlock {
   return (block.type === "Title" || block.type === "Text") && "props" in block && "text" in block;
+}
+
+export function isEditableTableBlock(block: MotionDocScene["blocks"][number]): block is EditableTableBlock {
+  return block.type === "Table" && "props" in block;
 }
 
 export function blockFrame(block: MotionDocScene["blocks"][number] | undefined): Frame {

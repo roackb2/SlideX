@@ -6,7 +6,6 @@ import {
   Eye,
   FileCode2,
   FileText,
-  FileType2,
   PanelLeft
 } from "lucide-react";
 import { useI18n } from "@/common/lib/I18nProvider";
@@ -118,7 +117,6 @@ function ExportDropdown({
   const items = [
     { label: actions.mdx, kind: "mdx" as const, icon: FileCode2 },
     { label: actions.html, kind: "html" as const, icon: FileText },
-    { label: actions.pdf, kind: "pdf" as const, icon: FileType2 },
     { label: actions.copy, kind: "copy" as const, icon: Copy }
   ];
 

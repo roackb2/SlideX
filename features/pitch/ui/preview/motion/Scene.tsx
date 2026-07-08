@@ -22,12 +22,17 @@ type SceneProps = {
   layout?: "default" | "split-left" | "split-right";
   mutedColor?: string;
   shader?: string;
+  shaderAngle?: number;
   shaderColor1?: string;
   shaderColor2?: string;
   shaderColor3?: string;
+  shaderColor4?: string;
+  shaderColor5?: string;
+  shaderColor6?: string;
   shaderDetail?: number;
   shaderEngine?: string;
   shaderIntensity?: number;
+  shaderPreset?: string;
   shaderScale?: number;
   shaderSoftness?: number;
   shaderSpeed?: number;
@@ -52,12 +57,17 @@ export function Scene({
   layout = "default",
   mutedColor,
   shader,
+  shaderAngle,
   shaderColor1,
   shaderColor2,
   shaderColor3,
+  shaderColor4,
+  shaderColor5,
+  shaderColor6,
   shaderDetail,
   shaderEngine,
   shaderIntensity,
+  shaderPreset,
   shaderScale,
   shaderSoftness,
   shaderSpeed,
@@ -77,6 +87,9 @@ export function Scene({
       shaderColor1,
       shaderColor2,
       shaderColor3,
+      shaderColor4,
+      shaderColor5,
+      shaderColor6,
       shaderEngine,
       shaderIntensity,
       textColor,
@@ -136,12 +149,17 @@ export function Scene({
           color1={themeColors.shaderColor1}
           color2={themeColors.shaderColor2}
           color3={themeColors.shaderColor3}
+          color4={themeColors.shaderColor4}
+          color5={themeColors.shaderColor5}
+          color6={themeColors.shaderColor6}
           detail={shaderDetail ?? 0.5}
           intensity={shaderIntensity ?? 0.5}
           presetId={shader}
+          shaderPreset={shaderPreset}
           scale={shaderScale ?? 0.5}
           softness={shaderSoftness ?? 0.5}
           speed={shaderSpeed ?? 1}
+          angle={shaderAngle ?? 0}
           style={{ borderRadius: 0, inset: 0, position: "absolute", zIndex: 0 }}
         />
       ) : null}

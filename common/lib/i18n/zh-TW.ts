@@ -120,13 +120,13 @@ export const zhTwDictionary = {    metadata: {
           title: "Briefly",
           core: "把專案說清楚",
           target: "PM、Founder、顧問、專案負責人",
-          output: "Brief / MDX / HTML / PDF"
+          output: "HTML / MDX"
         },
         pitch: {
           title: "Pitch",
           core: "把專案講得有說服力",
           target: "PM、BD、業務、創辦人、顧問",
-          output: "Deck / Proposal / Pitch"
+          output: "HTML / MDX"
         }
       },
       trustedBy: "備受現代團隊信賴",
@@ -151,8 +151,8 @@ export const zhTwDictionary = {    metadata: {
           desc: "一鍵為簡報加入高質感的進場與互動動畫，完全不需要手動調整關鍵影格。"
         },
         export: {
-          title: "多格式輸出",
-          desc: "一鍵匯出為 HTML 或 PDF 格式。"
+          title: "HTML 與 MDX 輸出",
+          desc: "一鍵匯出為 HTML 或 MDX 格式。"
         }
       },
       devSection: {
@@ -217,7 +217,7 @@ export const zhTwDictionary = {    metadata: {
       stats: [
         ["MDX 優先", "簡報後續仍可編輯"],
         ["即時節奏", "邊組合邊預覽動畫"],
-        ["可匯出", "交付原始碼、HTML 或擷取序列"]
+        ["可匯出", "交付 MDX 原始檔與 HTML 成品"]
       ],
       compose: {
         title: "像寫軟體一樣組簡報。",
@@ -247,7 +247,7 @@ export const zhTwDictionary = {    metadata: {
           },
           {
             title: "打包輸出",
-            body: "讓原始碼、預覽與匯出序列都對齊同一個 Pitch。"
+            body: "讓 MDX 原始檔、預覽與 HTML 成品都對齊同一個 Pitch。"
           }
         ]
       },
@@ -266,10 +266,10 @@ export const zhTwDictionary = {    metadata: {
       hero: {
         eyebrow: "SlideX Pitch",
         title: {
-          regular: "用原始碼製作",
+          regular: "用 MDX 製作",
           highlight: "動態簡報。"
         },
-        body: "撰寫 MDX Slide、調整動畫節奏、即時預覽結果，並讓每一次修改都保持可編輯。",
+        body: "撰寫 MDX Slide、調整動畫節奏、即時預覽結果，最後只匯出 HTML 或 MDX。",
         primary: "開啟工作區",
         mcpPublishNotes: [
           "檢查器必須處於執行狀態才能接收請求。",
@@ -279,22 +279,22 @@ export const zhTwDictionary = {    metadata: {
       bentoFeatures: [
         {
           title: "MDX 優先編輯",
-          body: "用可閱讀的原始碼建立投影片，再調整文案、版面與動效，不需要把簡報壓平成圖片。",
+          body: "用可閱讀的原始碼建立投影片，再調整文案、版面與動效，不再額外維護多種格式。",
           codeLabel: "motion-doc.mdx",
           codeTitle: "主管成長檢討"
         },
         {
           title: "即時動效預覽",
-          body: "在同一個工作區裡重播時間、圖層進場與敘事節奏，邊看邊調整。"
+          body: "在同一個工作區裡重播時間、圖層進場與敘事節奏，並讓 MDX 保持可編輯。"
         },
         {
           title: "範本化版面",
-          body: "從實用的投影片結構開始，讓整份簡報維持一致的動效語法。"
+          body: "從實用的投影片結構開始，讓整份簡報在原始檔中維持一致動效語法。"
         }
       ],
       workflow: {
-        title: "從草稿到播放的一條流程。",
-        body: "Pitch 讓書寫內容、視覺結構與動畫時間軸一起前進。",
+        title: "從 MDX 到 HTML 的一條流程。",
+        body: "Pitch 讓書寫內容、視覺結構、動畫時間軸與瀏覽器成品一起前進。",
         steps: [
           {
             label: "01",
@@ -309,7 +309,7 @@ export const zhTwDictionary = {    metadata: {
           {
             label: "03",
             title: "打包完成結果",
-            body: "保留可維護的原始碼簡報，準備播放、匯出或接上自動化。"
+            body: "匯出可在瀏覽器播放的 HTML，或保留 MDX 原始檔繼續編輯。"
           }
         ]
       },
@@ -328,13 +328,13 @@ export const zhTwDictionary = {    metadata: {
           },
           {
             title: "可重用系統",
-            body: "為需要用多種形式發布同一故事的團隊建立可重複的 Slide 模式。"
+            body: "為需要用 HTML 與 MDX 發布同一故事的團隊建立可重複的 Slide 模式。"
           }
         ]
       },
       cta: {
         title: "開啟工作區。",
-        body: "從空白簡報開始、載入範本，或貼上 MDX 後立即預覽動效。",
+        body: "從空白簡報開始、載入範本，或貼上 MDX 後立即預覽 HTML 成品。",
         button: "開啟工作區"
       },
 
@@ -474,7 +474,7 @@ export const zhTwDictionary = {    metadata: {
         builderBody: "使用互動式建構器定義專案範圍並產生文件。",
         mcpInstallEyebrow: "Briefly MCP Server",
         mcpInstallTitle: "安裝已發布的 Briefly MCP server。",
-        mcpInstallBody: "npm package 會把 Briefly Builder、審查規則庫、HTML 匯出與 PDF 匯出作為 MCP tools 提供給 Claude Desktop、Cursor 與其他 MCP Client。",
+        mcpInstallBody: "npm package 會把 Briefly Builder、審查規則庫、HTML 匯出與 MDX 匯出作為 MCP tools 提供給 Claude Desktop、Cursor 與其他 MCP Client。",
         mcpInstallCommand: "npm install -g @z7589xxz758/briefly-mcp-server",
         mcpPackageLabel: "打開 npm package",
         mcpPackageUrl: "https://www.npmjs.com/package/@z7589xxz758/briefly-mcp-server",
@@ -508,7 +508,7 @@ export const zhTwDictionary = {    metadata: {
           ["1. 新增 Block 區塊", "從左側工具列選擇需要的文件區塊，如：封面 (Cover)、專案目標 (Goal)、時程規劃 (Timeline) 或目標受眾 (Audience)。系統會自動將區塊加入預覽畫布中。"],
           ["2. 透過 Inspector 填寫資料", "點擊任一區塊，右側的 Inspector 面板會展開相對應的專屬表單，幫助你結構化地輸入核心訊息與數據，不需煩惱版面問題。"],
           ["3. 調整設計與大綱排序", "利用 Outline 工具拖曳排序章節，並切換至 Design 工具設定排版寬度、字型 (Typography)、邊框樣式以及視覺主題 (Theme Gradient)。"],
-          ["4. 預覽與匯出文件", "隨時切換 MDX 預覽模式查看生成的標記語法。完成後，你可以將 Brief 匯出為 HTML、PDF，或是轉換為 MDX 檔案供 SlideX Pitch 製作簡報使用。"]
+          ["4. 預覽與匯出文件", "隨時切換 MDX 預覽模式查看生成的標記語法。完成後，你可以將 Brief 匯出為 HTML 或 MDX，供 SlideX Pitch 製作簡報使用。"]
         ],
         builderExampleTitle: "範例輸出 (MDX)",
         blocks: [

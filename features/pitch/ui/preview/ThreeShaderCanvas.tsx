@@ -1,183 +1,182 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { memo, useMemo } from "react";
 import type { CSSProperties } from "react";
-import * as THREE from "three";
-import { getShaderPreset } from "@/core/motion-doc/presets/shaderPresets";
+import { DEFAULT_DARK_SHADER_PALETTE, DEFAULT_SHADER_CONTROLS } from "@/core/motion-doc/application/shaders/shaderDefaults";
+import {
+  getPaperShaderPresetParams,
+  resolvePaperShaderId
+} from "@/core/motion-doc/application/shaders/paperShaderCatalog";
+import {
+  PAPER_SHADER_PREVIEW_MAX_PIXEL_COUNT,
+  PAPER_SHADER_PREVIEW_MIN_PIXEL_RATIO,
+  paperShaderPreviewWebGlContextAttributes,
+  paperShaderRenderers,
+  type PaperShaderPreviewColors,
+  type PaperShaderPreviewControls
+} from "@/features/pitch/ui/preview/paperShaderRenderers";
 
 type ThreeShaderCanvasProps = {
-  presetId: string;
+  angle?: number;
+  className?: string;
   color1?: string;
   color2?: string;
   color3?: string;
-  intensity?: number;
-  speed?: number;
-  softness?: number;
-  scale?: number;
+  color4?: string;
+  color5?: string;
+  color6?: string;
   detail?: number;
-  className?: string;
+  image?: string;
+  intensity?: number;
+  presetId: string;
+  scale?: number;
+  shaderPreset?: string;
+  softness?: number;
+  speed?: number;
   style?: CSSProperties;
 };
 
-const THREE_FULLSCREEN_VERTEX_SHADER = `precision highp float;
-in vec3 position;
-out vec2 vUv;
-void main() {
-  vUv = position.xy * 0.5 + 0.5;
-  gl_Position = vec4(position.xy, 0.0, 1.0);
-}`;
-
-export function ThreeShaderCanvas({
-  presetId,
-  color1 = "#7c3aed",
-  color2 = "#2563eb",
-  color3 = "#06b6d4",
-  intensity = 0.5,
-  speed = 1,
-  softness = 0.5,
-  scale = 0.5,
-  detail = 0.5,
+function ThreeShaderCanvasImpl({
+  angle = DEFAULT_SHADER_CONTROLS.angle,
   className,
+  color1 = DEFAULT_DARK_SHADER_PALETTE.color1,
+  color2 = DEFAULT_DARK_SHADER_PALETTE.color2,
+  color3 = DEFAULT_DARK_SHADER_PALETTE.color3,
+  color4 = DEFAULT_DARK_SHADER_PALETTE.color4,
+  color5 = DEFAULT_DARK_SHADER_PALETTE.color5,
+  color6 = DEFAULT_DARK_SHADER_PALETTE.color6,
+  detail = DEFAULT_SHADER_CONTROLS.detail,
+  image,
+  intensity = DEFAULT_SHADER_CONTROLS.intensity,
+  presetId,
+  scale = DEFAULT_SHADER_CONTROLS.scale,
+  shaderPreset,
+  softness = DEFAULT_SHADER_CONTROLS.softness,
+  speed = DEFAULT_SHADER_CONTROLS.speed,
   style
 }: ThreeShaderCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const rafRef = useRef<number>(0);
-  const startTimeRef = useRef<number>(0);
-  const valuesRef = useRef({
+  const paperShaderId = resolvePaperShaderId(presetId) ?? "mesh-gradient";
+  const presetParams = useMemo(
+    () => getPaperShaderPresetParams(paperShaderId, shaderPreset),
+    [paperShaderId, shaderPreset]
+  );
+
+  const colors = useMemo<PaperShaderPreviewColors>(() => ({
     color1,
     color2,
     color3,
+    color4,
+    color5,
+    color6
+  }), [color1, color2, color3, color4, color5, color6]);
+  const controls = useMemo<PaperShaderPreviewControls>(() => ({
+    angle,
     detail,
     intensity,
     scale,
     softness,
     speed
+  }), [angle, detail, intensity, scale, softness, speed]);
+  const colorsArray = useMemo(
+    () => [color1, color2, color3, color4, color5, color6].filter(Boolean) as string[],
+    [color1, color2, color3, color4, color5, color6]
+  );
+  const colorsFrom2 = useMemo(
+    () => [color2, color3, color4, color5, color6].filter(Boolean) as string[],
+    [color2, color3, color4, color5, color6]
+  );
+  const colorsFrom3 = useMemo(
+    () => [color3, color4, color5, color6].filter(Boolean) as string[],
+    [color3, color4, color5, color6]
+  );
+
+  const sizingProps = useMemo(() => ({
+    className,
+    fit: shaderFitParam(presetParams, "fit", "contain"),
+    maxPixelCount: PAPER_SHADER_PREVIEW_MAX_PIXEL_COUNT,
+    minPixelRatio: PAPER_SHADER_PREVIEW_MIN_PIXEL_RATIO,
+    offsetX: numberParam(presetParams, "offsetX", 0),
+    offsetY: numberParam(presetParams, "offsetY", 0),
+    originX: numberParam(presetParams, "originX", 0.5),
+    originY: numberParam(presetParams, "originY", 0.5),
+    rotation: angle,
+    scale: Math.max(0.01, scale),
+    speed,
+    style: {
+      backfaceVisibility: "hidden" as const,
+      contain: "strict" as const,
+      display: "block" as const,
+      height: "100%",
+      inset: 0,
+      pointerEvents: "none" as const,
+      position: "absolute" as const,
+      transform: "translateZ(0)",
+      width: "100%",
+      willChange: "transform",
+      ...style
+    },
+    webGlContextAttributes: paperShaderPreviewWebGlContextAttributes,
+    worldHeight: numberParam(presetParams, "worldHeight", 0),
+    worldWidth: numberParam(presetParams, "worldWidth", 0)
+  }), [angle, className, presetParams, scale, speed, style]);
+  const renderer = paperShaderRenderers[paperShaderId];
+
+  return renderer({
+    colors,
+    colorsArray,
+    colorsFrom2,
+    colorsFrom3,
+    controls,
+    image,
+    params: presetParams,
+    sizingProps
   });
+}
 
-  useEffect(() => {
-    valuesRef.current = {
-      color1,
-      color2,
-      color3,
-      detail,
-      intensity,
-      scale,
-      softness,
-      speed
-    };
-  }, [color1, color2, color3, detail, intensity, scale, softness, speed]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const preset = getShaderPreset(presetId);
-
-    if (!canvas || !preset) {
-      return;
-    }
-
-    const canvasElement = canvas;
-    let renderer: THREE.WebGLRenderer;
-
-    try {
-      renderer = new THREE.WebGLRenderer({
-        alpha: true,
-        antialias: false,
-        canvas: canvasElement,
-        premultipliedAlpha: false
-      });
-    } catch (error) {
-      console.warn("Three.js shader renderer unavailable:", error);
-      return;
-    }
-
-    const initialValues = valuesRef.current;
-    const uniforms = {
-      u_color1: { value: safeColor(initialValues.color1) },
-      u_color2: { value: safeColor(initialValues.color2) },
-      u_color3: { value: safeColor(initialValues.color3) },
-      u_detail: { value: initialValues.detail },
-      u_intensity: { value: initialValues.intensity },
-      u_resolution: { value: new THREE.Vector2(1, 1) },
-      u_scale: { value: initialValues.scale },
-      u_softness: { value: initialValues.softness },
-      u_speed: { value: initialValues.speed },
-      u_time: { value: 0 }
-    };
-    const material = new THREE.RawShaderMaterial({
-      depthTest: false,
-      depthWrite: false,
-      fragmentShader: stripGlslVersion(preset.fragmentV3),
-      glslVersion: THREE.GLSL3,
-      transparent: true,
-      uniforms,
-      vertexShader: THREE_FULLSCREEN_VERTEX_SHADER
-    });
-    const scene = new THREE.Scene();
-    const camera = new THREE.Camera();
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
-
-    scene.add(mesh);
-    renderer.setClearColor(0x000000, 0);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    startTimeRef.current = performance.now();
-
-    function render() {
-      const values = valuesRef.current;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const width = Math.max(canvasElement.clientWidth, 1);
-      const height = Math.max(canvasElement.clientHeight, 1);
-
-      renderer.setPixelRatio(dpr);
-      renderer.setSize(width, height, false);
-
-      uniforms.u_time.value = (performance.now() - startTimeRef.current) / 1000;
-      uniforms.u_resolution.value.set(Math.round(width * dpr), Math.round(height * dpr));
-      uniforms.u_color1.value.copy(safeColor(values.color1));
-      uniforms.u_color2.value.copy(safeColor(values.color2));
-      uniforms.u_color3.value.copy(safeColor(values.color3));
-      uniforms.u_intensity.value = values.intensity;
-      uniforms.u_speed.value = values.speed;
-      uniforms.u_softness.value = values.softness;
-      uniforms.u_scale.value = values.scale;
-      uniforms.u_detail.value = values.detail;
-
-      renderer.render(scene, camera);
-      rafRef.current = requestAnimationFrame(render);
-    }
-
-    rafRef.current = requestAnimationFrame(render);
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      scene.remove(mesh);
-      mesh.geometry.dispose();
-      material.dispose();
-      renderer.dispose();
-    };
-  }, [presetId]);
-
+function areThreeShaderCanvasPropsEqual(previous: ThreeShaderCanvasProps, next: ThreeShaderCanvasProps) {
   return (
-    <canvas
-      ref={canvasRef}
-      className={className}
-      style={{
-        display: "block",
-        height: "100%",
-        width: "100%",
-        ...style
-      }}
-    />
+    previous.angle === next.angle &&
+    previous.className === next.className &&
+    previous.color1 === next.color1 &&
+    previous.color2 === next.color2 &&
+    previous.color3 === next.color3 &&
+    previous.color4 === next.color4 &&
+    previous.color5 === next.color5 &&
+    previous.color6 === next.color6 &&
+    previous.detail === next.detail &&
+    previous.image === next.image &&
+    previous.intensity === next.intensity &&
+    previous.presetId === next.presetId &&
+    previous.scale === next.scale &&
+    previous.shaderPreset === next.shaderPreset &&
+    previous.softness === next.softness &&
+    previous.speed === next.speed &&
+    shallowStyleEqual(previous.style, next.style)
   );
 }
 
-function safeColor(value: string) {
-  try {
-    return new THREE.Color(value);
-  } catch {
-    return new THREE.Color("#000000");
+function shallowStyleEqual(previous: CSSProperties | undefined, next: CSSProperties | undefined) {
+  if (previous === next) return true;
+  if (!previous || !next) return false;
+
+  const previousKeys = Object.keys(previous) as Array<keyof CSSProperties>;
+  const nextKeys = Object.keys(next) as Array<keyof CSSProperties>;
+
+  if (previousKeys.length !== nextKeys.length) {
+    return false;
   }
+
+  return previousKeys.every((key) => previous[key] === next[key]);
 }
 
-function stripGlslVersion(source: string) {
-  return source.replace(/^#version\s+300\s+es\s*\n/, "");
+function numberParam(params: Record<string, unknown>, key: string, fallback: number) {
+  const value = params[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
+
+function shaderFitParam(params: Record<string, unknown>, key: string, fallback: "none" | "contain" | "cover") {
+  const value = params[key];
+  return value === "none" || value === "contain" || value === "cover" ? value : fallback;
+}
+
+export const ThreeShaderCanvas = memo(ThreeShaderCanvasImpl, areThreeShaderCanvasPropsEqual);

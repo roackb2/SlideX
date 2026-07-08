@@ -68,11 +68,16 @@ export function PitchInspector({
   activeSlideLayoutPreset,
   activeSlideMutedColor,
   activeSlideShader,
+  activeSlideShaderAngle,
   activeSlideShaderColor1,
   activeSlideShaderColor2,
   activeSlideShaderColor3,
+  activeSlideShaderColor4,
+  activeSlideShaderColor5,
+  activeSlideShaderColor6,
   activeSlideShaderIntensity,
   activeSlideShaderEngine,
+  activeSlideShaderPreset,
   activeSlideShaderSpeed,
   activeSlideShaderSoftness,
   activeSlideShaderScale,
@@ -101,11 +106,16 @@ export function PitchInspector({
   activeSlideLayoutPreset: string;
   activeSlideMutedColor: string;
   activeSlideShader: string;
+  activeSlideShaderAngle: number;
   activeSlideShaderColor1: string;
   activeSlideShaderColor2: string;
   activeSlideShaderColor3: string;
+  activeSlideShaderColor4: string;
+  activeSlideShaderColor5: string;
+  activeSlideShaderColor6: string;
   activeSlideShaderEngine: string;
   activeSlideShaderIntensity: number;
+  activeSlideShaderPreset: string;
   activeSlideShaderSpeed: number;
   activeSlideShaderSoftness: number;
   activeSlideShaderScale: number;
@@ -168,11 +178,16 @@ export function PitchInspector({
                 mutedColor={activeSlideMutedColor}
                 setIsGridVisible={setIsGridVisible}
                 shader={activeSlideShader}
+                shaderAngle={activeSlideShaderAngle}
                 shaderColor1={activeSlideShaderColor1}
                 shaderColor2={activeSlideShaderColor2}
                 shaderColor3={activeSlideShaderColor3}
+                shaderColor4={activeSlideShaderColor4}
+                shaderColor5={activeSlideShaderColor5}
+                shaderColor6={activeSlideShaderColor6}
                 shaderEngine={activeSlideShaderEngine}
                 shaderIntensity={activeSlideShaderIntensity}
+                shaderPreset={activeSlideShaderPreset}
                 shaderSpeed={activeSlideShaderSpeed}
                 shaderSoftness={activeSlideShaderSoftness}
                 shaderScale={activeSlideShaderScale}

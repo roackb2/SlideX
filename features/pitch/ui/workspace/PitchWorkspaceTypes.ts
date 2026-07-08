@@ -19,12 +19,17 @@ export type PitchWorkspaceProps = {
   activeSlideLayoutPreset: string;
   activeSlideMutedColor: string;
   activeSlideShader: string;
+  activeSlideShaderAngle: number;
   activeSlideShaderColor1: string;
   activeSlideShaderColor2: string;
   activeSlideShaderColor3: string;
+  activeSlideShaderColor4: string;
+  activeSlideShaderColor5: string;
+  activeSlideShaderColor6: string;
   activeSlideShaderDetail: number;
   activeSlideShaderEngine: string;
   activeSlideShaderIntensity: number;
+  activeSlideShaderPreset: string;
   activeSlideShaderScale: number;
   activeSlideShaderSoftness: number;
   activeSlideShaderSpeed: number;
@@ -34,7 +39,6 @@ export type PitchWorkspaceProps = {
   addBlockToActiveSlide: (type: AddBlockType, options?: AddBlockOptions) => void;
   addSlide: () => void;
   applyLayoutToActiveSlide: (layoutSource: string, layoutId: string) => void;
-  addTextAtPosition: (position: { x: number; y: number }) => void;
   applyTemplate: (templateId: string) => void;
   beginBlockTransform: () => void;
   canvasSource: string;
@@ -48,9 +52,7 @@ export type PitchWorkspaceProps = {
   duplicateSelectedBlock: () => void;
   draggedBlockIndex: number | null;
   dragOverBlockIndex: number | null;
-  exportHtmlFile: () => void;
-  exportMdxFile: () => void;
-  exportPdfFile: () => void;
+
   exportMenuRef: RefObject<HTMLDivElement | null>;
   goToNextSlide: () => void;
   goToPreviousSlide: () => void;

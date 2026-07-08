@@ -1,18 +1,13 @@
 import type { ReactNode } from "react";
 import {
-  ArrowUpRight,
   BarChart3,
   ChartArea,
   ChartLine,
   ChartPie,
   Circle,
   Image as ImageIcon,
-  Minus,
-  Shapes,
   Sparkles,
-  Square,
-  Star,
-  Triangle,
+  Table2,
   Type,
   Video
 } from "lucide-react";
@@ -20,7 +15,7 @@ import type { AddBlockType } from "@/core/motion-doc/application/motionDocBlockF
 
 export type { AddBlockType };
 
-export type PitchToolGroupId = "chart" | "icon" | "media" | "text";
+export type PitchToolGroupId = "chart" | "icon" | "media" | "table" | "text";
 
 export type PitchBlockTool = {
   description?: string;
@@ -55,6 +50,10 @@ export const chartTools = [
   { icon: <Circle size={16} />, label: "Donut", type: "ChartDonut" }
 ] satisfies PitchBlockTool[];
 
+export const tableTools = [
+  { description: "Editable grid with row and column controls", icon: <Table2 size={16} />, label: "Table", type: "Table" }
+] satisfies PitchBlockTool[];
+
 // shapeTools removed as requested
 
 export const iconTool: PitchBlockTool = {
@@ -68,6 +67,7 @@ export const toolGroups: PitchToolGroup[] = [
   { icon: <Type size={17} />, id: "text", label: "Text", tools: textPresetTools },
   { icon: <ImageIcon size={17} />, id: "media", label: "Media", tools: mediaTools },
   { icon: <BarChart3 size={17} />, id: "chart", label: "Chart", tools: chartTools },
+  { icon: <Table2 size={17} />, id: "table", label: "Table", tools: tableTools },
   { icon: <Sparkles size={17} />, id: "icon", label: "Icon", tools: [iconTool] }
 ];
 
@@ -75,6 +75,7 @@ export const blockTools: PitchBlockTool[] = [
   ...textPresetTools,
   ...mediaTools,
   ...chartTools,
+  ...tableTools,
   iconTool
 ];
 

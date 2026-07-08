@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Layers, Palette, Sparkles } from "lucide-react";
+import { Palette, Sparkles } from "lucide-react";
 import type { PropRecord } from "@/features/pitch/application/themeColors";
 import { AccordionSection } from "@/features/pitch/ui/inspector/controls/AccordionSection";
 import { IconSegmentedControl } from "@/features/pitch/ui/inspector/InspectorControls";
@@ -13,12 +13,17 @@ type BackgroundSettingsSectionProps = {
   background: string;
   mutedColor: string;
   shader: string;
+  shaderAngle: number;
   shaderColor1: string;
   shaderColor2: string;
   shaderColor3: string;
+  shaderColor4: string;
+  shaderColor5: string;
+  shaderColor6: string;
   shaderDetail: number;
   shaderEngine: string;
   shaderIntensity: number;
+  shaderPreset: string;
   shaderScale: number;
   shaderSoftness: number;
   shaderSpeed: number;
@@ -33,12 +38,17 @@ export function BackgroundSettingsSection({
   background,
   mutedColor,
   shader,
+  shaderAngle,
   shaderColor1,
   shaderColor2,
   shaderColor3,
+  shaderColor4,
+  shaderColor5,
+  shaderColor6,
   shaderDetail,
   shaderEngine,
   shaderIntensity,
+  shaderPreset,
   shaderScale,
   shaderSoftness,
   shaderSpeed,
@@ -78,12 +88,17 @@ export function BackgroundSettingsSection({
           accent={accent}
           background={background}
           shader={shader}
+          shaderAngle={shaderAngle}
           shaderColor1={shaderColor1}
           shaderColor2={shaderColor2}
           shaderColor3={shaderColor3}
+          shaderColor4={shaderColor4}
+          shaderColor5={shaderColor5}
+          shaderColor6={shaderColor6}
           shaderDetail={shaderDetail}
           shaderEngine={shaderEngine}
           shaderIntensity={shaderIntensity}
+          shaderPreset={shaderPreset}
           shaderScale={shaderScale}
           shaderSoftness={shaderSoftness}
           shaderSpeed={shaderSpeed}

@@ -5,7 +5,6 @@ import {
   Eye,
   FileCode2,
   FileText,
-  FileType2,
   PanelRight,
   Settings
 } from "lucide-react";
@@ -72,7 +71,6 @@ export function MobileExportPanel({
         <div className="grid gap-2">
           <ExportAction label={copy.exportActions.mdx} icon={<FileCode2 className="h-4 w-4" />} onClick={() => onExport("mdx")} />
           <ExportAction label={copy.exportActions.html} icon={<FileText className="h-4 w-4" />} onClick={() => onExport("html")} />
-          <ExportAction label={copy.exportActions.pdf} icon={<FileType2 className="h-4 w-4" />} onClick={() => onExport("pdf")} />
           <ExportAction label={copy.exportActions.copy} icon={<Copy className="h-4 w-4" />} onClick={() => onExport("copy")} />
         </div>
         <pre className="max-h-[420px] overflow-auto rounded-xl border border-white/[0.08] bg-[#050505] p-4 font-mono text-[11px] leading-5 text-white/60">

@@ -8,6 +8,7 @@ import { ImageFields } from "@/features/pitch/ui/inspector/ImageFields";
 import { MetricFields } from "@/features/pitch/ui/inspector/MetricFields";
 import { ShapeFields } from "@/features/pitch/ui/inspector/ShapeFields";
 import { StackFields } from "@/features/pitch/ui/inspector/StackFields";
+import { TableFields } from "@/features/pitch/ui/inspector/TableFields";
 import { VideoFields } from "@/features/pitch/ui/inspector/VideoFields";
 import type { BlockFieldProps } from "@/features/pitch/ui/inspector/InspectorControls";
 
@@ -49,6 +50,10 @@ const blockFieldRegistry: Record<string, BlockFieldRegistryEntry> = {
   Stack: {
     render: (context) => <StackFields {...context} />,
     title: "Stack properties"
+  },
+  Table: {
+    render: (context) => <TableFields {...context} />,
+    title: "Table properties"
   },
   VideoBlock: {
     render: (context) => <VideoFields {...context} uploadVideoForBlock={context.uploadVideoForBlock} />,

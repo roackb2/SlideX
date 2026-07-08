@@ -1,16 +1,33 @@
-import { parseMotionDoc, type MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
+import { parseMotionDoc, type MotionDocBlock, type MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 import { isSlideXIconName, lucideIconPaths } from "@/core/motion-doc/domain/lucideIconRegistry";
-import { materializeFreeformScene } from "@/core/motion-doc/application/motionDocFreeform";
-import { shaderVariantForId } from "@/core/motion-doc/application/shaders/premiumShaderBodies";
+import { getPaperImageFilterDefinition } from "@/core/motion-doc/application/shaders/paperImageFilterCatalog";
 import { resolveSlideThemeColors } from "@/core/motion-doc/application/slideTheme";
-import { motionDocExportRuntime } from "@/core/motion-doc/infrastructure/export/motionDocExportRuntime";
+import { MOTION_DOC_CANVAS_HEIGHT, MOTION_DOC_CANVAS_WIDTH } from "@/core/motion-doc/domain/viewport";
+import {
+  parseColOverrides,
+  parseRowOverrides,
+  tableCellsFromProps,
+  tableColumnTrackValuesFromProps,
+  tableRowTrackValuesFromProps,
+  tableSizeFromProps,
+  tableTrackTemplate
+} from "@/core/motion-doc/application/tableBlock";
+import { makeMotionDocExportRuntime } from "@/core/motion-doc/infrastructure/export/motionDocExportRuntime";
 import { motionDocExportStyles } from "@/core/motion-doc/infrastructure/export/motionDocExportStyles";
+
+export const MOTION_DOC_PNG_HEIGHT = MOTION_DOC_CANVAS_HEIGHT;
+export const MOTION_DOC_PNG_WIDTH = MOTION_DOC_CANVAS_WIDTH;
+
+type RenderSceneHtmlOptions = {
+  active?: boolean;
+  rasterMode?: boolean;
+};
 
 export function buildMotionDocHtml(source: string, customTitle?: string) {
   const document = parseMotionDoc(source);
   const displayTitle = customTitle || document.title;
   const slidesHtml = document.scenes
-    .map((scene) => renderSceneHtml(materializeFreeformScene(scene)))
+    .map((scene) => renderSceneHtml(scene))
     .join("\n");
 
   return `<!DOCTYPE html>
@@ -44,7 +61,7 @@ export function buildMotionDocHtml(source: string, customTitle?: string) {
         </div>
       </nav>
     </main>
-    <script>${motionDocExportRuntime}</script>
+    <script>${makeMotionDocExportRuntime()}</script>
   </body>
 </html>`;
 }
@@ -58,7 +75,7 @@ export function buildMotionDocPdfHtml(source: string, customTitle?: string) {
   const document = parseMotionDoc(source);
   const displayTitle = customTitle || document.title;
   const slidesHtml = document.scenes
-    .map((scene) => renderSceneHtml(materializeFreeformScene(scene)))
+    .map((scene) => renderSceneHtml(scene))
     .join("\n");
 
   return `<!DOCTYPE html>
@@ -90,7 +107,7 @@ export function buildMotionDocPdfHtml(source: string, customTitle?: string) {
         filter: none !important;
         clip-path: none !important;
       }
-      .block-card, .block-metric, .block-chart, .block-image, .block-icon, .block-stack {
+      .block-card, .block-metric, .block-chart, .block-image, .block-icon, .block-stack, .block-table {
         backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
         box-shadow: none !important;
         filter: none !important;
@@ -117,9 +134,187 @@ export function buildMotionDocPdfHtml(source: string, customTitle?: string) {
 </html>`;
 }
 
-function renderSceneHtml(
-  scene: ReturnType<typeof materializeFreeformScene>
-) {
+
+
+export function buildMotionDocRasterHtml(source: string, customTitle?: string) {
+  const document = parseMotionDoc(source);
+  const displayTitle = customTitle || document.title;
+  const slidesHtml = document.scenes
+    .map((scene) => renderSceneHtml(scene, { active: true }))
+    .join("\n");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1024, initial-scale=1" />
+    <title>${escapeHtml(displayTitle)}</title>
+    <style>${motionDocExportStyles}</style>
+    <style>
+      html, body {
+        background: #000000;
+        height: ${MOTION_DOC_PNG_HEIGHT}px;
+        margin: 0;
+        overflow: hidden;
+        padding: 0;
+        width: ${MOTION_DOC_PNG_WIDTH}px;
+      }
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+      .player,
+      .stage,
+      .viewport,
+      .frame {
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        height: ${MOTION_DOC_PNG_HEIGHT}px !important;
+        margin: 0 !important;
+        max-width: none !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+        width: ${MOTION_DOC_PNG_WIDTH}px !important;
+      }
+      .player,
+      .stage {
+        display: block !important;
+      }
+      .viewport,
+      .frame {
+        position: relative !important;
+      }
+      .slide {
+        display: block !important;
+        height: ${MOTION_DOC_PNG_HEIGHT}px !important;
+        inset: 0 !important;
+        opacity: 1 !important;
+        position: absolute !important;
+        transform: none !important;
+        width: ${MOTION_DOC_PNG_WIDTH}px !important;
+      }
+      .motion-block {
+        clip-path: none !important;
+        filter: none !important;
+        opacity: 1 !important;
+        transform: translate3d(0, 0, 0) scale(1) !important;
+      }
+      .shader-still-image {
+        display: block !important;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="player" data-export-mode="raster" data-slide-count="${document.scenes.length}">
+      <div class="stage">
+        <div class="viewport">
+          <div class="frame">
+            ${slidesHtml}
+          </div>
+        </div>
+      </div>
+    </main>
+    <script>${makeMotionDocExportRuntime()}</script>
+  </body>
+</html>`;
+}
+
+export function buildMotionDocPngSvg(source: string, slideIndex = 0, customTitle?: string) {
+  const document = parseMotionDoc(source);
+  const displayTitle = customTitle || document.title;
+  const safeSlideIndex = Math.min(Math.max(Math.floor(slideIndex), 0), Math.max(document.scenes.length - 1, 0));
+  const scene = document.scenes[safeSlideIndex];
+  const slideHtml = scene
+    ? renderSceneHtml(scene, { active: true, rasterMode: true })
+    : `<section class="slide is-active" style="background:#ffffff;color:#111827;"></section>`;
+
+  return buildMotionDocPngSvgFromSlideHtml(slideHtml, displayTitle);
+}
+
+export function buildMotionDocPngSvgFromSlideHtml(slideHtml: string, customTitle?: string) {
+  const displayTitle = customTitle || "SlideX PNG";
+  const pngCss = `${motionDocExportStyles}
+    .png-export-root {
+      background: #000000;
+      color: #ffffff;
+      height: ${MOTION_DOC_PNG_HEIGHT}px;
+      margin: 0;
+      overflow: hidden;
+      width: ${MOTION_DOC_PNG_WIDTH}px;
+    }
+    .png-export-root *,
+    .png-export-root *::before,
+    .png-export-root *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+    .png-export-root .player,
+    .png-export-root .stage,
+    .png-export-root .viewport,
+    .png-export-root .frame {
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      height: ${MOTION_DOC_PNG_HEIGHT}px !important;
+      margin: 0 !important;
+      max-width: none !important;
+      overflow: hidden !important;
+      padding: 0 !important;
+      width: ${MOTION_DOC_PNG_WIDTH}px !important;
+    }
+    .png-export-root .player,
+    .png-export-root .stage {
+      display: block !important;
+    }
+    .png-export-root .viewport,
+    .png-export-root .frame {
+      position: relative !important;
+    }
+    .png-export-root .slide {
+      display: block !important;
+      height: ${MOTION_DOC_PNG_HEIGHT}px !important;
+      inset: 0 !important;
+      opacity: 1 !important;
+      position: absolute !important;
+      transform: none !important;
+      width: ${MOTION_DOC_PNG_WIDTH}px !important;
+    }
+    .png-export-root .motion-block {
+      clip-path: none !important;
+      filter: none !important;
+      opacity: 1 !important;
+      transform: translate3d(0, 0, 0) scale(1) !important;
+    }
+    .png-export-root .shader-bg:not(.shader-still-image),
+    .png-export-root .image-filter-canvas:not(.shader-still-image) {
+      display: none !important;
+    }
+    .png-export-root .shader-still-image {
+      display: block !important;
+    }
+    .png-export-root .controls {
+      display: none !important;
+    }`;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${MOTION_DOC_PNG_WIDTH}" height="${MOTION_DOC_PNG_HEIGHT}" viewBox="0 0 ${MOTION_DOC_PNG_WIDTH} ${MOTION_DOC_PNG_HEIGHT}">
+  <title>${escapeHtml(displayTitle)}</title>
+  <foreignObject width="${MOTION_DOC_PNG_WIDTH}" height="${MOTION_DOC_PNG_HEIGHT}" x="0" y="0">
+    <div xmlns="http://www.w3.org/1999/xhtml" class="png-export-root">
+      <style><![CDATA[${escapeCdata(pngCss)}]]></style>
+      <main class="player" data-slide-count="1">
+        <div class="stage">
+          <div class="viewport">
+            <div class="frame">
+              ${slideHtml}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </foreignObject>
+</svg>`;
+}
+
+function renderSceneHtml(scene: MotionDocScene, options: RenderSceneHtmlOptions = {}) {
   const { blocks, duration, props } = scene;
   const theme = typeof props.theme === "string" ? props.theme : "dark";
   const declaredLight = theme === "light" || theme === "paper";
@@ -129,7 +324,8 @@ function renderSceneHtml(
     themeFallback: theme
   });
   const shader = stringProp(props.shader);
-  const shaderHtml = shader ? `<canvas class="shader-bg" data-shader="${escapeAttribute(shader)}" data-shader-engine="${escapeAttribute(themeColors.shaderEngine)}" data-shader-variant="${shaderVariantForId(shader)}" data-shader-color1="${escapeAttribute(themeColors.shaderColor1)}" data-shader-color2="${escapeAttribute(themeColors.shaderColor2)}" data-shader-color3="${escapeAttribute(themeColors.shaderColor3)}" data-shader-intensity="${numberProp(props.shaderIntensity, 0.5)}" data-shader-speed="${numberProp(props.shaderSpeed, 1)}" data-shader-softness="${numberProp(props.shaderSoftness, 0.5)}" data-shader-scale="${numberProp(props.shaderScale, 0.5)}" data-shader-detail="${numberProp(props.shaderDetail, 0.5)}"></canvas>` : '';
+  const shaderPreset = stringProp(props.shaderPreset) ?? "Default";
+  const shaderHtml = shader ? `<canvas class="shader-bg" data-shader="${escapeAttribute(shader)}" data-shader-engine="${escapeAttribute(themeColors.shaderEngine)}" data-shader-preset="${escapeAttribute(shaderPreset)}" data-shader-variant="0" data-shader-color1="${escapeAttribute(themeColors.shaderColor1)}" data-shader-color2="${escapeAttribute(themeColors.shaderColor2)}" data-shader-color3="${escapeAttribute(themeColors.shaderColor3)}" data-shader-color4="${escapeAttribute(themeColors.shaderColor4)}" data-shader-color5="${escapeAttribute(themeColors.shaderColor5)}" data-shader-color6="${escapeAttribute(themeColors.shaderColor6)}" data-shader-angle="${numberProp(props.shaderAngle, 0)}" data-shader-intensity="${numberProp(props.shaderIntensity, 0.5)}" data-shader-speed="${numberProp(props.shaderSpeed, 1)}" data-shader-softness="${numberProp(props.shaderSoftness, 0.5)}" data-shader-scale="${numberProp(props.shaderScale, 0.5)}" data-shader-detail="${numberProp(props.shaderDetail, 0.5)}"></canvas>` : '';
   const backgroundImage = stringProp(props.backgroundImage);
   const backgroundImageHtml = backgroundImage
     ? `<div class="slide-bg-image" style="${escapeAttribute(inlineCss({
@@ -139,8 +335,23 @@ function renderSceneHtml(
     : "";
   const slideTransition = slideTransitionClass(props.slideTransition);
   const transitionDuration = numberProp(props.transitionDuration, 0.72);
+  const hasPositionedBlocks = blocks.some((block) => "props" in block && isPositionedProps(block.props));
+  const layout = slideLayoutProp(props.layout);
+  const imageBlocks = blocks.filter((block) => block.type === "ImageBlock");
+  const contentBlocks = blocks.filter((block) => block.type !== "ImageBlock");
+  const shouldSplit = !hasPositionedBlocks && layout !== "default" && imageBlocks.length > 0;
+  const contentHtml = shouldSplit
+    ? renderSplitSceneContent(contentBlocks, imageBlocks, layout, options)
+    : blocks.map((block, index) => renderBlock(block, index, options)).join("");
+  const contentClass = [
+    "slide-content",
+    hasPositionedBlocks ? "slide-content--freeform" : "",
+    shouldSplit ? "slide-content--split" : ""
+  ].filter(Boolean).join(" ");
 
-  return `<section class="slide ${slideTransition}" data-duration="${Math.max(duration, 1)}" data-has-shader="${shader ? "true" : "false"}" data-theme-tone="${themeColors.tone}" style="${escapeAttribute(inlineCss({
+  return `<section class="slide ${slideTransition}${options.active ? " is-active" : ""}" data-duration="${Math.max(duration, 1)}" data-has-shader="${shader ? "true" : "false"}" data-theme-tone="${themeColors.tone}" style="${escapeAttribute(inlineCss({
+    "--slide-align-x": alignXCss(props.alignX),
+    "--slide-align-y": alignYCss(props.alignY),
     "--slide-accent": themeColors.accent,
     "--slide-bg": themeColors.background,
     "--slide-border": themeColors.borderColor,
@@ -148,15 +359,35 @@ function renderSceneHtml(
     "--slide-fg": themeColors.foreground,
     "--slide-muted": themeColors.muted,
     "--slide-overlay-opacity": shader ? "0.3" : "0.72",
+    "--slide-padding": hasPositionedBlocks ? "0" : "clamp(16px, 3%, 32px)",
+    "--slide-text-align": textAlignCss(props.textAlign),
     "--slide-transition-duration": `${transitionDuration}s`
   }))}">
     ${backgroundImageHtml}
     ${shaderHtml}
-    ${blocks.map((block, index) => renderBlock(block, index)).join("")}
+    <div class="${contentClass}" data-layout="${escapeAttribute(layout)}" data-freeform="${hasPositionedBlocks ? "true" : "false"}">
+      ${contentHtml}
+    </div>
   </section>`;
 }
 
-function renderBlock(block: MotionDocBlock, blockIndex: number) {
+function renderSplitSceneContent(
+  contentBlocks: MotionDocBlock[],
+  imageBlocks: MotionDocBlock[],
+  layout: "split-left" | "split-right",
+  options: RenderSceneHtmlOptions
+) {
+  const textOrder = layout === "split-left" ? 1 : 2;
+  const imageOrder = layout === "split-left" ? 2 : 1;
+  const contentHtml = contentBlocks.length > 0
+    ? contentBlocks.map((block, index) => renderBlock(block, index, options)).join("")
+    : `<div class="motion-block enter-none"><p class="block-text">Add a text layer for this side.</p></div>`;
+  const imageHtml = imageBlocks.map((block, index) => renderBlock(block, contentBlocks.length + index, options)).join("");
+
+  return `<div class="slide-split-pane slide-split-pane--content" style="order:${textOrder}">${contentHtml}</div><div class="slide-split-pane slide-split-pane--media" style="order:${imageOrder}">${imageHtml}</div>`;
+}
+
+function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderSceneHtmlOptions = {}) {
   if (block.type === "Title") {
     return renderMotionBlock(block, `<h1 class="block-title">${renderTextLines(String(block.text ?? ""), block.props?.listType)}</h1>`);
   }
@@ -181,6 +412,31 @@ function renderBlock(block: MotionDocBlock, blockIndex: number) {
 
   if (block.type === "ImageBlock") {
     const fit = fitProp(block.props.fit);
+    const filterDefinition = getPaperImageFilterDefinition(stringProp(block.props.filter));
+
+    if (filterDefinition && !options.rasterMode) {
+      const fPreset = stringProp(block.props.filterPreset) || filterDefinition.defaultPreset;
+      const fDistortion = optionalNumberProp(block.props.filterDistortion);
+      const fSize = optionalNumberProp(block.props.filterSize);
+      const fAngle = optionalNumberProp(block.props.filterAngle);
+      const fContrast = optionalNumberProp(block.props.filterContrast);
+      const fSpeed = optionalNumberProp(block.props.filterSpeed);
+      const fDetail = optionalNumberProp(block.props.filterDetail);
+
+      const fPresetAttr = fPreset ? ` data-filter-preset="${escapeAttribute(fPreset)}"` : "";
+      const fDistortionAttr = fDistortion !== undefined ? ` data-filter-distortion="${fDistortion}"` : "";
+      const fSizeAttr = fSize !== undefined ? ` data-filter-size="${fSize}"` : "";
+      const fAngleAttr = fAngle !== undefined ? ` data-filter-angle="${fAngle}"` : "";
+      const fContrastAttr = fContrast !== undefined ? ` data-filter-contrast="${fContrast}"` : "";
+      const fSpeedAttr = fSpeed !== undefined ? ` data-filter-speed="${fSpeed}"` : "";
+      const fDetailAttr = fDetail !== undefined ? ` data-filter-detail="${fDetail}"` : "";
+      const fFitAttr = ` data-filter-fit="${escapeAttribute(shaderFitProp(fit))}"`;
+
+      return renderMotionBlock(
+        block,
+        `<figure class="block-image"><img src="${escapeAttribute(String(block.props.src ?? ""))}" alt="${escapeAttribute(String(block.props.alt ?? ""))}" style="${escapeAttribute(inlineCss({ "object-fit": fit }))}" /><canvas class="image-filter-canvas" data-shader="${escapeAttribute(filterDefinition.id)}"${fPresetAttr}${fFitAttr}${fDistortionAttr}${fSizeAttr}${fAngleAttr}${fContrastAttr}${fSpeedAttr}${fDetailAttr} style="${escapeAttribute(inlineCss({ "object-fit": fit, "position": "absolute", "inset": "0", "width": "100%", "height": "100%" }))}" data-shader-image="${escapeAttribute(String(block.props.src ?? ""))}"></canvas></figure>`
+      );
+    }
 
     return renderMotionBlock(
       block,
@@ -190,14 +446,23 @@ function renderBlock(block: MotionDocBlock, blockIndex: number) {
 
   if (block.type === "VideoBlock") {
     const fit = fitProp(block.props.fit);
+    const poster = stringProp(block.props.poster);
+
+    if (options.rasterMode) {
+      return renderMotionBlock(
+        block,
+        `<figure class="block-image block-video">${poster ? `<img src="${escapeAttribute(poster)}" alt="" style="${escapeAttribute(inlineCss({ "object-fit": fit }))}" />` : ""}</figure>`
+      );
+    }
+
     const controls = boolProp(block.props.controls, true) ? " controls" : "";
     const loop = boolProp(block.props.loop, true) ? " loop" : "";
     const muted = boolProp(block.props.muted, true) ? " muted autoplay playsinline" : "";
-    const poster = stringProp(block.props.poster) ? ` poster="${escapeAttribute(String(block.props.poster))}"` : "";
+    const posterAttr = poster ? ` poster="${escapeAttribute(poster)}"` : "";
 
     return renderMotionBlock(
       block,
-      `<figure class="block-image block-video"><video src="${escapeAttribute(String(block.props.src ?? ""))}"${poster}${controls}${loop}${muted} style="${escapeAttribute(inlineCss({ "object-fit": fit }))}"></video></figure>`
+      `<figure class="block-image block-video"><video src="${escapeAttribute(String(block.props.src ?? ""))}"${posterAttr}${controls}${loop}${muted} style="${escapeAttribute(inlineCss({ "object-fit": fit }))}"></video></figure>`
     );
   }
 
@@ -270,7 +535,100 @@ function renderBlock(block: MotionDocBlock, blockIndex: number) {
     );
   }
 
+  if (block.type === "Table") {
+    return renderMotionBlock(block, renderTableBlock(block.props));
+  }
+
   return "";
+}
+
+function renderTableBlock(props: Record<string, string | number>) {
+  const { columns, rows } = tableSizeFromProps(props);
+  const cells = tableCellsFromProps(props, rows, columns);
+  const columnTracks = tableColumnTrackValuesFromProps(props, columns);
+  const rowTracks = tableRowTrackValuesFromProps(props, rows);
+  const rowOverrides = parseRowOverrides(props);
+  const colOverrides = parseColOverrides(props);
+  const borderColor = stringProp(props.borderColor) ?? "var(--slide-border)";
+  const borderWidth = numberProp(props.borderWidth, 1);
+  const tableStyle = inlineCss({
+    "--table-border": borderColor,
+    "--table-border-width": `${borderWidth}px`,
+    "--table-cell-justify": tableCellJustify(props.textAlign),
+    "--table-font-size": `${numberProp(props.fontSize, 16)}px`,
+    "--table-text-align": tableTextAlign(props.textAlign),
+    "--table-vertical-align": tableVerticalAlign(props.textVerticalAlign),
+    background: stringProp(props.background ?? props.backgroundColor ?? props.bg) ?? "rgba(255,255,255,0.035)",
+    color: stringProp(props.color ?? props.textColor) ?? "var(--slide-fg)",
+    "grid-template-columns": tableTrackTemplate(columnTracks),
+    "grid-template-rows": tableTrackTemplate(rowTracks)
+  });
+
+  const cellHtml = cells.flatMap((row, rowIndex) =>
+    row.map((cell, columnIndex) => {
+      const rowOverride = rowOverrides[rowIndex];
+      const colOverride = colOverrides[columnIndex];
+      const cellBackground =
+        rowOverride?.background ??
+        colOverride?.background ??
+        tableCellBackground(props, rowIndex);
+      const cellBorderColor = rowOverride?.borderColor ?? colOverride?.borderColor;
+      const cellTextAlign = rowOverride?.textAlign ?? colOverride?.textAlign ?? tableTextAlign(props.textAlign);
+      const cellColor = rowOverride?.textColor ?? colOverride?.textColor ?? stringProp(props.color ?? props.textColor);
+      const cellFontFamily = rowOverride?.fontFamily ?? colOverride?.fontFamily;
+      const cellFontSize = rowOverride?.fontSize ?? colOverride?.fontSize;
+      const cellFontWeight = rowOverride?.fontWeight ?? colOverride?.fontWeight;
+      const cellStyle = inlineCss({
+        ...(cellBackground ? { background: cellBackground } : {}),
+        ...(cellBorderColor ? {
+          "border-bottom-color": cellBorderColor,
+          "border-right-color": cellBorderColor
+        } : {}),
+        ...(cellColor ? { color: cellColor } : {}),
+        ...(cellFontFamily ? { "font-family": cellFontFamily } : {}),
+        ...(cellFontSize ? { "font-size": `${cellFontSize}px` } : {}),
+        ...(cellFontWeight ? { "font-weight": String(cellFontWeight) } : {}),
+        "justify-content": tableCellJustify(cellTextAlign),
+        "text-align": cellTextAlign
+      });
+
+      return `<div class="block-table__cell" style="${escapeAttribute(cellStyle)}">${escapeHtml(cell)}</div>`;
+    })
+  ).join("");
+
+  return `<div class="block-table" style="${escapeAttribute(tableStyle)}">${cellHtml}</div>`;
+}
+
+function tableCellBackground(props: Record<string, string | number>, rowIndex: number) {
+  const stripeBackground = stringProp(props.stripeBackground);
+
+  if (stripeBackground && rowIndex % 2 === 1) {
+    return stripeBackground;
+  }
+
+  return stringProp(props.cellBackground) ?? "transparent";
+}
+
+function tableTextAlign(value: string | number | undefined) {
+  if (value === "left" || value === "right") {
+    return value;
+  }
+
+  return "center";
+}
+
+function tableCellJustify(value: string | number | undefined) {
+  if (value === "left") return "flex-start";
+  if (value === "right") return "flex-end";
+
+  return "center";
+}
+
+function tableVerticalAlign(value: string | number | undefined) {
+  if (value === "top") return "flex-start";
+  if (value === "bottom") return "flex-end";
+
+  return "center";
 }
 
 function renderMotionBlock(block: MotionDocBlock, content: string) {
@@ -346,10 +704,51 @@ function slideTransitionClass(value: string | number | undefined) {
   return "slide-transition-none";
 }
 
-function numberProp(value: string | number | undefined, fallback: number) {
+function slideLayoutProp(value: string | number | undefined): "default" | "split-left" | "split-right" {
+  if (value === "split-left" || value === "split-right") {
+    return value;
+  }
+
+  return "default";
+}
+
+function alignXCss(value: string | number | undefined) {
+  if (value === "center") return "center";
+  if (value === "right") return "flex-end";
+  if (value === "stretch") return "stretch";
+
+  return "flex-start";
+}
+
+function alignYCss(value: string | number | undefined) {
+  if (value === "top") return "flex-start";
+  if (value === "bottom") return "flex-end";
+
+  return "center";
+}
+
+function textAlignCss(value: string | number | undefined) {
+  if (value === "center" || value === "right") {
+    return value;
+  }
+
+  return "left";
+}
+
+function numberProp(value: string | number | undefined): number | undefined;
+function numberProp(value: string | number | undefined, fallback: number): number;
+function numberProp(value: string | number | undefined, fallback?: number) {
   const parsed = typeof value === "number" ? value : Number(value);
 
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function optionalNumberProp(value: string | number | undefined) {
+  if (value === "" || value === undefined) {
+    return undefined;
+  }
+
+  return numberProp(value);
 }
 
 function boolProp(value: string | number | undefined, fallback: boolean) {
@@ -595,6 +994,14 @@ function fitProp(value: string | number | undefined) {
   return "cover";
 }
 
+function shaderFitProp(value: string) {
+  if (value === "contain" || value === "scale-down") {
+    return "contain";
+  }
+
+  return "cover";
+}
+
 function backgroundSizeFromFit(value: string | undefined) {
   if (value === "contain" || value === "scale-down") {
     return "contain";
@@ -737,6 +1144,10 @@ function escapeHtml(value: string) {
 
 function escapeAttribute(value: string) {
   return escapeHtml(value);
+}
+
+function escapeCdata(value: string) {
+  return value.replaceAll("]]>", "]]]]><![CDATA[>");
 }
 
 export function slugifyFilename(name: string) {

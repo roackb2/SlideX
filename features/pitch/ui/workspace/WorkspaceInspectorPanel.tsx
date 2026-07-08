@@ -14,12 +14,17 @@ type WorkspaceInspectorPanelProps = Pick<
   | "activeSlideLayoutPreset"
   | "activeSlideMutedColor"
   | "activeSlideShader"
+  | "activeSlideShaderAngle"
   | "activeSlideShaderColor1"
   | "activeSlideShaderColor2"
   | "activeSlideShaderColor3"
+  | "activeSlideShaderColor4"
+  | "activeSlideShaderColor5"
+  | "activeSlideShaderColor6"
   | "activeSlideShaderDetail"
   | "activeSlideShaderEngine"
   | "activeSlideShaderIntensity"
+  | "activeSlideShaderPreset"
   | "activeSlideShaderScale"
   | "activeSlideShaderSoftness"
   | "activeSlideShaderSpeed"
@@ -83,12 +88,17 @@ function PitchInspectorContent({
   activeSlideLayoutPreset,
   activeSlideMutedColor,
   activeSlideShader,
+  activeSlideShaderAngle,
   activeSlideShaderColor1,
   activeSlideShaderColor2,
   activeSlideShaderColor3,
+  activeSlideShaderColor4,
+  activeSlideShaderColor5,
+  activeSlideShaderColor6,
   activeSlideShaderDetail,
   activeSlideShaderEngine,
   activeSlideShaderIntensity,
+  activeSlideShaderPreset,
   activeSlideShaderScale,
   activeSlideShaderSoftness,
   activeSlideShaderSpeed,
@@ -119,12 +129,17 @@ function PitchInspectorContent({
       activeSlideLayoutPreset={activeSlideLayoutPreset}
       activeSlideMutedColor={activeSlideMutedColor}
       activeSlideShader={activeSlideShader}
+      activeSlideShaderAngle={activeSlideShaderAngle}
       activeSlideShaderColor1={activeSlideShaderColor1}
       activeSlideShaderColor2={activeSlideShaderColor2}
       activeSlideShaderColor3={activeSlideShaderColor3}
+      activeSlideShaderColor4={activeSlideShaderColor4}
+      activeSlideShaderColor5={activeSlideShaderColor5}
+      activeSlideShaderColor6={activeSlideShaderColor6}
       activeSlideShaderDetail={activeSlideShaderDetail}
       activeSlideShaderEngine={activeSlideShaderEngine}
       activeSlideShaderIntensity={activeSlideShaderIntensity}
+      activeSlideShaderPreset={activeSlideShaderPreset}
       activeSlideShaderScale={activeSlideShaderScale}
       activeSlideShaderSoftness={activeSlideShaderSoftness}
       activeSlideShaderSpeed={activeSlideShaderSpeed}

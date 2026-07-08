@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import { MotionBlock, type AnimationProps, type RadiusProps } from "@/features/pitch/ui/preview/motion/MotionBlock";
 import { surfaceStyle } from "@/features/pitch/ui/preview/motion/blockStyles";
+import { PaperImageFilterLayer } from "@/features/pitch/ui/preview/paperImageFilterRenderers";
 
 type ImageFit = NonNullable<CSSProperties["objectFit"]>;
 
@@ -10,6 +11,14 @@ export function ImageBlock({
   alt,
   background,
   backgroundColor,
+  filter,
+  filterAngle,
+  filterContrast,
+  filterDetail,
+  filterDistortion,
+  filterPreset,
+  filterSize,
+  filterSpeed,
   fit = "cover",
   full = false,
   src,
@@ -19,11 +28,21 @@ export function ImageBlock({
   fit?: string;
   full?: boolean;
   src: string;
+  filter?: string;
+  filterAngle?: number;
+  filterContrast?: number;
+  filterDetail?: number;
+  filterDistortion?: number;
+  filterPreset?: string;
+  filterSize?: number;
+  filterSpeed?: number;
 } & RadiusProps & {
   background?: string;
   backgroundColor?: string;
 }) {
   const fillFrame = Boolean(animation.fillFrame);
+  const mediaClassName = full || fillFrame ? "h-full w-full" : "aspect-video w-full";
+  const objectFit = normalizeImageFit(fit);
 
   return (
     <MotionBlock
@@ -35,12 +54,26 @@ export function ImageBlock({
       style={surfaceStyle({ background, backgroundColor })}
       {...animation}
     >
-      <img
-        alt={alt}
-        className={full || fillFrame ? "h-full w-full" : "aspect-video w-full"}
-        src={src}
-        style={{ objectFit: normalizeImageFit(fit) }}
-      />
+      <div className={`relative overflow-hidden ${mediaClassName}`} style={{ borderRadius: "inherit" }}>
+        <img
+          alt={alt}
+          className="absolute inset-0 h-full w-full"
+          src={src}
+          style={{ objectFit }}
+        />
+        <PaperImageFilterLayer
+          filter={filter}
+          filterAngle={filterAngle}
+          filterContrast={filterContrast}
+          filterDetail={filterDetail}
+          filterDistortion={filterDistortion}
+          filterPreset={filterPreset}
+          filterSize={filterSize}
+          filterSpeed={filterSpeed}
+          fit={fit}
+          src={src}
+        />
+      </div>
     </MotionBlock>
   );
 }

@@ -5,6 +5,11 @@ import { cloneBlock } from "@/core/motion-doc/application/motionDocSerialize";
 import type { MotionDocBlock, MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 import { defaultTemplate, motionTemplates } from "@/core/motion-doc/presets/templates";
 import {
+  deleteTableColumn,
+  deleteTableRow,
+  tableSizeFromProps
+} from "@/core/motion-doc/application/tableBlock";
+import {
   appendBlankSlideSource,
   appendLayoutSlideSource,
   appendBlockToSlide,
@@ -34,6 +39,10 @@ import {
   type FrameUpdate,
   type InsertSlidePlacement
 } from "@/features/pitch/application/motionDocCommands";
+import {
+  clearTableEditorSelectionProps,
+  tableEditorSelectionFromProps
+} from "@/features/pitch/application/tableEditorSelection";
 import type { BlockUpdateOptions } from "@/features/pitch/ui/pitchCommandTypes";
 import { type AddBlockType } from "@/features/pitch/ui/pitchOptions";
 import { stringValue } from "@/common/util/valueUtils";
@@ -205,6 +214,10 @@ export function usePitchCommands({
   function deleteSelectedBlocks() {
     if (!activeSlide) return;
 
+    if (deleteSelectedTablePart()) {
+      return;
+    }
+
     const indices = selectedLayerIndices(selectedBlockIndices, selectedBlockIndex, "desc");
 
     if (indices.length === 0) {
@@ -216,6 +229,53 @@ export function usePitchCommands({
     selectSingleBlock(null);
     setReplayNonce((value) => value + 1);
     setNotice(indices.length > 1 ? "Layers deleted" : "Layer deleted");
+  }
+
+  function deleteSelectedTablePart() {
+    const isSingleSelectedBlock = selectedBlockIndices.length === 0 || (
+      selectedBlockIndices.length === 1 && selectedBlockIndices[0] === selectedBlockIndex
+    );
+
+    if (!activeSlide || selectedBlockIndex === null || !isSingleSelectedBlock) {
+      return false;
+    }
+
+    const block = activeSlide.blocks[selectedBlockIndex];
+
+    if (!block || block.type !== "Table" || !("props" in block)) {
+      return false;
+    }
+
+    const tableSelection = tableEditorSelectionFromProps(block.props);
+
+    if (!tableSelection) {
+      return false;
+    }
+
+    const beforeSize = tableSizeFromProps(block.props);
+    const nextTableProps = tableSelection.kind === "row"
+      ? deleteTableRow(block.props, tableSelection.index)
+      : deleteTableColumn(block.props, tableSelection.index);
+    const afterSize = tableSizeFromProps(nextTableProps);
+
+    if (beforeSize.rows === afterSize.rows && beforeSize.columns === afterSize.columns) {
+      setNotice(tableSelection.kind === "row" ? "Cannot delete last row" : "Cannot delete last column");
+      return true;
+    }
+
+    const nextSlide = updateBlockInSlide(
+      activeSlide,
+      selectedBlockIndex,
+      clearTableEditorSelectionProps(nextTableProps)
+    );
+
+    if (!nextSlide) {
+      return true;
+    }
+
+    commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
+    setNotice(tableSelection.kind === "row" ? "Row deleted" : "Column deleted");
+    return true;
   }
 
   function cutSelectedBlocks() {
@@ -397,7 +457,6 @@ export function usePitchCommands({
     }
 
     commitSource((current) => applySlideStyleSource(current, activeSlide, activeSlideIndex, updates));
-    setReplayNonce((value) => value + 1);
     setNotice("Slide style updated");
   }
 
@@ -424,7 +483,9 @@ export function usePitchCommands({
     }
 
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
-    setReplayNonce((value) => value + 1);
+    if (!options?.skipReplay) {
+      setReplayNonce((value) => value + 1);
+    }
     setNotice("Block updated");
   }
 

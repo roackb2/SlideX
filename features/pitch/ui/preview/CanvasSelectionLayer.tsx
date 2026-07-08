@@ -4,8 +4,10 @@ import type { PointerEvent } from "react";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 import type { CanvasTool } from "@/features/pitch/application/canvasTools";
 import { isPositionLocked } from "@/features/pitch/application/motionDocCommands";
+import { tableEditorSelectionProps } from "@/features/pitch/application/tableEditorSelection";
 import {
   blockFrame,
+  isEditableTableBlock,
   isEditableTextBlock,
   isMovableBlock,
   marqueeRect,
@@ -17,6 +19,7 @@ import {
 } from "@/features/pitch/application/previewCanvas";
 import type { CanvasInteractionMode } from "@/features/pitch/ui/preview/interaction/useCanvasInteractionEngine";
 import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
+import { TableFrameEditor } from "@/features/pitch/ui/preview/TableFrameEditor";
 import { TextFrameEditor } from "@/features/pitch/ui/preview/TextFrameEditor";
 
 type CanvasSelectionLayerProps = {
@@ -85,6 +88,8 @@ export function CanvasSelectionLayer({
 
         const isSelected = selectedBlockIndices.includes(blockIndex) || selectedBlockIndex === blockIndex;
         const isLocked = isPositionLocked(block);
+        const tableBlock = isEditableTableBlock(block) ? block : null;
+        const isTableBlock = tableBlock !== null;
         const isTextBlock = isEditableTextBlock(block);
         const frame = blockFrame(block);
         const minFrameSize = minimumFrameSize(block, canvasScale);
@@ -121,6 +126,17 @@ export function CanvasSelectionLayer({
 	                blockIndex={blockIndex}
 	                canvasScale={canvasScale}
 	                onBeginTextEdit={() => onBeginTextEdit(blockIndex)}
+                onSelectBlock={onSelectBlock}
+                onUpdateBlock={onUpdateBlock}
+              />
+            ) : null}
+            {isSelected && isTableBlock ? (
+              <TableFrameEditor
+                block={tableBlock}
+                blockIndex={blockIndex}
+                onSelectionChange={(selection) => {
+                  onUpdateBlock(blockIndex, tableEditorSelectionProps(tableBlock.props, selection), undefined, { transient: true });
+                }}
                 onSelectBlock={onSelectBlock}
                 onUpdateBlock={onUpdateBlock}
               />

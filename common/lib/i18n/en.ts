@@ -121,13 +121,13 @@ export const enDictionary = {
           title: "Briefly",
           core: "Articulate project clearly",
           target: "PM, Founder, Consultant, Project Owner",
-          output: "Brief / MDX / HTML / PDF"
+          output: "HTML / MDX"
         },
         pitch: {
           title: "Pitch",
           core: "Articulate project persuasively",
           target: "PM, BD, Sales, Founder, Consultant",
-          output: "Deck / Proposal / Pitch"
+          output: "HTML / MDX"
         }
       },
       trustedBy: "Trusted by modern teams",
@@ -152,8 +152,8 @@ export const enDictionary = {
           desc: "Add high-quality animations to your slides instantly. No keyframes required."
         },
         export: {
-          title: "Multi-format Export",
-          desc: "Export to HTML or PDF with a single click."
+          title: "HTML and MDX export",
+          desc: "Export to HTML or MDX with a single click."
         }
       },
       devSection: {
@@ -218,7 +218,7 @@ export const enDictionary = {
       stats: [
         ["MDX-first", "Slides stay editable after the pitch"],
         ["Live timing", "Preview animations as you compose"],
-        ["Export ready", "Ship source, HTML, or captured sequences"]
+        ["Export ready", "Ship MDX source and HTML output"]
       ],
       compose: {
         title: "Compose decks like software.",
@@ -248,7 +248,7 @@ export const enDictionary = {
           },
           {
             title: "Package the output",
-            body: "Keep source, preview, and exported sequences aligned from one pitch."
+            body: "Keep MDX source, preview, and HTML output aligned from one pitch."
           }
         ]
       },
@@ -267,31 +267,31 @@ export const enDictionary = {
       hero: {
         eyebrow: "SlideX Pitch",
         title: {
-          regular: "Compose motion decks",
-          highlight: "without leaving source."
+          regular: "Build motion decks",
+          highlight: "as MDX."
         },
-        body: "Write MDX Slides, shape animation timing, preview the result, and keep every revision editable.",
+        body: "Write MDX Slides, shape animation timing, preview the result, and export only HTML or MDX.",
         primary: "Open Workspace"
       },
       bentoFeatures: [
         {
           title: "MDX-first authoring",
-          body: "Build slides as readable source, then refine copy, layout, and motion without flattening the deck.",
+          body: "Build slides as readable source, then refine copy, layout, and motion without creating extra format debt.",
           codeLabel: "motion-doc.mdx",
           codeTitle: "Executive Growth Review"
         },
         {
           title: "Live motion preview",
-          body: "Replay timing, layer entrances, and pacing in the same workspace where you edit the story."
+          body: "Replay timing, layer entrances, and pacing in the same workspace where the MDX stays editable."
         },
         {
           title: "Template-backed layouts",
-          body: "Start from useful slide structures and keep the motion grammar consistent across the whole deck."
+          body: "Start from useful slide structures and keep the motion grammar consistent in source."
         }
       ],
       workflow: {
-        title: "From draft to playback in one loop.",
-        body: "Pitch keeps the written story, visual structure, and animation timeline moving together.",
+        title: "From MDX to HTML in one loop.",
+        body: "Pitch keeps the written story, visual structure, animation timing, and browser output moving together.",
         steps: [
           {
             label: "01",
@@ -306,7 +306,7 @@ export const enDictionary = {
           {
             label: "03",
             title: "Package the result",
-            body: "Keep a maintainable source deck ready for presentation, export, or automation."
+            body: "Export a browser-ready HTML deck, or keep the MDX source for continued editing."
           }
         ]
       },
@@ -325,13 +325,13 @@ export const enDictionary = {
           },
           {
             title: "Reusable systems",
-            body: "Build repeatable slide patterns for teams that publish the same story in many forms."
+            body: "Build repeatable slide patterns for teams that publish the same story as HTML and MDX."
           }
         ]
       },
       cta: {
         title: "Open the workspace.",
-        body: "Start from a clean deck, load a preset, or paste MDX and preview the motion immediately.",
+        body: "Start from a clean deck, load a preset, or paste MDX and preview the HTML output immediately.",
         button: "Open Workspace"
       }
     },
@@ -469,7 +469,7 @@ export const enDictionary = {
         builderBody: "Use the interactive builder to define project scope and generate documents.",
         mcpInstallEyebrow: "Briefly MCP Server",
         mcpInstallTitle: "Install the published Briefly MCP server.",
-        mcpInstallBody: "The npm package exposes Briefly Builder, review rubrics, HTML export, and PDF export as MCP tools for Claude Desktop, Cursor, and other MCP clients.",
+        mcpInstallBody: "The npm package exposes Briefly Builder, review rubrics, HTML export, and MDX export as MCP tools for Claude Desktop, Cursor, and other MCP clients.",
         mcpInstallCommand: "npm install -g @z7589xxz758/briefly-mcp-server",
         mcpPackageLabel: "Open npm package",
         mcpPackageUrl: "https://www.npmjs.com/package/@z7589xxz758/briefly-mcp-server",
@@ -503,7 +503,7 @@ export const enDictionary = {
           ["1. Add Blocks", "Select document blocks from the left toolbar, such as Cover, Goal, Timeline, or Audience. The system will automatically add them to the preview canvas."],
           ["2. Fill out data via Inspector", "Click any block, and the right Inspector panel will expand the corresponding form, helping you input key messages and data structurally without worrying about layout."],
           ["3. Adjust design and outline", "Use the Outline tool to drag and reorder sections, and switch to the Design tool to set layout width, typography, border styles, and theme gradient."],
-          ["4. Preview and Export", "Switch to MDX preview mode anytime to see the generated markup. When finished, export the Brief as HTML, PDF, or convert it to an MDX file for SlideX Pitch."]
+          ["4. Preview and Export", "Switch to MDX preview mode anytime to see the generated markup. When finished, export the Brief as HTML or MDX for SlideX Pitch."]
         ],
         builderExampleTitle: "Example Output (MDX)",
         blocks: [

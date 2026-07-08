@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
+import type { BlockUpdateOptions } from "@/features/pitch/ui/pitchCommandTypes";
 
 export type PropValue = string | number;
 export type PropRecord = Record<string, PropValue>;
@@ -14,7 +15,7 @@ export type IconControlOption<T extends string = string> = ControlOption<T> & { 
 export type BlockFieldProps<TBlock extends BlockWithProps = BlockWithProps> = {
   block: TBlock;
   selectedBlockIndex: number;
-  updateBlock: (blockIndex: number, newProps: TBlock["props"], newText?: string) => void;
+  updateBlock: (blockIndex: number, newProps: TBlock["props"], newText?: string, options?: BlockUpdateOptions) => void;
 };
 
 export function Field({ children, label }: { children: ReactNode; label: string }) {

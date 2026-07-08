@@ -6,6 +6,7 @@ import { canvasToolOptions, type CanvasTool } from "@/features/pitch/application
 import type { AddBlockOptions, InsertSlidePlacement } from "@/features/pitch/application/motionDocCommands";
 import { lucideIconLabels, lucideIconPaths, slidexIconNames, type SlideXIconName } from "@/core/motion-doc/domain/lucideIconRegistry";
 import type { SlideRow } from "@/features/pitch/ui/LayerSidebar";
+import { TableToolbox } from "@/features/pitch/ui/preview/TableToolbox";
 import { toolGroups, type AddBlockType, type PitchBlockTool, type PitchToolGroup } from "@/features/pitch/ui/pitchOptions";
 
 export type CanvasZoomDirection = "in" | "out";
@@ -83,7 +84,7 @@ export function CanvasBlockDock({
           type="button"
         />
       ) : null}
-      {activeGroup && !activeGroup.modal && (activeGroup.tools.length > 1 || activeGroup.id === "icon") ? (
+      {activeGroup && !activeGroup.modal && (activeGroup.tools.length > 1 || activeGroup.id === "icon" || activeGroup.id === "table") ? (
         <ToolFlyout
           group={activeGroup}
           onAddTool={addTool}
@@ -123,7 +124,7 @@ export function CanvasBlockDock({
         </button>
         {toolGroups.map((group) => {
           const isOpen = openGroupId === group.id;
-          const isSingleTool = group.tools.length === 1 && group.id !== "icon";
+          const isSingleTool = group.tools.length === 1 && group.id !== "icon" && group.id !== "table";
           return (
             <button
               aria-label={isSingleTool ? `Add ${group.label}` : `Open ${group.label} tools`}
@@ -162,6 +163,10 @@ function ToolFlyout({
 }) {
   if (group.id === "icon") {
     return <IconToolbox onAddTool={onAddTool} />;
+  }
+
+  if (group.id === "table") {
+    return <TableToolbox onAddTool={onAddTool} />;
   }
 
   return <CommandToolMenu group={group} onAddTool={onAddTool} />;

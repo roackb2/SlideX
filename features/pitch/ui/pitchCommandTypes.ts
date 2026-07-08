@@ -1,4 +1,5 @@
 export type BlockUpdateOptions = {
+  skipReplay?: boolean;
   transient?: boolean;
 };
 

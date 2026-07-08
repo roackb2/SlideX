@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { canvasToolFromShortcut, type CanvasTool } from "@/features/pitch/application/canvasTools";
 import { arrowDelta, isArrowKey } from "@/features/pitch/application/keyboard";
 
 type UsePitchShortcutsArgs = {
+  activeCanvasTool: CanvasTool;
   activeSlideIndex: number;
   closeCodeEditor: () => void;
   closeExportMenu: () => void;
@@ -14,8 +15,7 @@ type UsePitchShortcutsArgs = {
   deleteSelectedBlocks: () => void;
   deleteSlide: (slideIndex: number) => void;
   duplicateSelectedBlock: () => void;
-  exportHtmlFile: () => void;
-  exportMdxFile: () => void;
+
   goToNextSlide: () => void;
   goToPreviousSlide: () => void;
   isCodeEditorOpen: boolean;
@@ -33,6 +33,7 @@ type UsePitchShortcutsArgs = {
 };
 
 export function usePitchShortcuts({
+  activeCanvasTool,
   activeSlideIndex,
   closeCodeEditor,
   closeExportMenu,
@@ -58,10 +59,53 @@ export function usePitchShortcuts({
   setActiveCanvasTool,
   undoLastChange
 }: UsePitchShortcutsArgs) {
+  const canvasToolRef = useRef<CanvasTool>(activeCanvasTool);
+  const spaceRestoreToolRef = useRef<CanvasTool | null>(null);
+
   useEffect(() => {
+    canvasToolRef.current = activeCanvasTool;
+  }, [activeCanvasTool]);
+
+  useEffect(() => {
+    function isModalOrPanelOpen() {
+      return isCodeEditorOpen || isExportMenuOpen || isTemplateModalOpen || isMobileSidebarOpen || isMobileInspectorOpen;
+    }
+
+    function shouldIgnoreTypingTarget(target: HTMLElement | null) {
+      const tagName = target?.tagName;
+      return tagName === "TEXTAREA" || tagName === "INPUT" || tagName === "SELECT" || Boolean(target?.isContentEditable);
+    }
+
+    function restoreSpaceTool() {
+      const restoreTool = spaceRestoreToolRef.current;
+
+      if (!restoreTool) {
+        return;
+      }
+
+      spaceRestoreToolRef.current = null;
+      canvasToolRef.current = restoreTool;
+      setActiveCanvasTool(restoreTool);
+    }
+
+    function handleKeyUp(event: KeyboardEvent) {
+      if (!isSpaceKey(event)) {
+        return;
+      }
+
+      if (spaceRestoreToolRef.current) {
+        event.preventDefault();
+      }
+
+      restoreSpaceTool();
+    }
+
+    function handleWindowBlur() {
+      restoreSpaceTool();
+    }
+
     function handleKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
-      const tagName = target?.tagName;
 
       if (event.key === "Escape") {
         if (isCodeEditorOpen) {
@@ -91,11 +135,24 @@ export function usePitchShortcuts({
         }
       }
 
-      if (tagName === "TEXTAREA" || tagName === "INPUT" || tagName === "SELECT" || target?.isContentEditable) {
+      if (shouldIgnoreTypingTarget(target)) {
         return;
       }
 
-      if (isCodeEditorOpen || isExportMenuOpen || isTemplateModalOpen || isMobileSidebarOpen || isMobileInspectorOpen) {
+      if (isModalOrPanelOpen()) {
+        return;
+      }
+
+      if (isSpaceKey(event)) {
+        event.preventDefault();
+
+        if (!spaceRestoreToolRef.current) {
+          const currentTool = canvasToolRef.current;
+          spaceRestoreToolRef.current = currentTool;
+          canvasToolRef.current = "hand";
+          setActiveCanvasTool("hand");
+        }
+
         return;
       }
 
@@ -168,7 +225,13 @@ export function usePitchShortcuts({
     }
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleWindowBlur);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleWindowBlur);
+    };
   }, [
     activeSlideIndex,
     closeCodeEditor,
@@ -195,4 +258,8 @@ export function usePitchShortcuts({
     setActiveCanvasTool,
     undoLastChange
   ]);
+}
+
+function isSpaceKey(event: KeyboardEvent) {
+  return event.code === "Space" || event.key === " " || event.key === "Spacebar";
 }

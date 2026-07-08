@@ -1,0 +1,460 @@
+"use client";
+
+import { AlignCenter, AlignLeft, AlignRight, Rows3, Columns3, Grid3X3, X } from "lucide-react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
+import {
+  clearColOverride,
+  clearRowOverride,
+  columnLabel,
+  parseColOverrides,
+  parseRowOverrides,
+  resizeTableProps,
+  tableCellsFromProps,
+  tableSizeFromProps,
+  updateColOverride,
+  updateRowOverride,
+  updateTableCell,
+  type TableSelection
+} from "@/core/motion-doc/application/tableBlock";
+import {
+  Field,
+  IconSegmentedControl,
+  NumberInput,
+  type BlockFieldProps
+} from "@/features/pitch/ui/inspector/InspectorControls";
+import { hexColorValue } from "@/features/pitch/application/colorPalettes";
+import { tableEditorSelectionFromProps } from "@/features/pitch/application/tableEditorSelection";
+import { colorSwatchStyle } from "@/features/pitch/ui/inspector/color/colorSwatchStyle";
+import { defaultColorPresets } from "@/features/pitch/ui/inspector/color/palettes";
+import { useCustomSwatches } from "@/features/pitch/ui/inspector/color/useCustomSwatches";
+import { uniqueColors } from "@/features/pitch/application/colorPalettes";
+
+// ─── Main Component ──────────────────────────────────────────────────
+
+export function TableFields({ block, selectedBlockIndex, updateBlock }: BlockFieldProps) {
+  const size = tableSizeFromProps(block.props);
+  const cells = tableCellsFromProps(block.props, size.rows, size.columns);
+  const tableSelection = tableEditorSelectionFromProps(block.props);
+  const selectionKind = tableSelection?.kind;
+  const selectionIndex = tableSelection?.index ?? null;
+  const hasSelection = tableSelection !== null;
+
+  // Resolve current colors based on selection
+  const rowOverrides = parseRowOverrides(block.props);
+  const colOverrides = parseColOverrides(block.props);
+  const currentOverride = hasSelection
+    ? selectionKind === "row" ? rowOverrides[selectionIndex!] ?? {} : colOverrides[selectionIndex!] ?? {}
+    : null;
+
+  const selectionLabel = hasSelection
+    ? selectionKind === "row" ? `Row ${selectionIndex! + 1}` : `Column ${columnLabel(selectionIndex!)}`
+    : "Entire table";
+
+  // Colors to display in the palette
+  const bgColor = hasSelection && currentOverride?.background
+    ? currentOverride.background
+    : String(block.props.background ?? block.props.backgroundColor ?? block.props.bg ?? "");
+  const borderColor = hasSelection && currentOverride?.borderColor
+    ? currentOverride.borderColor
+    : String(block.props.borderColor ?? "");
+
+  function onBgChange(value: string) {
+    if (hasSelection && selectionIndex !== null) {
+      const nextProps = selectionKind === "row"
+        ? updateRowOverride(block.props, selectionIndex, { background: value })
+        : updateColOverride(block.props, selectionIndex, { background: value });
+      updateBlock(selectedBlockIndex, nextProps);
+    } else {
+      updateBlock(selectedBlockIndex, { ...block.props, background: value });
+    }
+  }
+
+  function onBorderChange(value: string) {
+    if (hasSelection && selectionIndex !== null) {
+      const nextProps = selectionKind === "row"
+        ? updateRowOverride(block.props, selectionIndex, { borderColor: value })
+        : updateColOverride(block.props, selectionIndex, { borderColor: value });
+      updateBlock(selectedBlockIndex, nextProps);
+    } else {
+      updateBlock(selectedBlockIndex, { ...block.props, borderColor: value });
+    }
+  }
+
+  function clearOverride() {
+    if (!hasSelection || selectionIndex === null) return;
+    const nextProps = selectionKind === "row"
+      ? clearRowOverride(block.props, selectionIndex)
+      : clearColOverride(block.props, selectionIndex);
+    updateBlock(selectedBlockIndex, nextProps);
+  }
+
+  return (
+    <div className="flex flex-col gap-5 animate-[bubble-appear_0.2s_ease-out]">
+
+      {/* ── Size ────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="Rows">
+          <NumberInput
+            max="10"
+            min="1"
+            onChange={(value) => {
+              const nextRows = value === "" ? size.rows : value;
+              updateBlock(selectedBlockIndex, resizeTableProps(block.props, nextRows, size.columns));
+            }}
+            step="1"
+            value={size.rows}
+          />
+        </Field>
+        <Field label="Columns">
+          <NumberInput
+            max="10"
+            min="1"
+            onChange={(value) => {
+              const nextColumns = value === "" ? size.columns : value;
+              updateBlock(selectedBlockIndex, resizeTableProps(block.props, size.rows, nextColumns));
+            }}
+            step="1"
+            value={size.columns}
+          />
+        </Field>
+      </div>
+
+      <TableCellMatrix
+        cells={cells}
+        columns={size.columns}
+        onChange={(rowIndex, columnIndex, value) => {
+          updateBlock(
+            selectedBlockIndex,
+            updateTableCell(block.props, rowIndex, columnIndex, value),
+            undefined,
+            { skipReplay: true }
+          );
+        }}
+        rows={size.rows}
+        selection={tableSelection}
+      />
+
+      {/* ── Color Palette ───────────────────────────────────────── */}
+      <div className="flex flex-col gap-3">
+        {/* Scope indicator */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded ${hasSelection ? "bg-violet-500/20 text-violet-300" : "bg-white/[0.06] text-neutral-400"}`}>
+              {hasSelection
+                ? selectionKind === "row" ? <Rows3 size={12} /> : <Columns3 size={12} />
+                : <Grid3X3 size={12} />
+              }
+            </span>
+            <span className={`text-[12px] font-medium ${hasSelection ? "text-violet-300" : "text-neutral-400"}`}>
+              {selectionLabel}
+            </span>
+          </div>
+          {hasSelection ? (
+            <button
+              className="flex h-5 items-center gap-1 rounded px-1.5 text-[10px] font-medium text-neutral-500 transition-colors hover:bg-white/[0.05] hover:text-red-300 cursor-pointer"
+              onClick={clearOverride}
+              title="Reset to table default"
+              type="button"
+            >
+              <X size={10} />
+              Reset
+            </button>
+          ) : null}
+        </div>
+
+        {/* Color swatches */}
+        <div className="grid grid-cols-2 gap-2">
+          <PaletteSwatch
+            color={bgColor}
+            label="Background"
+            onChange={onBgChange}
+            placeholder={hasSelection ? "Inherit" : "rgba(255,255,255,0.02)"}
+          />
+          <PaletteSwatch
+            color={borderColor}
+            label="Border"
+            onChange={onBorderChange}
+            placeholder={hasSelection ? "Inherit" : "#111827"}
+          />
+        </div>
+      </div>
+
+      {/* ── Font size (compact) ─────────────────────────────────── */}
+      <Field label="Font size">
+        <NumberInput
+          max="48"
+          min="8"
+          onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, fontSize: value === "" ? "" : value })}
+          step="1"
+          suffix="px"
+          value={block.props.fontSize ?? 18}
+        />
+      </Field>
+
+      {/* ── Text Align ───────────────────────────────────────── */}
+      <IconSegmentedControl
+        label="Text align"
+        options={[
+          { label: "Left", value: "left", icon: <AlignLeft size={14} /> },
+          { label: "Center", value: "center", icon: <AlignCenter size={14} /> },
+          { label: "Right", value: "right", icon: <AlignRight size={14} /> },
+        ]}
+        value={String(block.props.textAlign ?? "left")}
+        onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, textAlign: value })}
+      />
+    </div>
+  );
+}
+
+function TableCellMatrix({
+  cells,
+  columns,
+  onChange,
+  rows,
+  selection
+}: {
+  cells: string[][];
+  columns: number;
+  onChange: (rowIndex: number, columnIndex: number, value: string) => void;
+  rows: number;
+  selection: TableSelection | null;
+}) {
+  const gridTemplateColumns = `34px repeat(${columns}, minmax(72px, 1fr))`;
+
+  return (
+    <Field label="Cells">
+      <div className="max-h-[220px] overflow-auto rounded-xl border border-white/[0.06] bg-white/[0.025] p-1.5 custom-scrollbar">
+        <div className="grid gap-1" style={{ gridTemplateColumns }}>
+          <div aria-hidden="true" className="h-7" />
+          {Array.from({ length: columns }, (_, columnIndex) => {
+            const selected = selection?.kind === "column" && selection.index === columnIndex;
+
+            return (
+              <div
+                className={`flex h-7 items-center justify-center rounded-md text-[11px] font-semibold transition-colors ${
+                  selected ? "bg-pink-500/70 text-white" : "bg-white/[0.04] text-neutral-500"
+                }`}
+                key={`table-field-column-${columnIndex}`}
+              >
+                {columnLabel(columnIndex)}
+              </div>
+            );
+          })}
+
+          {Array.from({ length: rows }, (_, rowIndex) => {
+            const rowSelected = selection?.kind === "row" && selection.index === rowIndex;
+
+            return (
+              <TableCellMatrixRow
+                cells={cells[rowIndex] ?? []}
+                columns={columns}
+                key={`table-field-row-${rowIndex}`}
+                onChange={onChange}
+                rowIndex={rowIndex}
+                rowSelected={rowSelected}
+                selectedColumnIndex={selection?.kind === "column" ? selection.index : null}
+              />
+            );
+          })}
+        </div>
+      </div>
+    </Field>
+  );
+}
+
+function TableCellMatrixRow({
+  cells,
+  columns,
+  onChange,
+  rowIndex,
+  rowSelected,
+  selectedColumnIndex
+}: {
+  cells: string[];
+  columns: number;
+  onChange: (rowIndex: number, columnIndex: number, value: string) => void;
+  rowIndex: number;
+  rowSelected: boolean;
+  selectedColumnIndex: number | null;
+}) {
+  return (
+    <>
+      <div
+        className={`flex h-8 items-center justify-center rounded-md text-[11px] font-semibold transition-colors ${
+          rowSelected ? "bg-pink-500/70 text-white" : "bg-white/[0.04] text-neutral-500"
+        }`}
+      >
+        {rowIndex + 1}
+      </div>
+      {Array.from({ length: columns }, (_, columnIndex) => {
+        const selected = rowSelected || selectedColumnIndex === columnIndex;
+
+        return (
+          <input
+            aria-label={`Cell ${columnLabel(columnIndex)}${rowIndex + 1}`}
+            className={`h-8 min-w-0 rounded-md border px-2 text-[12px] text-neutral-200 outline-none transition-colors placeholder:text-neutral-700 ${
+              selected
+                ? "border-pink-400/60 bg-pink-500/12 focus:border-pink-300/80"
+                : "border-white/[0.05] bg-black/20 hover:bg-white/[0.04] focus:border-white/20 focus:bg-white/[0.06]"
+            }`}
+            key={`table-field-cell-${rowIndex}-${columnIndex}`}
+            onChange={(event) => onChange(rowIndex, columnIndex, event.currentTarget.value)}
+            value={cells[columnIndex] ?? ""}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+// ─── Palette Swatch ──────────────────────────────────────────────────
+
+function PaletteSwatch({
+  color,
+  label,
+  onChange,
+  placeholder
+}: {
+  color: string;
+  label: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [popoverStyle, setPopoverStyle] = useState<CSSProperties>({});
+  const swatchRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const { customSwatches } = useCustomSwatches();
+  const resolvedColor = color || placeholder;
+  const swatchBg = colorSwatchStyle(resolvedColor);
+  const pickerValue = hexColorValue(color) ?? hexColorValue(placeholder) ?? "#ffffff";
+  const presets = uniqueColors([...customSwatches, ...defaultColorPresets]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function updatePosition() {
+      const rect = swatchRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const width = 240;
+      const margin = 12;
+      const left = Math.min(Math.max(rect.left, margin), Math.max(window.innerWidth - width - margin, margin));
+      const top = window.innerHeight - rect.bottom < 300
+        ? Math.max(margin, rect.top - 310)
+        : rect.bottom + 8;
+      setPopoverStyle({ left, position: "fixed", top, width, zIndex: 1000 });
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as Node;
+      if (swatchRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setIsOpen(false);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsOpen(false);
+    }
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("mousedown", handlePointerDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("mousedown", handlePointerDown);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[11px] font-medium text-neutral-500">{label}</span>
+      <button
+        ref={swatchRef}
+        type="button"
+        className="group relative flex h-10 w-full items-end overflow-hidden rounded-lg border border-white/[0.08] transition-all hover:border-white/20 hover:shadow-[0_0_12px_rgba(139,92,246,0.1)] cursor-pointer"
+        onClick={() => setIsOpen((v) => !v)}
+        aria-expanded={isOpen}
+      >
+        <span className="absolute inset-0" style={swatchBg} />
+        <span className="relative z-10 w-full truncate bg-gradient-to-t from-black/60 to-transparent px-2 pb-1 pt-3 text-left font-mono text-[10px] text-white/70 group-hover:text-white/90">
+          {color || "Default"}
+        </span>
+      </button>
+
+      {isOpen && typeof document !== "undefined" ? createPortal(
+        <div
+          ref={panelRef}
+          className="rounded-xl border border-neutral-700 bg-[#111111] p-3 shadow-2xl shadow-black/60"
+          style={popoverStyle}
+        >
+          <div className="mb-2.5 flex items-center justify-between">
+            <span className="text-xs font-semibold text-neutral-300">{label}</span>
+            <button
+              className="rounded border border-neutral-800 px-2 py-0.5 text-[11px] text-neutral-400 transition-colors hover:border-neutral-600 hover:text-white cursor-pointer"
+              onClick={() => { onChange(""); setIsOpen(false); }}
+              type="button"
+            >
+              Clear
+            </button>
+          </div>
+
+          {/* Input */}
+          <div className="flex items-center gap-2 mb-2.5">
+            <span className="h-7 w-7 shrink-0 rounded-md border border-white/15 shadow-inner" style={swatchBg} />
+            <input
+              className="w-full rounded border border-neutral-800 bg-black px-2 py-1 font-mono text-xs text-neutral-200 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-500"
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={placeholder}
+              type="text"
+              value={color}
+            />
+          </div>
+
+          {/* Picker */}
+          <div className="flex items-center gap-2 mb-2.5">
+            <input
+              aria-label={`${label} picker`}
+              className="h-7 flex-1 cursor-pointer rounded border border-neutral-800 bg-transparent p-0"
+              onChange={(e) => onChange(e.target.value)}
+              type="color"
+              value={pickerValue}
+            />
+            <span className="font-mono text-[11px] text-neutral-500">{pickerValue.toUpperCase()}</span>
+          </div>
+
+          {/* Presets */}
+          <div className="grid grid-cols-8 gap-1">
+            <button
+              aria-label="Use transparent"
+              className={`relative flex h-5 items-center justify-center overflow-hidden rounded border transition-transform hover:scale-110 ${
+                color === "transparent" ? "border-white" : "border-neutral-700 bg-neutral-900"
+              }`}
+              onClick={() => onChange("transparent")}
+              type="button"
+            >
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiM0NCIvPjxyZWN0IHg9IjQiIHk9IjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiM0NCIvPjwvc3ZnPg==')] opacity-50" />
+              <div className="absolute inset-0 m-auto h-[2px] w-[140%] -rotate-45 bg-red-500/80" />
+            </button>
+            {presets.map((preset) => (
+              <button
+                aria-label={`Use ${preset}`}
+                className={`h-5 rounded border transition-transform hover:scale-110 ${
+                  color.toLowerCase() === preset.toLowerCase() ? "border-white" : "border-neutral-700"
+                }`}
+                key={preset}
+                onClick={() => onChange(preset)}
+                style={{ background: preset }}
+                type="button"
+              />
+            ))}
+          </div>
+        </div>,
+        document.body
+      ) : null}
+    </div>
+  );
+}

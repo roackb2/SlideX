@@ -4,7 +4,7 @@ import { BrieflyBuilder } from "@/features/briefly";
 export const metadata: Metadata = {
   title: "SlideX Briefly Workspace",
   description:
-    "Create a structured project brief, preview it as a polished document, and export it as MDX, HTML, or PDF."
+    "Create a structured project brief, preview it as a polished document, and export it as MDX or HTML."
 };
 
 export default function BrieflyWorkspacePage() {

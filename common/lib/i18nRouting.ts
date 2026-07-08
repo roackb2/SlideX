@@ -33,7 +33,7 @@ const pageMetadata = {
   "zh-TW": {
     briefly: {
       title: "SlideX Briefly — 專案需求建構器",
-      description: "建立結構化專案需求文件，即時預覽為精美文檔，並匯出為 MDX、HTML 或 PDF。",
+      description: "建立結構化專案需求文件，即時預覽為精美文檔，並匯出為 MDX 或 HTML。",
     },
     home: {
       title: "SlideX — 動態簡報與專案文件平台",
@@ -51,7 +51,7 @@ const pageMetadata = {
   en: {
     briefly: {
       title: "SlideX Briefly — Project Brief Builder",
-      description: "Create structured project briefs, preview polished documents, and export to MDX, HTML, or PDF.",
+      description: "Create structured project briefs, preview polished documents, and export to MDX or HTML.",
     },
     home: {
       title: "SlideX — Motion Decks and Project Briefs",

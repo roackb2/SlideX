@@ -1,7 +1,7 @@
 "use client";
 
-import { BarChart3, ChevronUp, ChevronDown, Gauge, GripVertical, Image as ImageIcon, MousePointer2, PlaySquare, Rows3, Shapes, Sparkles, Trash2 } from "lucide-react";
-import type { MouseEvent } from "react";
+import { BarChart3, ChevronUp, ChevronDown, Gauge, GripVertical, Image as ImageIcon, MousePointer2, PlaySquare, Rows3, Shapes, Sparkles, Table2, Trash2 } from "lucide-react";
+import type { MouseEvent, PointerEvent } from "react";
 import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
 
 export function LayerTextIcon({ className = "", label }: { className?: string; label: "H" | "T" }) {
@@ -22,8 +22,25 @@ export function BlockLayerIcon({ block, className = "" }: { block: MotionDocBloc
   if (block.type === "Icon") return <Sparkles className={className} size={12} />;
   if (block.type === "Shape") return <Shapes className={className} size={12} />;
   if (block.type === "Stack") return <Rows3 className={className} size={12} />;
+  if (block.type === "Table") return <Table2 className={className} size={12} />;
 
   return <MousePointer2 className={className} size={12} />;
+}
+
+function blockLayerLabel(block: MotionDocBlock) {
+  if ("text" in block && block.text.trim()) {
+    return block.text;
+  }
+
+  if (block.type === "Table") {
+    return "Table";
+  }
+
+  if ("props" in block) {
+    return String(block.props.title || block.props.text || block.type);
+  }
+
+  return block.type;
 }
 
 export function LayerRow({
@@ -104,7 +121,7 @@ export function LayerRow({
           <GripVertical size={12} className="opacity-30 group-hover:opacity-100" />
         </div>
         <BlockLayerIcon block={block} />
-        <span className="truncate text-sm font-semibold text-neutral-300 group-hover:text-white transition-colors">{("text" in block ? block.text : "") || ("props" in block ? String(block.props.title || block.props.text || "Element") : "")}</span>
+        <span className="truncate text-sm font-semibold text-neutral-300 group-hover:text-white transition-colors">{blockLayerLabel(block)}</span>
       </div>
       <div className="flex items-center gap-1">
         <div className="flex items-center gap-1 opacity-0 transition-all group-hover:opacity-100">
@@ -114,11 +131,29 @@ export function LayerRow({
         <button className="shrink-0 p-0.5 text-neutral-400 transition-all hover:text-white disabled:opacity-30" disabled={index === totalBlocks - 1} onClick={(event) => { event.stopPropagation(); moveBlock(index, 1); }}>
           <ChevronDown size={12} />
         </button>
-        <button className="ml-1 shrink-0 p-0.5 text-neutral-400 transition-all hover:text-red-400" onClick={(event) => { event.stopPropagation(); deleteBlock(index); }}>
+        <button
+          aria-label="Delete layer"
+          className="ml-1 shrink-0 p-0.5 text-neutral-400 transition-all hover:text-red-400"
+          onClick={(event) => {
+            event.stopPropagation();
+
+            if (event.detail === 0) {
+              deleteBlock(index);
+            }
+          }}
+          onPointerDown={(event) => runLayerPointerAction(event, () => deleteBlock(index))}
+          title="Delete layer"
+        >
           <Trash2 size={12} />
         </button>
         </div>
       </div>
     </div>
   );
+}
+
+function runLayerPointerAction(event: PointerEvent<HTMLButtonElement>, action: () => void) {
+  event.preventDefault();
+  event.stopPropagation();
+  action();
 }

@@ -1,3 +1,5 @@
+import { defaultShaderPaletteForBackground } from "@/core/motion-doc/application/shaders/shaderDefaults";
+
 export type SlideThemeTone = "dark" | "light";
 export type ShaderEngine = "three";
 
@@ -12,6 +14,9 @@ export type SlideThemeColors = {
   shaderColor1: string;
   shaderColor2: string;
   shaderColor3: string;
+  shaderColor4: string;
+  shaderColor5: string;
+  shaderColor6: string;
   shaderEngine: ShaderEngine;
   theme: string;
   tone: SlideThemeTone;
@@ -46,6 +51,12 @@ export function resolveSlideThemeColors(
   const shaderColor1 = stringProp(props.shaderColor1) ?? accent;
   const shaderColor2 = stringProp(props.shaderColor2) ?? background;
   const shaderColor3 = stringProp(props.shaderColor3) ?? (backgroundLightness > 0.62 ? "#64748b" : "#06b6d4");
+
+  const defaultPalette = defaultShaderPaletteForBackground(backgroundLightness, background);
+  const shaderColor4 = stringProp(props.shaderColor4) ?? defaultPalette.color4;
+  const shaderColor5 = stringProp(props.shaderColor5) ?? defaultPalette.color5;
+  const shaderColor6 = stringProp(props.shaderColor6) ?? defaultPalette.color6;
+
   const visualLightness = shader
     ? estimateShaderLightness(backgroundLightness, [shaderColor1, shaderColor2, shaderColor3], numberProp(props.shaderIntensity, 0.5))
     : backgroundLightness;
@@ -66,6 +77,9 @@ export function resolveSlideThemeColors(
     shaderColor1,
     shaderColor2,
     shaderColor3,
+    shaderColor4,
+    shaderColor5,
+    shaderColor6,
     shaderEngine: shaderEngineProp(props.shaderEngine),
     theme,
     tone: isLight ? "light" : "dark"

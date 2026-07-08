@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DesktopWelcome } from "@/features/pitch/ui/DesktopWelcome";
 
 import { PitchWorkspace } from "@/features/pitch/ui/PitchWorkspace";
+import { ExportModal, type ExportFormat } from "@/features/pitch/ui/export/ExportModal";
 import { defaultMdx } from "@/core/motion-doc/presets/defaultMdx";
 import { getSelectionMdx } from "@/core/motion-doc/application/motionDocSerialize";
 import { useLayerSelection } from "@/features/pitch/ui/hooks/useLayerSelection";
@@ -27,6 +28,7 @@ export function MotionDocApp() {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [isCanvasGridVisible, setIsCanvasGridVisible] = useState(false);
   const [activeCanvasTool, setActiveCanvasTool] = useState<CanvasTool>(defaultCanvasTool);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
@@ -44,12 +46,18 @@ export function MotionDocApp() {
     activeSlideLayoutPreset,
     activeSlideMutedColor,
     activeSlideShader,
+    activeSlideShaderAngle,
     activeSlideShaderColor1,
     activeSlideShaderColor2,
     activeSlideShaderColor3,
+    activeSlideShaderColor4,
+    activeSlideShaderColor5,
+    activeSlideShaderColor6,
+
     activeSlideShaderDetail,
     activeSlideShaderEngine,
     activeSlideShaderIntensity,
+    activeSlideShaderPreset,
     activeSlideShaderScale,
     activeSlideShaderSoftness,
     activeSlideShaderSpeed,
@@ -101,12 +109,28 @@ export function MotionDocApp() {
     source,
     undoStackRef
   });
-  const { copySource, exportHtmlFile, exportMdxFile, exportPdfFile } = usePitchExport({
+  const { copySource, exportHtmlFile, exportMdxFile } = usePitchExport({
     canvasSource,
     documentTitle: sliderDocument.title,
-    setIsExportMenuOpen,
     setNotice
   });
+
+  const handleExportFromModal = useCallback(async (format: ExportFormat, filename: string) => {
+    setIsExporting(true);
+    try {
+      switch (format) {
+        case "html":
+          await exportHtmlFile(filename);
+          break;
+        case "mdx":
+          await exportMdxFile(filename);
+          break;
+      }
+    } finally {
+      setIsExporting(false);
+      setIsExportMenuOpen(false);
+    }
+  }, [exportHtmlFile, exportMdxFile]);
   const pitchCommands = usePitchCommands({
     activeSlide,
     activeSlideIndex,
@@ -144,6 +168,12 @@ export function MotionDocApp() {
         return;
       }
 
+      // Safeguard: If click target is inside a dialog/modal container, do not close
+      const target = event.target as HTMLElement | null;
+      if (target?.closest?.('[role="dialog"]') || target?.closest?.('.fixed')) {
+        return;
+      }
+
       setIsExportMenuOpen(false);
     }
 
@@ -160,6 +190,7 @@ export function MotionDocApp() {
   );
 
   usePitchShortcuts({
+    activeCanvasTool,
     activeSlideIndex,
     closeCodeEditor: () => setIsCodeEditorOpen(false),
     closeExportMenu: () => setIsExportMenuOpen(false),
@@ -171,8 +202,6 @@ export function MotionDocApp() {
     deleteSelectedBlocks: pitchCommands.deleteSelectedBlocks,
     deleteSlide: pitchCommands.deleteSlide,
     duplicateSelectedBlock: pitchCommands.duplicateSelectedBlock,
-    exportHtmlFile,
-    exportMdxFile,
     goToNextSlide: pitchCommands.goToNextSlide,
     goToPreviousSlide: pitchCommands.goToPreviousSlide,
     isCodeEditorOpen,
@@ -202,6 +231,7 @@ export function MotionDocApp() {
   }
 
   return (
+    <>
     <PitchWorkspace
       activeSlide={activeSlide}
       activeSlideAccent={activeSlideAccent}
@@ -213,12 +243,18 @@ export function MotionDocApp() {
       activeSlideLayoutPreset={activeSlideLayoutPreset}
       activeSlideMutedColor={activeSlideMutedColor}
       activeSlideShader={activeSlideShader}
+      activeSlideShaderAngle={activeSlideShaderAngle}
       activeSlideShaderColor1={activeSlideShaderColor1}
       activeSlideShaderColor2={activeSlideShaderColor2}
       activeSlideShaderColor3={activeSlideShaderColor3}
+      activeSlideShaderColor4={activeSlideShaderColor4}
+      activeSlideShaderColor5={activeSlideShaderColor5}
+      activeSlideShaderColor6={activeSlideShaderColor6}
+
       activeSlideShaderDetail={activeSlideShaderDetail}
       activeSlideShaderEngine={activeSlideShaderEngine}
       activeSlideShaderIntensity={activeSlideShaderIntensity}
+      activeSlideShaderPreset={activeSlideShaderPreset}
       activeSlideShaderScale={activeSlideShaderScale}
       activeSlideShaderSoftness={activeSlideShaderSoftness}
       activeSlideShaderSpeed={activeSlideShaderSpeed}
@@ -227,7 +263,6 @@ export function MotionDocApp() {
       activeCanvasTool={activeCanvasTool}
       addBlockToActiveSlide={pitchCommands.addBlockToActiveSlide}
       addSlide={pitchCommands.addSlide}
-      addTextAtPosition={pitchCommands.addTextAtPosition}
       applyLayoutToActiveSlide={pitchCommands.applyLayoutToActiveSlide}
       applyTemplate={pitchCommands.applyTemplate}
       beginBlockTransform={pitchCommands.beginBlockTransform}
@@ -245,9 +280,6 @@ export function MotionDocApp() {
       duplicateSelectedBlock={pitchCommands.duplicateSelectedBlock}
       draggedBlockIndex={draggedBlockIndex}
       dragOverBlockIndex={dragOverBlockIndex}
-      exportHtmlFile={exportHtmlFile}
-      exportMdxFile={exportMdxFile}
-      exportPdfFile={exportPdfFile}
       exportMenuRef={exportMenuRef}
       goToNextSlide={pitchCommands.goToNextSlide}
       goToPreviousSlide={pitchCommands.goToPreviousSlide}
@@ -305,5 +337,13 @@ export function MotionDocApp() {
       uploadImageForBlock={pitchCommands.uploadImageForBlock}
       uploadVideoForBlock={pitchCommands.uploadVideoForBlock}
     />
+    <ExportModal
+      isOpen={isExportMenuOpen}
+      onClose={() => setIsExportMenuOpen(false)}
+      onExport={handleExportFromModal}
+      documentTitle={sliderDocument.title}
+      isExporting={isExporting}
+    />
+    </>
   );
 }

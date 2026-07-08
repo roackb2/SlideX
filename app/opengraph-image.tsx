@@ -8,19 +8,7 @@ export const size = {
 };
 export const contentType = "image/png";
 
-async function getFont(url: string): Promise<ArrayBuffer> {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Failed to fetch font: ${url}`);
-  return response.arrayBuffer();
-}
-
 export default async function OpenGraphImage() {
-  const [outfitRegular, outfitBold, jetbrainsMono] = await Promise.all([
-    getFont("https://fonts.gstatic.com/s/outfit/v15/QGYyz_MVcBeNP4NjuGObqx1XmO1I4TC1O4a0Fg.ttf"),
-    getFont("https://fonts.gstatic.com/s/outfit/v15/QGYyz_MVcBeNP4NjuGObqx1XmO1I4deyO4a0Fg.ttf"),
-    getFont("https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxTOlOQ.ttf")
-  ]);
-
   const tracks = [
     { label: "Title", left: "0%", width: "70%", color: "#a9c0ff", opacity: 0.8 },
     { label: "Chart", left: "20%", width: "80%", color: "#8ea5ff", opacity: 1 },
@@ -43,7 +31,7 @@ export default async function OpenGraphImage() {
           padding: "60px 80px",
           background:
             "radial-gradient(circle at 50% -20%, rgba(142,165,255,0.16) 0%, transparent 55%), radial-gradient(circle at 10% 90%, rgba(15,17,28,0.6) 0%, transparent 45%), #05060b",
-          fontFamily: "Outfit, sans-serif",
+          fontFamily: "Arial, sans-serif",
           position: "relative",
           overflow: "hidden"
         }}
@@ -168,7 +156,7 @@ export default async function OpenGraphImage() {
                 fontWeight: 400
               }}
             >
-              Compose cinematic Slides with MDX, fine-tune timings on an interactive timeline, and export editable slides or video.
+              Compose cinematic slides with MDX, fine-tune timings on an interactive timeline, and export clean HTML or MDX.
             </div>
           </div>
 
@@ -199,7 +187,7 @@ export default async function OpenGraphImage() {
                 display: "flex",
                 fontSize: 13,
                 color: "#4f5666",
-                fontFamily: "JetBrains Mono"
+                fontFamily: "monospace"
               }}
             >
               slide-x-psi.vercel.app
@@ -281,7 +269,7 @@ export default async function OpenGraphImage() {
                     display: "flex",
                     fontSize: 11,
                     color: "#4f5666",
-                    fontFamily: "JetBrains Mono"
+                    fontFamily: "monospace"
                   }}
                 >
                   UTF-8
@@ -300,7 +288,7 @@ export default async function OpenGraphImage() {
                     border: "1px solid rgba(255,255,255,0.03)",
                     borderRadius: 12,
                     padding: "16px 14px",
-                    fontFamily: "JetBrains Mono, monospace",
+                    fontFamily: "monospace",
                     fontSize: 12,
                     gap: 2
                   }}
@@ -395,7 +383,7 @@ export default async function OpenGraphImage() {
                         justifyContent: "space-between",
                         fontSize: 10,
                         color: "#4f5666",
-                        fontFamily: "JetBrains Mono"
+                        fontFamily: "monospace"
                       }}
                     >
                       <span>0s</span>
@@ -459,7 +447,7 @@ export default async function OpenGraphImage() {
               gap: 8
             }}
           >
-            {(["MDX", "HTML5", "MP4"] as const).map((tag, idx) => (
+            {(["MDX", "HTML"] as const).map((tag, idx) => (
               <div
                 key={tag}
                 style={{
@@ -486,13 +474,6 @@ export default async function OpenGraphImage() {
         </div>
       </div>
     ),
-    {
-      ...size,
-      fonts: [
-        { name: "Outfit", data: outfitRegular, style: "normal", weight: 400 },
-        { name: "Outfit", data: outfitBold, style: "normal", weight: 700 },
-        { name: "JetBrains Mono", data: jetbrainsMono, style: "normal", weight: 400 }
-      ]
-    }
+    size
   );
 }

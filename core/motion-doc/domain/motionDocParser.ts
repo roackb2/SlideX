@@ -9,7 +9,7 @@ export type MotionDocBlock =
       text: string;
     }
   | {
-      type: "Card" | "Chart" | "Icon" | "ImageBlock" | "Metric" | "Shape" | "Stack" | "VideoBlock";
+      type: "Card" | "Chart" | "Icon" | "ImageBlock" | "Metric" | "Shape" | "Stack" | "Table" | "VideoBlock";
       props: Record<string, string | number>;
     };
 
@@ -51,7 +51,7 @@ export function parseMotionDoc(source: string): ParsedMotionDoc {
 function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
   const blocks: MotionDocBlock[] = [];
   const blockPattern =
-    /<(Title|Text)\b([^>]*)>([\s\S]*?)<\/\1>|<(Card|ImageBlock|VideoBlock|Metric|Chart|Icon|Shape|Stack)\b([\s\S]*?)\/>/g;
+    /<(Title|Text)\b([^>]*)>([\s\S]*?)<\/\1>|<(Card|ImageBlock|VideoBlock|Metric|Chart|Icon|Shape|Stack|Table)\b([\s\S]*?)\/>/g;
   let markdownSource = sceneSource;
 
   for (const match of sceneSource.matchAll(blockPattern)) {
@@ -65,6 +65,7 @@ function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
       | "Metric"
       | "Shape"
       | "Stack"
+      | "Table"
       | "VideoBlock"
       | undefined;
 
@@ -121,19 +122,33 @@ function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
 
 function parseProps(rawProps: string): Record<string, string | number> {
   const props: Record<string, string | number> = {};
-  const propPattern = /([A-Za-z][A-Za-z0-9]*)\s*=\s*(?:"([^"]*)"|\{([^}]*)\})/g;
+  const propPattern = /([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|\{([^}]*)\})/g;
 
   for (const match of rawProps.matchAll(propPattern)) {
     const key = match[1];
-    const quotedValue = match[2];
-    const expressionValue = match[3];
-    const value = quotedValue ?? expressionValue ?? "";
+    const quotedValue = match[2] ?? match[3];
+    const expressionValue = match[4];
+    const value = quotedValue === undefined
+      ? expressionValue ?? ""
+      : decodeMdxAttribute(quotedValue);
     const numericValue = Number(value);
 
     props[key] = Number.isFinite(numericValue) && value.trim() !== "" ? numericValue : value;
   }
 
   return props;
+}
+
+function decodeMdxAttribute(value: string) {
+  return value
+    .replaceAll("&#10;", "\n")
+    .replaceAll("&#xA;", "\n")
+    .replaceAll("&#xa;", "\n")
+    .replaceAll("&quot;", "\"")
+    .replaceAll("&apos;", "'")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&");
 }
 
 function normalizeText(value: string) {

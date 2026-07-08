@@ -1,4 +1,5 @@
 import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
+import { createTableCells, serializeTableCells } from "@/core/motion-doc/application/tableBlock";
 
 export type AddBlockType =
   | "Title"
@@ -20,6 +21,7 @@ export type AddBlockType =
   | "ChartPie"
   | "ChartDonut"
   | "Icon"
+  | "Table"
   | "ShapeRectangle"
   | "ShapeCircle"
   | "ShapeTriangle"
@@ -29,6 +31,27 @@ export type AddBlockType =
 
 export function createMotionDocBlock(type: AddBlockType): MotionDocBlock {
   switch (type) {
+    case "Table":
+      return {
+        type: "Table",
+        props: {
+          borderColor: "rgba(255,255,255,0.18)",
+          cellBackground: "rgba(255,255,255,0.04)",
+          cells: serializeTableCells(createTableCells(3, 4)),
+          color: "#ffffff",
+          columns: 4,
+          enter: "none",
+          fontSize: 16,
+          h: 30,
+          headerHeight: 26,
+          rowHeaderWidth: 34,
+          rows: 3,
+          stripeBackground: "rgba(255,255,255,0.07)",
+          w: 56,
+          x: 22,
+          y: 34
+        }
+      } as MotionDocBlock;
     case "Title":
       return { type: "Title", props: { enter: "none", fontSize: 72, x: 9, y: 18, w: 52, h: 18 }, text: "New Title" } as MotionDocBlock;
     case "Text":

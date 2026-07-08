@@ -32,9 +32,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
         zoomLevel={zoomLevel}
         setZoomLevel={setZoomLevel}
         actualScale={zoomLevel === "fit" ? fitScale : zoomLevel}
-        onExportHtml={props.exportHtmlFile}
-        onExportMdx={props.exportMdxFile}
-        onExportPdf={props.exportPdfFile}
+
         onReplay={() => props.setReplayNonce((value) => value + 1)}
         onToggleInspector={() => {
           props.setIsMobileInspectorOpen((value) => !value);
@@ -62,7 +60,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
           canPasteBlock={props.hasCopiedBlock}
           isGridVisible={props.isCanvasGridVisible}
           onAddBlock={props.addBlockToActiveSlide}
-          onAddTextAtPosition={props.addTextAtPosition}
+
           onBeginBlockTransform={props.beginBlockTransform}
           onClearSelection={props.clearBlockSelection}
           onCopySelectedBlock={props.copySelectedBlock}
@@ -74,7 +72,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
           onInsertSlideNearActive={props.insertSlideNearActive}
           onSelectBlock={props.selectBlock}
           onSelectBlocks={props.selectBlocks}
-          onSelectSlide={props.setActiveSlideIndex}
+          onSelectSlide={selectSlide}
           onToggleSelectedBlocksPositionLock={props.toggleSelectedBlocksPositionLock}
           onUpdateBlock={props.updateBlock}
           onUpdateBlockFrames={props.updatePositionedBlockFrames}
@@ -84,9 +82,9 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
           selectedBlockIndex={props.selectedBlockIndex}
           selectedBlockIndices={props.selectedBlockIndices}
           selectedBlocksLocked={props.selectedBlocksLocked}
+          scenes={props.scenes}
           slideRows={props.slideRows}
           source={props.canvasSource}
-          totalDuration={props.totalDuration}
           onCanvasToolChange={props.setActiveCanvasTool}
         />
 

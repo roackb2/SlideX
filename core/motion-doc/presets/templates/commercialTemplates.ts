@@ -10,7 +10,7 @@ export const commercialTemplates: MotionTemplate[] = [
     useCase: "Board updates, growth strategy, enterprise sales narratives",
     source: `# Black Boardroom
 
-<Slide duration={5} theme="dark" background="#030303" accent="#ffffff" shader="aurora" shaderIntensity={0.6} shaderColor1="#ffffff" shaderColor2="#030303" shaderColor3="#27272a" textColor="#ffffff">
+<Slide duration={5} theme="dark" background="#030303" accent="#ffffff" shader="god-rays" shaderPreset="Linear" shaderIntensity={0.79} shaderSoftness={0.25} shaderDetail={0.41} shaderSpeed={0.5} shaderColor1="#000000" shaderColor2="#eeeeee" shaderColor3="#ffffff" shaderColor4="#d4d4d8" shaderColor5="#525252" shaderColor6="#fafafa" textColor="#ffffff">
   <Text enter="zoomIn" fontSize={84} fontWeight={800} h={28} w={90} x={5} y={18} textAlign="center">Growth Investment Memo</Text>
   <Text enter="fadeUp" delay={0.2} fontSize={24} lineHeight={1.6} h={22} w={70} x={15} y={56} textAlign="center">A boardroom-ready narrative for framing the decision, sizing the opportunity, and aligning the next operating move.</Text>
 </Slide>
@@ -85,7 +85,7 @@ export const commercialTemplates: MotionTemplate[] = [
   <Text enter="fadeUp" delay={0.75} fontSize={19} lineHeight={1.6} x={15} y={90} w={78} h={18}>Turn the winning narrative into governed templates and repeatable workflows.</Text>
 </Slide>
 
-<Slide duration={5} theme="dark" background="#030303" accent="#ffffff" shader="waves" shaderColor1="#171717" shaderColor2="#030303" shaderColor3="#27272a" shaderIntensity={0.3}>
+<Slide duration={5} theme="dark" background="#030303" accent="#ffffff" shader="water" shaderPreset="Streaming" shaderColor1="#082f49" shaderColor2="#ffffff" shaderColor3="#0ea5e9" shaderColor4="#bae6fd" shaderColor5="#030303" shaderColor6="#f0f9ff" shaderIntensity={0} shaderSoftness={0.5} shaderDetail={0.5} shaderSpeed={2}>
   <Text enter="zoomIn" fontSize={80} fontWeight={800} h={22} w={80} x={10} y={28} textAlign="center">Decision requested</Text>
   <Text enter="fadeUp" delay={0.2} fontSize={26} lineHeight={1.6} h={24} x={13} y={56} w={74} textAlign="center">Approve a focused commercial pilot, validate the operating impact, then expand the black and white template system.</Text>
 </Slide>`
@@ -100,7 +100,7 @@ export const commercialTemplates: MotionTemplate[] = [
     useCase: "Client proposals, investor updates, quarterly business reviews",
     source: `# White Executive
 
-<Slide duration={5} theme="light" background="#ffffff" accent="#111111" shader="aurora" shaderIntensity={0.5} shaderColor1="#111111" shaderColor2="#ffffff" shaderColor3="#d4d4d8" textColor="#111111">
+<Slide duration={5} theme="light" background="#ffffff" accent="#111111" shader="paper-texture" shaderPreset="Default" shaderIntensity={0.4} shaderSoftness={0.3} shaderDetail={0.3} shaderColor1="#ffffff" shaderColor2="#9fadbc" shaderColor3="#f4f4f5" shaderColor4="#d4d4d8" shaderColor5="#71717a" shaderColor6="#ffffff" textColor="#111111">
   <Text enter="zoomIn" fontSize={84} fontWeight={800} h={28} w={90} x={5} y={18} textAlign="center">Executive Growth Proposal</Text>
   <Text enter="fadeUp" delay={0.2} fontSize={24} lineHeight={1.6} h={22} w={70} x={15} y={56} textAlign="center">A client-ready narrative for aligning the opportunity, proving the business case, and moving leadership toward a clear decision.</Text>
 </Slide>
@@ -175,7 +175,7 @@ export const commercialTemplates: MotionTemplate[] = [
   <Text enter="fadeUp" delay={0.75} fontSize={19} lineHeight={1.6} x={15} y={90} w={78} h={18}>Export MDX and interactive HTML for stakeholder review, then tighten the final executive ask.</Text>
 </Slide>
 
-<Slide duration={5} theme="light" background="#ffffff" accent="#111111" shader="mesh" shaderColor1="#ffffff" shaderColor2="#f4f4f5" shaderColor3="#d4d4d8" shaderIntensity={0.4}>
+<Slide duration={5} theme="light" background="#ffffff" accent="#111111" shader="static-mesh-gradient" shaderPreset="Sea" shaderColor1="#013b65" shaderColor2="#03738c" shaderColor3="#a3d3ff" shaderColor4="#f2faef" shaderColor5="#ffffff" shaderColor6="#e0f2fe" shaderIntensity={0.53} shaderSoftness={0.5} shaderDetail={0} shaderSpeed={0}>
   <Text enter="zoomIn" fontSize={80} fontWeight={800} h={22} w={80} x={10} y={28} textAlign="center">Approve the pilot</Text>
   <Text enter="fadeUp" delay={0.2} fontSize={26} lineHeight={1.6} h={24} w={74} x={13} y={56} textAlign="center">Move forward with one executive-ready proposal workflow, validate the impact, then scale the black and white template system.</Text>
 </Slide>`

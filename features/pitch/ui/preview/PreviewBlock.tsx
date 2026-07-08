@@ -19,6 +19,7 @@ import {
 } from "@/features/pitch/application/previewProps";
 import { blockFrame } from "@/features/pitch/application/previewCanvas";
 import { Card, Chart, IconBlock, ImageBlock, Metric, ShapeBlock, StackBlock, Text, Title, VideoBlock } from "@/features/pitch/ui/preview/motion-blocks";
+import { TableBlock } from "@/features/pitch/ui/preview/motion/TableBlock";
 
 export type PreviewBlockItem = {
   block: MotionDocBlock;
@@ -138,6 +139,14 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
         fillFrame={fillFrame}
+        filter={stringProp(block.props.filter)}
+        filterAngle={numberProp(block.props.filterAngle)}
+        filterContrast={numberProp(block.props.filterContrast)}
+        filterDetail={numberProp(block.props.filterDetail)}
+        filterDistortion={numberProp(block.props.filterDistortion)}
+        filterPreset={stringProp(block.props.filterPreset)}
+        filterSize={numberProp(block.props.filterSize)}
+        filterSpeed={numberProp(block.props.filterSpeed)}
         fit={fitProp(block.props.fit)}
         full={booleanProp(block.props.full)}
         radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
@@ -264,6 +273,10 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
         stroke={stringProp(block.props.stroke)}
       />
     );
+  }
+
+  if (block.type === "Table") {
+    return <TableBlock fillFrame={fillFrame} props={block.props} />;
   }
 
   return null;

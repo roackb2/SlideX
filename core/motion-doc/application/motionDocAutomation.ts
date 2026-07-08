@@ -23,6 +23,7 @@ export const motionDocAddBlockTypes = [
   "ChartArea",
   "ChartPie",
   "ChartDonut",
+  "Table",
   "Icon"
 ] as const satisfies readonly AddBlockType[];
 
@@ -77,6 +78,7 @@ const supportedComponentTags = new Set([
   "Icon",
   "ImageBlock",
   "Slide",
+  "Table",
   "Text",
   "VideoBlock"
 ]);
@@ -255,7 +257,8 @@ function createCoverScene(
     props: {
       ...themeProps,
       duration: 5,
-      shader: "aurora",
+      shader: "mesh-gradient",
+      shaderPreset: "Default",
       shaderIntensity: 0.5
     },
     blocks: [

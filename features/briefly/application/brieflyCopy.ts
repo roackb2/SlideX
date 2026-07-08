@@ -5,12 +5,12 @@ export type BrieflyLocale = "zh-TW" | "en";
 export const brieflyCopy = {
   "zh-TW": {
     landing: {
-      heroBody: "使用 MDX 更快建立 Project Brief，把零散想法整理成結構化專案企劃，直接在文件畫布中預覽，再匯出 MDX、HTML 或 PDF。",
+      heroBody: "使用 MDX 更快建立 Project Brief，把零散想法整理成結構化專案企劃，直接在文件畫布中預覽，最後匯出 MDX 或 HTML。",
       primaryCta: "開始使用 SlideX Briefly",
       secondaryCta: "探索功能",
       mcpInstallEyebrow: "Briefly MCP Server",
       mcpInstallTitle: "用 npm 安裝 Briefly MCP。",
-      mcpInstallBody: "把 Brief Builder、文件審查、HTML 與 PDF 匯出工具接進 Claude Desktop、Cursor 或任何支援 MCP 的 AI Client。",
+      mcpInstallBody: "把 Brief Builder、文件審查、HTML 與 MDX 匯出工具接進 Claude Desktop、Cursor 或任何支援 MCP 的 AI Client。",
       mcpInstallCommand: "npm install -g @z7589xxz758/briefly-mcp-server",
       mcpPackageLabel: "查看 npm package",
       mcpPackageUrl: "https://www.npmjs.com/package/@z7589xxz758/briefly-mcp-server",
@@ -30,12 +30,12 @@ export const brieflyCopy = {
         ["模組化區塊編輯", "不再受限於死板的文件。使用結構化的區塊 (Blocks) 拼湊企劃，每個區塊都能獨立編輯與重複使用。"],
         ["原生 MDX 支援", "結合 Markdown 的簡潔與 React 元件的強大，讓文件具備動態表現力。"],
         ["即時高階預覽", "編輯的當下即時渲染成排版精美的終端文件格式，所見即所得。"],
-        ["結構化資料匯出", "企劃不只是給人看的。一鍵將文件轉換為結構化 JSON，供開發團隊無縫整合系統。"]
+        ["HTML 與 MDX 輸出", "企劃可以保持可編輯，也可以成為可分享的網頁文件。輸出格式只保留 HTML 與 MDX。"]
       ],
       workflow: [
         ["結構建構 (Builder)", "透過視覺化的介面拖曳區塊，快速搭起專案的骨架。"],
         ["屬性檢查 (Inspector)", "精細調整每個區塊的細節設定、欄位與特定 MDX 屬性。"],
-        ["文件輸出 (Export)", "無縫產出包含高階排版的 PDF 或是提供工程師的 JSON。"]
+        ["文件輸出 (Export)", "完成後輸出 HTML 成品，或保留 MDX 原始檔供團隊繼續編輯。"]
       ]
     },
     builder: {
@@ -56,10 +56,10 @@ export const brieflyCopy = {
       exportActions: {
         mdx: "匯出為 MDX",
         html: "匯出為 HTML",
-        pdf: "匯出為 PDF",
+        pdf: "匯出為 HTML",
         copy: "複製 MDX"
       },
-      exportPanelBody: "下載目前的專案企劃書或複製產生的 MDX 原始碼。",
+      exportPanelBody: "匯出目前的 HTML 文件，或複製與下載 MDX 原始碼。",
       left: {
         added: "已在文件中",
         add: "點擊加入",
@@ -81,7 +81,7 @@ export const brieflyCopy = {
         uploadBackground: "上傳背景圖片",
         processingImage: "圖片處理中...",
         fileTypes: "PNG, JPG 或 WebP",
-        developerJson: "開發者 JSON 預覽"
+        developerJson: "MDX 結構預覽"
       },
       preferences: {
         title: "偏好設定",
@@ -117,7 +117,7 @@ export const brieflyCopy = {
       toasts: {
         exportedMdx: "已匯出 MDX",
         exportedHtml: "已匯出 HTML",
-        preparingPdf: "正在準備 PDF",
+        preparingPdf: "正在準備 HTML",
         copiedMdx: "已複製 MDX",
         copyFailed: "無法複製，請改用匯出 MDX"
       }
@@ -305,12 +305,12 @@ export const brieflyCopy = {
   },
   en: {
     landing: {
-      heroBody: "Build project briefs faster with MDX. Turn loose ideas into a structured brief, preview the finished document on canvas, then export MDX, HTML, or PDF.",
+      heroBody: "Build project briefs faster with MDX. Turn loose ideas into a structured brief, preview the finished document on canvas, then export MDX or HTML.",
       primaryCta: "Start Using SlideX Briefly",
       secondaryCta: "Explore Features",
       mcpInstallEyebrow: "Briefly MCP Server",
       mcpInstallTitle: "Install Briefly MCP with npm.",
-      mcpInstallBody: "Connect Brief Builder, document review, HTML export, and PDF export tools to Claude Desktop, Cursor, or any MCP-capable AI client.",
+      mcpInstallBody: "Connect Brief Builder, document review, HTML export, and MDX export tools to Claude Desktop, Cursor, or any MCP-capable AI client.",
       mcpInstallCommand: "npm install -g @z7589xxz758/briefly-mcp-server",
       mcpPackageLabel: "Open npm package",
       mcpPackageUrl: "https://www.npmjs.com/package/@z7589xxz758/briefly-mcp-server",
@@ -330,12 +330,12 @@ export const brieflyCopy = {
         ["Modular Block Editing", "Stop fighting rigid documents. Compose briefs with structured blocks that can be edited and reused independently."],
         ["Native MDX Support", "Combine Markdown simplicity with React component power so documents can stay expressive and dynamic."],
         ["Live Premium Preview", "Render your edits immediately into a polished final document format."],
-        ["Structured Data Export", "Briefs are not only for reading. Convert documents into structured JSON for clean developer handoff."]
+        ["HTML and MDX Export", "Briefs stay editable and can become shareable web documents. The output surface stays focused on HTML and MDX."]
       ],
       workflow: [
         ["Structure Builder", "Drag blocks visually and assemble the project skeleton quickly."],
         ["Property Inspector", "Fine-tune each block's fields, details, and MDX-specific attributes."],
-        ["Document Export", "Produce a polished PDF or developer-ready JSON without breaking the flow."]
+        ["Document Export", "Export a polished HTML document, or keep the MDX source editable for the team."]
       ]
     },
     builder: {
@@ -356,10 +356,10 @@ export const brieflyCopy = {
       exportActions: {
         mdx: "Export as MDX",
         html: "Export as HTML",
-        pdf: "Export as PDF",
+        pdf: "Export as HTML",
         copy: "Copy MDX"
       },
-      exportPanelBody: "Download the current project brief or copy the generated MDX source.",
+      exportPanelBody: "Export the current HTML document, or copy and download the generated MDX source.",
       left: {
         added: "In document",
         add: "Click to add",
@@ -381,7 +381,7 @@ export const brieflyCopy = {
         uploadBackground: "Upload background image",
         processingImage: "Processing image...",
         fileTypes: "PNG, JPG, or WebP",
-        developerJson: "Developer JSON preview"
+        developerJson: "MDX structure preview"
       },
       preferences: {
         title: "Preferences",
@@ -417,7 +417,7 @@ export const brieflyCopy = {
       toasts: {
         exportedMdx: "MDX exported",
         exportedHtml: "HTML exported",
-        preparingPdf: "Preparing PDF",
+        preparingPdf: "Preparing HTML",
         copiedMdx: "MDX copied",
         copyFailed: "Could not copy. Use Export as MDX instead."
       }

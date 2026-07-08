@@ -2,11 +2,15 @@ import type { BusinessTemplateConfig, MotionTemplate } from "@/core/motion-doc/p
 
 function getCoverSlideOptions(templateId: string) {
   const options = {
-    shader: "aurora",
+    shader: "mesh-gradient",
+    shaderPreset: "Default",
     shaderIntensity: 0.55,
     shaderColor1: "#ffffff",
     shaderColor2: "#030303",
     shaderColor3: "#27272a",
+    shaderColor4: "#52525b",
+    shaderColor5: "#09090b",
+    shaderColor6: "#a1a1aa",
     textColor: "#ffffff"
   };
 
@@ -129,10 +133,14 @@ ${slide(theme, config.background, config.accent, [
 
 type SlideOptions = {
   shader?: string;
+  shaderPreset?: string;
   shaderIntensity?: number;
   shaderColor1?: string;
   shaderColor2?: string;
   shaderColor3?: string;
+  shaderColor4?: string;
+  shaderColor5?: string;
+  shaderColor6?: string;
   textColor?: string;
 };
 
@@ -144,13 +152,17 @@ function slide(
   options: SlideOptions = {}
 ) {
   const shaderAttr = options.shader ? ` shader="${options.shader}"` : "";
+  const shaderPresetAttr = options.shaderPreset ? ` shaderPreset="${options.shaderPreset}"` : "";
   const intensityAttr = options.shaderIntensity !== undefined ? ` shaderIntensity={${options.shaderIntensity}}` : "";
   const c1Attr = options.shaderColor1 ? ` shaderColor1="${options.shaderColor1}"` : "";
   const c2Attr = options.shaderColor2 ? ` shaderColor2="${options.shaderColor2}"` : "";
   const c3Attr = options.shaderColor3 ? ` shaderColor3="${options.shaderColor3}"` : "";
+  const c4Attr = options.shaderColor4 ? ` shaderColor4="${options.shaderColor4}"` : "";
+  const c5Attr = options.shaderColor5 ? ` shaderColor5="${options.shaderColor5}"` : "";
+  const c6Attr = options.shaderColor6 ? ` shaderColor6="${options.shaderColor6}"` : "";
   const textAttr = options.textColor ? ` textColor="${options.textColor}"` : "";
 
-  return `<Slide duration={5} theme="${theme}" background="${background}" accent="${accent}"${shaderAttr}${intensityAttr}${c1Attr}${c2Attr}${c3Attr}${textAttr}>
+  return `<Slide duration={5} theme="${theme}" background="${background}" accent="${accent}"${shaderAttr}${shaderPresetAttr}${intensityAttr}${c1Attr}${c2Attr}${c3Attr}${c4Attr}${c5Attr}${c6Attr}${textAttr}>
 ${blocks.map((block) => `  ${block}`).join("\n")}
 </Slide>`;
 }

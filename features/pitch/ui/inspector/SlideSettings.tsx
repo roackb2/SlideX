@@ -16,12 +16,17 @@ type SlideSettingsProps = {
   mutedColor: string;
   setIsGridVisible: (value: boolean) => void;
   shader: string;
+  shaderAngle: number;
   shaderColor1: string;
   shaderColor2: string;
   shaderColor3: string;
+  shaderColor4: string;
+  shaderColor5: string;
+  shaderColor6: string;
   shaderDetail: number;
   shaderEngine: string;
   shaderIntensity: number;
+  shaderPreset: string;
   shaderScale: number;
   shaderSoftness: number;
   shaderSpeed: number;
@@ -44,12 +49,17 @@ export function SlideSettings({
   mutedColor,
   setIsGridVisible,
   shader,
+  shaderAngle,
   shaderColor1,
   shaderColor2,
   shaderColor3,
+  shaderColor4,
+  shaderColor5,
+  shaderColor6,
   shaderDetail,
   shaderEngine,
   shaderIntensity,
+  shaderPreset,
   shaderScale,
   shaderSoftness,
   shaderSpeed,
@@ -67,12 +77,17 @@ export function SlideSettings({
         background={background}
         mutedColor={mutedColor}
         shader={shader}
+        shaderAngle={shaderAngle}
         shaderColor1={shaderColor1}
         shaderColor2={shaderColor2}
         shaderColor3={shaderColor3}
+        shaderColor4={shaderColor4}
+        shaderColor5={shaderColor5}
+        shaderColor6={shaderColor6}
         shaderDetail={shaderDetail}
         shaderEngine={shaderEngine}
         shaderIntensity={shaderIntensity}
+        shaderPreset={shaderPreset}
         shaderScale={shaderScale}
         shaderSoftness={shaderSoftness}
         shaderSpeed={shaderSpeed}

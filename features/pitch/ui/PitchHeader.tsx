@@ -3,21 +3,17 @@
 import Link from "next/link";
 import { useState, type RefObject } from "react";
 import * as Popover from "@radix-ui/react-popover";
-import { Check, ChevronDown, Download, FileCode2, FileText, Layers, PanelRight, RotateCcw, Undo2 } from "lucide-react";
+import { Check, ChevronDown, Download, Layers, PanelRight, RotateCcw, Undo2 } from "lucide-react";
 
 export function PitchHeader({
   exportMenuRef,
-  isExportMenuOpen,
   isMobileInspectorOpen,
   isMobileSidebarOpen,
-  notice,
   projectName,
   zoomLevel,
   setZoomLevel,
   actualScale,
-  onExportHtml,
-  onExportMdx,
-  onExportPdf,
+
   onReplay,
   onUndo,
   onToggleInspector,
@@ -33,9 +29,7 @@ export function PitchHeader({
   zoomLevel: number | "fit";
   setZoomLevel: (z: number | "fit") => void;
   actualScale: number;
-  onExportHtml: () => void;
-  onExportMdx: () => void;
-  onExportPdf: () => void;
+
   onReplay: () => void;
   onUndo: () => void;
   onToggleInspector: () => void;
@@ -146,34 +140,7 @@ export function PitchHeader({
             <Download size={14} className="text-black" />
             <span className="hidden sm:inline">Export</span>
           </button>
-          {isExportMenuOpen && (
-            <div className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[160px] sm:min-w-[180px] rounded-2xl border border-white/[0.04] bg-neutral-950/90 backdrop-blur-xl p-[5px] shadow-2xl shadow-black/60 animate-[bubble-appear_0.2s_cubic-bezier(0.16,1,0.3,1)]">
-              <button
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-neutral-300 transition-colors hover:bg-white/[0.04] hover:text-white cursor-pointer duration-150"
-                onClick={onExportMdx}
-                type="button"
-              >
-                <FileCode2 size={14} className="text-neutral-400" />
-                Export `.mdx`
-              </button>
-              <button
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-neutral-300 transition-colors hover:bg-white/[0.04] hover:text-white cursor-pointer duration-150"
-                onClick={onExportHtml}
-                type="button"
-              >
-                <FileText size={14} className="text-neutral-400" />
-                Export `.html`
-              </button>
-              <button
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-neutral-300 transition-colors hover:bg-white/[0.04] hover:text-white cursor-pointer duration-150"
-                onClick={onExportPdf}
-                type="button"
-              >
-                <FileText size={14} className="text-neutral-400" />
-                Export `.pdf`
-              </button>
-            </div>
-          )}
+
         </div>
 
         {/* Mobile inspector toggle */}

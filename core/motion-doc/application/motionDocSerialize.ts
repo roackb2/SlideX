@@ -108,6 +108,7 @@ export function getSlideTitle(blocks: MotionDocBlock[], fallbackIndex: number) {
 function formatProps(props: Record<string, string | number>) {
   const entries = Object.entries(props).filter(
     ([key, value]) =>
+      !key.startsWith("_") &&
       key !== "duration" &&
       key !== "mb" &&
       key !== "marginBottom" &&
@@ -116,8 +117,17 @@ function formatProps(props: Record<string, string | number>) {
       value !== ""
   );
   return entries
-    .map(([key, value]) => (typeof value === "number" ? `${key}={${value}}` : `${key}="${value}"`))
+    .map(([key, value]) => (typeof value === "number" ? `${key}={${value}}` : `${key}="${escapeMdxAttribute(value)}"`))
     .join(" ");
+}
+
+function escapeMdxAttribute(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("\"", "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\n", "&#10;");
 }
 
 function formatTextProps(props: Record<string, string | number>) {

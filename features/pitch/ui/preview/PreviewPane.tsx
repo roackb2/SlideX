@@ -68,12 +68,17 @@ export function PreviewPane({
         layout={shouldSplit ? layout : "default"}
         mutedColor={stringProp(activeSlide.props.mutedColor)}
         shader={stringProp(activeSlide.props.shader)}
+        shaderAngle={numberProp(activeSlide.props.shaderAngle)}
         shaderColor1={stringProp(activeSlide.props.shaderColor1)}
         shaderColor2={stringProp(activeSlide.props.shaderColor2)}
         shaderColor3={stringProp(activeSlide.props.shaderColor3)}
+        shaderColor4={stringProp(activeSlide.props.shaderColor4)}
+        shaderColor5={stringProp(activeSlide.props.shaderColor5)}
+        shaderColor6={stringProp(activeSlide.props.shaderColor6)}
         shaderDetail={numberProp(activeSlide.props.shaderDetail)}
         shaderEngine={stringProp(activeSlide.props.shaderEngine)}
         shaderIntensity={numberProp(activeSlide.props.shaderIntensity)}
+        shaderPreset={stringProp(activeSlide.props.shaderPreset)}
         shaderScale={numberProp(activeSlide.props.shaderScale)}
         shaderSoftness={numberProp(activeSlide.props.shaderSoftness)}
         shaderSpeed={numberProp(activeSlide.props.shaderSpeed)}

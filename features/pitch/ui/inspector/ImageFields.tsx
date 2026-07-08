@@ -1,8 +1,13 @@
 "use client";
 
-import { Image as ImageIcon, Link2, Upload, Maximize, Minimize, StretchHorizontal, Shrink, ImagePlus } from "lucide-react";
-import { Field, TextInput, IconSegmentedControl, OptionButtons, type BlockFieldProps } from "@/features/pitch/ui/inspector/InspectorControls";
-import { imageFitOptions, imageModeOptions } from "@/features/pitch/ui/pitchOptions";
+import { Upload, Maximize, Minimize, StretchHorizontal, Shrink, ImagePlus } from "lucide-react";
+import {
+  Field,
+  IconSegmentedControl,
+  TextInput,
+  type BlockFieldProps
+} from "@/features/pitch/ui/inspector/InspectorControls";
+import { ImageFilterSection } from "@/features/pitch/ui/inspector/image/ImageFilterSection";
 
 export function ImageFields({
   block,
@@ -82,6 +87,11 @@ export function ImageFields({
         ]}
         value={String(block.props.fit ?? "cover")}
         onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, fit: value })}
+      />
+
+      <ImageFilterSection
+        onChange={(updates, options) => updateBlock(selectedBlockIndex, { ...block.props, ...updates }, undefined, options)}
+        props={block.props}
       />
 
     </div>

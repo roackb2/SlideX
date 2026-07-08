@@ -27,11 +27,16 @@ export function useMotionDocDocument({
   const activeSlideTextColor = stringValue(activeSlide?.props.textColor ?? activeSlide?.props.foreground ?? activeSlide?.props.color) ?? "";
   const activeSlideMutedColor = stringValue(activeSlide?.props.mutedColor) ?? "";
   const activeSlideShader = stringValue(activeSlide?.props.shader) ?? "";
+  const activeSlideShaderAngle = numberValue(activeSlide?.props.shaderAngle) ?? 0;
   const activeSlideShaderColor1 = stringValue(activeSlide?.props.shaderColor1) ?? "";
   const activeSlideShaderColor2 = stringValue(activeSlide?.props.shaderColor2) ?? "";
   const activeSlideShaderColor3 = stringValue(activeSlide?.props.shaderColor3) ?? "";
+  const activeSlideShaderColor4 = stringValue(activeSlide?.props.shaderColor4) ?? "";
+  const activeSlideShaderColor5 = stringValue(activeSlide?.props.shaderColor5) ?? "";
+  const activeSlideShaderColor6 = stringValue(activeSlide?.props.shaderColor6) ?? "";
   const activeSlideShaderEngine = stringValue(activeSlide?.props.shaderEngine) ?? "three";
   const activeSlideShaderIntensity = numberValue(activeSlide?.props.shaderIntensity) ?? 0.5;
+  const activeSlideShaderPreset = stringValue(activeSlide?.props.shaderPreset) ?? "";
   const activeSlideShaderSpeed = numberValue(activeSlide?.props.shaderSpeed) ?? 1;
   const activeSlideShaderSoftness = numberValue(activeSlide?.props.shaderSoftness) ?? 0.5;
   const activeSlideShaderScale = numberValue(activeSlide?.props.shaderScale) ?? 0.5;
@@ -57,12 +62,17 @@ export function useMotionDocDocument({
     activeSlideLayoutPreset,
     activeSlideMutedColor,
     activeSlideShader,
+    activeSlideShaderAngle,
     activeSlideShaderColor1,
     activeSlideShaderColor2,
     activeSlideShaderColor3,
+    activeSlideShaderColor4,
+    activeSlideShaderColor5,
+    activeSlideShaderColor6,
     activeSlideShaderDetail,
     activeSlideShaderEngine,
     activeSlideShaderIntensity,
+    activeSlideShaderPreset,
     activeSlideShaderScale,
     activeSlideShaderSoftness,
     activeSlideShaderSpeed,

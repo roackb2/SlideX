@@ -25,6 +25,8 @@
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lang-markdown": "^6.5.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@paper-design/shaders": "^0.0.77",
+    "@paper-design/shaders-react": "^0.0.77",
     "@radix-ui/react-popover": "^1.1.17",
     "@radix-ui/react-toolbar": "^1.1.13",
     "@react-three/drei": "^10.7.7",

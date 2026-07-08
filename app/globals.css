@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-sans-custom), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-mono), ui-monospace, monospace;
-  --font-ibm: var(--font-ibm), sans-serif;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --font-ibm: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 
   --color-ibm-primary: #0f62fe;
   --color-ibm-canvas: #0d0d0d;
@@ -14,6 +14,9 @@
   --color-ibm-hairline: #272725;
   --color-ibm-inverseCanvas: #000000;
   --color-ibm-inverseInkMuted: #8c8c8c;
+
+  --color-accent-green: #c4ee87;
+  --color-accent-green-hover: #d4f4a7;
 }
 
 :root {
@@ -33,10 +36,25 @@
   --glow-pink: #EC287A;
   --glow-pink-soft: #FE7BBF;
   --glow-accent: #CEFF32;
+
+  /* Accent Green CTA */
+  --accent-green: #c4ee87;
+  --accent-green-hover: #d4f4a7;
+  --accent-green-text: #0a1a00;
+
+  /* Richer Surfaces & Borders */
+  --surface-elevated: rgba(255, 255, 255, 0.06);
+  --surface-overlay: rgba(0, 0, 0, 0.48);
+  --border-medium: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.18);
 }
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 html,
@@ -59,7 +77,7 @@ button {
 }
 
 ::selection {
-  background: rgba(15, 98, 254, 0.40);
+  background: rgba(154, 215, 255, 0.30);
   color: #ffffff;
 }
 
@@ -182,4 +200,9 @@ button {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
