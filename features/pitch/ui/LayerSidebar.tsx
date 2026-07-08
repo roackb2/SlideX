@@ -5,6 +5,7 @@ import type { MouseEvent } from "react";
 import { useState } from "react";
 import { LayerRow } from "@/features/pitch/ui/LayerRow";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import { SlideThumbnailPreview } from "@/features/pitch/ui/preview/SlideThumbnailPreview";
 
 export type SlideRow = {
   duration: number;
@@ -25,12 +26,14 @@ export function LayerSidebar({
   onSelectSlide,
   reorderBlock,
   reorderSlide,
+  replayNonce,
   scenes,
   selectedBlockIndex,
   selectedBlockIndices,
   setDragOverBlockIndex,
   setDraggedBlockIndex,
-  slideRows
+  slideRows,
+  source
 }: {
   activeSlideIndex: number;
   deleteBlock: (index: number) => void;
@@ -43,12 +46,14 @@ export function LayerSidebar({
   onSelectSlide: (index: number) => void;
   reorderBlock: (fromIndex: number, toIndex: number) => void;
   reorderSlide: (fromIndex: number, toIndex: number) => void;
+  replayNonce: number;
   scenes: MotionDocScene[];
   selectedBlockIndex: number | null;
   selectedBlockIndices: number[];
   setDragOverBlockIndex: (index: number | null) => void;
   setDraggedBlockIndex: (index: number | null) => void;
   slideRows: SlideRow[];
+  source: string;
 }) {
   const [activeTab, setActiveTab] = useState<"slides" | "layers">("slides");
   const [draggedSlideIndex, setDraggedSlideIndex] = useState<number | null>(null);
@@ -185,8 +190,12 @@ export function LayerSidebar({
                       onClick={() => onSelectSlide(slide.index)}
                     >
                       {isActive && <div className="absolute left-0 top-3 bottom-8 w-[3px] rounded-r bg-[#8ea5ff] z-10" />}
-                      <div className={`relative aspect-video w-full rounded-lg shadow-sm overflow-hidden flex items-center justify-center border transition-colors ${isActive ? "border-white/20 bg-black/60" : "border-white/5 bg-black/40 hover:border-white/10"}`}>
-                        {/* Optionally, we can render the LayoutThumbnail here if we know the layout. For now, empty dark box */}
+                      <div className={`relative aspect-video w-full overflow-hidden rounded-lg border shadow-sm transition-colors ${isActive ? "border-white/20 bg-black/60" : "border-white/5 bg-black/40 hover:border-white/10"}`}>
+                        <SlideThumbnailPreview
+                          activeSlideIndex={slide.index}
+                          replayNonce={replayNonce}
+                          source={source}
+                        />
                       </div>
                       <span className={`absolute bottom-1.5 left-2.5 text-[11px] font-medium ${isActive ? "text-[#8ea5ff]" : "text-neutral-500"}`}>
                         {slide.index + 1}

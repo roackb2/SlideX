@@ -7,6 +7,7 @@ type WorkspaceLayerSidebarProps = Pick<
   PitchWorkspaceProps,
   | "activeSlideIndex"
   | "addSlide"
+  | "canvasSource"
   | "deleteBlock"
   | "deleteSlide"
   | "draggedBlockIndex"
@@ -15,6 +16,7 @@ type WorkspaceLayerSidebarProps = Pick<
   | "moveBlock"
   | "reorderBlock"
   | "reorderSlide"
+  | "replayNonce"
   | "scenes"
   | "selectBlockFromLayer"
   | "selectedBlockIndex"
@@ -66,6 +68,7 @@ function LayerSidebarContent({
   onSelectSlide,
   reorderBlock,
   reorderSlide,
+  replayNonce,
   scenes,
   selectBlockFromLayer,
   selectedBlockIndex,
@@ -73,7 +76,8 @@ function LayerSidebarContent({
   setDraggedBlockIndex,
   setDragOverBlockIndex,
   setIsMobileSidebarOpen,
-  slideRows
+  slideRows,
+  canvasSource
 }: WorkspaceLayerSidebarProps) {
   return (
     <LayerSidebar
@@ -91,12 +95,14 @@ function LayerSidebarContent({
       onSelectSlide={onSelectSlide}
       reorderBlock={reorderBlock}
       reorderSlide={reorderSlide}
+      replayNonce={replayNonce}
       scenes={scenes}
       selectedBlockIndex={selectedBlockIndex}
       selectedBlockIndices={selectedBlockIndices}
       setDraggedBlockIndex={setDraggedBlockIndex}
       setDragOverBlockIndex={setDragOverBlockIndex}
       slideRows={slideRows}
+      source={canvasSource}
     />
   );
 }
