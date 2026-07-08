@@ -53,9 +53,6 @@ export function HomePage() {
     finalBody: isZh
       ? "打開 SlideX Pitch，從一份可維護的動態簡報開始。"
       : "Open SlideX Pitch and start with a motion deck your team can maintain.",
-    audiences: isZh
-      ? ["產品團隊", "創辦人", "顧問", "業務團隊", "專案負責人"]
-      : ["Product teams", "Founders", "Consultants", "Sales teams", "Project owners"],
     solutionItems: isZh
       ? [
           ["產品與 GTM", "把定位、路線圖、上市訊息與商業指標合成一份能被決策者快速理解的故事。"],
@@ -207,20 +204,9 @@ export function HomePage() {
 
         <motion.div
           {...reveal(0.16)}
-          className="mx-auto mt-12 flex max-w-7xl flex-col gap-4 text-[#111315] sm:flex-row sm:items-center sm:justify-between"
+          className="mx-auto mt-12 max-w-7xl text-[#111315]"
         >
           <p className="font-mono text-[12px] font-medium uppercase text-[#111315]/50">{copy.trustedLabel}</p>
-          <div className="flex flex-wrap gap-2">
-            {copy.audiences.map((audience, i) => (
-              <motion.span
-                key={audience}
-                {...staggerReveal(i, 0.2)}
-                className="rounded-full border border-[#111315]/10 bg-white/70 px-4 py-2 text-sm font-medium text-[#111315]/72 shadow-[0_2px_8px_rgba(17,19,21,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(17,19,21,0.08)]"
-              >
-                {audience}
-              </motion.span>
-            ))}
-          </div>
         </motion.div>
       </section>
 
@@ -234,18 +220,6 @@ export function HomePage() {
             </div>
             <h2 className="mt-6 max-w-xl text-[clamp(32px,5vw,56px)] font-semibold leading-[1.05] tracking-[-0.02em]">{copy.whyTitle}</h2>
             <p className="mt-6 max-w-xl text-lg leading-8 text-[#111315]/60">{copy.whyBody}</p>
-            <div className="mt-10 grid gap-3 sm:grid-cols-3 lg:max-w-xl">
-              {(isZh ? ["策略", "畫面", "節奏"] : ["Strategy", "Visuals", "Rhythm"]).map((item, index) => (
-                <motion.div
-                  key={item}
-                  {...staggerReveal(index, 0.1)}
-                  className="group rounded-xl border border-[#111315]/8 bg-white/80 p-5 shadow-[0_4px_16px_rgba(17,19,21,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(17,19,21,0.08)]"
-                >
-                  <p className="font-mono text-xs text-[#2f6279]">0{index + 1}</p>
-                  <p className="mt-5 text-lg font-semibold">{item}</p>
-                </motion.div>
-              ))}
-            </div>
           </motion.div>
 
           <motion.div {...reveal(0.06)} className="overflow-hidden rounded-2xl border border-[#111315]/8 bg-white shadow-[0_32px_100px_rgba(17,19,21,0.12)]">

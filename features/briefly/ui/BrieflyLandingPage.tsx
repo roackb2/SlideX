@@ -7,8 +7,6 @@ import { getBrieflyCopy } from "@/features/briefly/application/brieflyCopy";
 
 const easeOut = [0.16, 1, 0.3, 1] as const;
 
-const formatStack = ["Blocks", "Preview", "Review", "Handoff"];
-
 export function BrieflyLandingPage() {
   const { locale } = useI18n();
   const reduceMotion = useReducedMotion();
@@ -22,7 +20,6 @@ export function BrieflyLandingPage() {
       ? "把零散想法整理成結構化專案企劃，直接在文件畫布中預覽，讓團隊先對齊背景、目標、受眾與下一步。"
       : "Turn loose ideas into a structured project brief, preview the document on canvas, and align the team around context, goals, audience, and next steps.",
     secondaryCta: isZh ? "看工作流" : "See workflow",
-    productLabel: isZh ? "文件工作區預覽" : "Document workspace preview",
     trustLabel: isZh ? "為現代專案文件設計" : "Built for modern project documents",
     formatEyebrow: isZh ? "STRUCTURE" : "STRUCTURE",
     formatTitle: isZh ? "先把文件骨架整理好。" : "Shape the brief before the deck.",
@@ -122,16 +119,6 @@ export function BrieflyLandingPage() {
         </motion.div>
 
         <motion.div {...reveal(0.1)} className="mx-auto mt-14 max-w-7xl">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <p className="font-mono text-[12px] font-medium uppercase text-white/42">{local.productLabel}</p>
-            <div className="hidden gap-2 sm:flex">
-              {formatStack.map((item) => (
-                <span key={item} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white/60">
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
           <BrieflyWorkspacePreview />
         </motion.div>
 
