@@ -1,280 +1,338 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  ChevronDown,
+  FileText,
+  Globe2,
+  Menu,
+  Presentation,
+  X
+} from "lucide-react";
 import { useI18n } from "@/common/lib/I18nProvider";
-import { Menu, X, ChevronDown, Globe, Check } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 const languages = [
-  { code: "zh-TW" as const, label: "繁體中文", flag: "🇹🇼" },
-  { code: "en" as const, label: "English", flag: "🇺🇸" },
+  { code: "zh-TW" as const, label: "繁體中文" },
+  { code: "en" as const, label: "English" }
 ];
 
 export function SiteNav() {
-  const { t, locale, setLocale, localePath } = useI18n();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLangOpen, setIsLangOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const langRef = useRef<HTMLDivElement>(null);
+  const { locale, localePath, setLocale } = useI18n();
   const pathname = usePathname();
+  const languageMenuRef = useRef<HTMLDivElement>(null);
+  const productMenuRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const [productOpen, setProductOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const isZh = locale === "zh-TW";
+
+  const products = [
+    {
+      href: "/pitch",
+      label: "Pitch",
+      description: isZh ? "用 shader、圖層與動效製作簡報" : "Create slides with shaders, layers, and motion",
+      icon: Presentation,
+      accent: "bg-[#c4ee87] text-[#132303]"
+    },
+    {
+      href: "/briefly",
+      label: "Briefly",
+      description: isZh ? "把目標、範圍與決策整理成 brief" : "Shape goals, scope, and decisions into a brief",
+      icon: FileText,
+      accent: "bg-[#9ad7ff] text-[#071117]"
+    }
+  ];
 
   useEffect(() => {
-    setIsMenuOpen(false);
+    setMenuOpen(false);
+    setProductOpen(false);
   }, [pathname]);
 
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
+    const updateScroll = () => setScrolled(window.scrollY > 24);
+    updateScroll();
+    window.addEventListener("scroll", updateScroll, { passive: true });
+    return () => window.removeEventListener("scroll", updateScroll);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => {
       document.body.style.overflow = "";
-    }
-  }, [isMenuOpen]);
+    };
+  }, [menuOpen]);
 
-  // Close language dropdown on outside click
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (langRef.current && !langRef.current.contains(event.target as Node)) {
-        setIsLangOpen(false);
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (languageMenuRef.current && !languageMenuRef.current.contains(event.target as Node)) {
+        setLanguageOpen(false);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+      if (productMenuRef.current && !productMenuRef.current.contains(event.target as Node)) {
+        setProductOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
   }, []);
 
-  // Track scroll position for enhanced shadow state
-  useEffect(() => {
-    function handleScroll() {
-      setIsScrolled(window.scrollY > 50);
-    }
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // check initial state
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const navLinks = [
-    { href: "/pitch", label: "Pitch" },
-    { href: "/briefly", label: "Briefly" },
-    { href: "/docs", label: t.nav.resources },
-  ];
-
-  const menuVariants = {
-    closed: {
-      opacity: 0,
-      y: "-100%",
-      transition: {
-        duration: 0.5,
-        ease: [0.76, 0, 0.24, 1]
-      }
-    },
-    open: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.76, 0, 0.24, 1]
-      }
-    }
-  };
-
-  const linkVariants = {
-    closed: { opacity: 0, y: 20 },
-    open: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: 0.2 + i * 0.05,
-        duration: 0.5,
-        ease: [0.33, 1, 0.68, 1]
-      }
-    })
-  };
-
-  const currentLang = languages.find((l) => l.code === locale) ?? languages[0];
+  const isActive = (href: string) => pathname.includes(`/${locale}${href}`);
 
   return (
     <>
-      {/* ── Desktop Floating Pill Nav ── */}
-      <nav
-        className={[
-          "fixed top-5 left-1/2 -translate-x-1/2 z-50",
-          "hidden md:flex items-center",
-          "h-14 px-3 rounded-full",
-          "backdrop-blur-xl",
-          "border border-white/[0.08]",
-          "transition-all duration-500 ease-out",
-          isScrolled
-            ? "bg-[#0c0d0f]/88 shadow-[0_8px_40px_rgba(0,0,0,0.48),0_0_0_1px_rgba(255,255,255,0.06)]"
-            : "bg-[#0c0d0f]/75 shadow-[0_8px_32px_rgba(0,0,0,0.32),0_0_0_1px_rgba(255,255,255,0.04)]",
-        ].join(" ")}
+      <header
+        className={`fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300 ${
+          scrolled
+            ? "border-white/10 bg-[#090a0c]/92 backdrop-blur-xl"
+            : "border-transparent bg-[#090a0c]/72 backdrop-blur-md"
+        }`}
       >
-        {/* Logo */}
-        <Link href={localePath("/")} className="flex items-center shrink-0 pl-2 pr-4">
-          <img src="/logo.png" alt="SlideX Logo" className="w-[62px] h-auto object-contain" />
-        </Link>
-
-        {/* Center nav links */}
-        <ul className="flex items-center gap-1 text-[13.5px] font-medium">
-          {/* Products dropdown */}
-          <li className="relative group">
-            <span className="flex items-center gap-1 cursor-pointer text-white/60 hover:text-white hover:bg-white/[0.06] rounded-full px-3.5 py-1.5 transition-all duration-200">
-              {t.nav.products} <ChevronDown className="w-3.5 h-3.5 opacity-50" />
-            </span>
-            <div className="absolute left-1/2 -translate-x-1/2 top-full hidden group-hover:block pt-2">
-              <div className="bg-[#101214]/95 border border-white/10 rounded-xl p-2 w-[220px] shadow-2xl backdrop-blur-xl">
-                <Link href={localePath("/pitch")} className="block px-3 py-2.5 rounded-lg hover:bg-white/10 text-white transition-colors">
-                  <div className="font-medium text-[13px]">SlideX Pitch</div>
-                  <div className="text-xs text-white/40 mt-0.5">Motion Design Editor</div>
-                </Link>
-                <Link href={localePath("/briefly")} className="block px-3 py-2.5 rounded-lg hover:bg-white/10 text-white transition-colors">
-                  <div className="font-medium text-[13px]">SlideX Briefly</div>
-                  <div className="text-xs text-white/40 mt-0.5">Project Brief Builder</div>
-                </Link>
-              </div>
-            </div>
-          </li>
-
-          {/* Static links */}
-          <li>
-            <Link
-              href={localePath("/docs")}
-              className="text-white/60 hover:text-white hover:bg-white/[0.06] rounded-full px-3.5 py-1.5 transition-all duration-200"
-            >
-              {t.nav.resources}
-            </Link>
-          </li>
-        </ul>
-
-        {/* Spacer */}
-        <div className="w-4 shrink-0" />
-
-        {/* Right side: Language + CTA */}
-        <div className="flex items-center gap-3 shrink-0 pr-1.5">
-          {/* Language Dropdown */}
-          <div className="relative" ref={langRef}>
-            <button
-              onClick={() => setIsLangOpen(!isLangOpen)}
-              className="flex items-center gap-1.5 text-white/55 hover:text-white hover:bg-white/[0.06] rounded-full px-2.5 py-1.5 transition-all duration-200 text-[13px] font-medium"
-            >
-              <Globe className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">{currentLang.label}</span>
-              <ChevronDown className={`w-3 h-3 opacity-50 transition-transform duration-200 ${isLangOpen ? "rotate-180" : ""}`} />
-            </button>
-
-            <AnimatePresence>
-              {isLangOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -4, scale: 0.95 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
-                  className="absolute right-0 top-full mt-3 bg-[#101214]/95 border border-white/10 rounded-xl p-1.5 w-[180px] shadow-2xl backdrop-blur-xl z-[60]"
-                >
-                  {languages.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => {
-                        setLocale(lang.code);
-                        setIsLangOpen(false);
-                      }}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors ${
-                        locale === lang.code
-                          ? "bg-white/10 text-white"
-                          : "text-white/60 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      <span className="text-base">{lang.flag}</span>
-                      <span className="flex-1 text-left">{lang.label}</span>
-                      {locale === lang.code && (
-                        <Check className="w-3.5 h-3.5 text-[#9ad7ff]" />
-                      )}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* CTA */}
+        <div className="mx-auto flex h-[78px] max-w-[1440px] items-center px-5 sm:px-7 lg:px-10">
           <Link
-            href={localePath("/pitch")}
-            className="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full bg-[#f7f4ec] px-5 text-[13px] font-semibold text-[#070809] transition duration-300 hover:-translate-y-0.5 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#9ad7ff] active:translate-y-0"
+            href={localePath("/")}
+            aria-label={isZh ? "SlideX 首頁" : "SlideX home"}
+            className="relative z-10 shrink-0 transition-opacity hover:opacity-80"
           >
-            {t.nav.getStarted}
+            <Image
+              src="/logo.png"
+              alt="SlideX"
+              width={260}
+              height={72}
+              priority
+              className="h-auto w-[150px] object-contain"
+            />
           </Link>
-        </div>
-      </nav>
 
-      {/* ── Mobile Nav Top Bar ── */}
-      <nav className="fixed top-0 left-0 right-0 z-[70] bg-[#090a0b]/92 backdrop-blur-md border-b border-white/10 md:hidden rounded-b-xl">
-        <div className="flex h-16 items-center justify-between px-4">
-          <Link href={localePath("/")} className="font-bold text-xl text-white flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
-            <img src="/logo.png" alt="SlideX Logo" className="w-[65px] h-auto object-contain" />
-          </Link>
-          <div className="flex items-center gap-4">
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white relative z-[70] w-8 h-8 flex items-center justify-center">
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* ── Mobile Menu Overlay ── */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div 
-            initial="closed"
-            animate="open"
-            exit="closed"
-            variants={menuVariants}
-            className="fixed inset-0 z-[65] bg-[#090a0b] flex flex-col md:hidden pt-28 px-6 pb-12 overflow-y-auto"
-          >
-            <div className="flex flex-col gap-8 h-full">
-              <div className="flex flex-col gap-6 text-4xl font-medium">
-                {navLinks.map((link, i) => (
-                  <motion.div key={link.href} custom={i} variants={linkVariants} initial="closed" animate="open" exit="closed">
-                    <Link 
-                      href={localePath(link.href)} 
-                      className={`block ${i < 3 ? "text-white" : "text-white/50 hover:text-white transition-colors"}`}
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {link.label}
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-
-              <motion.div 
-                variants={linkVariants} 
-                custom={navLinks.length} 
-                initial="closed" 
-                animate="open" 
-                exit="closed"
-                className="mt-auto pt-8 border-t border-white/10 flex flex-col gap-3"
+          <nav aria-label={isZh ? "主要導覽" : "Main navigation"} className="ml-14 hidden h-full items-center gap-1 md:flex">
+            <div
+              ref={productMenuRef}
+              className="relative flex h-full items-center"
+              onMouseEnter={() => setProductOpen(true)}
+              onMouseLeave={() => setProductOpen(false)}
+            >
+              <button
+                type="button"
+                aria-expanded={productOpen}
+                aria-haspopup="menu"
+                onClick={() => setProductOpen((open) => !open)}
+                className={`inline-flex h-11 items-center gap-1.5 px-4 text-[15px] font-medium transition-colors ${
+                  pathname.includes(`/${locale}/pitch`) || pathname.includes(`/${locale}/briefly`)
+                    ? "text-white"
+                    : "text-white/62 hover:text-white"
+                }`}
               >
-                <p className="text-[11px] uppercase text-white/40 font-semibold mb-1">Language</p>
-                {languages.map((lang) => (
+                {isZh ? "產品" : "Product"}
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${productOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              <AnimatePresence>
+                {productOpen && (
+                  <motion.div
+                    role="menu"
+                    initial={{ opacity: 0, y: -8, scale: 0.985 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.985 }}
+                    transition={{ duration: 0.16 }}
+                    className="absolute left-0 top-[66px] w-[520px] rounded-lg border border-white/12 bg-[#111315] p-2 shadow-[0_28px_90px_rgba(0,0,0,0.48)]"
+                  >
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {products.map((product) => {
+                        const Icon = product.icon;
+                        return (
+                          <Link
+                            key={product.href}
+                            role="menuitem"
+                            href={localePath(product.href)}
+                            className="group flex min-h-40 flex-col rounded-md border border-transparent p-4 transition-colors hover:border-white/10 hover:bg-white/[0.055]"
+                          >
+                            <span className={`flex h-9 w-9 items-center justify-center rounded-md ${product.accent}`}>
+                              <Icon className="h-4 w-4" strokeWidth={1.8} />
+                            </span>
+                            <span className="mt-5 flex items-center justify-between text-[17px] font-semibold text-white">
+                              {product.label}
+                              <ArrowUpRight className="h-4 w-4 text-white/28 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white" />
+                            </span>
+                            <span className="mt-2 text-[13px] leading-5 text-white/46">{product.description}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 flex items-center justify-between border-t border-white/10 px-3 pb-1 pt-3 text-[12px] text-white/38">
+                      <span>{isZh ? "從內容到畫面，一套完整工作流" : "One workflow, from content to slides"}</span>
+                      <Link href={localePath("/")} className="inline-flex items-center gap-1.5 text-white/62 hover:text-white">
+                        {isZh ? "產品總覽" : "Overview"}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {[
+              { href: "/docs", label: isZh ? "文件" : "Docs" }
+            ].map((link) => (
+              <Link
+                key={link.href}
+                href={localePath(link.href)}
+                className={`inline-flex h-11 items-center px-4 text-[15px] font-medium transition-colors ${
+                  isActive(link.href) ? "text-white" : "text-white/58 hover:text-white"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="ml-auto hidden items-center gap-2 md:flex">
+            <div ref={languageMenuRef} className="relative">
+              <button
+                type="button"
+                aria-expanded={languageOpen}
+                aria-haspopup="menu"
+                onClick={() => setLanguageOpen((open) => !open)}
+                className="inline-flex h-11 items-center gap-2 px-3 text-[14px] font-medium text-white/56 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <Globe2 className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden lg:inline">{locale === "zh-TW" ? "繁中" : "EN"}</span>
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${languageOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+              </button>
+
+              <AnimatePresence>
+                {languageOpen && (
+                  <motion.div
+                    role="menu"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.16 }}
+                    className="absolute right-0 top-[calc(100%+8px)] w-44 rounded-lg border border-white/12 bg-[#111315] p-1.5 shadow-[0_24px_70px_rgba(0,0,0,0.4)]"
+                  >
+                    {languages.map((language) => (
+                      <button
+                        key={language.code}
+                        role="menuitem"
+                        type="button"
+                        onClick={() => {
+                          setLocale(language.code);
+                          setLanguageOpen(false);
+                        }}
+                        className={`flex h-10 w-full items-center justify-between rounded-md px-3 text-left text-sm transition-colors ${
+                          locale === language.code ? "bg-white/10 text-white" : "text-white/58 hover:bg-white/[0.06] hover:text-white"
+                        }`}
+                      >
+                        {language.label}
+                        {locale === language.code && <Check className="h-4 w-4 text-[#c4ee87]" aria-hidden="true" />}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <Link
+              href={localePath("/login")}
+              className="inline-flex h-11 items-center px-4 text-[14px] font-medium text-white/64 transition-colors hover:text-white"
+            >
+              {isZh ? "登入" : "Log in"}
+            </Link>
+
+            <Link
+              href="/workspace/pitch"
+              className="group ml-1 inline-flex h-11 items-center gap-2 rounded-md bg-[#c4ee87] px-5 text-[14px] font-semibold text-[#0a1a00] transition-colors hover:bg-[#d8f6ad] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#c4ee87]"
+            >
+              {isZh ? "開始製作" : "Start creating"}
+              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+            </Link>
+          </div>
+
+          <button
+            type="button"
+            aria-label={menuOpen ? (isZh ? "關閉選單" : "Close menu") : (isZh ? "開啟選單" : "Open menu")}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+            className="ml-auto inline-flex h-11 w-11 items-center justify-center text-white md:hidden"
+          >
+            {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
+      </header>
+
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -14 }}
+            transition={{ duration: 0.22 }}
+            className="fixed inset-0 z-40 flex flex-col bg-[#090a0c] px-5 pb-7 pt-28 text-white md:hidden"
+          >
+            <nav aria-label={isZh ? "手機導覽" : "Mobile navigation"} className="flex flex-col border-t border-white/10">
+              {products.map((product) => (
+                <Link
+                  key={product.href}
+                  href={localePath(product.href)}
+                  className={`flex min-h-20 items-center justify-between border-b border-white/10 text-[28px] font-semibold ${
+                    isActive(product.href) ? "text-[#c4ee87]" : "text-white"
+                  }`}
+                >
+                  <span className="flex items-center gap-4">
+                    <span className={`flex h-10 w-10 items-center justify-center rounded-md ${product.accent}`}>
+                      <product.icon className="h-5 w-5" />
+                    </span>
+                    {product.label}
+                  </span>
+                  <ArrowUpRight className="h-5 w-5 text-white/40" aria-hidden="true" />
+                </Link>
+              ))}
+              <Link
+                href={localePath("/docs")}
+                className={`flex min-h-20 items-center justify-between border-b border-white/10 text-[28px] font-semibold ${
+                  isActive("/docs") ? "text-[#c4ee87]" : "text-white"
+                }`}
+              >
+                {isZh ? "文件" : "Docs"}
+                <ArrowUpRight className="h-5 w-5 text-white/40" aria-hidden="true" />
+              </Link>
+            </nav>
+
+            <div className="mt-auto grid gap-3">
+              <div className="flex gap-2">
+                {languages.map((language) => (
                   <button
-                    key={lang.code}
-                    onClick={() => {
-                      setLocale(lang.code);
-                      setIsMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] font-medium transition-colors ${
-                      locale === lang.code
-                        ? "bg-white/10 text-white"
-                        : "text-white/50 hover:bg-white/5 hover:text-white"
+                    key={language.code}
+                    type="button"
+                    onClick={() => setLocale(language.code)}
+                    className={`h-11 flex-1 rounded-md border text-sm font-medium ${
+                      locale === language.code
+                        ? "border-white/28 bg-white/10 text-white"
+                        : "border-white/10 text-white/50"
                     }`}
                   >
-                    <span className="text-lg">{lang.flag}</span>
-                    <span className="flex-1 text-left">{lang.label}</span>
-                    {locale === lang.code && (
-                      <Check className="w-4 h-4 text-[#9ad7ff]" />
-                    )}
+                    {language.label}
                   </button>
                 ))}
-              </motion.div>
+              </div>
+              <Link
+                href={localePath("/login")}
+                className="inline-flex h-12 items-center justify-center rounded-md border border-white/12 text-sm font-medium text-white/72"
+              >
+                {isZh ? "登入" : "Log in"}
+              </Link>
+              <Link
+                href="/workspace/pitch"
+                className="inline-flex h-13 items-center justify-center gap-2 rounded-md bg-[#c4ee87] px-5 text-[15px] font-semibold text-[#0a1a00]"
+              >
+                {isZh ? "開始製作" : "Start creating"}
+                <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
             </div>
           </motion.div>
         )}
