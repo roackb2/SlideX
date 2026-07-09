@@ -4,13 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import {
+  AlignLeft,
   ArrowRight,
+  Bold,
   CalendarDays,
   Check,
   FileText,
   GripVertical,
+  Italic,
   LayoutTemplate,
   Link2,
+  List,
   Palette,
   Paperclip,
   Users
@@ -260,8 +264,114 @@ function BlockLibraryVisual({ isZh }: { isZh: boolean }) {
 
 function LiveDocumentVisual({ isZh }: { isZh: boolean }) {
   return (
-    <div className="relative aspect-[16/10] overflow-hidden rounded-md bg-[#0a0c0e]">
-      <Image src="/images/briefly-canvas.png" alt={isZh ? "Briefly 即時文件畫布" : "Briefly live document canvas"} fill sizes="(max-width: 1024px) 100vw, 56vw" className="object-cover" />
+    <div className="grid aspect-[16/10] grid-cols-[0.22fr_0.58fr_0.2fr] grid-rows-[0.1fr_0.9fr] overflow-hidden rounded-md bg-[#0a0c0e] text-white">
+      <div className="col-span-3 flex items-center border-b border-white/10 px-[2.5%]">
+        <span className="text-[clamp(7px,0.9vw,11px)] font-semibold">Briefly</span>
+        <span className="ml-[4%] rounded-sm bg-white/[0.055] px-[1.8%] py-[0.7%] text-[clamp(5px,0.65vw,8px)] text-white/42">
+          {isZh ? "產品發表計畫" : "Product launch plan"}
+        </span>
+        <span className="ml-auto text-[clamp(5px,0.65vw,8px)] text-white/36">
+          {isZh ? "已儲存" : "Saved"}
+        </span>
+      </div>
+
+      <div className="border-r border-white/10 p-[8%]">
+        <div className="flex items-center justify-between text-[clamp(5px,0.68vw,9px)] text-white/40">
+          <span>{isZh ? "文件大綱" : "Outline"}</span>
+          <span>5</span>
+        </div>
+        <div className="mt-[14%] space-y-[6%]">
+          {(isZh
+            ? ["封面與簡介", "背景與問題", "目標與成果", "預期產出", "時程規劃"]
+            : ["Overview", "Context", "Goals", "Deliverables", "Timeline"]
+          ).map((label, index) => (
+            <div
+              key={label}
+              className={`flex items-center gap-[6%] rounded-sm px-[7%] py-[7%] text-[clamp(5px,0.72vw,9px)] ${
+                index === 1 ? "bg-[#9ad7ff] text-[#071117]" : "text-white/42"
+              }`}
+            >
+              <GripVertical className="h-[1em] w-[1em] opacity-50" />
+              <span className="truncate">{label}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-[16%] h-px bg-white/10" />
+        <div className="mt-[10%] flex items-center gap-2 text-[clamp(5px,0.68vw,8px)] text-white/32">
+          <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-white/[0.07]">+</span>
+          {isZh ? "新增區塊" : "Add block"}
+        </div>
+      </div>
+
+      <div className="relative flex items-center justify-center overflow-hidden bg-[#dfeef3] p-[7%]">
+        <div className="relative h-full w-[78%] bg-white p-[8%] text-[#111315] shadow-[0_18px_48px_rgba(24,46,57,0.14)]">
+          <div className="h-[3%] w-[22%] bg-[#9ad7ff]" />
+          <div className="mt-[7%] text-[clamp(8px,1.1vw,16px)] font-semibold">
+            {isZh ? "Renew 產品發表計畫" : "Renew product launch"}
+          </div>
+          <div className="mt-[4%] h-[3px] w-[34%] bg-[#111315]/18" />
+
+          <div className="relative mt-[10%] border border-[#2589c4] bg-[#f4fbfe] px-[5%] py-[5%]">
+            <span className="absolute -left-1 -top-1 h-2 w-2 bg-white ring-1 ring-[#2589c4]" />
+            <span className="absolute -bottom-1 -right-1 h-2 w-2 bg-white ring-1 ring-[#2589c4]" />
+            <div className="text-[clamp(6px,0.82vw,11px)] font-semibold">
+              {isZh ? "為什麼現在要做？" : "Why now?"}
+            </div>
+            <div className="mt-[5%] flex items-center text-[clamp(5px,0.7vw,9px)] leading-relaxed text-[#111315]/48">
+              <span>{isZh ? "把市場訊號、使用者需求與商業目標整理成共同脈絡" : "Connect market signals, customer needs, and business goals"}</span>
+              <span className="ml-0.5 inline-block h-[1.2em] w-px bg-[#2589c4]" />
+            </div>
+          </div>
+
+          <div className="absolute left-[15%] top-[34%] flex items-center gap-0.5 rounded-md border border-[#111315]/12 bg-[#111315] p-1 text-white shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
+            {[Bold, Italic, Link2, List, AlignLeft].map((Icon, index) => (
+              <span key={index} className={`flex h-[clamp(14px,2vw,24px)] w-[clamp(14px,2vw,24px)] items-center justify-center rounded-sm ${index === 0 ? "bg-white/14" : ""}`}>
+                <Icon className="h-[52%] w-[52%]" />
+              </span>
+            ))}
+          </div>
+
+          <div className="mt-[10%] grid grid-cols-3 gap-[4%]">
+            {[
+              [isZh ? "目標" : "Goal", "80%"],
+              [isZh ? "時程" : "Timing", "Q3"],
+              [isZh ? "負責人" : "Owner", "AL"]
+            ].map(([label, value]) => (
+              <div key={label} className="bg-[#e7f2f7] p-[8%]">
+                <div className="text-[clamp(4px,0.55vw,7px)] text-[#111315]/38">{label}</div>
+                <div className="mt-[8%] text-[clamp(6px,0.8vw,10px)] font-semibold">{value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-l border-white/10 p-[8%]">
+        <div className="text-[clamp(6px,0.8vw,10px)] font-medium text-white/68">
+          {isZh ? "背景與問題" : "Context"}
+        </div>
+        <div className="mt-[16%] space-y-[13%]">
+          {[
+            isZh ? "區塊標題" : "Block title",
+            isZh ? "版面配置" : "Layout",
+            isZh ? "內容寬度" : "Content width"
+          ].map((label, index) => (
+            <div key={label}>
+              <div className="mb-[5%] text-[clamp(5px,0.62vw,8px)] text-white/30">{label}</div>
+              <div className="h-[clamp(18px,2.7vw,32px)] rounded-sm bg-white/[0.055] px-[8%] text-[clamp(5px,0.68vw,8px)] leading-[clamp(18px,2.7vw,32px)] text-white/52">
+                {index === 0 ? (isZh ? "背景與問題" : "Context") : index === 1 ? "Full width" : "Standard"}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-[20%] h-px bg-white/10" />
+        <div className="mt-[12%] flex items-center justify-between text-[clamp(5px,0.65vw,8px)] text-white/38">
+          <span>{isZh ? "顯示標題" : "Show title"}</span>
+          <span className="flex h-3 w-6 items-center justify-end rounded-full bg-[#9ad7ff] p-0.5">
+            <span className="h-2 w-2 rounded-full bg-[#071117]" />
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

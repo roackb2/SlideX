@@ -49,7 +49,7 @@ export default function PitchLandingPage() {
           },
           {
             title: "在精確畫布上自由編排。",
-            body: "拖曳、縮放、框選、鎖定與排序圖層；格線、對齊與版面配置讓複雜畫面依然可控。"
+            body: "拖曳、縮放、框選與排序圖層；格線、對齊與版面配置讓複雜畫面依然可控。"
           },
           {
             title: "用節奏引導觀眾視線。",
@@ -67,7 +67,7 @@ export default function PitchLandingPage() {
           },
           {
             title: "Compose freely on a precise canvas.",
-            body: "Drag, resize, marquee-select, lock, and reorder layers with grids, alignment tools, and ready-made layouts."
+            body: "Drag, resize, marquee-select, and reorder layers with grids, alignment tools, and ready-made layouts."
           },
           {
             title: "Guide attention with motion.",
@@ -78,15 +78,15 @@ export default function PitchLandingPage() {
             body: "Add images, video, icons, tables, and five chart types without leaving the canvas."
           }
         ],
-    toolkitTitle: isZh ? "做簡報需要的工具，都在畫布旁。" : "Everything you need stays close to the canvas.",
-    toolkitBody: isZh ? "保持設計控制，也保持製作速度。" : "Keep full design control without slowing down.",
+    toolkitTitle: isZh ? "從排版到動效，都在同一個畫布完成。" : "Design every detail without breaking your flow.",
+    toolkitBody: isZh ? "文字、媒體、資料、圖層與播放控制，都放在需要的位置。" : "Type, media, data, layers, and playback stay within reach as you build.",
     tools: (isZh
       ? [
           { title: "文字與字體", body: "字級、字重、對齊與 Google Fonts。", icon: Type },
           { title: "圖片與影片", body: "裁切、填滿、濾鏡與全版媒體。", icon: Video },
           { title: "圖表與表格", body: "五種圖表與可直接編輯的欄列。", icon: BarChart3 },
           { title: "圖示與形狀", body: "快速建立視覺層級與資訊標記。", icon: Shapes },
-          { title: "圖層管理", body: "排序、複製、鎖定與多選。", icon: Layers3 },
+          { title: "圖層管理", body: "排序、複製與多選。", icon: Layers3 },
           { title: "播放與 Replay", body: "檢查 shader、進場與轉場。", icon: Play }
         ]
       : [
@@ -94,7 +94,7 @@ export default function PitchLandingPage() {
           { title: "Images and video", body: "Crop, fit, filters, and full-slide media.", icon: ImageIcon },
           { title: "Charts and tables", body: "Five chart types and editable rows and columns.", icon: BarChart3 },
           { title: "Icons and shapes", body: "Build hierarchy and visual markers quickly.", icon: Shapes },
-          { title: "Layer management", body: "Reorder, duplicate, lock, and multi-select.", icon: Layers3 },
+          { title: "Layer management", body: "Reorder, duplicate, and multi-select.", icon: Layers3 },
           { title: "Playback and replay", body: "Review shaders, entrances, and transitions.", icon: Play }
         ]) satisfies PitchTool[],
     shaderTitle: isZh ? "12 種即時材質，從安靜到強烈。" : "Twelve live materials, from quiet to bold.",
@@ -266,8 +266,87 @@ function FeatureShowcase({
 
 function ShaderStudioVisual({ isZh }: { isZh: boolean }) {
   return (
-    <div className="relative aspect-[16/10] overflow-hidden rounded-md bg-[#08090a]">
-      <Image src="/images/pitch-shader-workspace.png" alt={isZh ? "Pitch shader 控制工作區" : "Pitch shader controls"} fill sizes="(max-width: 1024px) 100vw, 56vw" className="object-cover" />
+    <div className="grid aspect-[16/10] grid-cols-[0.18fr_0.6fr_0.22fr] grid-rows-[0.1fr_0.9fr] overflow-hidden rounded-md bg-[#08090a] text-white">
+      <div className="col-span-3 flex items-center border-b border-white/10 px-[2.5%]">
+        <span className="text-[clamp(7px,0.9vw,11px)] font-semibold">SlideX</span>
+        <span className="ml-[4%] rounded-sm bg-white/[0.055] px-[1.8%] py-[0.7%] text-[clamp(5px,0.65vw,8px)] text-white/42">
+          {isZh ? "產品發表" : "Product launch"}
+        </span>
+        <div className="ml-auto flex items-center gap-2 text-[clamp(5px,0.65vw,8px)] text-white/42">
+          <span>Undo</span>
+          <span>Replay</span>
+          <span className="rounded-sm bg-white px-2 py-1 font-medium text-black">Export</span>
+        </div>
+      </div>
+
+      <div className="border-r border-white/10 p-[8%]">
+        <div className="flex items-center justify-between text-[clamp(5px,0.68vw,9px)] text-white/42">
+          <span>{isZh ? "投影片" : "Slides"}</span>
+          <span>3</span>
+        </div>
+        <div className="mt-[14%] space-y-[8%]">
+          {[
+            ["#d8ff76", "bg-[#7b5cff]"],
+            ["#f1eee8", "bg-[#ff6f8f]"],
+            ["#8fcfff", "bg-[#111315]"]
+          ].map(([background, shape], index) => (
+            <div key={background} className={`aspect-video rounded-sm border p-[5%] ${index === 0 ? "border-[#c4ee87]" : "border-white/10"}`} style={{ backgroundColor: background }}>
+              <div className={`h-[58%] w-[44%] rounded-full ${shape}`} />
+              <div className="mt-[8%] h-[5%] w-[60%] bg-black/34" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="relative flex items-center justify-center overflow-hidden p-[8%] [background-image:radial-gradient(rgba(255,255,255,0.16)_1px,transparent_1px)] [background-size:14px_14px]">
+        <div className="relative aspect-video w-full overflow-hidden bg-[#e8edf0] shadow-[0_22px_60px_rgba(0,0,0,0.55)]">
+          <div className="absolute left-[8%] top-[12%] text-[clamp(7px,1.4vw,18px)] font-semibold text-[#111315]">
+            {isZh ? "未來，不必等待。" : "The future, in motion."}
+          </div>
+          <div className="absolute left-[8%] top-[28%] h-[2px] w-[22%] bg-[#111315]/24" />
+          <div className="absolute bottom-[12%] right-[9%] h-[58%] w-[45%] rotate-[-8deg] overflow-hidden rounded-[18%] border border-black/20 shadow-[0_16px_28px_rgba(25,29,34,0.24)]">
+            <div
+              className="absolute inset-[-30%]"
+              style={{
+                background: "conic-gradient(from 220deg, #f8f7f2, #15171a 18%, #8fcfff 32%, #f7f6f0 47%, #ff6f8f 62%, #15171a 78%, #f8f7f2)"
+              }}
+            />
+            <div className="absolute inset-[18%] rounded-[24%] border border-white/55 bg-black/18 backdrop-blur-[2px]" />
+          </div>
+          <div className="absolute bottom-[12%] left-[8%] flex gap-1.5">
+            {["#111315", "#8fcfff", "#ff6f8f"].map((color) => <span key={color} className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />)}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-l border-white/10 p-[8%]">
+        <div className="text-[clamp(6px,0.8vw,10px)] font-medium text-white/70">Liquid Metal</div>
+        <div
+          className="mt-[10%] h-[13%] rounded-sm"
+          style={{ background: "linear-gradient(105deg, #f7f6f0, #111315 35%, #8fcfff 58%, #ff6f8f 78%, #f7f6f0)" }}
+        />
+        <div className="mt-[14%] grid grid-cols-5 gap-[5%]">
+          {["#111315", "#f7f6f0", "#8fcfff", "#ff6f8f", "#c4ee87"].map((color) => <span key={color} className="aspect-square rounded-full border border-white/18" style={{ backgroundColor: color }} />)}
+        </div>
+        <div className="mt-[18%] space-y-[13%]">
+          {[
+            [isZh ? "扭曲" : "Distortion", 76],
+            [isZh ? "速度" : "Speed", 42],
+            [isZh ? "尺度" : "Scale", 64],
+            [isZh ? "細節" : "Detail", 88]
+          ].map(([label, value]) => (
+            <div key={String(label)}>
+              <div className="mb-[5%] flex justify-between text-[clamp(5px,0.62vw,8px)] text-white/36">
+                <span>{label}</span>
+                <span>{value}</span>
+              </div>
+              <div className="h-[3px] bg-white/10">
+                <div className="h-full bg-[#c4ee87]" style={{ width: `${value}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

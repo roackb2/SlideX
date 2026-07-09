@@ -16,7 +16,7 @@ const ogImage = {
 
 export const metadata: Metadata = {
   title: {
-    default: "SlideX — 專案管理與協作平台 | Project Management Platform",
+    default: "SlideX — Motion Presentations and Project Briefs",
     template: "%s | SlideX",
   },
   description: defaultMetadata.description,
@@ -26,18 +26,18 @@ export const metadata: Metadata = {
     canonical: "/"
   },
   openGraph: {
-    title: "SlideX — 專案管理與協作平台",
+    title: "SlideX — Motion Presentations and Project Briefs",
     description: defaultMetadata.description,
     url: "/",
     siteName: "SlideX",
     images: [ogImage],
-    locale: "zh_TW",
-    alternateLocale: ["en_US"],
+    locale: "en_US",
+    alternateLocale: ["zh_TW"],
     type: "website"
   },
   twitter: {
     card: "summary_large_image",
-    title: "SlideX — 專案管理與協作平台",
+    title: "SlideX — Motion Presentations and Project Briefs",
     description: defaultMetadata.description,
     images: [
       {
@@ -57,7 +57,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-TW" suppressHydrationWarning translate="no" className={GeistSans.variable}>
+    <html lang="en" suppressHydrationWarning translate="no" className={GeistSans.variable}>
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>
