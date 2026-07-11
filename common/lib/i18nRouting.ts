@@ -1,69 +1,95 @@
 import type { Metadata } from "next";
 import { defaultLocale, isLocale, locales, type Locale } from "@/common/lib/i18n";
 
-export const localizedSiteSegments = [
-  "briefly",
-  "docs",
-  "pitch"
-] as const;
+export const localizedSiteSegments = ["blog", "docs", "download", "pitch", "pricing", "privacy", "terms"] as const;
 
-export type SitePageKey =
-  | "briefly"
-  | "home"
-  | "docs"
-  | "pitch";
+export type SitePageKey = "blog" | "docs" | "download" | "home" | "pitch" | "pricing" | "privacy" | "terms";
 
 export type LocaleRouteParams = Promise<{ locale: string }>;
 
 type PageMetadataCopy = {
   description: string;
-  openGraphDescription?: string;
-  openGraphTitle?: string;
   title: string;
 };
 
 export const sitePagePaths = {
-  briefly: "/briefly",
   home: "/",
+  pitch: "/pitch",
+  download: "/download",
+  pricing: "/pricing",
   docs: "/docs",
-  pitch: "/pitch"
+  blog: "/blog",
+  terms: "/terms",
+  privacy: "/privacy"
 } satisfies Record<SitePageKey, string>;
 
 const pageMetadata = {
   "zh-TW": {
-    briefly: {
-      title: "SlideX Briefly — 專案需求建構器",
-      description: "建立結構化專案需求文件，即時預覽為精美文檔，並匯出為 MDX 或 HTML。",
-    },
     home: {
-      title: "SlideX — 動態簡報與專案文件平台",
-      description: "用 MDX Slide 製作動態簡報，搭配 Briefly 建立專案文件，讓團隊更快對齊敘事、設計與輸出。",
-    },
-    docs: {
-      title: "SlideX 資源中心 — 文件與教學",
-      description: "SlideX 完整技術文件、使用教學與 API 參考。涵蓋 Pitch 編輯器與 SwiftShip 範本系統。",
+      title: "SlideX Pitch - 專注的簡報工作區",
+      description: "用精確畫布、單色 Fill 與克制動態製作清楚的簡報。"
     },
     pitch: {
-      title: "SlideX Pitch — 動態簡報編輯器",
-      description: "用 MDX 語法撰寫投影片，即時預覽動效，並匯出高品質動態簡報。",
+      title: "SlideX Pitch - 單色簡報編輯器",
+      description: "用單色 Fill、精確畫布與動態節奏完成可持續修改的簡報。"
+    },
+    download: {
+      title: "下載 SlideX Pitch",
+      description: "Pitch 的網頁工作區現在可用，Mac 版正在開發中。"
+    },
+    pricing: {
+      title: "SlideX Pitch 定價",
+      description: "Pitch 目前免費使用。任何未來付費功能都會在收費前清楚說明。"
+    },
+    docs: {
+      title: "SlideX Pitch 文件",
+      description: "快速了解 Pitch 的畫布、單色 Fill 與動態背景。"
+    },
+    blog: {
+      title: "SlideX Journal",
+      description: "SlideX Pitch 的產品近況與設計筆記。"
+    },
+    terms: {
+      title: "SlideX 使用條款",
+      description: "SlideX Pitch 使用條款。"
+    },
+    privacy: {
+      title: "SlideX 隱私權政策",
+      description: "SlideX Pitch 如何處理與保護個人資料。"
     }
   },
   en: {
-    briefly: {
-      title: "SlideX Briefly — Project Brief Builder",
-      description: "Create structured project briefs, preview polished documents, and export to MDX or HTML.",
-    },
     home: {
-      title: "SlideX — Motion Decks and Project Briefs",
-      description: "Build motion presentations with MDX Slides and create project briefs that keep narrative, design, and delivery aligned.",
-    },
-    docs: {
-      title: "SlideX Resources — Documentation and Guides",
-      description: "Technical documentation, workflow guides, and API references for SlideX Pitch and SwiftShip.",
+      title: "SlideX Pitch - A focused presentation workspace",
+      description: "Build clear presentations with a precise canvas, solid fills, and restrained motion."
     },
     pitch: {
-      title: "SlideX Pitch — Motion Deck Editor",
-      description: "Write slides in MDX, preview motion live, and export polished motion presentations.",
+      title: "SlideX Pitch - Solid color presentation editor",
+      description: "Build editable presentations with solid fills, a precise canvas, and focused motion."
+    },
+    download: {
+      title: "Download SlideX Pitch",
+      description: "The Pitch web workspace is available now. Pitch for Mac is in progress."
+    },
+    pricing: {
+      title: "SlideX Pitch Pricing",
+      description: "Pitch is free to use today. Any future paid functionality will be explained before it is available."
+    },
+    docs: {
+      title: "SlideX Pitch Documentation",
+      description: "Learn the Pitch canvas, solid fill, and motion background workflow."
+    },
+    blog: {
+      title: "SlideX Journal",
+      description: "Product updates and design notes from SlideX Pitch."
+    },
+    terms: {
+      title: "SlideX Terms of Use",
+      description: "Terms governing use of SlideX Pitch."
+    },
+    privacy: {
+      title: "SlideX Privacy Policy",
+      description: "How SlideX Pitch handles and protects personal information."
     }
   }
 } satisfies Record<Locale, Record<SitePageKey, PageMetadataCopy>>;
@@ -120,15 +146,14 @@ export function localizedLanguages(path: string) {
   return Object.fromEntries(locales.map((locale) => [locale, localizePath(path, locale)]));
 }
 
-export function openGraphLocale(locale: Locale) {
+function openGraphLocale(locale: Locale) {
   return locale === "zh-TW" ? "zh_TW" : "en_US";
 }
 
 export function buildSiteMetadata(page: SitePageKey, locale: Locale = defaultLocale): Metadata {
-  const copy: PageMetadataCopy = pageMetadata[locale][page];
+  const copy = pageMetadata[locale][page];
   const path = sitePagePaths[page];
   const canonical = localizePath(path, locale);
-  const alternateLocale = locales.filter((item) => item !== locale).map(openGraphLocale);
 
   return {
     title: copy.title,
@@ -141,12 +166,12 @@ export function buildSiteMetadata(page: SitePageKey, locale: Locale = defaultLoc
       }
     },
     openGraph: {
-      title: copy.openGraphTitle ?? copy.title,
-      description: copy.openGraphDescription ?? copy.description,
+      title: copy.title,
+      description: copy.description,
       url: canonical,
       siteName: "SlideX",
       locale: openGraphLocale(locale),
-      alternateLocale,
+      alternateLocale: locales.filter((item) => item !== locale).map(openGraphLocale),
       type: "website"
     },
     twitter: {

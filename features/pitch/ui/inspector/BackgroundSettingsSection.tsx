@@ -66,7 +66,7 @@ export function BackgroundSettingsSection({
           label="Background Type"
           onChange={(value) => setActiveTab(value as "standard" | "dynamic")}
           options={[
-            { icon: <Palette size={14} />, label: "Standard", value: "standard" },
+            { icon: <Palette size={14} />, label: "Static", value: "standard" },
             { icon: <Sparkles size={14} />, label: "Dynamic", value: "dynamic" }
           ]}
           value={activeTab}

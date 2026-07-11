@@ -11,6 +11,7 @@ import {
 } from "@/core/motion-doc/infrastructure/export/motionDocExport";
 import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
 import { parseExportSlideSelection } from "@/features/pitch/application/exportSlideSelection";
+import { createPptxPresentation } from "@/features/pitch/infrastructure/pptxBrowser";
 
 type UsePitchExportArgs = {
   canvasSource: string;
@@ -33,6 +34,8 @@ const HTML_EXPORT_IMAGE_QUALITY = 0.94;
 const PNG_EXPORT_HEIGHT = 1080;
 const PNG_EXPORT_WIDTH = 1920;
 const PNG_MULTI_DOWNLOAD_DELAY_MS = 180;
+const PPTX_SLIDE_HEIGHT = 7.5;
+const PPTX_SLIDE_WIDTH = 13.333;
 
 /**
  * Embed a local image with enough source pixels for fullscreen HTML playback.
@@ -104,6 +107,47 @@ function readFileAsDataUrl(fileOrBlob: File | Blob) {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(fileOrBlob);
   });
+}
+
+async function remoteImageToDataUrl(url: string) {
+  const response = await fetch(url, { mode: "cors", credentials: "omit" });
+
+  if (!response.ok) {
+    throw new Error(`Image request failed (${response.status})`);
+  }
+
+  const blob = await response.blob();
+  if (!blob.type.startsWith("image/")) {
+    throw new Error("URL did not return an image");
+  }
+
+  return readFileAsDataUrl(blob);
+}
+
+async function embedRemoteImages(sourceText: string) {
+  const imageSourcePattern = /\bsrc\s*=\s*["'](https?:\/\/[^"'<>]+)["']/gi;
+  const urls = [...new Set([...sourceText.matchAll(imageSourcePattern)].map((match) => match[1]))];
+  if (urls.length === 0) return sourceText;
+
+  const replacements = new Map<string, string>();
+
+  for (const url of urls) {
+    try {
+      replacements.set(url, await remoteImageToDataUrl(url));
+    } catch {
+      let hostname = url;
+      try {
+        hostname = new URL(url).hostname;
+      } catch {
+        // Keep the original value when URL parsing fails.
+      }
+      throw new Error(`Cannot export image from ${hostname}. Re-upload the image from your device, or use an image host that allows CORS.`);
+    }
+  }
+
+  return sourceText.replace(imageSourcePattern, (attribute, url: string) => (
+    attribute.replace(url, replacements.get(url) ?? url)
+  ));
 }
 
 function downloadBlob(filename: string, blob: Blob) {
@@ -229,6 +273,50 @@ async function renderStaticSlideHtml(source: string, title: string) {
       return html;
     });
   } finally {
+    iframe.remove();
+  }
+}
+
+async function renderStaticSlidePngDataUrls(source: string, title: string) {
+  const rasterHtml = buildMotionDocRasterHtml(source, title);
+  const blob = new Blob([rasterHtml], { type: "text/html;charset=utf-8" });
+  const blobUrl = URL.createObjectURL(blob);
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:1024px;height:576px;pointer-events:none;opacity:0;";
+  document.body.appendChild(iframe);
+  iframe.src = blobUrl;
+
+  try {
+    await waitForIframeLoad(iframe);
+    URL.revokeObjectURL(blobUrl);
+    const frameWindow = iframe.contentWindow as MotionDocExportWindow | null;
+    if (!frameWindow?.document) throw new Error("Export renderer failed to load");
+
+    await prepareStaticExportWindow(frameWindow);
+    const slides = Array.from(frameWindow.document.querySelectorAll<HTMLElement>(".slide"));
+    if (slides.length === 0) throw new Error("No slides to export");
+
+    const { default: html2canvas } = await import("html2canvas-pro");
+    const images: string[] = [];
+    for (const slide of slides) {
+      slide.classList.add("is-active");
+      const canvas = await html2canvas(slide, {
+        allowTaint: false,
+        backgroundColor: null,
+        height: 576,
+        logging: false,
+        scale: PNG_EXPORT_WIDTH / 1024,
+        useCORS: true,
+        width: 1024,
+        windowHeight: 576,
+        windowWidth: 1024
+      });
+      images.push(canvas.toDataURL("image/png"));
+      slide.classList.remove("is-active");
+    }
+    return images;
+  } finally {
+    URL.revokeObjectURL(blobUrl);
     iframe.remove();
   }
 }
@@ -401,11 +489,53 @@ export function usePitchExport({
     }
   }, [canvasSource, documentTitle, setNotice]);
 
+  const exportPptxFile = useCallback(async (filename: string) => {
+    const finalTitle = (filename || documentTitle || "slidesx-deck").trim();
+    const pptxFilename = `${slugifyFilename(finalTitle)}.pptx`;
+
+    try {
+      setNotice("Rendering PowerPoint…");
+      const localSource = await embedLocalFiles(canvasSource);
+      const finalSource = await embedRemoteImages(localSource);
+      const slideImages = await renderStaticSlidePngDataUrls(finalSource, finalTitle);
+      const pptx = await createPptxPresentation();
+
+      pptx.layout = "LAYOUT_WIDE";
+      pptx.author = "SlideX Pitch";
+      pptx.company = "SlideX";
+      pptx.subject = "Presentation exported from SlideX Pitch";
+      pptx.title = finalTitle;
+
+      for (let slideIndex = 0; slideIndex < slideImages.length; slideIndex += 1) {
+        setNotice(`Rendering PowerPoint ${slideIndex + 1}/${slideImages.length}…`);
+        const slide = pptx.addSlide();
+
+        slide.background = { color: "000000" };
+        slide.addImage({
+          data: slideImages[slideIndex],
+          x: 0,
+          y: 0,
+          w: PPTX_SLIDE_WIDTH,
+          h: PPTX_SLIDE_HEIGHT
+        });
+      }
+
+      setNotice("Building PowerPoint…");
+      await pptx.writeFile({ fileName: pptxFilename, compression: true });
+      setNotice("PowerPoint exported ✓");
+    } catch (error) {
+      const exportError = error instanceof Error ? error : new Error("PowerPoint export failed");
+      setNotice(exportError.message);
+      throw exportError;
+    }
+  }, [canvasSource, documentTitle, setNotice]);
+
   return {
     copySource,
     exportHtmlFile,
     exportMdxFile,
     exportPdfFile,
-    exportPngFile
+    exportPngFile,
+    exportPptxFile
   };
 }

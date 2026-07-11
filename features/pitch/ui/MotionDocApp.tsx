@@ -16,6 +16,7 @@ import { usePitchShortcuts } from "@/features/pitch/ui/hooks/usePitchShortcuts";
 import { usePitchUndo } from "@/features/pitch/ui/hooks/usePitchUndo";
 import { defaultTemplate } from "@/core/motion-doc/presets/templates";
 import { defaultCanvasTool, type CanvasTool } from "@/features/pitch/application/canvasTools";
+import { importPitchProjectFile } from "@/features/pitch/infrastructure/pitchImport";
 
 export function MotionDocApp() {
   const [source, setSource] = useState(defaultMdx);
@@ -109,7 +110,7 @@ export function MotionDocApp() {
     source,
     undoStackRef
   });
-  const { copySource, exportHtmlFile, exportMdxFile } = usePitchExport({
+  const { copySource, exportHtmlFile, exportMdxFile, exportPptxFile } = usePitchExport({
     canvasSource,
     documentTitle: sliderDocument.title,
     setNotice
@@ -118,7 +119,12 @@ export function MotionDocApp() {
   const handleExportFromModal = useCallback(async (format: ExportFormat, filename: string) => {
     setIsExporting(true);
     try {
+      let exportCompleted = false;
+
       switch (format) {
+        case "pptx":
+          await exportPptxFile(filename);
+          break;
         case "html":
           await exportHtmlFile(filename);
           break;
@@ -126,11 +132,15 @@ export function MotionDocApp() {
           await exportMdxFile(filename);
           break;
       }
+      exportCompleted = true;
+
+      if (exportCompleted) {
+        setIsExportMenuOpen(false);
+      }
     } finally {
       setIsExporting(false);
-      setIsExportMenuOpen(false);
     }
-  }, [exportHtmlFile, exportMdxFile]);
+  }, [exportHtmlFile, exportMdxFile, exportPptxFile]);
   const pitchCommands = usePitchCommands({
     activeSlide,
     activeSlideIndex,
@@ -189,6 +199,21 @@ export function MotionDocApp() {
     [newProject]
   );
 
+  const importPitchFile = useCallback(async (file: File) => {
+    try {
+      const importedProject = await importPitchProjectFile(file);
+      startNewProject({
+        name: importedProject.name,
+        notice: `${file.name} imported`,
+        source: importedProject.source
+      });
+    } catch (error) {
+      const importError = error instanceof Error ? error : new Error("Import failed");
+      setNotice(importError.message);
+      throw importError;
+    }
+  }, [setNotice, startNewProject]);
+
   usePitchShortcuts({
     activeCanvasTool,
     activeSlideIndex,
@@ -225,6 +250,7 @@ export function MotionDocApp() {
   if (!hasEnteredPitch) {
     return (
       <DesktopWelcome
+        importPitchFile={importPitchFile}
         newProject={startNewProject}
       />
     );
@@ -341,6 +367,7 @@ export function MotionDocApp() {
       isOpen={isExportMenuOpen}
       onClose={() => setIsExportMenuOpen(false)}
       onExport={handleExportFromModal}
+      onImport={importPitchFile}
       documentTitle={sliderDocument.title}
       isExporting={isExporting}
     />

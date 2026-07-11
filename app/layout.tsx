@@ -16,7 +16,7 @@ const ogImage = {
 
 export const metadata: Metadata = {
   title: {
-    default: "SlideX — Motion Presentations and Project Briefs",
+    default: "SlideX Pitch - Focused presentations",
     template: "%s | SlideX",
   },
   description: defaultMetadata.description,
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     canonical: "/"
   },
   openGraph: {
-    title: "SlideX — Motion Presentations and Project Briefs",
+    title: "SlideX Pitch - Focused presentations",
     description: defaultMetadata.description,
     url: "/",
     siteName: "SlideX",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "SlideX — Motion Presentations and Project Briefs",
+    title: "SlideX Pitch - Focused presentations",
     description: defaultMetadata.description,
     images: [
       {
