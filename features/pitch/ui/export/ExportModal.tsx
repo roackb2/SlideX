@@ -1,252 +1,262 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
-import { X, FileCode2, FileText, Download, Check } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, Download, FileCode2, Globe2, Presentation, Upload, X } from "lucide-react";
 
-export type ExportFormat = "html" | "mdx";
+export type ExportFormat = "html" | "mdx" | "pptx";
 
 type ExportModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onExport: (format: ExportFormat, filename: string) => void;
+  onExport: (format: ExportFormat, filename: string) => Promise<void> | void;
+  onImport: (file: File) => Promise<void>;
   documentTitle: string;
   isExporting: boolean;
 };
 
-const FORMAT_OPTIONS: {
+type ExportOption = {
+  description: string;
+  ext: string;
+  icon: typeof Presentation;
   id: ExportFormat;
   label: string;
-  ext: string;
-  description: string;
-  icon: typeof FileText;
-}[] = [
+};
+
+const formatOptions = [
+  {
+    id: "pptx",
+    label: "PowerPoint",
+    ext: ".pptx",
+    description: "Exact 16:9 canvas. Motion and shaders are captured as still frames.",
+    icon: Presentation
+  },
   {
     id: "html",
-    label: "HTML",
+    label: "Interactive HTML",
     ext: ".html",
-    description: "Self-contained interactive presentation with animations & shaders",
-    icon: FileText
+    description: "Self-contained playback with motion and shaders.",
+    icon: Globe2
   },
   {
     id: "mdx",
-    label: "MDX",
+    label: "MDX source",
     ext: ".mdx",
-    description: "Raw MDX source for editing in code editors",
+    description: "Editable source for continuing the project in code.",
     icon: FileCode2
   }
-];
+] satisfies ExportOption[];
 
 export function ExportModal({
   isOpen,
   onClose,
   onExport,
+  onImport,
   documentTitle,
   isExporting
 }: ExportModalProps) {
-  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("html");
+  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("pptx");
+  const [mode, setMode] = useState<"export" | "import">("export");
   const [filename, setFilename] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback(async () => {
     if (isExporting) return;
     const finalFilename = filename.trim() || documentTitle || "slidesx-deck";
-    onExport(selectedFormat, finalFilename);
-  }, [isExporting, filename, documentTitle, selectedFormat, onExport]);
+    setErrorMessage("");
 
-  // Sync filename with document title when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setFilename(documentTitle || "slidesx-deck");
-      // Focus the filename input after a brief delay for the animation
-      const timer = setTimeout(() => inputRef.current?.select(), 120);
-      return () => clearTimeout(timer);
+    try {
+      await onExport(selectedFormat, finalFilename);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Export failed");
     }
-  }, [isOpen, documentTitle]);
+  }, [documentTitle, filename, isExporting, onExport, selectedFormat]);
 
-  // Escape key handler
+  const handleImport = useCallback(async (file: File) => {
+    setErrorMessage("");
+    setIsImporting(true);
+    try {
+      await onImport(file);
+      onClose();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Import failed");
+    } finally {
+      setIsImporting(false);
+    }
+  }, [onClose, onImport]);
+
   useEffect(() => {
     if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
+    setFilename(documentTitle || "slidesx-deck");
+    setErrorMessage("");
+    const timer = window.setTimeout(() => {
+      if (mode === "export") inputRef.current?.select();
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [documentTitle, isOpen, mode]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
         onClose();
       }
-      if (e.key === "Enter" && !isExporting) {
-        e.preventDefault();
-        handleExport();
+
+      if (event.key === "Enter" && mode === "export" && !isExporting) {
+        event.preventDefault();
+        void handleExport();
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose, isExporting, handleExport]);
-
-  // Click outside to close
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) onClose();
-    },
-    [onClose]
-  );
+  }, [handleExport, isExporting, isOpen, mode, onClose]);
 
   if (!isOpen) return null;
 
+  const selectedOption = formatOptions.find((option) => option.id === selectedFormat) ?? formatOptions[0];
+
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-[fade-in_0.15s_ease-out]"
-      onClick={handleBackdropClick}
-      onMouseDown={(e) => {
-        if (e.target !== e.currentTarget) {
-          e.stopPropagation();
-        }
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/72 px-4 py-6 backdrop-blur-sm"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div
-        ref={modalRef}
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[480px] mx-4 rounded-2xl border border-white/[0.08] bg-neutral-950/95 backdrop-blur-2xl shadow-2xl shadow-black/80 animate-[modal-pop_0.25s_cubic-bezier(0.16,1,0.3,1)]"
+      <section
+        aria-labelledby="export-dialog-title"
+        aria-modal="true"
+        className="w-full max-w-[560px] overflow-hidden rounded-xl border border-white/[0.1] bg-[#111214] shadow-[0_30px_100px_rgba(0,0,0,0.52)]"
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400">
-              <Download size={16} />
-            </div>
-            <h2 className="text-[15px] font-bold text-white tracking-tight">Export Presentation</h2>
+        <header className="flex items-start justify-between border-b border-white/[0.08] px-6 py-5">
+          <div>
+            <h2 className="text-[18px] font-semibold tracking-[-0.03em] text-white" id="export-dialog-title">Presentation file</h2>
+            <p className="mt-1 text-[13px] leading-5 text-neutral-500">Bring a deck in or prepare it for sharing.</p>
           </div>
           <button
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-white/[0.06] hover:text-white"
+            aria-label="Close export dialog"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-1 focus-visible:outline-white"
             onClick={onClose}
             type="button"
-            aria-label="Close"
           >
-            <X size={15} />
+            <X size={16} />
           </button>
+        </header>
+
+        <div className="border-b border-white/[0.08] px-6 pt-4">
+          <div className="flex gap-5" role="tablist" aria-label="Presentation file action">
+            {(["export", "import"] as const).map((item) => (
+              <button
+                aria-selected={mode === item}
+                className={`border-b-2 pb-3 text-[13px] font-semibold capitalize transition-colors ${mode === item ? "border-white text-white" : "border-transparent text-neutral-500 hover:text-neutral-300"}`}
+                key={item}
+                onClick={() => { setMode(item); setErrorMessage(""); }}
+                role="tab"
+                type="button"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Format Selection */}
-        <div className="px-6 pb-4">
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-500 mb-2.5">
-            Format
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {FORMAT_OPTIONS.map((fmt) => {
-              const isActive = selectedFormat === fmt.id;
-              const Icon = fmt.icon;
+        <div className="max-h-[min(72dvh,620px)] overflow-y-auto px-6 py-5">
+          {mode === "export" ? <>
+          <p className="mb-3 text-[12px] font-semibold text-neutral-400">Format</p>
+          <div className="overflow-hidden rounded-lg border border-white/[0.08]">
+            {formatOptions.map((option) => {
+              const Icon = option.icon;
+              const isActive = selectedFormat === option.id;
+
               return (
                 <button
-                  key={fmt.id}
-                  type="button"
-                  onClick={() => setSelectedFormat(fmt.id)}
-                  className={`group relative flex items-start gap-2.5 rounded-xl border p-3 text-left transition-all duration-200 cursor-pointer ${
-                    isActive
-                      ? "border-violet-500/50 bg-violet-500/[0.06] ring-1 ring-violet-500/20"
-                      : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]"
+                  aria-pressed={isActive}
+                  className={`flex w-full items-center gap-3 border-b border-white/[0.07] px-4 py-3.5 text-left transition-colors last:border-b-0 ${
+                    isActive ? "bg-[#9ad7ff]/10" : "bg-white/[0.015] hover:bg-white/[0.04]"
                   }`}
+                  key={option.id}
+                  onClick={() => setSelectedFormat(option.id)}
+                  type="button"
                 >
-                  <div
-                    className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                      isActive ? "bg-violet-500/15 text-violet-400" : "bg-white/[0.04] text-neutral-500 group-hover:text-neutral-300"
-                    }`}
-                  >
-                    <Icon size={13} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={`text-[13px] font-semibold transition-colors ${
-                          isActive ? "text-violet-300" : "text-neutral-300 group-hover:text-white"
-                        }`}
-                      >
-                        {fmt.label}
-                      </span>
-                      <span className="text-[10px] font-medium text-neutral-600">{fmt.ext}</span>
-                    </div>
-                    <p className="mt-0.5 text-[10px] leading-snug text-neutral-500 line-clamp-2">
-                      {fmt.description}
-                    </p>
-                  </div>
-                  {isActive && (
-                    <div className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-violet-500 text-white">
-                      <Check size={10} strokeWidth={3} />
-                    </div>
-                  )}
+                  <Icon className={isActive ? "text-[#9ad7ff]" : "text-neutral-500"} size={18} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-baseline gap-2">
+                      <span className={`text-[14px] font-semibold ${isActive ? "text-white" : "text-neutral-300"}`}>{option.label}</span>
+                      <span className="font-mono text-[10px] text-neutral-600">{option.ext}</span>
+                    </span>
+                    <span className="mt-1 block text-[11px] leading-4 text-neutral-500">{option.description}</span>
+                  </span>
+                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${isActive ? "border-[#9ad7ff] bg-[#9ad7ff] text-[#08131a]" : "border-white/[0.12] text-transparent"}`}>
+                    <Check size={12} strokeWidth={3} />
+                  </span>
                 </button>
               );
             })}
           </div>
-        </div>
 
-        {/* Filename Input */}
-        <div className="px-6 pb-3">
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-500 mb-1.5">
-            Filename
-          </label>
-          <div className="flex items-center gap-0 rounded-xl border border-white/[0.08] bg-white/[0.03] overflow-hidden focus-within:border-violet-500/40 focus-within:ring-1 focus-within:ring-violet-500/20 transition-all">
+          <label className="mt-5 block text-[12px] font-semibold text-neutral-400" htmlFor="export-filename">Filename</label>
+          <div className="mt-2 flex h-11 items-center overflow-hidden rounded-lg border border-white/[0.1] bg-black/20 focus-within:border-[#9ad7ff]/50 focus-within:ring-1 focus-within:ring-[#9ad7ff]/20">
             <input
+              autoComplete="off"
+              className="min-w-0 flex-1 bg-transparent px-3 text-[13px] text-white outline-none placeholder:text-neutral-600"
+              id="export-filename"
+              onChange={(event) => setFilename(event.target.value)}
+              placeholder="slidesx-deck"
               ref={inputRef}
+              spellCheck={false}
               type="text"
               value={filename}
-              onChange={(e) => setFilename(e.target.value)}
-              placeholder="slidesx-deck"
-              className="flex-1 bg-transparent px-3 py-2 text-[13px] text-white placeholder:text-neutral-600 focus:outline-none"
-              autoComplete="off"
-              spellCheck={false}
             />
-            <span className="pr-3 text-[12px] font-medium text-neutral-600 select-none">
-              {FORMAT_OPTIONS.find((f) => f.id === selectedFormat)?.ext}
-            </span>
+            <span className="pr-3 font-mono text-[11px] text-neutral-600">{selectedOption.ext}</span>
           </div>
+          </> : <div>
+            <input
+              accept=".html,.mdx,text/html,text/markdown"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void handleImport(file);
+              }}
+              ref={fileInputRef}
+              type="file"
+            />
+            <button
+              className="flex min-h-40 w-full flex-col items-center justify-center rounded-lg border border-dashed border-white/[0.14] bg-white/[0.015] px-6 text-center transition-colors hover:border-white/[0.28] hover:bg-white/[0.035] focus-visible:outline focus-visible:outline-1 focus-visible:outline-white"
+              disabled={isImporting}
+              onClick={() => fileInputRef.current?.click()}
+              type="button"
+            >
+              <Upload className="mb-3 text-neutral-400" size={20} />
+              <span className="text-[14px] font-semibold text-white">{isImporting ? "Importing…" : "Choose an MDX or HTML file"}</span>
+              <span className="mt-1.5 max-w-xs text-[12px] leading-5 text-neutral-500">MDX opens directly. SlideX HTML restores its embedded editable source.</span>
+            </button>
+          </div>}
+          {errorMessage ? <p className="mt-3 rounded-md border border-red-400/20 bg-red-400/[0.06] px-3 py-2.5 text-[12px] leading-5 text-red-200" role="alert">{errorMessage}</p> : null}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-2 border-t border-white/[0.04] px-6 py-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl px-4 py-2 text-[13px] font-semibold text-neutral-400 transition-colors hover:bg-white/[0.04] hover:text-white"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleExport}
-            disabled={isExporting}
-            className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2 text-[13px] font-bold text-white shadow-lg shadow-violet-600/20 transition-all hover:bg-violet-500 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isExporting ? (
-              <>
-                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                Exporting…
-              </>
-            ) : (
-              <>
-                <Download size={14} />
-                Export
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Keyframe animations */}
-      <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes modal-pop {
-          from {
-            opacity: 0;
-            transform: scale(0.95) translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-      `}</style>
+        <footer className="flex items-center justify-between gap-4 border-t border-white/[0.08] px-6 py-4">
+          <p className="hidden text-[11px] text-neutral-600 sm:block">Esc to close</p>
+          <div className="ml-auto flex items-center gap-2">
+            <button className="h-10 rounded-md px-4 text-[13px] font-semibold text-neutral-400 transition-colors hover:bg-white/[0.04] hover:text-white" onClick={onClose} type="button">Cancel</button>
+            {mode === "export" ? <button
+              className="inline-flex h-10 min-w-28 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#f4f4f1] px-4 text-[13px] font-semibold text-[#0b0c0f] transition-colors hover:bg-white active:translate-y-px disabled:cursor-wait disabled:opacity-55"
+              disabled={isExporting}
+              onClick={() => void handleExport()}
+              type="button"
+            >
+              <Download size={14} />
+              {isExporting ? "Exporting" : "Export"}
+            </button> : null}
+          </div>
+        </footer>
+      </section>
     </div>
   );
 }

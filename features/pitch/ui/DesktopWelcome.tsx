@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, LayoutTemplate, FilePlus, ArrowRight, ChevronLeft } from "lucide-react";
+import { Sparkles, LayoutTemplate, FilePlus, ArrowRight, ChevronLeft, Upload } from "lucide-react";
 import {
-  defaultTemplateChooserItem,
   getTemplateChooserItemsForCategory,
 } from "@/core/motion-doc/presets/templateChooser";
 import type { NewPitchProjectOptions } from "@/features/pitch/ui/hooks/usePitchProject";
@@ -14,12 +13,16 @@ import {
 } from "@/features/pitch/ui/welcome/TemplateChooserCards";
 
 type DesktopWelcomeProps = {
+  importPitchFile: (file: File) => Promise<void>;
   newProject: (options?: NewPitchProjectOptions) => void;
 };
 
-export function DesktopWelcome({ newProject }: DesktopWelcomeProps) {
+export function DesktopWelcome({ importPitchFile, newProject }: DesktopWelcomeProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [projectType, setProjectType] = useState<"blank" | "deck" | null>(null);
+  const [importError, setImportError] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const visibleItems = useMemo(() => getTemplateChooserItemsForCategory("all"), []);
   const deckItems = visibleItems.filter((item) => item.kind === "deck");
@@ -88,6 +91,35 @@ export function DesktopWelcome({ newProject }: DesktopWelcomeProps) {
                 Let&apos;s get started
                 <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
               </button>
+              <div className="flex flex-col items-center gap-2">
+                <input
+                  accept=".html,.mdx,text/html,text/markdown"
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = "";
+                    if (!file) return;
+
+                    setImportError("");
+                    setIsImporting(true);
+                    void importPitchFile(file)
+                      .catch((error) => setImportError(error instanceof Error ? error.message : "Import failed"))
+                      .finally(() => setIsImporting(false));
+                  }}
+                  ref={importInputRef}
+                  type="file"
+                />
+                <button
+                  className="inline-flex h-11 items-center gap-2 rounded-md border border-white/[0.12] px-4 text-[14px] font-semibold text-white/66 transition-colors hover:border-white/25 hover:text-white disabled:cursor-wait disabled:opacity-50"
+                  disabled={isImporting}
+                  onClick={() => importInputRef.current?.click()}
+                  type="button"
+                >
+                  <Upload size={16} />
+                  {isImporting ? "Importing" : "Import MDX or HTML"}
+                </button>
+                {importError ? <p className="max-w-sm text-center text-[12px] leading-5 text-red-300" role="alert">{importError}</p> : null}
+              </div>
             </motion.div>
           )}
 

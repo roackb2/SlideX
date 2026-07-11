@@ -1,44 +1,37 @@
-import type { PaletteScope, ThemePaletteColors } from "@/features/pitch/application/colorPalettes";
+import { hexColorValue } from "@/features/pitch/application/colorPalettes";
 
 export type PropRecord = Record<string, string | number>;
 
-export type CustomTheme = {
-  colors: ThemePaletteColors;
-  createdAt: number;
-  id: string;
-  name: string;
-};
-
-export function themeUpdates(colors: ThemePaletteColors): PropRecord {
-  return {
-    accent: colors.accent,
-    background: colors.background,
-    mutedColor: colors.muted,
-    textColor: colors.text,
-    theme: isLightTheme(colors.background) ? "light" : "dark"
-  };
-}
-
-export function currentThemeColors({
-  accent,
-  background,
-  mutedColor,
-  textColor,
-  theme
-}: {
-  accent: string;
-  background: string;
-  mutedColor: string;
-  textColor: string;
-  theme: string;
-}): ThemePaletteColors {
-  const isLight = theme === "light" || theme === "paper";
+/**
+ * Pitch uses one solid fill per slide. Supporting colors are derived from that
+ * decision so copy, charts, and controls retain readable contrast.
+ */
+export function solidFillUpdates(value: string): PropRecord {
+  const background = hexColorValue(value) ?? "#050505";
+  const light = isLightTheme(background);
+  const foreground = light ? "#111111" : "#f7f7f5";
 
   return {
-    accent: accent || "#7c3aed",
-    background: background || "#050505",
-    muted: mutedColor || (isLight ? "#475569" : "#cbd5e1"),
-    text: textColor || (isLight ? "#111827" : "#ffffff")
+    accent: foreground,
+    background,
+    mutedColor: light ? "#656565" : "#b8b8b4",
+    textColor: foreground,
+    theme: light ? "light" : "dark",
+    shader: "",
+    shaderAngle: "",
+    shaderColor1: "",
+    shaderColor2: "",
+    shaderColor3: "",
+    shaderColor4: "",
+    shaderColor5: "",
+    shaderColor6: "",
+    shaderDetail: "",
+    shaderEngine: "",
+    shaderIntensity: "",
+    shaderPreset: "",
+    shaderScale: "",
+    shaderSoftness: "",
+    shaderSpeed: ""
   };
 }
 
@@ -56,35 +49,3 @@ export function isLightTheme(background: string) {
 
   return luminance > 0.62;
 }
-
-export function isThemePaletteColors(value: unknown): value is ThemePaletteColors {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const candidate = value as ThemePaletteColors;
-
-  return (
-    typeof candidate.accent === "string" &&
-    typeof candidate.background === "string" &&
-    typeof candidate.muted === "string" &&
-    typeof candidate.text === "string"
-  );
-}
-
-export function isCustomTheme(value: unknown): value is CustomTheme {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const candidate = value as CustomTheme;
-
-  return (
-    typeof candidate.id === "string" &&
-    typeof candidate.name === "string" &&
-    typeof candidate.createdAt === "number" &&
-    isThemePaletteColors(candidate.colors)
-  );
-}
-
-export type { PaletteScope, ThemePaletteColors };

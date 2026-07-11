@@ -1,10 +1,10 @@
-import { DocsPage } from "@/features/marketing";
+import { PricingPage } from "@/features/marketing";
 import { buildSiteMetadata, localeFromParams, type LocaleRouteParams } from "@/common/lib/i18nRouting";
 
 export async function generateMetadata({ params }: { params: LocaleRouteParams }) {
-  return buildSiteMetadata("docs", await localeFromParams(params));
+  return buildSiteMetadata("pricing", await localeFromParams(params));
 }
 
-export default function DocsRoutePage() {
-  return <DocsPage />;
+export default function PricingRoutePage() {
+  return <PricingPage />;
 }

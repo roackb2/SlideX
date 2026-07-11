@@ -17,5 +17,5 @@ export type {
   PropValue
 } from "@/features/pitch/ui/inspector/controls/BaseControls";
 export { ColorControl } from "@/features/pitch/ui/inspector/color/ColorControl";
-export { ColorSetControl } from "@/features/pitch/ui/inspector/color/ColorSetControl";
-export type { HexColor, PaletteScope, ThemePaletteColors } from "@/features/pitch/application/colorPalettes";
+export { SolidFillControl } from "@/features/pitch/ui/inspector/color/SolidFillControl";
+export type { HexColor } from "@/features/pitch/application/colorPalettes";

@@ -13,6 +13,7 @@ const eslintConfig = [
       ".next-dev/**",
       "out/**",
       "packages/*/dist/**",
+      "public/vendor/**",
       "src-tauri/target/**",
       "node_modules/**",
       "next-env.d.ts"

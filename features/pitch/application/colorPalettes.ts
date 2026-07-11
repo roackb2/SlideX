@@ -1,20 +1,5 @@
 export type HexColor = `#${string}`;
 
-export type PaletteScope = "deck" | "slide";
-
-export type ThemePaletteColors = {
-  accent: string;
-  background: string;
-  muted: string;
-  text: string;
-};
-
-export type ThemePalette = {
-  colors: ThemePaletteColors;
-  id: string;
-  name: string;
-};
-
 export function hexColorValue(value: string): HexColor | null {
   const trimmed = value.trim();
 
