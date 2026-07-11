@@ -48,9 +48,14 @@ export function SiteNav() {
           rel="noreferrer"
           target="_blank"
         >
-          {isZh
-            ? "SlideX 正在封閉測試中，歡迎填寫問卷協助我們改善"
-            : "SlideX is in closed beta — help us improve by sharing your feedback"}
+          <span className="whitespace-nowrap sm:hidden">
+            {isZh ? "SlideX 封閉測試中 — 填寫回饋" : "SlideX closed beta — Share feedback"}
+          </span>
+          <span className="hidden whitespace-nowrap sm:inline">
+            {isZh
+              ? "SlideX 正在封閉測試中，歡迎填寫問卷協助我們改善"
+              : "SlideX is in closed beta — help us improve by sharing your feedback"}
+          </span>
         </a>
         <div className="mx-auto flex h-[68px] max-w-[1440px] items-center px-5 sm:px-7 lg:px-10">
           <div className="flex shrink-0 items-center gap-3">
