@@ -1,6 +1,6 @@
 import type { EventSourceMessage } from "eventsource-parser";
 import { z } from "zod";
-import { ConversationRunProtocolCodec } from "@roackb2/heddle/remote";
+import { ConversationRunProtocolCodec } from "@roackb2/heddle-remote";
 import type {
   AgentActivity,
   AgentRunEvent,

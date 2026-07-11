@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ConversationRunConsumerService } from "@roackb2/heddle/remote";
+import { ConversationRunConsumerService } from "@roackb2/heddle-remote";
 import {
   parseSlideXAgentSseMessage,
   SlideXAgentRunProtocol
