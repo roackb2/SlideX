@@ -16,6 +16,7 @@ import { usePitchShortcuts } from "@/features/pitch/ui/hooks/usePitchShortcuts";
 import { usePitchUndo } from "@/features/pitch/ui/hooks/usePitchUndo";
 import { defaultTemplate } from "@/core/motion-doc/presets/templates";
 import { defaultCanvasTool, type CanvasTool } from "@/features/pitch/application/canvasTools";
+import { PitchAgentPanel } from "@/features/pitch/ui/agent/PitchAgentPanel";
 
 export function MotionDocApp() {
   const [source, setSource] = useState(defaultMdx);
@@ -35,6 +36,7 @@ export function MotionDocApp() {
   const undoStackRef = useRef<string[]>([]);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isMobileInspectorOpen, setIsMobileInspectorOpen] = useState(false);
+  const [isAgentPanelOpen, setIsAgentPanelOpen] = useState(false);
 
   const {
     activeSlide,
@@ -114,6 +116,12 @@ export function MotionDocApp() {
     documentTitle: sliderDocument.title,
     setNotice
   });
+  const applyAgentMotionDoc = useCallback((motionDoc: string, summary: string) => {
+    commitSource(motionDoc);
+    setReplayNonce((value) => value + 1);
+    clearBlockSelection();
+    setNotice(summary || "Agent changes applied");
+  }, [clearBlockSelection, commitSource]);
 
   const handleExportFromModal = useCallback(async (format: ExportFormat, filename: string) => {
     setIsExporting(true);
@@ -219,7 +227,7 @@ export function MotionDocApp() {
   });
 
   if (!isMounted) {
-    return <div className="flex h-screen w-full bg-[#050505]" />;
+    return <div className="flex h-dvh w-full bg-[#050505]" />;
   }
 
   if (!hasEnteredPitch) {
@@ -233,6 +241,14 @@ export function MotionDocApp() {
   return (
     <>
     <PitchWorkspace
+      agentPanel={(
+        <PitchAgentPanel
+          isOpen={isAgentPanelOpen}
+          onApplyMotionDoc={applyAgentMotionDoc}
+          projectName={projectName}
+          source={source}
+        />
+      )}
       activeSlide={activeSlide}
       activeSlideAccent={activeSlideAccent}
       activeSlideAlignX={activeSlideAlignX}
@@ -286,6 +302,7 @@ export function MotionDocApp() {
       insertSnippet={pitchCommands.insertSnippet}
       insertSlideNearActive={pitchCommands.insertSlideNearActive}
       isCanvasGridVisible={isCanvasGridVisible}
+      isAgentPanelOpen={isAgentPanelOpen}
       isCodeEditorOpen={isCodeEditorOpen}
       isExportMenuOpen={isExportMenuOpen}
       isMobileInspectorOpen={isMobileInspectorOpen}
@@ -326,6 +343,7 @@ export function MotionDocApp() {
       slideRows={slideRows}
       source={source}
       toggleSelectedBlocksPositionLock={pitchCommands.toggleSelectedBlocksPositionLock}
+      toggleAgentPanel={() => setIsAgentPanelOpen((current) => !current)}
       totalDuration={stats.totalDuration}
       undoLastChange={undoLastChange}
       updateActiveSlideStyle={pitchCommands.updateActiveSlideStyle}

@@ -1,4 +1,4 @@
-import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction } from "react";
+import type { Dispatch, MouseEvent as ReactMouseEvent, ReactNode, RefObject, SetStateAction } from "react";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 import type { CanvasTool } from "@/features/pitch/application/canvasTools";
 import type { AddBlockOptions, FrameUpdate, InsertSlidePlacement } from "@/features/pitch/application/motionDocCommands";
@@ -9,6 +9,7 @@ import type { AddBlockType } from "@/features/pitch/ui/pitchOptions";
 export type SelectionMdx = { label: string; source: string };
 
 export type PitchWorkspaceProps = {
+  agentPanel: ReactNode;
   activeSlide: MotionDocScene | undefined;
   activeSlideAccent: string;
   activeSlideAlignX: string;
@@ -59,6 +60,7 @@ export type PitchWorkspaceProps = {
   insertSnippet: (code: string) => void;
   insertSlideNearActive: (placement: InsertSlidePlacement) => void;
   isCanvasGridVisible: boolean;
+  isAgentPanelOpen: boolean;
   isCodeEditorOpen: boolean;
   isExportMenuOpen: boolean;
   isMobileInspectorOpen: boolean;
@@ -99,6 +101,7 @@ export type PitchWorkspaceProps = {
   slideRows: SlideRow[];
   source: string;
   toggleSelectedBlocksPositionLock: () => void;
+  toggleAgentPanel: () => void;
   totalDuration: number;
   undoLastChange: () => void;
   updateActiveSlideStyle: (updates: {
