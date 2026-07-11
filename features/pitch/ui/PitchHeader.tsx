@@ -10,6 +10,7 @@ export function PitchHeader({
   isMobileInspectorOpen,
   isMobileSidebarOpen,
   isAgentPanelOpen,
+  notice,
   projectName,
   zoomLevel,
   setZoomLevel,
@@ -65,6 +66,9 @@ export function PitchHeader({
         >
           <img src="/logo.png" alt="SlideX" className="h-auto w-[72px] rounded object-contain sm:w-[84px]" />
         </Link>
+        <span className="hidden whitespace-nowrap rounded-md border border-white/[0.12] px-1.5 py-0.5 text-[10px] font-semibold text-neutral-500 sm:inline-flex">
+          Pitch Beta
+        </span>
         <div className="hidden h-3.5 w-[1px] bg-white/[0.08] sm:block mx-1" />
         <span className="hidden max-w-[180px] truncate whitespace-nowrap rounded-xl bg-neutral-900/40 px-3 py-1 text-sm font-semibold tracking-wide text-neutral-300 sm:block border border-white/[0.04] shadow-inner">
           {projectName}
@@ -73,6 +77,7 @@ export function PitchHeader({
 
       {/* Right side actions */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-3.5">
+        <span className="hidden max-w-[180px] truncate text-[11px] text-neutral-500 xl:block" title={notice}>{notice}</span>
         <button
           aria-label="Toggle SlideX agent"
           aria-pressed={isAgentPanelOpen}

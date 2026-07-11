@@ -39,6 +39,7 @@ export function buildMotionDocHtml(source: string, customTitle?: string) {
     <style>${motionDocExportStyles}</style>
   </head>
   <body>
+    <script id="slidex-motion-doc-source" type="application/json">${serializeMotionDocSource(source)}</script>
     <main class="player" data-slide-count="${document.scenes.length}">
       <div class="stage">
         <div class="viewport" aria-live="polite">
@@ -64,6 +65,10 @@ export function buildMotionDocHtml(source: string, customTitle?: string) {
     <script>${makeMotionDocExportRuntime()}</script>
   </body>
 </html>`;
+}
+
+function serializeMotionDocSource(source: string) {
+  return JSON.stringify(source).replaceAll("<", "\\u003c");
 }
 
 /**

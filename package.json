@@ -15,11 +15,7 @@
     "mcp:build": "node scripts/build-mcp-server.mjs",
     "mcp:pack": "npm pack ./packages/slidex-mcp-server",
     "mcp:publish": "npm publish ./packages/slidex-mcp-server --access public",
-    "test:agent": "esbuild features/pitch/infrastructure/slidexAgentProtocol.test.mts --bundle --platform=node --format=esm --outfile=.next/agent-protocol-test.mjs && node --test .next/agent-protocol-test.mjs",
-    "briefly:mcp": "tsx mcp/brieflyServer.ts",
-    "briefly:mcp:build": "node scripts/build-briefly-mcp-server.mjs",
-    "briefly:mcp:pack": "npm pack ./packages/briefly-mcp-server",
-    "briefly:mcp:publish": "npm publish ./packages/briefly-mcp-server --access public"
+    "test:agent": "esbuild features/pitch/infrastructure/slidexAgentProtocol.test.mts --bundle --platform=node --format=esm --outfile=.next/agent-protocol-test.mjs && node --test .next/agent-protocol-test.mjs"
   },
   "dependencies": {
     "@codemirror/lang-html": "^6.4.11",
@@ -40,14 +36,15 @@
     "@tiptap/react": "^3.27.1",
     "@tiptap/starter-kit": "^3.27.1",
     "@uiw/react-codemirror": "^4.25.10",
-    "@z7589xxz758/briefly-mcp-server": "^0.1.0",
     "border-beam": "^1.2.0",
     "eventsource-parser": "^3.1.0",
     "framer-motion": "11.18.2",
     "geist": "^1.7.2",
+    "html2canvas-pro": "^2.2.3",
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
     "next-themes": "0.4.6",
+    "pptxgenjs": "^4.0.1",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "three": "^0.184.0",
@@ -70,11 +67,8 @@
     "tsx": "^4.22.4",
     "typescript": "5.9.3"
   },
-  "description": "SlideX 是一個以 MDX Slide 為核心的動態簡報系統。它把簡報內容、版面、動畫節奏、預覽與桌面專案流程放在同一個可維護的程式碼結構裡。全新升級的 Pitch 介面採用 Double-Bezel 玻璃擬真（Glassmorphism）與高對比視覺美學，將開發工具的穩健與高階設計的質感完美融合。",
+  "description": "SlideX Pitch is a focused presentation workspace with a precise canvas, solid fills, and editable motion.",
   "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zz41354899/Animark.git"
