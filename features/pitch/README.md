@@ -58,7 +58,9 @@ agent flag enabled and verifies multi-turn MotionDoc continuity, visible
 history after refresh, conversation reset without erasing the deck, and
 manual-edit-safe recovery after live replay expires. It also locks stale-session
 self-healing, explicit cancellation, sanitized start failure with retry, and
-active-run conflict reattachment. The same test runs in
+active-run conflict reattachment. An accepted run whose event stream cannot be
+opened enters the same durable status-recovery path instead of leaving the
+composer locked behind a generic error. The same test runs in
 `.github/workflows/agent-regression.yml`. The route fixture in
 `tests/browser/agent-lifecycle.spec.ts` owns only deterministic HTTP/SSE test
 responses; it must not reimplement product session or Heddle run policy. The
