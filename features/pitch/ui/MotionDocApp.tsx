@@ -19,6 +19,8 @@ import { defaultCanvasTool, type CanvasTool } from "@/features/pitch/application
 import { PitchAgentPanel } from "@/features/pitch/ui/agent/PitchAgentPanel";
 import { importPitchProjectFile } from "@/features/pitch/infrastructure/pitchImport";
 
+const isSlideXAgentEnabled = process.env.NEXT_PUBLIC_SLIDEX_AGENT_ENABLED === "true";
+
 export function MotionDocApp() {
   const [source, setSource] = useState(defaultMdx);
   const [replayNonce, setReplayNonce] = useState(0);
@@ -252,7 +254,7 @@ export function MotionDocApp() {
   });
 
   if (!isMounted) {
-    return <div className="flex h-dvh w-full bg-[#050505]" />;
+    return <div className="flex h-screen w-full bg-[#050505]" />;
   }
 
   if (!hasEnteredPitch) {
@@ -267,14 +269,14 @@ export function MotionDocApp() {
   return (
     <>
     <PitchWorkspace
-      agentPanel={(
+      agentPanel={isSlideXAgentEnabled ? (
         <PitchAgentPanel
           isOpen={isAgentPanelOpen}
           onApplyMotionDoc={applyAgentMotionDoc}
           projectName={projectName}
           source={source}
         />
-      )}
+      ) : null}
       activeSlide={activeSlide}
       activeSlideAccent={activeSlideAccent}
       activeSlideAlignX={activeSlideAlignX}
@@ -328,7 +330,7 @@ export function MotionDocApp() {
       insertSnippet={pitchCommands.insertSnippet}
       insertSlideNearActive={pitchCommands.insertSlideNearActive}
       isCanvasGridVisible={isCanvasGridVisible}
-      isAgentPanelOpen={isAgentPanelOpen}
+      isAgentPanelOpen={isSlideXAgentEnabled && isAgentPanelOpen}
       isCodeEditorOpen={isCodeEditorOpen}
       isExportMenuOpen={isExportMenuOpen}
       isMobileInspectorOpen={isMobileInspectorOpen}

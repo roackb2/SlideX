@@ -12,6 +12,7 @@ import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWor
 
 export function PitchWorkspace(props: PitchWorkspaceProps) {
   const sceneCount = props.scenes.length;
+  const isAgentEnabled = Boolean(props.agentPanel);
   const [zoomLevel, setZoomLevel] = useState<number | "fit">("fit");
   const [fitScale, setFitScale] = useState(1);
 
@@ -22,7 +23,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
   }
 
   return (
-    <main className="flex h-dvh flex-col overflow-hidden bg-[#000000] font-sans text-neutral-300">
+    <main className="flex h-screen flex-col overflow-hidden bg-[#000000] font-sans text-neutral-300">
       <PitchHeader
         exportMenuRef={props.exportMenuRef}
         isExportMenuOpen={props.isExportMenuOpen}
@@ -32,6 +33,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
         zoomLevel={zoomLevel}
         setZoomLevel={setZoomLevel}
         actualScale={zoomLevel === "fit" ? fitScale : zoomLevel}
+        isAgentEnabled={isAgentEnabled}
         isAgentPanelOpen={props.isAgentPanelOpen}
         onReplay={() => props.setReplayNonce((value) => value + 1)}
         onToggleInspector={() => {
@@ -90,9 +92,11 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
         />
 
         <WorkspaceInspectorPanel {...props} />
-        <div className="absolute inset-y-0 right-0 z-[70] shadow-[-20px_0_50px_rgba(0,0,0,0.45)]">
-          {props.agentPanel}
-        </div>
+        {isAgentEnabled ? (
+          <div className="absolute inset-y-0 right-0 z-[70] shadow-[-20px_0_50px_rgba(0,0,0,0.45)]">
+            {props.agentPanel}
+          </div>
+        ) : null}
       </div>
 
       <WorkspaceCodeEditorOverlay {...props} sceneCount={sceneCount} />
