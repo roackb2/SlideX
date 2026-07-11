@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useState, type RefObject } from "react";
 import * as Popover from "@radix-ui/react-popover";
-import { Check, ChevronDown, Download, Layers, PanelRight, RotateCcw, Undo2 } from "lucide-react";
+import { Bot, Check, ChevronDown, Download, Layers, PanelRight, RotateCcw, Undo2 } from "lucide-react";
 
 export function PitchHeader({
   exportMenuRef,
   isMobileInspectorOpen,
   isMobileSidebarOpen,
+  isAgentPanelOpen,
   projectName,
   zoomLevel,
   setZoomLevel,
@@ -18,12 +19,14 @@ export function PitchHeader({
   onUndo,
   onToggleInspector,
   onToggleSidebar,
+  onToggleAgentPanel,
   setIsExportMenuOpen
 }: {
   exportMenuRef: RefObject<HTMLDivElement | null>;
   isExportMenuOpen: boolean;
   isMobileInspectorOpen: boolean;
   isMobileSidebarOpen: boolean;
+  isAgentPanelOpen: boolean;
   notice: string;
   projectName: string;
   zoomLevel: number | "fit";
@@ -34,13 +37,14 @@ export function PitchHeader({
   onUndo: () => void;
   onToggleInspector: () => void;
   onToggleSidebar: () => void;
+  onToggleAgentPanel: () => void;
   setIsExportMenuOpen: (updater: (current: boolean) => boolean) => void;
 }) {
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const zoomOptions = ["fit", 0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
   return (
-    <header className="z-50 flex shrink-0 items-center justify-between border-b border-white/[0.12] bg-[#111111] px-4 py-2.5 sm:px-6 select-none transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] h-[52px]">
+    <header className="z-50 flex h-14 shrink-0 items-center justify-between border-b border-white/[0.12] bg-[#111111] px-4 sm:px-6 select-none transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]">
       
       {/* Left side actions */}
       <div className="flex shrink-0 items-center gap-3">
@@ -69,6 +73,17 @@ export function PitchHeader({
 
       {/* Right side actions */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-3.5">
+        <button
+          aria-label="Toggle SlideX agent"
+          aria-pressed={isAgentPanelOpen}
+          className={`flex h-11 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${isAgentPanelOpen ? "bg-white/[0.1] text-white" : "text-neutral-400 hover:bg-white/[0.06] hover:text-white"}`}
+          onClick={onToggleAgentPanel}
+          type="button"
+        >
+          <Bot aria-hidden="true" size={16} />
+          <span className="hidden lg:inline">Agent</span>
+        </button>
+
         <Popover.Root onOpenChange={setIsZoomOpen} open={isZoomOpen}>
           <Popover.Trigger asChild>
             <button

@@ -22,7 +22,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
   }
 
   return (
-    <main className="flex h-screen flex-col overflow-hidden bg-[#000000] font-sans text-neutral-300">
+    <main className="flex h-dvh flex-col overflow-hidden bg-[#000000] font-sans text-neutral-300">
       <PitchHeader
         exportMenuRef={props.exportMenuRef}
         isExportMenuOpen={props.isExportMenuOpen}
@@ -33,6 +33,8 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
         setZoomLevel={setZoomLevel}
         actualScale={zoomLevel === "fit" ? fitScale : zoomLevel}
 
+        isAgentPanelOpen={props.isAgentPanelOpen}
+
         onReplay={() => props.setReplayNonce((value) => value + 1)}
         onToggleInspector={() => {
           props.setIsMobileInspectorOpen((value) => !value);
@@ -42,6 +44,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
           props.setIsMobileSidebarOpen((value) => !value);
           props.setIsMobileInspectorOpen(false);
         }}
+        onToggleAgentPanel={props.toggleAgentPanel}
         onUndo={props.undoLastChange}
         projectName={`${props.projectName}${props.isProjectDirty ? " - Edited" : ""}`}
         setIsExportMenuOpen={props.setIsExportMenuOpen}
@@ -89,6 +92,9 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
         />
 
         <WorkspaceInspectorPanel {...props} />
+        <div className="absolute inset-y-0 right-0 z-[70] shadow-[-20px_0_50px_rgba(0,0,0,0.45)]">
+          {props.agentPanel}
+        </div>
       </div>
 
       <WorkspaceCodeEditorOverlay {...props} sceneCount={sceneCount} />
