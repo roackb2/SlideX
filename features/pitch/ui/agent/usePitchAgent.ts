@@ -1,11 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SlideXAgentClient } from "@/features/pitch/infrastructure/slidexAgentClient";
+import { ConversationRunConsumerService } from "@roackb2/heddle/remote";
+import {
+  SlideXAgentClient,
+  SlideXAgentClientError
+} from "@/features/pitch/infrastructure/slidexAgentClient";
 import type { AgentRunEvent, AgentToolActivity } from "@/features/pitch/domain/agentRun";
 
 const client = new SlideXAgentClient();
-const MAX_RECONNECT_ATTEMPTS = 6;
+
+type AgentRunConsumer = ConversationRunConsumerService<{ runId: string }>;
 
 export type PitchAgentMessage = {
   id: string;
@@ -84,7 +89,11 @@ export function usePitchAgent(input: {
       runIdRef.current = accepted.runId;
       setSessionId(accepted.session.id);
       window.localStorage.setItem(sessionStorageKey(input.projectName), accepted.session.id);
-      await subscribeWithReconnect(accepted.runId, requestController.signal, handleEvent);
+      await subscribeWithReconnect(
+        createRunConsumer(accepted.runId),
+        requestController.signal,
+        handleEvent
+      );
     } catch (caught) {
       if (!mountedRef.current) {
         return;
@@ -98,40 +107,40 @@ export function usePitchAgent(input: {
       requestAbortRef.current = undefined;
     }
 
-    async function handleEvent(event: AgentRunEvent): Promise<boolean> {
+    async function handleEvent(event: AgentRunEvent): Promise<void> {
       if (!mountedRef.current) {
-        return true;
+        return;
       }
-      if (event.type === "activity") {
+      if (event.kind === "activity") {
         applyActivity(event);
-        return false;
+        return;
       }
-      if (event.type === "complete") {
-        setAssistantMessage(event.assistantMessage);
+      if (event.kind === "result") {
+        const result = event.result;
+        setAssistantMessage(result.assistantMessage);
         const currentRevision = await hashSource(sourceRef.current);
-        if (currentRevision === event.baseSourceRevision) {
-          input.onApplyMotionDoc(event.motionDoc, event.assistantMessage);
+        if (currentRevision === result.baseSourceRevision) {
+          input.onApplyMotionDoc(result.motionDoc, result.assistantMessage);
         } else {
           setPendingMotionDoc({
-            motionDoc: event.motionDoc,
-            assistantMessage: event.assistantMessage
+            motionDoc: result.motionDoc,
+            assistantMessage: result.assistantMessage
           });
         }
         setStatus("idle");
-        return true;
+        return;
       }
-      if (event.type === "cancelled") {
+      if (event.kind === "cancelled") {
         setAssistantMessage("Run cancelled.");
         setStatus("idle");
-        return true;
+        return;
       }
-      setAssistantMessage(event.message);
-      setError(event.message);
+      setAssistantMessage(event.error.message);
+      setError(event.error.message);
       setStatus("error");
-      return true;
     }
 
-    function applyActivity(event: Extract<AgentRunEvent, { type: "activity" }>): void {
+    function applyActivity(event: Extract<AgentRunEvent, { kind: "activity" }>): void {
       const activity = event.activity;
       if (activity.type === "assistant.stream" && activity.text) {
         setAssistantMessage(activity.text);
@@ -158,38 +167,56 @@ export function usePitchAgent(input: {
     }
 
     async function subscribeWithReconnect(
-      runId: string,
+      consumer: AgentRunConsumer,
       signal: AbortSignal,
-      onEvent: (event: AgentRunEvent) => Promise<boolean>
+      onEvent: (event: AgentRunEvent) => Promise<void>
     ): Promise<void> {
-      let afterSequence = 0;
-      let terminal = false;
-      let attempt = 0;
+      let lastError: unknown;
 
-      while (!terminal && attempt < MAX_RECONNECT_ATTEMPTS) {
+      while (!consumer.isTerminal()) {
+        let handlerError: unknown;
         try {
           await client.subscribe({
-            runId,
-            afterSequence,
+            ...requireSubscriptionInput(consumer),
             signal,
             onEvent: async (event) => {
-              afterSequence = Math.max(afterSequence, event.sequence);
-              terminal = terminal || await onEvent(event);
+              const acceptance = consumer.accept(event);
+              if (!acceptance.accepted) {
+                return;
+              }
+              try {
+                await onEvent(event);
+              } catch (caught) {
+                handlerError = caught;
+                throw caught;
+              }
             }
           });
-          if (!terminal) {
-            throw new Error("Agent event stream ended before the run completed");
+          if (!consumer.isTerminal()) {
+            lastError = new Error("Agent event stream ended before the run completed");
           }
         } catch (subscriptionError) {
-          if (terminal) {
-            return;
+          if (handlerError !== undefined) {
+            throw handlerError;
           }
-          attempt += 1;
-          if (attempt >= MAX_RECONNECT_ATTEMPTS) {
+          if (signal.aborted) {
             throw subscriptionError;
           }
+          if (!isRetryableSubscriptionError(subscriptionError)) {
+            throw subscriptionError;
+          }
+          lastError = subscriptionError;
+        }
+
+        if (!consumer.isTerminal()) {
+          const retry = consumer.nextRetry();
+          if (!retry) {
+            throw lastError instanceof Error
+              ? lastError
+              : new Error("SlideX agent run exhausted its reconnect attempts");
+          }
           setStatus("reconnecting");
-          await wait(Math.min(500 * 2 ** (attempt - 1), 4_000), signal);
+          await wait(retry.delayMs, signal);
         }
       }
     }
@@ -230,6 +257,32 @@ export function usePitchAgent(input: {
     submit,
     tools
   };
+}
+
+function createRunConsumer(runId: string): AgentRunConsumer {
+  const consumer = new ConversationRunConsumerService<{ runId: string }>({
+    retry: { maxAttempts: 6, baseDelayMs: 500, maxDelayMs: 4_000 }
+  });
+  consumer.select({ runId });
+  return consumer;
+}
+
+function requireSubscriptionInput(consumer: AgentRunConsumer) {
+  const subscription = consumer.subscriptionInput();
+  if (!subscription) {
+    throw new Error("SlideX agent run no longer accepts subscriptions");
+  }
+  return subscription;
+}
+
+function isRetryableSubscriptionError(error: unknown): boolean {
+  if (!(error instanceof SlideXAgentClientError) || error.status === undefined) {
+    return true;
+  }
+  return error.status === 408
+    || error.status === 425
+    || error.status === 429
+    || error.status >= 500;
 }
 
 async function hashSource(source: string): Promise<string> {
