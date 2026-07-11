@@ -16,6 +16,7 @@ import { usePitchShortcuts } from "@/features/pitch/ui/hooks/usePitchShortcuts";
 import { usePitchUndo } from "@/features/pitch/ui/hooks/usePitchUndo";
 import { defaultTemplate } from "@/core/motion-doc/presets/templates";
 import { defaultCanvasTool, type CanvasTool } from "@/features/pitch/application/canvasTools";
+import type { AgentSession } from "@/features/pitch/domain/agentRun";
 import { PitchAgentPanel } from "@/features/pitch/ui/agent/PitchAgentPanel";
 import { importPitchProjectFile } from "@/features/pitch/infrastructure/pitchImport";
 
@@ -94,7 +95,9 @@ export function MotionDocApp() {
     isProjectDirty,
     markProjectDirty,
     newProject,
+    projectId,
     projectName,
+    restoreProject,
   } = usePitchProject({
     canvasSource,
     documentTitle: sliderDocument.title,
@@ -125,6 +128,12 @@ export function MotionDocApp() {
     clearBlockSelection();
     setNotice(summary || "Agent changes applied");
   }, [clearBlockSelection, commitSource]);
+  const restoreAgentSession = useCallback((session: AgentSession): boolean => {
+    return restoreProject({
+      name: session.title,
+      source: session.latestMotionDoc
+    });
+  }, [restoreProject]);
 
   const handleExportFromModal = useCallback(async (format: ExportFormat, filename: string) => {
     setIsExporting(true);
@@ -254,7 +263,7 @@ export function MotionDocApp() {
   });
 
   if (!isMounted) {
-    return <div className="flex h-screen w-full bg-[#050505]" />;
+    return <div className="flex h-dvh w-full bg-[#050505]" />;
   }
 
   if (!hasEnteredPitch) {
@@ -273,6 +282,8 @@ export function MotionDocApp() {
         <PitchAgentPanel
           isOpen={isAgentPanelOpen}
           onApplyMotionDoc={applyAgentMotionDoc}
+          onRestoreSession={restoreAgentSession}
+          projectId={projectId}
           projectName={projectName}
           source={source}
         />

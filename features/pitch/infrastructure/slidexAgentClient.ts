@@ -4,10 +4,18 @@ import {
 } from "eventsource-parser";
 import type { ZodType } from "zod";
 import { ConversationRunReplayCursorSchema } from "@roackb2/heddle-remote";
-import type { AgentRunEvent, StartAgentRunResult } from "@/features/pitch/domain/agentRun";
+import type {
+  AgentApiErrorCode,
+  AgentRunEvent,
+  AgentSessionState,
+  StartAgentRunResult
+} from "@/features/pitch/domain/agentRun";
 import {
+  AgentApiErrorResponseSchema,
+  AgentSessionStateSchema,
   CancelAgentRunResultSchema,
   parseSlideXAgentSseMessage,
+  ResetAgentSessionResultSchema,
   StartAgentRunResultSchema
 } from "@/features/pitch/infrastructure/slidexAgentProtocol";
 
@@ -24,16 +32,29 @@ export type StartAgentRunInput = {
 };
 
 export class SlideXAgentClientError extends Error {
-  constructor(message: string, readonly status?: number) {
+  constructor(
+    message: string,
+    readonly status?: number,
+    readonly code?: AgentApiErrorCode
+  ) {
     super(message);
+    this.name = "SlideXAgentClientError";
   }
 }
 
+export type SlideXAgentClientOptions = {
+  baseUrl?: string;
+  getHeaders?: () => HeadersInit | Promise<HeadersInit>;
+};
+
 export class SlideXAgentClient {
   private readonly baseUrl: string;
+  private readonly getHeaders?: SlideXAgentClientOptions["getHeaders"];
 
-  constructor(baseUrl = process.env.NEXT_PUBLIC_SLIDEX_AGENT_SERVER_URL) {
+  constructor(options: SlideXAgentClientOptions = {}) {
+    const baseUrl = options.baseUrl ?? process.env.NEXT_PUBLIC_SLIDEX_AGENT_SERVER_URL;
     this.baseUrl = (baseUrl || DEFAULT_AGENT_SERVER_URL).replace(/\/$/, "");
+    this.getHeaders = options.getHeaders;
   }
 
   async start(input: StartAgentRunInput, signal?: AbortSignal): Promise<StartAgentRunResult> {
@@ -51,15 +72,16 @@ export class SlideXAgentClient {
     onEvent: (event: AgentRunEvent) => void | Promise<void>;
   }): Promise<void> {
     ConversationRunReplayCursorSchema.parse(input.afterSequence);
+    const headers = await this.createHeaders({ Accept: "text/event-stream" });
     const response = await fetch(
       `${this.baseUrl}/api/agent/runs/${encodeURIComponent(input.runId)}/events?after=${input.afterSequence}`,
       {
-        headers: { Accept: "text/event-stream" },
+        headers,
         signal: input.signal
       }
     );
     if (!response.ok || !response.body) {
-      throw new SlideXAgentClientError(await readError(response), response.status);
+      throw await responseError(response);
     }
     if (!response.headers.get("content-type")?.startsWith("text/event-stream")) {
       throw new SlideXAgentClientError(
@@ -120,26 +142,59 @@ export class SlideXAgentClient {
     return result.cancelled;
   }
 
+  session(sessionId: string, signal?: AbortSignal): Promise<AgentSessionState> {
+    return this.request(
+      `/api/agent/sessions/${encodeURIComponent(sessionId)}`,
+      AgentSessionStateSchema,
+      { method: "GET", signal }
+    );
+  }
+
+  async resetSession(sessionId: string): Promise<void> {
+    await this.request(
+      `/api/agent/sessions/${encodeURIComponent(sessionId)}`,
+      ResetAgentSessionResultSchema,
+      { method: "DELETE" }
+    );
+  }
+
   private async request<Result>(
     path: string,
     schema: ZodType<Result>,
     init: RequestInit
   ): Promise<Result> {
+    const headers = await this.createHeaders(init.headers);
+    if (init.body !== undefined && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...init.headers
-      }
+      headers
     });
     if (!response.ok) {
-      throw new SlideXAgentClientError(await readError(response), response.status);
+      throw await responseError(response);
     }
     return schema.parse(await response.json());
   }
+
+  private async createHeaders(additional?: HeadersInit): Promise<Headers> {
+    const headers = new Headers(await this.getHeaders?.());
+    new Headers(additional).forEach((value, key) => headers.set(key, value));
+    return headers;
+  }
 }
 
-async function readError(response: Response): Promise<string> {
-  const body = await response.json().catch(() => undefined) as { error?: string } | undefined;
-  return body?.error ?? `SlideX agent request failed (${response.status})`;
+async function responseError(response: Response): Promise<SlideXAgentClientError> {
+  const body = await response.json().catch(() => undefined);
+  const parsed = AgentApiErrorResponseSchema.safeParse(body);
+  return parsed.success
+    ? new SlideXAgentClientError(
+        parsed.data.error.message,
+        response.status,
+        parsed.data.error.code
+      )
+    : new SlideXAgentClientError(
+        `SlideX agent request failed (${response.status})`,
+        response.status
+      );
 }

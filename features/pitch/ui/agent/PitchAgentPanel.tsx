@@ -1,17 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { AlertTriangle, Bot, Check, Send, Settings2, Square, Wrench, X } from "lucide-react";
+import { AlertTriangle, Bot, Check, RotateCcw, Send, Settings2, Square, Wrench, X } from "lucide-react";
+import type { AgentSession } from "@/features/pitch/domain/agentRun";
 import { usePitchAgent } from "@/features/pitch/ui/agent/usePitchAgent";
 
 export function PitchAgentPanel({
   isOpen,
   onApplyMotionDoc,
+  onRestoreSession,
+  projectId,
   projectName,
   source
 }: {
   isOpen: boolean;
   onApplyMotionDoc: (motionDoc: string, summary: string) => void;
+  onRestoreSession: (session: AgentSession) => boolean;
+  projectId: string;
   projectName: string;
   source: string;
 }) {
@@ -19,7 +24,13 @@ export function PitchAgentPanel({
   const [llmApiKey, setLlmApiKey] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const agent = usePitchAgent({ projectName, source, onApplyMotionDoc });
+  const agent = usePitchAgent({
+    projectId,
+    projectName,
+    source,
+    onApplyMotionDoc,
+    onRestoreSession
+  });
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -35,6 +46,15 @@ export function PitchAgentPanel({
     void agent.submit(nextMessage, llmApiKey);
   }
 
+  function handleResetConversation(): void {
+    if (!window.confirm(
+      "Start a new conversation? The current deck stays open, but this chat history will be removed."
+    )) {
+      return;
+    }
+    void agent.resetConversation();
+  }
+
   return (
     <aside
       aria-label="SlideX agent"
@@ -46,7 +66,13 @@ export function PitchAgentPanel({
           <div>
             <h2 className="text-sm font-semibold text-white">SlideX Agent</h2>
             <p className="text-xs text-neutral-500">
-              {agent.status === "reconnecting" ? "Reconnecting…" : agent.isRunning ? "Working…" : "Ready"}
+              {agent.isHydrating
+                ? "Restoring…"
+                : agent.status === "reconnecting"
+                  ? "Reconnecting…"
+                  : agent.status === "detached"
+                    ? "Live progress unavailable"
+                    : agent.isRunning ? "Working…" : "Ready"}
             </p>
           </div>
         </div>
@@ -71,13 +97,22 @@ export function PitchAgentPanel({
             className="h-11 w-full rounded-md border border-white/[0.12] bg-black px-3 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-white/30 focus:ring-2 focus:ring-white/10"
             id="slidex-agent-api-key"
             onChange={(event) => setLlmApiKey(event.target.value)}
-            placeholder="Blank uses local Heddle OAuth"
+            placeholder="Blank only uses local development OAuth"
             type="password"
             value={llmApiKey}
           />
           <p className="mt-2 text-xs leading-5 text-neutral-500">
             The key is sent only to your configured SlideX agent server and is not stored by this editor.
           </p>
+          <button
+            className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-md border border-white/[0.12] px-3 text-sm font-medium text-neutral-200 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+            disabled={!agent.canReset || agent.isResetting}
+            onClick={handleResetConversation}
+            type="button"
+          >
+            <RotateCcw aria-hidden="true" size={15} />
+            {agent.isResetting ? "Starting new conversation…" : "New conversation"}
+          </button>
         </div>
       )}
 
@@ -85,6 +120,11 @@ export function PitchAgentPanel({
         {agent.error && (
           <p className="mb-4 border border-red-400/25 bg-red-400/[0.06] p-3 text-xs leading-5 text-red-200" role="alert">
             {agent.error}
+          </p>
+        )}
+        {agent.notice && (
+          <p className="mb-4 border border-white/[0.12] bg-white/[0.04] p-3 text-pretty text-xs leading-5 text-neutral-300" role="status">
+            {agent.notice}
           </p>
         )}
         {agent.messages.length === 0 ? (
@@ -159,7 +199,7 @@ export function PitchAgentPanel({
         <label className="sr-only" htmlFor="slidex-agent-message">Message the SlideX agent</label>
         <textarea
           className="min-h-24 w-full resize-none rounded-md border border-white/[0.12] bg-black p-3 text-sm leading-6 text-white outline-none placeholder:text-neutral-600 focus:border-white/30 focus:ring-2 focus:ring-white/10"
-          disabled={agent.isRunning}
+          disabled={agent.isRunning || agent.isHydrating || agent.isResetting}
           id="slidex-agent-message"
           onChange={(event) => setMessage(event.target.value)}
           placeholder="Make the opening slide more visual…"
@@ -178,7 +218,7 @@ export function PitchAgentPanel({
           ) : (
             <button
               className="flex h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-black hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-              disabled={!message.trim()}
+              disabled={!message.trim() || agent.isHydrating || agent.isResetting}
               type="submit"
             >
               <Send aria-hidden="true" size={15} /> Send

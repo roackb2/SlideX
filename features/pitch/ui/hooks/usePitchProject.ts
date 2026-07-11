@@ -1,5 +1,17 @@
-import { useState, useEffect, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction
+} from "react";
 import { defaultMdx } from "@/core/motion-doc/presets/defaultMdx";
+import {
+  resolveProjectInstanceId,
+  rotateProjectInstanceId
+} from "@/features/pitch/infrastructure/slidexAgentPersistence";
 
 export type NewPitchProjectOptions = {
   name?: string;
@@ -28,38 +40,74 @@ export function usePitchProject({
   undoStackRef
 }: UsePitchProjectArgs) {
   const [projectName, setProjectName] = useState("Untitled");
+  const [projectId, setProjectId] = useState("");
   const [isProjectDirty, setIsProjectDirty] = useState(false);
+  const isProjectDirtyRef = useRef(false);
   const [hasEnteredPitch, setHasEnteredPitch] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setProjectId(resolveProjectInstanceId(window.sessionStorage));
     setIsMounted(true);
-    if (typeof window !== "undefined" && localStorage.getItem("slidex_has_completed_onboarding") === "true") {
+    if (localStorage.getItem("slidex_has_completed_onboarding") === "true") {
       setHasEnteredPitch(true);
     }
   }, []);
 
-  function newProject(options: NewPitchProjectOptions = {}) {
+  const applyProject = useCallback((options: NewPitchProjectOptions) => {
     setSource(options.source ?? defaultMdx);
     setProjectName(options.name ?? "Untitled");
+    isProjectDirtyRef.current = false;
     setIsProjectDirty(false);
     setHasEnteredPitch(true);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("slidex_has_completed_onboarding", "true");
-    }
     undoStackRef.current = [];
     setActiveSlideIndex(0);
     resetSelection();
     setReplayNonce((value) => value + 1);
     setNotice(options.notice ?? "New project");
-  }
+  }, [
+    resetSelection,
+    setActiveSlideIndex,
+    setNotice,
+    setReplayNonce,
+    setSource,
+    undoStackRef
+  ]);
+
+  const newProject = useCallback((options: NewPitchProjectOptions = {}) => {
+    setProjectId(rotateProjectInstanceId(window.sessionStorage));
+    localStorage.setItem("slidex_has_completed_onboarding", "true");
+    applyProject(options);
+  }, [applyProject]);
+
+  const restoreProject = useCallback((options: {
+    name: string;
+    source: string;
+  }): boolean => {
+    if (isProjectDirtyRef.current) {
+      return false;
+    }
+    applyProject({
+      name: options.name,
+      source: options.source,
+      notice: "Conversation restored"
+    });
+    return true;
+  }, [applyProject]);
+
+  const markProjectDirty = useCallback(() => {
+    isProjectDirtyRef.current = true;
+    setIsProjectDirty(true);
+  }, []);
 
   return {
     isMounted,
     hasEnteredPitch,
     isProjectDirty,
-    markProjectDirty: () => setIsProjectDirty(true),
+    markProjectDirty,
     newProject,
+    projectId,
+    restoreProject,
     projectName
   };
 }
