@@ -1,4 +1,4 @@
-import type { ConversationRunProtocolEvent } from "@roackb2/heddle/remote";
+import type { ConversationRunProtocolEvent } from "@roackb2/heddle-remote";
 
 export type AgentActivity = {
   type: string;

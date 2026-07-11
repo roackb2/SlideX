@@ -33,7 +33,7 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@react-three/postprocessing": "^3.0.4",
-    "@roackb2/heddle": "git+https://github.com/roackb2/heddle.git#1a8cb3b1fe563daf58416fc41fc9158182b11c58",
+    "@roackb2/heddle-remote": "4.3.0",
     "@tiptap/extension-bubble-menu": "^3.27.1",
     "@tiptap/extension-placeholder": "^3.27.1",
     "@tiptap/pm": "^3.27.1",

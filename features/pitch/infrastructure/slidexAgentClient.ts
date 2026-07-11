@@ -3,7 +3,7 @@ import {
   type EventSourceMessage
 } from "eventsource-parser";
 import type { ZodType } from "zod";
-import { ConversationRunReplayCursorSchema } from "@roackb2/heddle/remote";
+import { ConversationRunReplayCursorSchema } from "@roackb2/heddle-remote";
 import type { AgentRunEvent, StartAgentRunResult } from "@/features/pitch/domain/agentRun";
 import {
   CancelAgentRunResultSchema,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ConversationRunConsumerService } from "@roackb2/heddle/remote";
+import { ConversationRunConsumerService } from "@roackb2/heddle-remote";
 import {
   SlideXAgentClient,
   SlideXAgentClientError
