@@ -92,6 +92,80 @@ test("protects manual deck edits when a detached run later completes", async ({ 
   expect(consoleErrors[0]).toContain("409 (Conflict)");
 });
 
+test("clears a stale conversation binding and starts fresh", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Create the first conversation");
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  agent.expireSession();
+
+  await page.reload();
+  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await expect(panel.getByText(
+    "The previous conversation was unavailable, so a new one will start.",
+    { exact: true }
+  )).toBeVisible();
+
+  await submitAgentMessage(page, "Create a fresh conversation");
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+  expect(agent.startRequests[1]?.sessionId).toBeUndefined();
+  expect(consoleErrors).toHaveLength(1);
+  expect(consoleErrors[0]).toContain("404 (Not Found)");
+});
+
+test("cancels an accepted run and returns the composer to idle", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  agent.holdNextRun();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Start a long-running edit");
+  const stop = panel.getByRole("button", { name: "Stop" });
+  await expect(stop).toBeVisible();
+  await stop.click();
+
+  await expect(panel.getByText("Run cancelled.", { exact: true })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Send" })).toBeVisible();
+  expect(agent.cancellations).toBe(1);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("shows a sanitized start failure and allows a clean retry", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  agent.failNextStart({
+    status: 500,
+    code: "internal_error",
+    message: "The agent service could not complete the request"
+  });
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "This request will fail safely");
+  await expect(panel.getByRole("alert")).toHaveText(
+    "The agent service could not complete the request"
+  );
+
+  await submitAgentMessage(page, "Retry the request");
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  expect(agent.startRequests).toHaveLength(1);
+  expect(consoleErrors).toHaveLength(1);
+  expect(consoleErrors[0]).toContain("500 (Internal Server Error)");
+});
+
+test("reattaches to the server run after an active-run conflict", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Create a conversation");
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  agent.startBackgroundRun("Continue editing in the active run");
+
+  await submitAgentMessage(page, "Collide with the active run");
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+  await expect(panel.getByText("The deck changed during this run", { exact: true })).toBeVisible();
+  expect(consoleErrors).toHaveLength(1);
+  expect(consoleErrors[0]).toContain("409 (Conflict)");
+});
+
 async function openAgentPanel(
   page: Page,
   agent: DeterministicAgentApi
@@ -143,8 +217,11 @@ type Session = {
 };
 
 type AcceptedRun = {
+  cancelled?: boolean;
   detached: boolean;
   events?: FixtureAgentEvent[];
+  held: boolean;
+  release?: () => void;
   request: StartRequest;
   runId: string;
   sessionId: string;
@@ -152,12 +229,19 @@ type AcceptedRun = {
 };
 
 type FixtureAgentEvent = {
-  kind: "activity" | "result";
+  kind: "activity" | "result" | "cancelled";
   runId: string;
   sequence: number;
   timestamp: string;
   activity?: unknown;
+  reason?: string;
   result?: unknown;
+};
+
+type StartFailure = {
+  status: number;
+  code: "internal_error";
+  message: string;
 };
 
 /**
@@ -168,6 +252,7 @@ type FixtureAgentEvent = {
 class DeterministicAgentApi {
   readonly producedMotionDocs: string[] = [];
   readonly startRequests: StartRequest[] = [];
+  cancellations = 0;
   resets = 0;
   sessionReads = 0;
 
@@ -175,11 +260,39 @@ class DeterministicAgentApi {
   private nextTurn = 1;
   private activeRun?: { runId: string; acceptedAt: string };
   private detachUpcomingRun = false;
+  private holdUpcomingRun = false;
+  private nextStartFailure?: StartFailure;
   private session?: Session;
   private readonly runs = new Map<string, AcceptedRun>();
 
   detachNextRun(): void {
     this.detachUpcomingRun = true;
+  }
+
+  expireSession(): void {
+    this.activeRun = undefined;
+    this.session = undefined;
+  }
+
+  failNextStart(failure: StartFailure): void {
+    this.nextStartFailure = failure;
+  }
+
+  holdNextRun(): void {
+    this.holdUpcomingRun = true;
+  }
+
+  startBackgroundRun(message: string): void {
+    if (!this.session || this.activeRun) {
+      throw new Error("A settled conversation is required before starting a background run");
+    }
+    this.createRun({
+      sessionId: this.session.id,
+      title: this.session.title,
+      message,
+      motionDoc: this.session.latestMotionDoc,
+      sourceRevision: "background-source-revision"
+    });
   }
 
   completeDetachedRun(): void {
@@ -196,6 +309,10 @@ class DeterministicAgentApi {
 
     if (request.method() === "POST" && url.pathname === "/api/agent/runs") {
       await this.start(route);
+      return;
+    }
+    if (request.method() === "POST" && /\/api\/agent\/runs\/[^/]+\/cancel$/.test(url.pathname)) {
+      await this.cancel(route, url);
       return;
     }
     if (request.method() === "GET" && /\/api\/agent\/runs\/[^/]+\/events$/.test(url.pathname)) {
@@ -221,7 +338,53 @@ class DeterministicAgentApi {
   }
 
   private async start(route: Route): Promise<void> {
+    if (this.nextStartFailure) {
+      const failure = this.nextStartFailure;
+      this.nextStartFailure = undefined;
+      await route.fulfill({
+        json: { error: { code: failure.code, message: failure.message } },
+        status: failure.status
+      });
+      return;
+    }
+
     const request = route.request().postDataJSON() as StartRequest;
+    if (this.activeRun) {
+      await route.fulfill({
+        json: {
+          error: {
+            code: "active_run_conflict",
+            message: "An agent run is already in progress for this conversation"
+          }
+        },
+        status: 409
+      });
+      return;
+    }
+
+    const run = this.createRun(request, {
+      detached: this.detachUpcomingRun,
+      held: this.holdUpcomingRun,
+      recordRequest: true
+    });
+    this.detachUpcomingRun = false;
+    this.holdUpcomingRun = false;
+
+    await route.fulfill({
+      json: {
+        accepted: true,
+        runId: run.runId,
+        acceptedAt: timestamp,
+        session: this.session
+      },
+      status: 202
+    });
+  }
+
+  private createRun(
+    request: StartRequest,
+    options: { detached?: boolean; held?: boolean; recordRequest?: boolean } = {}
+  ): AcceptedRun {
     const turn = this.nextTurn++;
     const sessionId = request.sessionId ?? `session-${this.nextSession++}`;
     if (!this.session || this.session.id !== sessionId) {
@@ -239,21 +402,32 @@ class DeterministicAgentApi {
       createdAt: timestamp
     });
     const runId = `run-${turn}`;
-    const detached = this.detachUpcomingRun;
-    this.detachUpcomingRun = false;
-    this.runs.set(runId, { detached, request, runId, sessionId, turn });
+    const run = {
+      detached: options.detached ?? false,
+      held: options.held ?? false,
+      request,
+      runId,
+      sessionId,
+      turn
+    } satisfies AcceptedRun;
+    this.runs.set(runId, run);
     this.activeRun = { runId, acceptedAt: timestamp };
-    this.startRequests.push(request);
+    if (options.recordRequest) {
+      this.startRequests.push(request);
+    }
+    return run;
+  }
 
-    await route.fulfill({
-      json: {
-        accepted: true,
-        runId,
-        acceptedAt: timestamp,
-        session: this.session
-      },
-      status: 202
-    });
+  private async cancel(route: Route, url: URL): Promise<void> {
+    const runId = url.pathname.split("/").at(-2) ?? "";
+    const run = this.runs.get(runId);
+    const cancelled = Boolean(run && !run.events && !run.cancelled);
+    if (run && cancelled) {
+      run.cancelled = true;
+      this.cancellations += 1;
+      run.release?.();
+    }
+    await route.fulfill({ json: { cancelled }, status: 200 });
   }
 
   private async subscribe(route: Route, url: URL): Promise<void> {
@@ -267,7 +441,14 @@ class DeterministicAgentApi {
       return;
     }
 
-    if (run.detached && !run.events) {
+    if (run.held && !run.cancelled && !run.events) {
+      await new Promise<void>((resolve) => {
+        run.release = resolve;
+      });
+      run.release = undefined;
+    }
+
+    if (run.detached && !run.cancelled && !run.events) {
       await route.fulfill({
         json: {
           error: {
@@ -280,7 +461,7 @@ class DeterministicAgentApi {
       return;
     }
 
-    const events = this.completeRun(run);
+    const events = run.cancelled ? this.completeCancelledRun(run) : this.completeRun(run);
     const afterSequence = Number(url.searchParams.get("after") ?? "0");
     const body = events
       .filter(({ sequence }) => sequence > afterSequence)
@@ -297,6 +478,32 @@ class DeterministicAgentApi {
       contentType: "text/event-stream; charset=utf-8",
       status: 200
     });
+  }
+
+  private completeCancelledRun(run: AcceptedRun): FixtureAgentEvent[] {
+    if (run.events) {
+      return run.events;
+    }
+    if (!this.session || this.session.id !== run.sessionId) {
+      throw new Error("Agent run session is unavailable");
+    }
+    this.session.messages.push({
+      id: `message-assistant-${run.turn}`,
+      role: "assistant",
+      content: "Run cancelled.",
+      createdAt: timestamp
+    });
+    run.events = [{
+      kind: "cancelled",
+      runId: run.runId,
+      sequence: 1,
+      timestamp,
+      reason: "Cancelled by user"
+    }];
+    if (this.activeRun?.runId === run.runId) {
+      this.activeRun = undefined;
+    }
+    return run.events;
   }
 
   private completeRun(run: AcceptedRun): FixtureAgentEvent[] {
