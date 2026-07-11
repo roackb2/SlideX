@@ -41,7 +41,7 @@ export function SiteNav() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-30 border-b border-white/[0.08] bg-[#0b0c0f]/92 backdrop-blur-xl">
+      <header className="fixed inset-x-0 top-0 z-[110] border-b border-white/[0.08] bg-[#0b0c0f]/92 backdrop-blur-xl">
         <a
           className="flex h-7 items-center justify-center bg-[#c4ee87] px-4 text-center text-[12px] font-semibold text-[#0a1a00] transition-colors hover:bg-[#d2f5a0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#0a1a00]"
           href="https://tally.so/r/jaYbe4"
@@ -136,7 +136,7 @@ export function SiteNav() {
         {menuOpen ? (
           <motion.div
             animate={{ opacity: 1, y: 0 }}
-            className="fixed inset-0 z-20 flex flex-col bg-[#0b0c0f] px-5 pb-7 pt-36 text-white lg:hidden"
+            className="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-[#0b0c0f] px-5 pb-[max(28px,env(safe-area-inset-bottom))] pt-36 text-white lg:hidden"
             exit={{ opacity: 0, y: -12 }}
             initial={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
@@ -148,7 +148,7 @@ export function SiteNav() {
                 </Link>
               ))}
             </nav>
-            <div className="mt-auto grid gap-3">
+            <div className="mt-auto grid gap-3 pt-8">
               <Link className="inline-flex h-11 items-center justify-center rounded-md border border-white/[0.14] text-[14px] font-semibold text-white" href={localePath("/login")}>
                 {isZh ? "登入" : "Log in"}
               </Link>
