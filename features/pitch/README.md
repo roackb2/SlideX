@@ -45,3 +45,14 @@ The editor flag only controls presentation. A deployment must also set
 `SLIDEX_AGENT_ENABLED=true` on the SlideX agent server to register the
 reconnectable run API. Keep both flags disabled for the upstream-compatible
 experience, and enable both for internal validation.
+
+## Browser regression boundary
+
+Run `npm run test:agent:e2e:install` once, then `npm run test:agent:e2e` for the
+deterministic editor lifecycle regression. Playwright starts SlideX with the
+agent flag enabled and verifies multi-turn MotionDoc continuity, visible
+history after refresh, and conversation reset without erasing the deck. The
+same test runs in `.github/workflows/agent-regression.yml`. The route fixture in
+`tests/browser/agent-lifecycle.spec.ts` owns only deterministic HTTP/SSE test
+responses; it must not reimplement product session or Heddle run policy. The
+real server repository verifies those policies and route semantics separately.
