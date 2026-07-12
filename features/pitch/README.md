@@ -6,9 +6,15 @@ editor. It is a product boundary, not an agent runtime:
 - `infrastructure/slidexAgentProtocol.ts` owns the public SlideX activity/result
   schemas and canonical Heddle run-envelope validation.
 - `infrastructure/slidexAgentClient.ts` owns HTTP requests, SSE framing, and
-  transport error classification. It does not decide cursor or terminal policy.
+  transport error classification. It accepts injected sync/async headers for
+  the host's eventual production auth provider, but does not acquire tokens or
+  choose model-credential policy. It does not decide cursor or terminal policy.
+- `infrastructure/slidexAgentPersistence.ts` owns the tab-scoped project and
+  product-conversation binding. Project instance identity survives refresh,
+  rotates for new/imported decks, and never derives from a mutable project name.
 - `ui/usePitchAgent.ts` coordinates editor-facing state, retry timers, tool
-  progress, cancellation, and stale-source conflict handling. Heddle's
+  progress, history hydration, reset/stale-session recovery, cancellation, and
+  stale-source conflict handling. Heddle's
   `ConversationRunConsumerService` owns cursor advancement, duplicate/gap
   detection, terminal state, and bounded retry attempts.
 - `ui/PitchAgentPanel.tsx` renders the conversation and delegates MotionDoc
@@ -18,6 +24,14 @@ Execution, event replay, run-consumer policy, and cancellation semantics belong
 to Heddle. Product
 session persistence and MotionDoc artifact finalization belong to the SlideX
 agent server. Do not duplicate either concern in this feature.
+
+Until SlideX has durable projects, identity and conversation binding use
+`sessionStorage`: refresh can restore the matching server MotionDoc plus chat,
+while a new tab starts clean. The server exposes active-run discovery and the
+editor can replay a retained active run after refresh. The persisted cursor is
+recorded now, but Heddle remote v4.3 cannot seed a consumer with a nonzero
+cursor; add that generic capability in Heddle before relying on cursor-bounded
+refresh recovery instead of retained replay from sequence zero.
 
 ## Rollout flag
 
