@@ -28,13 +28,14 @@ export function TableBlock({
   const columnTracks = tableColumnTrackValuesFromProps(props, columns);
   const rowTracks = tableRowTrackValuesFromProps(props, rows);
   const borderWidth = numberFromProp(props.borderWidth, 1);
+  const borderStyle = tableBorderStyle(props.borderStyle);
   const textAlign = textAlignValue(props.textAlign);
   const rootStyle = tableRootStyle(props, fillFrame);
   const gridStyle: CSSProperties = {
     gridTemplateColumns: tableTrackTemplate(columnTracks),
     gridTemplateRows: tableTrackTemplate(rowTracks)
   };
-  const cellBaseStyle = tableCellStyle(props, borderWidth, textAlign);
+  const cellBaseStyle = tableCellStyle(props, borderWidth, borderStyle, textAlign);
   const rowOverrides = parseRowOverrides(props);
   const colOverrides = parseColOverrides(props);
 
@@ -66,7 +67,7 @@ export function TableBlock({
                   ...cellBaseStyle,
                   ...borderOverride,
                   background: cellBg,
-                  color: cellTextColor || tableColor(props.color ?? props.textColor, "#111827")
+                  color: cellTextColor || tableColor(props.color ?? props.textColor, "#000000")
                 }}
               >
                 <span className="min-w-0 whitespace-pre-wrap break-words">{cell || "\u00A0"}</span>
@@ -80,23 +81,24 @@ export function TableBlock({
 }
 
 function tableRootStyle(props: TableProps, fillFrame: boolean | undefined): CSSProperties {
-  const background = tableColor(props.background ?? props.backgroundColor ?? props.bg, "rgba(255,255,255,0.02)");
-  const color = tableColor(props.color ?? props.textColor, "#111827");
-  const borderColor = tableColor(props.borderColor, "#111827");
+  const background = tableColor(props.background ?? props.backgroundColor ?? props.bg, "#ffffff");
+  const color = tableColor(props.color ?? props.textColor, "#000000");
+  const borderColor = tableColor(props.borderColor, "#d1d5db");
 
   return {
     background,
     borderColor,
+    borderStyle: tableBorderStyle(props.borderStyle),
     color,
     ...(fillFrame ? { minHeight: 0 } : {})
   };
 }
 
-function tableCellStyle(props: TableProps, borderWidth: number, textAlign: "center" | "left" | "right"): CSSProperties {
+function tableCellStyle(props: TableProps, borderWidth: number, borderStyle: "dashed" | "dotted" | "solid", textAlign: "center" | "left" | "right"): CSSProperties {
   return {
     alignItems: verticalAlignValue(props.textVerticalAlign),
-    borderBottom: `${borderWidth}px solid ${tableColor(props.borderColor, "#111827")}`,
-    borderRight: `${borderWidth}px solid ${tableColor(props.borderColor, "#111827")}`,
+    borderBottom: `${borderWidth}px ${borderStyle} ${tableColor(props.borderColor, "#d1d5db")}`,
+    borderRight: `${borderWidth}px ${borderStyle} ${tableColor(props.borderColor, "#d1d5db")}`,
     display: "flex",
     fontSize: fontSizeValue(props.fontSize),
     justifyContent: justifyValue(textAlign),
@@ -109,6 +111,10 @@ function tableCellStyle(props: TableProps, borderWidth: number, textAlign: "cent
   };
 }
 
+function tableBorderStyle(value: string | number | undefined): "dashed" | "dotted" | "solid" {
+  return value === "dashed" || value === "dotted" ? value : "solid";
+}
+
 function tableCellBackground(props: TableProps, rowIndex: number) {
   const stripeBackground = typeof props.stripeBackground === "string" && props.stripeBackground.trim()
     ? props.stripeBackground
@@ -118,7 +124,7 @@ function tableCellBackground(props: TableProps, rowIndex: number) {
     return tableColor(stripeBackground, "rgba(17,24,39,0.04)");
   }
 
-  return tableColor(props.cellBackground, "transparent");
+  return tableColor(props.cellBackground, "#ffffff");
 }
 
 function tableColor(value: string | number | undefined, fallback: string) {

@@ -163,15 +163,17 @@ export function Scene({
           style={{ borderRadius: 0, inset: 0, position: "absolute", zIndex: 0 }}
         />
       ) : null}
-      <div
-        style={{
-          background: `radial-gradient(circle at 20% 10%, ${themeColors.accent}38, transparent 28rem), radial-gradient(circle at 90% 70%, ${themeColors.accent}24, transparent 24rem)`,
-          inset: 0,
-          opacity: shader ? 0.3 : 0.7,
-          pointerEvents: "none",
-          position: "absolute"
-        }}
-      />
+      {shader ? (
+        <div
+          style={{
+            background: `radial-gradient(circle at 20% 10%, ${themeColors.accent}38, transparent 28rem), radial-gradient(circle at 90% 70%, ${themeColors.accent}24, transparent 24rem)`,
+            inset: 0,
+            opacity: 0.3,
+            pointerEvents: "none",
+            position: "absolute"
+          }}
+        />
+      ) : null}
       <div
         style={{
           alignItems: layout === "default" ? alignXToFlex(alignX) : "stretch",

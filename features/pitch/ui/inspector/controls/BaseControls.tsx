@@ -20,8 +20,8 @@ export type BlockFieldProps<TBlock extends BlockWithProps = BlockWithProps> = {
 
 export function Field({ children, label }: { children: ReactNode; label: string }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      {label ? <span className="text-[12px] font-medium text-neutral-500">{label}</span> : null}
+    <div className="flex min-w-0 flex-col gap-2">
+      {label ? <span className="text-[11px] font-medium tracking-[0.01em] text-neutral-500">{label}</span> : null}
       {children}
     </div>
   );
@@ -40,15 +40,15 @@ export function OptionButtons<T extends string>({
 }) {
   return (
     <Field label={label}>
-      <div className="flex w-full gap-0.5 rounded-lg bg-white/[0.03] p-0.5 overflow-x-auto custom-scrollbar">
+      <div className="flex min-h-9 w-full gap-1 overflow-x-auto rounded-xl border border-white/[0.055] bg-[#18181b] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] custom-scrollbar">
         {options.map((option) => {
           const isSelected = value === option.value;
           return (
             <button
-              className={`flex-1 min-w-0 flex items-center justify-center rounded-md px-2 py-1.5 text-[12px] font-medium transition-colors cursor-pointer ${
+              className={`flex min-w-0 flex-1 items-center justify-center rounded-lg px-2 py-1.5 text-[11px] font-medium outline-none transition-[background-color,color,box-shadow,transform] duration-150 focus-visible:ring-1 focus-visible:ring-violet-300/60 active:scale-[0.98] ${
                 isSelected
-                  ? "bg-white/[0.08] text-white shadow-sm"
-                  : "text-neutral-500 hover:bg-white/[0.04] hover:text-neutral-300"
+                  ? "bg-white text-[#17171a] shadow-[0_1px_5px_rgba(0,0,0,0.22)]"
+                  : "text-neutral-500 hover:bg-white/[0.055] hover:text-neutral-200"
               }`}
               key={option.value}
               onClick={() => onChange(option.value)}
@@ -76,23 +76,23 @@ export function IconSegmentedControl<T extends string>({
 }) {
   return (
     <Field label={label}>
-      <div className="flex w-full gap-0.5 rounded-lg bg-white/[0.03] p-0.5">
+      <div className="flex min-h-9 w-full gap-1 rounded-xl border border-white/[0.055] bg-[#18181b] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]">
         {options.map((option) => {
           const isSelected = value === option.value;
           return (
             <button
               aria-label={option.label}
-              className={`group relative flex-1 flex h-7 items-center justify-center rounded-md transition-colors cursor-pointer ${
+              className={`group relative flex h-7 flex-1 items-center justify-center rounded-lg outline-none transition-[background-color,color,box-shadow,transform] duration-150 focus-visible:ring-1 focus-visible:ring-violet-300/60 active:scale-[0.96] ${
                 isSelected
-                  ? "bg-white/[0.08] text-white shadow-sm"
-                  : "text-neutral-500 hover:bg-white/[0.04] hover:text-neutral-300"
+                  ? "bg-white text-[#17171a] shadow-[0_1px_5px_rgba(0,0,0,0.22)]"
+                  : "text-neutral-600 hover:bg-white/[0.055] hover:text-neutral-200"
               }`}
               key={option.value}
               onClick={() => onChange(option.value)}
               title={option.label}
               type="button"
             >
-              <span className="scale-95 group-hover:scale-100 transition-transform">{option.icon}</span>
+              <span className="scale-95 transition-transform duration-150 group-hover:scale-100">{option.icon}</span>
               <span className="sr-only">{option.label}</span>
             </button>
           );
@@ -112,9 +112,9 @@ export function NativeSelect<T extends string>({
   value: T;
 }) {
   return (
-    <div className="relative rounded-lg bg-white/[0.03] transition-colors hover:bg-white/[0.05] focus-within:bg-white/[0.06] focus-within:ring-1 focus-within:ring-white/[0.12]">
+    <div className="relative min-h-9 rounded-xl border border-white/[0.055] bg-[#18181b] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] transition-[border-color,background-color,box-shadow] hover:border-white/[0.09] hover:bg-[#1b1b1e] focus-within:border-violet-300/35 focus-within:bg-[#1d1d20] focus-within:ring-2 focus-within:ring-violet-400/10">
       <select
-        className="w-full cursor-pointer appearance-none bg-transparent pl-3 pr-8 py-1.5 text-[13px] text-neutral-200 outline-none"
+        className="h-9 w-full cursor-pointer appearance-none bg-transparent pl-3 pr-8 text-[12px] font-medium text-neutral-200 outline-none"
         onChange={(event) => {
           const selectedOption = options.find((option) => option.value === event.target.value);
 
@@ -132,7 +132,7 @@ export function NativeSelect<T extends string>({
       </select>
       <ChevronDown
         aria-hidden="true"
-        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500"
+        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-600"
         size={14}
       />
     </div>
@@ -153,7 +153,7 @@ export function TextInput({
   return (
     <Field label={label}>
       <input
-        className="w-full rounded-lg bg-white/[0.03] px-3 py-1.5 text-[13px] text-neutral-200 outline-none transition-colors placeholder:text-neutral-600 hover:bg-white/[0.05] focus:bg-white/[0.06] focus:ring-1 focus:ring-white/[0.12]"
+        className="h-9 w-full rounded-xl border border-white/[0.055] bg-[#18181b] px-3 text-[12px] text-neutral-200 outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] transition-[border-color,background-color,box-shadow] placeholder:text-neutral-600 hover:border-white/[0.09] hover:bg-[#1b1b1e] focus:border-violet-300/35 focus:bg-[#1d1d20] focus:ring-2 focus:ring-violet-400/10"
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         type="text"
@@ -179,7 +179,7 @@ export function TextAreaField({
   return (
     <Field label={label}>
       <textarea
-        className="w-full resize-none rounded-lg bg-white/[0.03] px-3 py-1.5 text-[13px] leading-relaxed text-neutral-200 outline-none transition-colors placeholder:text-neutral-600 hover:bg-white/[0.05] focus:bg-white/[0.06] focus:ring-1 focus:ring-white/[0.12]"
+        className="w-full resize-none rounded-xl border border-white/[0.055] bg-[#18181b] px-3 py-2.5 text-[12px] leading-relaxed text-neutral-200 outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] transition-[border-color,background-color,box-shadow] placeholder:text-neutral-600 hover:border-white/[0.09] hover:bg-[#1b1b1e] focus:border-violet-300/35 focus:bg-[#1d1d20] focus:ring-2 focus:ring-violet-400/10"
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         rows={rows}
@@ -218,10 +218,10 @@ export function NumberInput({
   }, [isFocused, value]);
 
   return (
-    <div className="flex items-center overflow-hidden rounded-lg bg-white/[0.03] transition-colors hover:bg-white/[0.05] focus-within:bg-white/[0.06] focus-within:ring-1 focus-within:ring-white/[0.12]">
-      {prefix ? <span className="pl-2.5 flex items-center text-neutral-500">{prefix}</span> : null}
+    <div className="flex min-h-9 items-center overflow-hidden rounded-xl border border-white/[0.055] bg-[#18181b] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] transition-[border-color,background-color,box-shadow] hover:border-white/[0.09] hover:bg-[#1b1b1e] focus-within:border-violet-300/35 focus-within:bg-[#1d1d20] focus-within:ring-2 focus-within:ring-violet-400/10">
+      {prefix ? <span className="flex items-center pl-2.5 text-neutral-600">{prefix}</span> : null}
       <input
-        className="w-full bg-transparent px-2.5 py-1.5 font-mono text-[13px] text-neutral-200 outline-none"
+        className="h-9 w-full min-w-0 bg-transparent px-2.5 font-mono text-[12px] tabular-nums text-neutral-200 outline-none"
         inputMode="decimal"
         max={max}
         min={min}
@@ -240,7 +240,7 @@ export function NumberInput({
         type="text"
         value={isFocused ? draftValue : value}
       />
-      {suffix ? <span className="pr-2.5 font-mono text-[13px] text-neutral-500">{suffix}</span> : null}
+      {suffix ? <span className="pr-2.5 font-mono text-[11px] text-neutral-600">{suffix}</span> : null}
     </div>
   );
 }
@@ -255,10 +255,10 @@ export function ColorInput({
   value: string;
 }) {
   return (
-    <div className="flex flex-1 flex-col gap-1.5">
-      <span className="text-[12px] font-medium text-neutral-500">{label}</span>
-      <div className="flex items-center gap-2 rounded-lg bg-white/[0.03] p-1.5 transition-colors hover:bg-white/[0.05] focus-within:bg-white/[0.06] focus-within:ring-1 focus-within:ring-white/[0.12]">
-        <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-[4px] border border-white/10 shadow-sm hover:scale-105 transition-transform duration-200">
+    <div className="flex min-w-0 flex-1 flex-col gap-2">
+      <span className="text-[11px] font-medium tracking-[0.01em] text-neutral-500">{label}</span>
+      <div className="flex min-h-9 items-center gap-2 rounded-xl border border-white/[0.055] bg-[#18181b] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] transition-[border-color,background-color,box-shadow] hover:border-white/[0.09] hover:bg-[#1b1b1e] focus-within:border-violet-300/35 focus-within:ring-2 focus-within:ring-violet-400/10">
+        <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-md border border-white/10 shadow-sm transition-transform duration-150 hover:scale-105">
           <input
             className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             onChange={(event) => onChange(event.target.value)}
@@ -268,20 +268,8 @@ export function ColorInput({
           />
           <span className="block h-full w-full" style={{ backgroundColor: value }} />
         </span>
-        <span className="font-mono text-[13px] text-neutral-300 pl-1">{value}</span>
+        <span className="min-w-0 truncate pl-1 font-mono text-[11px] tabular-nums text-neutral-300">{value}</span>
       </div>
     </div>
   );
-}
-
-function optionGridClass(optionCount: number) {
-  if (optionCount === 2) {
-    return "grid-cols-2";
-  }
-
-  if (optionCount === 4) {
-    return "grid-cols-4";
-  }
-
-  return "grid-cols-3";
 }

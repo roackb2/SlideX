@@ -1,6 +1,20 @@
 "use client";
 
-import { AlignCenter, AlignLeft, AlignRight, Bold, List, Minus, Plus } from "lucide-react";
+import * as Popover from "@radix-ui/react-popover";
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  AlignVerticalJustifyCenter,
+  AlignVerticalJustifyEnd,
+  AlignVerticalJustifyStart,
+  Bold,
+  Check,
+  List,
+  Minus,
+  Plus,
+  Type
+} from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { CSSProperties, CompositionEvent } from "react";
 import * as Toolbar from "@radix-ui/react-toolbar";
@@ -19,6 +33,7 @@ type TextFrameEditorProps = {
   onBeginTextEdit: () => void;
   onSelectBlock: (index: number) => void;
   onUpdateBlock: BlockUpdater;
+  toolbarPlacement?: "above" | "below";
 };
 
 export function TextFrameEditor({
@@ -27,7 +42,8 @@ export function TextFrameEditor({
   canvasScale,
   onBeginTextEdit,
   onSelectBlock,
-  onUpdateBlock
+  onUpdateBlock,
+  toolbarPlacement = "above"
 }: TextFrameEditorProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const editStartedRef = useRef(false);
@@ -73,7 +89,7 @@ export function TextFrameEditor({
 
   return (
     <>
-      <TextStyleToolbar block={block} blockIndex={blockIndex} onUpdateBlock={onUpdateBlock} />
+      <TextStyleToolbar block={block} blockIndex={blockIndex} onUpdateBlock={onUpdateBlock} placement={toolbarPlacement} />
       <div
         className="absolute z-10 cursor-text overflow-hidden border-0 bg-transparent p-0 text-current outline-none"
         onClick={(event) => event.stopPropagation()}
@@ -129,11 +145,13 @@ export function TextFrameEditor({
 function TextStyleToolbar({
   block,
   blockIndex,
-  onUpdateBlock
+  onUpdateBlock,
+  placement
 }: {
   block: EditableTextBlock;
   blockIndex: number;
   onUpdateBlock: BlockUpdater;
+  placement: "above" | "below";
 }) {
   const fontSize = numberValue(block.props.fontSize) ?? (block.type === "Title" ? 72 : 24);
   const lineHeight = numberValue(block.props.lineHeight) ?? (block.type === "Title" ? 1.02 : 1.45);
@@ -141,6 +159,7 @@ function TextStyleToolbar({
   const color = stringValue(block.props.color ?? block.props.textColor, "#ffffff");
   const pickerColor = hexColorValue(color) ?? "#ffffff";
   const textAlign = stringValue(block.props.textAlign, "left");
+  const verticalAlign = stringValue(block.props.textVerticalAlign, "top");
   const listType = stringValue(block.props.listType, "");
   const fontFamily = stringValue(block.props.fontFamily, "");
   useDynamicFont(fontFamily);
@@ -169,7 +188,19 @@ function TextStyleToolbar({
   }
 
   function adjustFontSize(delta: number) {
-    setProp("fontSize", Math.min(Math.max(Math.round(fontSize + delta), 8), 180), true);
+    setProp("fontSize", Math.min(Math.max(Math.round(fontSize + delta), 8), 180));
+  }
+
+  function applyTextPreset(preset: TextPreset) {
+    const nextProps = {
+      ...block.props,
+      fontSize: preset.fontSize,
+      fontWeight: preset.fontWeight,
+      lineHeight: preset.lineHeight,
+      role: preset.role
+    };
+
+    updateProps(nextProps);
   }
 
   function toggleList() {
@@ -192,13 +223,14 @@ function TextStyleToolbar({
 
   return (
     <Toolbar.Root
-      className="absolute -top-14 left-0 z-30 flex items-center gap-1 rounded-lg border border-white/[0.08] bg-[#18181b]/95 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl"
+      className={`absolute left-0 z-30 flex items-center gap-1 rounded-xl border border-white/[0.1] bg-[#17171a]/95 p-1.5 shadow-[0_18px_48px_rgba(5,4,10,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl ${placement === "below" ? "top-[calc(100%+10px)]" : "-top-[58px]"}`}
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
       onKeyDown={(event) => event.stopPropagation()}
       onPointerDown={(event) => event.stopPropagation()}
     >
-      {/* Font Family Selector */}
+      <TextPresetPicker block={block} onSelect={applyTextPreset} />
+
       <FontPicker onChange={(val) => setProp("fontFamily", val, true)} value={fontFamily} />
 
       <Toolbar.Separator className="mx-0.5 h-4 w-px bg-white/10 shrink-0" />
@@ -213,7 +245,7 @@ function TextStyleToolbar({
           className="h-full w-9 bg-transparent px-1 text-center font-mono text-[11px] text-neutral-200 outline-none focus:bg-white/5"
           max={180}
           min={8}
-          onChange={(event) => setProp("fontSize", event.target.value === "" ? "" : Number(event.target.value), true)}
+          onChange={(event) => setProp("fontSize", event.target.value === "" ? "" : Number(event.target.value))}
           type="number"
           value={fontSize}
         />
@@ -249,6 +281,27 @@ function TextStyleToolbar({
         </Toolbar.Button>
       </div>
 
+      <Popover.Root>
+        <Popover.Trigger asChild>
+          <Toolbar.Button aria-label="Vertical alignment" className={toolbarButtonClass(verticalAlign !== "top")} title="Vertical alignment">
+            {verticalAlign === "bottom" ? <AlignVerticalJustifyEnd size={13} /> : verticalAlign === "middle" || verticalAlign === "center" ? <AlignVerticalJustifyCenter size={13} /> : <AlignVerticalJustifyStart size={13} />}
+          </Toolbar.Button>
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content align="center" className="z-[110] flex gap-1 rounded-lg border border-white/10 bg-[#17171a] p-1.5 shadow-2xl" sideOffset={10}>
+            {[
+              { icon: <AlignVerticalJustifyStart size={14} />, label: "Align top", value: "top" },
+              { icon: <AlignVerticalJustifyCenter size={14} />, label: "Align middle", value: "middle" },
+              { icon: <AlignVerticalJustifyEnd size={14} />, label: "Align bottom", value: "bottom" }
+            ].map((option) => (
+              <button className={toolbarButtonClass(verticalAlign === option.value)} key={option.value} onClick={() => setProp("textVerticalAlign", option.value)} title={option.label} type="button">
+                {option.icon}
+              </button>
+            ))}
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
+
       <Toolbar.Separator className="mx-0.5 h-4 w-px bg-white/10 shrink-0" />
 
       {/* Color */}
@@ -278,6 +331,56 @@ function TextStyleToolbar({
         />
       </div>
     </Toolbar.Root>
+  );
+}
+
+type TextPreset = {
+  fontSize: number;
+  fontWeight: number;
+  label: string;
+  lineHeight: number;
+  role: "title" | "content";
+  sample: string;
+};
+
+const textPresets: TextPreset[] = [
+  { fontSize: 72, fontWeight: 700, label: "Display", lineHeight: 1, role: "title", sample: "Large statement" },
+  { fontSize: 48, fontWeight: 650, label: "Heading", lineHeight: 1.08, role: "title", sample: "Section heading" },
+  { fontSize: 30, fontWeight: 560, label: "Lead", lineHeight: 1.28, role: "content", sample: "Introductory copy" },
+  { fontSize: 24, fontWeight: 400, label: "Body", lineHeight: 1.45, role: "content", sample: "Comfortable reading" },
+  { fontSize: 18, fontWeight: 500, label: "Caption", lineHeight: 1.35, role: "content", sample: "Details and notes" }
+];
+
+function TextPresetPicker({ block, onSelect }: { block: EditableTextBlock; onSelect: (preset: TextPreset) => void }) {
+  const fontSize = numberValue(block.props.fontSize) ?? (block.type === "Title" ? 72 : 24);
+  const activePreset = textPresets.find((preset) => preset.fontSize === fontSize);
+
+  return (
+    <Popover.Root>
+      <Popover.Trigger asChild>
+        <Toolbar.Button aria-label="Text styles" className="flex h-7 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold text-neutral-300 outline-none transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-1 focus-visible:ring-white/50" title="Text styles">
+          <Type size={13} />
+          <span>{activePreset?.label ?? "Style"}</span>
+        </Toolbar.Button>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content align="start" className="z-[110] w-[250px] overflow-hidden rounded-xl border border-white/10 bg-[#17171a] p-1.5 shadow-[0_24px_70px_rgba(0,0,0,0.58)]" sideOffset={10}>
+          <div className="px-2 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-500">Text styles</div>
+          {textPresets.map((preset) => {
+            const active = activePreset?.label === preset.label;
+            return (
+              <Popover.Close asChild key={preset.label}>
+                <button className={`group flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors ${active ? "bg-white text-black" : "text-neutral-200 hover:bg-white/[0.08]"}`} onClick={() => onSelect(preset)} type="button">
+                  <span className="w-[72px] text-[12px] font-semibold">{preset.label}</span>
+                  <span className={`flex-1 truncate text-[11px] ${active ? "text-black/55" : "text-neutral-500 group-hover:text-neutral-400"}`}>{preset.sample}</span>
+                  {active ? <Check size={13} /> : <span className="font-mono text-[9px] text-neutral-600">{preset.fontSize}</span>}
+                </button>
+              </Popover.Close>
+            );
+          })}
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }
 

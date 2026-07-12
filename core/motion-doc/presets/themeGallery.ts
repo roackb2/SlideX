@@ -55,8 +55,6 @@ type Frame = {
   y: number;
 };
 
-const leftTitleFrame = { h: 15, w: 64, x: 8, y: 26 } satisfies Frame;
-const leftBodyFrame = { h: 16, w: 54, x: 8, y: 47 } satisfies Frame;
 const centerTitleFrame = { h: 15, w: 64, x: 18, y: 30 } satisfies Frame;
 const centerBodyFrame = { h: 16, w: 54, x: 23, y: 52 } satisfies Frame;
 
@@ -80,7 +78,7 @@ export const documentThemes = [
     name: "Basic Black",
     category: "basic",
     theme: "dark",
-    background: "#030303",
+    background: "#000000",
     accent: "#ffffff",
     textColor: "#f8fafc",
     mutedColor: "#a1a1aa",
@@ -259,24 +257,8 @@ function createDocumentTheme(config: DocumentThemeConfig): DocumentTheme {
 }
 
 export function createBlankDocumentSource(config: BlankDocumentSourceConfig) {
-  const titleFrame = config.titleFrame ?? (config.textAlign === "center" ? centerTitleFrame : leftTitleFrame);
-  const bodyFrame = config.bodyFrame ?? (config.textAlign === "center" ? centerBodyFrame : leftBodyFrame);
-  const titleFontSize = config.titleFontSize ?? (config.textAlign === "center" ? 62 : 64);
-  const bodyFontSize = config.bodyFontSize ?? 24;
-  const lineHeight = config.lineHeight ?? 1.35;
-  const titleWeight = config.titleWeight ?? 700;
-
   return `# Untitled
 
 <Slide duration={5} theme="${config.theme}" background="${config.background}" accent="${config.accent}" textColor="${config.textColor}" mutedColor="${config.mutedColor}" alignX="${config.textAlign}" alignY="center" textAlign="${config.textAlign}">
-  <Text fontSize={${titleFontSize}} fontWeight={${titleWeight}} textAlign="${config.textAlign}" x={${titleFrame.x}} y={${titleFrame.y}} w={${titleFrame.w}} h={${titleFrame.h}}>${escapeText(config.titlePlaceholder)}</Text>
-  <Text fontSize={${bodyFontSize}} lineHeight={${lineHeight}} textAlign="${config.textAlign}" x={${bodyFrame.x}} y={${bodyFrame.y}} w={${bodyFrame.w}} h={${bodyFrame.h}}>${escapeText(config.bodyPlaceholder)}</Text>
 </Slide>`;
-}
-
-function escapeText(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
 }

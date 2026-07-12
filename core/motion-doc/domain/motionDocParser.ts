@@ -133,7 +133,7 @@ function parseProps(rawProps: string): Record<string, string | number> {
       : decodeMdxAttribute(quotedValue);
     const numericValue = Number(value);
 
-    props[key] = Number.isFinite(numericValue) && value.trim() !== "" ? numericValue : value;
+    props[key] = key !== "text" && Number.isFinite(numericValue) && value.trim() !== "" ? numericValue : value;
   }
 
   return props;

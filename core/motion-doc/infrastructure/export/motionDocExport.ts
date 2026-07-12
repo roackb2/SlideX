@@ -13,7 +13,11 @@ import {
   tableTrackTemplate
 } from "@/core/motion-doc/application/tableBlock";
 import { makeMotionDocExportRuntime } from "@/core/motion-doc/infrastructure/export/motionDocExportRuntime";
+import { normalizeChartType, type ChartType } from "@/core/motion-doc/domain/chartCatalog";
+import { chartAxisBounds, chartAxisMaximum, chartAxisTicks, normalizeChartAxisStep } from "@/core/motion-doc/domain/chartAxis";
+import { formatChartValue, formatSignedChartValue, normalizeChartValueFormat, type ChartValueFormat } from "@/core/motion-doc/domain/chartValue";
 import { motionDocExportStyles } from "@/core/motion-doc/infrastructure/export/motionDocExportStyles";
+import { resolveContrastingTextColor } from "@/common/util/colorContrast";
 
 export const MOTION_DOC_PNG_HEIGHT = MOTION_DOC_CANVAS_HEIGHT;
 export const MOTION_DOC_PNG_WIDTH = MOTION_DOC_CANVAS_WIDTH;
@@ -325,7 +329,7 @@ function renderSceneHtml(scene: MotionDocScene, options: RenderSceneHtmlOptions 
   const declaredLight = theme === "light" || theme === "paper";
   const themeColors = resolveSlideThemeColors(props, {
     accentFallback: declaredLight ? "#111111" : "#ffffff",
-    backgroundFallback: declaredLight ? "#ffffff" : "#050505",
+    backgroundFallback: declaredLight ? "#ffffff" : "#000000",
     themeFallback: theme
   });
   const shader = stringProp(props.shader);
@@ -363,7 +367,7 @@ function renderSceneHtml(scene: MotionDocScene, options: RenderSceneHtmlOptions 
     "--slide-card": themeColors.cardBackground,
     "--slide-fg": themeColors.foreground,
     "--slide-muted": themeColors.muted,
-    "--slide-overlay-opacity": shader ? "0.3" : "0.72",
+    "--slide-overlay-opacity": shader ? "0.3" : "0",
     "--slide-padding": hasPositionedBlocks ? "0" : "clamp(16px, 3%, 32px)",
     "--slide-text-align": textAlignCss(props.textAlign),
     "--slide-transition-duration": `${transitionDuration}s`
@@ -417,6 +421,13 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
 
   if (block.type === "ImageBlock") {
     const fit = fitProp(block.props.fit);
+    const imageScaleX = clampExportImageScale(optionalNumberProp(block.props.scaleX));
+    const imageScaleY = clampExportImageScale(optionalNumberProp(block.props.scaleY));
+    const imageScaleStyle = {
+      "object-fit": fit,
+      "transform": `scale(${imageScaleX}, ${imageScaleY})`,
+      "transform-origin": "center"
+    };
     const filterDefinition = getPaperImageFilterDefinition(stringProp(block.props.filter));
 
     if (filterDefinition && !options.rasterMode) {
@@ -439,13 +450,13 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
 
       return renderMotionBlock(
         block,
-        `<figure class="block-image"><img src="${escapeAttribute(String(block.props.src ?? ""))}" alt="${escapeAttribute(String(block.props.alt ?? ""))}" style="${escapeAttribute(inlineCss({ "object-fit": fit }))}" /><canvas class="image-filter-canvas" data-shader="${escapeAttribute(filterDefinition.id)}"${fPresetAttr}${fFitAttr}${fDistortionAttr}${fSizeAttr}${fAngleAttr}${fContrastAttr}${fSpeedAttr}${fDetailAttr} style="${escapeAttribute(inlineCss({ "object-fit": fit, "position": "absolute", "inset": "0", "width": "100%", "height": "100%" }))}" data-shader-image="${escapeAttribute(String(block.props.src ?? ""))}"></canvas></figure>`
+        `<figure class="block-image"><img src="${escapeAttribute(String(block.props.src ?? ""))}" alt="${escapeAttribute(String(block.props.alt ?? ""))}" style="${escapeAttribute(inlineCss(imageScaleStyle))}" /><canvas class="image-filter-canvas" data-shader="${escapeAttribute(filterDefinition.id)}"${fPresetAttr}${fFitAttr}${fDistortionAttr}${fSizeAttr}${fAngleAttr}${fContrastAttr}${fSpeedAttr}${fDetailAttr} style="${escapeAttribute(inlineCss({ "object-fit": fit, "position": "absolute", "inset": "0", "width": "100%", "height": "100%", "transform": `scale(${imageScaleX}, ${imageScaleY})`, "transform-origin": "center" }))}" data-shader-image="${escapeAttribute(String(block.props.src ?? ""))}"></canvas></figure>`
       );
     }
 
     return renderMotionBlock(
       block,
-      `<figure class="block-image"><img src="${escapeAttribute(String(block.props.src ?? ""))}" alt="${escapeAttribute(String(block.props.alt ?? ""))}" style="${escapeAttribute(inlineCss({ "object-fit": fit }))}" /></figure>`
+      `<figure class="block-image"><img src="${escapeAttribute(String(block.props.src ?? ""))}" alt="${escapeAttribute(String(block.props.alt ?? ""))}" style="${escapeAttribute(inlineCss(imageScaleStyle))}" /></figure>`
     );
   }
 
@@ -481,39 +492,61 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
   }
 
   if (block.type === "Chart") {
-    const values = chartValues(String(block.props.values ?? ""));
+    const chartType = chartTypeProp(block.props.chartType ?? block.props.type);
+    const values = chartValues(String(block.props.values ?? ""), chartType === "waterfall");
     const labels = String(block.props.labels ?? "").split(",").map((label) => label.trim()).filter(Boolean);
-    const maxValue = Math.max(...values, 1);
+    const colors = String(block.props.colors ?? "").split(",").map((color) => color.trim()).filter(Boolean);
+    const sizes = String(block.props.sizes ?? "").split(",").map(Number).filter(Number.isFinite);
+    const xValues = String(block.props.xValues ?? "").split(",").map(Number).filter(Number.isFinite);
+    const xAxisStep = normalizeChartAxisStep(block.props.xAxisStep);
+    const yAxisStep = normalizeChartAxisStep(block.props.yAxisStep);
+    const valueFormat = normalizeChartValueFormat(block.props.valueFormat);
+    const maxValue = Math.max(...values.map(Math.abs), 1);
     const chartWidthClass = chartWidthClassName(block.props.width);
     const chartHeight = chartHeightProp(block.props.height);
+    const chartColor = stringProp(block.props.chartColor) ?? colors[0] ?? "#3b82f6";
+    const chartFontSize = Math.min(Math.max(numberProp(block.props.fontSize, 18), 10), 32);
+    const chartTextColor = resolveContrastingTextColor(
+      stringProp(block.props.background ?? block.props.backgroundColor ?? block.props.bg),
+      stringProp(block.props.color ?? block.props.textColor)
+    );
     const chartBody = renderChartBody({
       chartHeight,
-      chartType: chartTypeProp(block.props.chartType ?? block.props.type),
+      chartType,
+      colors,
       labels,
       maxValue,
-      values
+      sizes,
+      strokeWidth: Math.min(Math.max(numberProp(block.props.strokeWidth, 16), 2), 32),
+      valueFormat,
+      values,
+      xAxisStep,
+      xValues,
+      yAxisStep
     });
 
     return renderMotionBlock(
       block,
-      `<article class="block-chart${chartWidthClass}" style="${escapeAttribute(inlineCss({ "--chart-height": `${chartHeight}px` }))}"><h3>${escapeHtml(String(block.props.title ?? "Chart"))}</h3>${chartBody}</article>`
+      `<article class="block-chart${chartWidthClass}" style="${escapeAttribute(inlineCss({ "--chart-color": chartColor, "--chart-font-size": `${chartFontSize}px`, "--chart-height": `${chartHeight}px`, "--chart-weight": String(Math.min(Math.max(numberProp(block.props.strokeWidth, 16), 2), 32)), ...(chartTextColor ? { "--motion-fg": chartTextColor, "--motion-muted": chartTextColor } : {}) }))}"><h3>${escapeHtml(String(block.props.title ?? "Chart"))}</h3>${chartBody}</article>`
     );
   }
 
   if (block.type === "Icon") {
     const strokeWidth = numberProp(block.props.strokeWidth, 2);
-    const size = numberProp(block.props.size, 96);
-
     return renderMotionBlock(
       block,
-      `<div class="block-icon" style="${escapeAttribute(inlineCss({ "--icon-size": `${size}px` }))}">${renderLucideIcon(String(block.props.icon ?? "Sparkles"), strokeWidth)}</div>`
+      `<div class="block-icon">${renderLucideIcon(String(block.props.icon ?? "Sparkles"), strokeWidth)}</div>`
     );
   }
 
   if (block.type === "Shape") {
+    const shapeText = String(block.props.text ?? "");
+    const textLayer = shapeText
+      ? `<span class="block-shape__text" style="${escapeAttribute(inlineCss({ color: stringProp(block.props.textColor ?? block.props.color) ?? "#ffffff", fontSize: `${numberProp(block.props.fontSize, 18)}px`, fontWeight: String(numberProp(block.props.fontWeight, 650)) }))}">${escapeHtml(shapeText)}</span>`
+      : "";
     return renderMotionBlock(
       block,
-      `<div class="block-shape">${renderShapeSvg(block.props, blockIndex)}</div>`
+      `<div class="block-shape">${renderShapeSvg(block.props, blockIndex)}${textLayer}</div>`
     );
   }
 
@@ -554,17 +587,20 @@ function renderTableBlock(props: Record<string, string | number>) {
   const rowTracks = tableRowTrackValuesFromProps(props, rows);
   const rowOverrides = parseRowOverrides(props);
   const colOverrides = parseColOverrides(props);
-  const borderColor = stringProp(props.borderColor) ?? "var(--slide-border)";
+  const borderColor = stringProp(props.borderColor) ?? "#d1d5db";
   const borderWidth = numberProp(props.borderWidth, 1);
   const tableStyle = inlineCss({
     "--table-border": borderColor,
+    "--table-border-style": tableBorderStyle(props.borderStyle),
     "--table-border-width": `${borderWidth}px`,
     "--table-cell-justify": tableCellJustify(props.textAlign),
     "--table-font-size": `${numberProp(props.fontSize, 16)}px`,
+    "--table-padding-x": `${numberProp(props.cellPaddingX, 10)}px`,
+    "--table-padding-y": `${numberProp(props.cellPaddingY, 8)}px`,
     "--table-text-align": tableTextAlign(props.textAlign),
     "--table-vertical-align": tableVerticalAlign(props.textVerticalAlign),
-    background: stringProp(props.background ?? props.backgroundColor ?? props.bg) ?? "rgba(255,255,255,0.035)",
-    color: stringProp(props.color ?? props.textColor) ?? "var(--slide-fg)",
+    background: stringProp(props.background ?? props.backgroundColor ?? props.bg) ?? "#ffffff",
+    color: stringProp(props.color ?? props.textColor) ?? "#000000",
     "grid-template-columns": tableTrackTemplate(columnTracks),
     "grid-template-rows": tableTrackTemplate(rowTracks)
   });
@@ -612,6 +648,10 @@ function tableCellBackground(props: Record<string, string | number>, rowIndex: n
   }
 
   return stringProp(props.cellBackground) ?? "transparent";
+}
+
+function tableBorderStyle(value: string | number | undefined) {
+  return value === "dashed" || value === "dotted" ? value : "solid";
 }
 
 function tableTextAlign(value: string | number | undefined) {
@@ -862,11 +902,12 @@ function roundValue(value: number) {
   return Math.round(value * 100) / 100;
 }
 
-function chartValues(value: string) {
+function chartValues(value: string, allowNegative = false) {
   const values = value
     .split(",")
     .map((item) => Number(item.trim()))
-    .filter((item) => Number.isFinite(item) && item >= 0);
+    .filter((item) => Number.isFinite(item))
+    .map((item) => allowNegative ? item : Math.max(item, 0));
 
   return values.length > 0 ? values : [24, 42, 68, 54];
 }
@@ -874,87 +915,253 @@ function chartValues(value: string) {
 function renderChartBody({
   chartHeight,
   chartType,
+  colors,
   labels,
   maxValue,
-  values
+  sizes,
+  strokeWidth,
+  valueFormat,
+  values,
+  xAxisStep,
+  xValues,
+  yAxisStep
 }: {
   chartHeight: number;
-  chartType: "area" | "bar" | "donut" | "line" | "pie";
+  chartType: ChartType;
+  colors: string[];
   labels: string[];
   maxValue: number;
+  sizes: number[];
+  strokeWidth: number;
+  valueFormat: ChartValueFormat;
   values: number[];
+  xAxisStep?: number;
+  xValues: number[];
+  yAxisStep?: number;
 }) {
-  if (chartType === "line" || chartType === "area") {
-    const width = 720;
-    const height = chartHeight;
-    const points = values.map((value, index) => {
-      const x = values.length === 1 ? width / 2 : (index / (values.length - 1)) * width;
-      const y = height - Math.max((value / maxValue) * height, 4);
-      return { x, y };
-    });
-    const pointString = points.map((point) => `${point.x},${point.y}`).join(" ");
-    const areaPath = points.length > 0
-      ? `M ${points[0].x} ${height} L ${points.map((point) => `${point.x} ${point.y}`).join(" L ")} L ${points[points.length - 1].x} ${height} Z`
-      : "";
-    const dots = points
-      .map((point) => `<circle cx="${point.x}" cy="${point.y}" r="8" />`)
-      .join("");
-    const labelHtml = values
-      .map((value, index) => `<span class="block-chart__label">${escapeHtml(labels[index] ?? `D${index + 1}`)}</span>`)
-      .join("");
-
-    return `<div class="block-chart__line"><svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">${
-      chartType === "area" ? `<path class="block-chart__area" d="${escapeAttribute(areaPath)}" />` : ""
-    }<polyline points="${escapeAttribute(pointString)}" />${dots}</svg><div class="block-chart__line-labels">${labelHtml}</div></div>`;
+  if (chartType === "gauge") {
+    const visibleValues = values.slice(0, 6);
+    const axisMax = chartAxisMaximum(Math.max(...visibleValues, 1));
+    const primaryValue = Math.max(visibleValues[0] ?? 0, 0);
+    const angle = Math.PI * (1 - Math.min(primaryValue / axisMax, 1));
+    const needleX = 150 + Math.cos(angle) * 64;
+    const needleY = 130 - Math.sin(angle) * 64;
+    const primaryColor = colors[0] || "var(--chart-color)";
+    const arcWidth = Math.min(14, Math.max(5, strokeWidth));
+    const arcs = visibleValues.map((value, index) => { const radius = 96 - index * (arcWidth + 4); const color = colors[index] || "var(--chart-color)"; const pct = Math.min(Math.max(value, 0) / axisMax * 100, 100); return `<path d="M${150 - radius} 130 A${radius} ${radius} 0 0 1 ${150 + radius} 130" fill="none" pathLength="100" stroke="rgba(255,255,255,.08)" stroke-linecap="round" stroke-width="${arcWidth}"/><path d="M${150 - radius} 130 A${radius} ${radius} 0 0 1 ${150 + radius} 130" fill="none" pathLength="100" stroke="${escapeAttribute(color)}" stroke-dasharray="${pct} 100" stroke-linecap="round" stroke-width="${arcWidth}"/>`; }).join("");
+    const legend = visibleValues.map((value, index) => `<div><i style="${escapeAttribute(inlineCss({ background: colors[index] || "var(--chart-color)" }))}"></i><span>${escapeHtml(labels[index] ?? `Value ${index + 1}`)}</span><b>${formatChartValue(value, valueFormat)}</b></div>`).join("");
+    return `<div class="block-chart__gauge"><svg viewBox="0 0 300 205">${arcs}<line x1="150" x2="${needleX}" y1="130" y2="${needleY}" stroke="var(--motion-fg,var(--slide-fg))" stroke-linecap="round" stroke-width="3"/><circle cx="150" cy="130" fill="var(--slide-card)" r="8" stroke="${escapeAttribute(primaryColor)}" stroke-width="4"/><text x="49" y="153">${formatChartValue(0, valueFormat)}</text><text x="251" y="153">${formatChartValue(axisMax, valueFormat)}</text><text class="block-chart__gauge-value" x="150" y="176" fill="var(--motion-fg,var(--slide-fg))">${formatChartValue(primaryValue, valueFormat)}</text><text class="block-chart__gauge-label" x="150" y="194">${escapeHtml(labels[0] ?? "Value")}</text></svg><div class="block-chart__gauge-legend">${legend}</div></div>`;
   }
 
-  if (chartType === "pie" || chartType === "donut") {
+  if (["pie", "donut", "polar-area"].includes(chartType)) {
     const total = values.reduce((sum, value) => sum + value, 0) || 1;
-    const legend = values
-      .map((value, index) => `<div class="block-chart__legend-row"><span style="${escapeAttribute(inlineCss({ background: pieColor(index) }))}"></span><b>${escapeHtml(labels[index] ?? `D${index + 1}`)}</b><em>${Math.round((value / total) * 100)}%</em></div>`)
-      .join("");
+    let cursor = 0;
+    const gradient = values.map((value, index) => {
+      const start = cursor;
+      cursor += value / total * 100;
+      return `${colors[index] || "var(--chart-color)"} ${start}% ${cursor}%`;
+    }).join(",");
+    const donutInset = `${Math.min(40, Math.max(18, 44 - strokeWidth * 1.5))}%`;
+    const center = chartType === "donut" ? `<span style="${escapeAttribute(inlineCss({ background: "var(--slide-card)", "border-radius": "999px", display: "grid", inset: donutInset, "place-items": "center", position: "absolute" }))}">${formatChartValue(total, valueFormat)}</span>` : "";
+    const legend = values.map((value, index) => `<span><i style="${escapeAttribute(inlineCss({ background: colors[index] || "var(--chart-color)" }))}"></i>${escapeHtml(labels[index] ?? `Q${index + 1}`)} <b>${formatChartValue(value, valueFormat)}</b></span>`).join("");
+    return `<div class="block-chart__radial"><div class="block-chart__radial-graphic" style="${escapeAttribute(inlineCss({ background: `conic-gradient(${gradient})` }))}">${center}</div><div class="block-chart__radial-legend">${legend}</div></div>`;
+  }
 
-    return `<div class="block-chart__pie"><div class="block-chart__pie-graphic${chartType === "donut" ? " block-chart__pie-graphic--donut" : ""}" style="${escapeAttribute(inlineCss({ background: pieGradient(values) }))}"></div><div class="block-chart__legend">${legend}</div></div>`;
+  if (chartType === "treemap" || chartType === "heatmap") {
+    return `<div class="block-chart__tiles">${values.map((value, index) => { const tileColor = colors[index] || "var(--chart-color)"; return `<div style="${escapeAttribute(inlineCss({ background: tileColor, color: resolveContrastingTextColor(tileColor) ?? "#ffffff", opacity: String(.35 + .65 * value / maxValue) }))}"><span>${escapeHtml(labels[index] ?? `Q${index + 1}`)}</span><b>${formatChartValue(value, valueFormat)}</b></div>`; }).join("")}</div>`;
+  }
+
+  if (chartType === "timeline") {
+    return `<div class="block-chart__timeline">${values.map((value, index) => `<div><i style="${escapeAttribute(inlineCss({ background: colors[index] || "var(--chart-color)" }))}"></i><b>${escapeHtml(labels[index] ?? `Q${index + 1}`)}</b><span>${formatChartValue(value, valueFormat)}</span></div>`).join("")}</div>`;
+  }
+
+  if (chartType === "waterfall") {
+    const running = values.reduce<number[]>((items, value, index) => [...items, (items[index - 1] ?? 0) + value], []);
+    const finalTotal = running.at(-1) ?? 0;
+    const levels = [0, ...running];
+    const axisBounds = chartAxisBounds(Math.min(...levels), Math.max(...levels), yAxisStep);
+    const minimum = axisBounds.minimum;
+    const maximum = axisBounds.maximum;
+    const range = Math.max(maximum - minimum, 1);
+    const top = 30;
+    const bottom = 34;
+    const plotHeight = Math.max(chartHeight - top - bottom, 40);
+    const yFor = (value: number) => top + (maximum - value) / range * plotHeight;
+    const plotLeft = 68;
+    const plotRight = 704;
+    const itemCount = values.length + 1;
+    const step = (plotRight - plotLeft) / Math.max(itemCount, 1);
+    const barWidth = Math.min(64, Math.max(28, step * .55 + strokeWidth));
+    const xFor = (index: number) => plotLeft + step * index + (step - barWidth) / 2;
+    const yTicks = chartAxisTicks(minimum, maximum, yAxisStep);
+    const xTicks = chartAxisTicks(0, itemCount, xAxisStep, itemCount <= 8 ? itemCount : 4);
+    const yGrid = yTicks.map((tick) => `<line class="block-chart__axis-grid-line" x1="${plotLeft - 4}" x2="${plotRight}" y1="${yFor(tick)}" y2="${yFor(tick)}"/><text class="block-chart__axis-tick block-chart__axis-tick--y" x="${plotLeft - 10}" y="${yFor(tick)}">${formatChartValue(tick, valueFormat)}</text>`).join("");
+    const xGrid = xTicks.map((tick) => { const x = plotLeft + tick / Math.max(itemCount, 1) * (plotRight - plotLeft); return `<line class="block-chart__axis-grid-line" x1="${x}" x2="${x}" y1="${top}" y2="${chartHeight - bottom}"/>`; }).join("");
+    const bars = values.map((value, index) => {
+      const previous = running[index - 1] ?? 0;
+      const current = running[index];
+      const barTop = yFor(Math.max(previous, current));
+      const barBottom = yFor(Math.min(previous, current));
+      const valueY = value >= 0 ? Math.max(barTop - 8, 14) : Math.min(barBottom + 17, chartHeight - bottom - 2);
+      const connectorY = yFor(current);
+      const signedValue = formatSignedChartValue(value, valueFormat, index === 0);
+      return `<g><rect x="${xFor(index)}" y="${barTop}" width="${barWidth}" height="${Math.max(barBottom - barTop, 4)}" rx="3" fill="${escapeAttribute(colors[index] || "var(--chart-color)")}"/><line x1="${xFor(index) + barWidth}" x2="${xFor(index + 1)}" y1="${connectorY}" y2="${connectorY}"/><text class="block-chart__waterfall-value" x="${xFor(index) + barWidth / 2}" y="${valueY}">${signedValue}</text><text class="block-chart__waterfall-label" x="${xFor(index) + barWidth / 2}" y="${chartHeight - 8}">${index + 1} · ${escapeHtml(labels[index] ?? `Q${index + 1}`)}</text></g>`;
+    }).join("");
+    const totalTop = Math.min(yFor(finalTotal), yFor(0));
+    const totalHeight = Math.max(Math.abs(yFor(finalTotal) - yFor(0)), 4);
+
+    return `<div class="block-chart__waterfall"><svg viewBox="0 0 720 ${chartHeight}" preserveAspectRatio="none">${yGrid}${xGrid}<text class="block-chart__axis-name" x="8" y="16">Y</text>${bars}<rect x="${xFor(values.length)}" y="${totalTop}" width="${barWidth}" height="${totalHeight}" rx="3" fill="var(--chart-color)"/><text class="block-chart__waterfall-value" x="${xFor(values.length) + barWidth / 2}" y="${Math.max(totalTop - 8, 14)}">${formatChartValue(finalTotal, valueFormat)}</text><text class="block-chart__waterfall-label" x="${xFor(values.length) + barWidth / 2}" y="${chartHeight - 8}">${values.length + 1} · Total</text></svg></div>`;
+  }
+
+  if (chartType === "radar") {
+    const safeHeight = Math.max(chartHeight, 96);
+    const centerX = 360;
+    const centerY = safeHeight / 2;
+    const radius = Math.max(18, Math.min(118, safeHeight / 2 - 32));
+    const count = Math.max(values.length, 1);
+    const pointAt = (index: number, scale = 1) => {
+      const angle = -Math.PI / 2 + index * Math.PI * 2 / count;
+      return { x: centerX + Math.cos(angle) * radius * scale, y: centerY + Math.sin(angle) * radius * scale };
+    };
+    const polygon = (scale: number) => values.map((_, index) => {
+      const point = pointAt(index, scale);
+      return `${point.x},${point.y}`;
+    }).join(" ");
+    const valuePoints = values.map((value, index) => pointAt(index, Math.max(value, 0) / maxValue));
+    const axes = values.map((_, index) => { const point = pointAt(index); return `<line x1="${centerX}" y1="${centerY}" x2="${point.x}" y2="${point.y}"/>`; }).join("");
+    const dots = valuePoints.map((point, index) => `<circle cx="${point.x}" cy="${point.y}" r="${Math.max(3.5, strokeWidth / 2)}" fill="${escapeAttribute(colors[index] || "var(--chart-color)")}"/>`).join("");
+    const radarLabels = values.map((value, index) => {
+      const outerPoint = pointAt(index, 1.22);
+      const x = Math.min(Math.max(outerPoint.x, 42), 678);
+      const y = Math.min(Math.max(outerPoint.y, 16), safeHeight - 16);
+      return `<text x="${x}" y="${y}">${escapeHtml(labels[index] ?? `Q${index + 1}`)} · ${formatChartValue(value, valueFormat)}</text>`;
+    }).join("");
+
+    return `<div class="block-chart__radar"><svg viewBox="0 0 720 ${safeHeight}" preserveAspectRatio="xMidYMid meet"><g class="block-chart__radar-grid"><polygon points="${polygon(1)}"/><polygon points="${polygon(.66)}"/><polygon points="${polygon(.33)}"/>${axes}</g><polygon class="block-chart__radar-value" points="${valuePoints.map((point) => `${point.x},${point.y}`).join(" ")}"/>${dots}${radarLabels}</svg></div>`;
+  }
+
+  if (chartType === "sparkline") {
+    const latest = values.at(-1) ?? 0;
+    const first = values[0] ?? latest;
+    const change = first === 0 ? 0 : (latest - first) / Math.abs(first) * 100;
+    const rawMin = values.length ? Math.min(...values) : 0;
+    const rawMax = values.length ? Math.max(...values) : 1;
+    const bounds = chartAxisBounds(rawMin, rawMax, yAxisStep);
+    const min = bounds.minimum;
+    const max = bounds.maximum;
+    const range = Math.max(max - min, 1);
+    const points = values.map((value, index) => ({ x: values.length === 1 ? 314 : 44 + index * 540 / (values.length - 1), y: 12 + (max - value) / range * 62 }));
+    const pointString = points.map((point) => `${point.x},${point.y}`).join(" ");
+    const areaPath = points.length ? `M ${points[0].x} 82 L ${points.map((point) => `${point.x} ${point.y}`).join(" L ")} L ${points.at(-1)?.x} 82 Z` : "";
+    const dots = points.map((point, index) => `<circle cx="${point.x}" cy="${point.y}" r="${index === points.length - 1 ? 5 : 3.5}" fill="${escapeAttribute(colors[index] || "var(--chart-color)")}"/>`).join("");
+    const yTicks = chartAxisTicks(min, max, yAxisStep, 2);
+    const xTicks = chartAxisTicks(1, Math.max(values.length, 1), xAxisStep, Math.max(values.length - 1, 1));
+    const miniGrid = yTicks.map((tick) => { const y = 12 + (max - tick) / range * 62; return `<line class="block-chart__axis-grid-line" x1="36" x2="590" y1="${y}" y2="${y}"/><text class="block-chart__sparkline-axis" x="31" y="${y}">${formatChartValue(tick, valueFormat)}</text>`; }).join("");
+    const miniXGrid = xTicks.map((tick) => { const x = values.length <= 1 ? 314 : 44 + (tick - 1) * 540 / (values.length - 1); return `<line class="block-chart__axis-grid-line" x1="${x}" x2="${x}" y1="10" y2="82"/><text class="block-chart__sparkline-x-axis" x="${x}" y="89">${formatExportChartNumber(tick)}</text>`; }).join("");
+    const valueItems = values.map((value, index) => `<div><i style="${escapeAttribute(inlineCss({ background: colors[index] || "var(--chart-color)" }))}"></i><span>X ${index + 1} · ${escapeHtml(labels[index] ?? `Q${index + 1}`)}</span><b>Y ${formatChartValue(value, valueFormat)}</b></div>`).join("");
+    return `<div class="block-chart__sparkline"><div class="block-chart__sparkline-head"><div><small>Latest</small><strong>${formatChartValue(latest, valueFormat)}</strong></div><em class="${change >= 0 ? "is-positive" : "is-negative"}">${change >= 0 ? "+" : ""}${change.toFixed(1)}%</em></div><svg viewBox="0 0 600 90" preserveAspectRatio="none">${miniGrid}${miniXGrid}<path class="block-chart__sparkline-area" d="${escapeAttribute(areaPath)}"/><polyline points="${escapeAttribute(pointString)}"/>${dots}</svg><div class="block-chart__sparkline-values" style="${escapeAttribute(inlineCss({ "grid-template-columns": `repeat(${Math.max(values.length, 1)},minmax(0,1fr))` }))}">${valueItems}</div></div>`;
+  }
+
+  if (chartType === "scatter" || chartType === "bubble") {
+    const resolvedXValues = values.map((_, index) => xValues[index] ?? index + 1);
+    const maxX = Math.max(...resolvedXValues, 1);
+    const maxSize = Math.max(...sizes, 1);
+    const scale = exportCartesianScale(chartHeight, maxX, maxValue, xAxisStep, yAxisStep);
+    const points = values.map((value, index) => {
+      const xValue = resolvedXValues[index];
+      const x = scale.x(xValue);
+      const y = scale.y(value);
+      const diameter = chartType === "bubble" ? 14 + (sizes[index] ?? 10) / maxSize * (30 + strokeWidth) : Math.max(8, strokeWidth + 3);
+      const pointColor = colors[index] || "var(--chart-color)";
+      const innerLabel = chartType === "bubble" && diameter > 34 ? `<text class="block-chart__point-inner" x="${x}" y="${y}" fill="${escapeAttribute(resolveContrastingTextColor(pointColor) ?? "#ffffff")}">${escapeHtml(labels[index]?.slice(0, 3) ?? "")}</text>` : "";
+      return `<g><circle cx="${x}" cy="${y}" r="${diameter / 2}" style="${escapeAttribute(inlineCss({ fill: pointColor }))}"/><text class="block-chart__point-value" x="${x}" y="${Math.max(y - diameter / 2 - 7, 13)}">(${formatExportChartNumber(xValue)}, ${formatChartValue(value, valueFormat)})</text>${innerLabel}</g>`;
+    }).join("");
+
+    return `<div class="block-chart__line"><svg viewBox="0 0 720 ${chartHeight}" preserveAspectRatio="none">${renderExportCartesianAxes(chartHeight, maxX, maxValue, valueFormat, xAxisStep, yAxisStep)}${points}</svg></div>`;
+  }
+
+  if (chartType === "line" || chartType === "area" || chartType === "step") {
+    const scale = exportCartesianScale(chartHeight, Math.max(values.length, 1), maxValue, xAxisStep, yAxisStep);
+    const points = values.map((value, index) => ({ x: scale.x(index + 1), y: scale.y(value) }));
+    const pointString = points.map((point) => `${point.x},${point.y}`).join(" ");
+    const stepPath = points.reduce((path, point, index) => index ? `${path} H ${point.x} V ${point.y}` : `M ${point.x} ${point.y}`, "");
+    const areaPath = points.length ? `M ${points[0].x} ${scale.y(0)} L ${points.map((point) => `${point.x} ${point.y}`).join(" L ")} L ${points.at(-1)?.x} ${scale.y(0)} Z` : "";
+    const marks = points.map((point, index) => `<g><circle cx="${point.x}" cy="${point.y}" r="${Math.max(4, strokeWidth * .62)}" style="${escapeAttribute(inlineCss({ fill: colors[index] || "var(--chart-color)" }))}"/><text class="block-chart__point-value" x="${point.x}" y="${Math.max(point.y - 11, 14)}">${formatChartValue(values[index], valueFormat)}</text><text class="block-chart__category-value" x="${point.x}" y="${chartHeight - 3}">${escapeHtml(labels[index] ?? `Q${index + 1}`)}</text></g>`).join("");
+    const series = chartType === "step" ? `<path class="block-chart__step" d="${escapeAttribute(stepPath)}"/>` : `<polyline points="${escapeAttribute(pointString)}"/>`;
+
+    return `<div class="block-chart__line"><svg viewBox="0 0 720 ${chartHeight}" preserveAspectRatio="none" style="${escapeAttribute(inlineCss({ "--chart-stroke-width": String(strokeWidth) }))}">${renderExportCartesianAxes(chartHeight, Math.max(values.length, 1), maxValue, valueFormat, xAxisStep, yAxisStep)}${chartType === "area" ? `<path class="block-chart__area" d="${escapeAttribute(areaPath)}"/>` : ""}${series}${marks}</svg></div>`;
+  }
+
+  const isColumn = chartType === "column" || chartType === "lollipop";
+  if (isColumn) {
+    const scale = exportCartesianScale(chartHeight, Math.max(values.length, 1), maxValue, xAxisStep, yAxisStep);
+    const barWidth = Math.min(72, Math.max(24, scale.plotWidth / Math.max(values.length, 1) * .48));
+    const marks = values.map((value, index) => { const x = scale.x(index + 1); const y = scale.y(value); const baseY = scale.y(0); const mark = chartType === "lollipop" ? `<line class="block-chart__lollipop-line" x1="${x}" x2="${x}" y1="${baseY}" y2="${y}" stroke="${escapeAttribute(colors[index] || "var(--chart-color)")}"/><circle cx="${x}" cy="${y}" r="${Math.max(6, strokeWidth * .72)}" style="${escapeAttribute(inlineCss({ fill: colors[index] || "var(--chart-color)" }))}"/>` : `<rect x="${x - barWidth / 2}" y="${Math.min(y, baseY - 4)}" width="${barWidth}" height="${Math.max(baseY - y, 4)}" rx="4" fill="${escapeAttribute(colors[index] || "var(--chart-color)")}"/>`; return `<g>${mark}<text class="block-chart__point-value" x="${x}" y="${Math.max(y - 9, 14)}">${formatChartValue(value, valueFormat)}</text><text class="block-chart__category-value" x="${x}" y="${chartHeight - 3}">${escapeHtml(labels[index] ?? `Q${index + 1}`)}</text></g>`; }).join("");
+    return `<div class="block-chart__line"><svg viewBox="0 0 720 ${chartHeight}" preserveAspectRatio="none">${renderExportCartesianAxes(chartHeight, Math.max(values.length, 1), maxValue, valueFormat, xAxisStep, yAxisStep)}${marks}</svg></div>`;
+  }
+
+  if (chartType === "bar") {
+    const width = 720;
+    const left = 112;
+    const right = 42;
+    const top = 18;
+    const bottom = 38;
+    const axisMax = chartAxisMaximum(maxValue, xAxisStep);
+    const plotWidth = width - left - right;
+    const rowHeight = (chartHeight - top - bottom) / Math.max(values.length, 1);
+    const xFor = (value: number) => left + Math.max(value, 0) / axisMax * plotWidth;
+    const grid = chartAxisTicks(0, axisMax, xAxisStep).map((tick) => `<line class="block-chart__axis-grid-line" x1="${xFor(tick)}" x2="${xFor(tick)}" y1="${top}" y2="${chartHeight - bottom}"/><text class="block-chart__axis-tick" x="${xFor(tick)}" y="${chartHeight - 15}">${formatChartValue(tick, valueFormat)}</text>`).join("");
+    const rowGrid = chartAxisTicks(0, values.length, yAxisStep, Math.min(values.length, 8)).map((tick) => { const y = top + tick / Math.max(values.length, 1) * (chartHeight - top - bottom); return `<line class="block-chart__axis-grid-line" x1="${left}" x2="${left + plotWidth}" y1="${y}" y2="${y}"/>`; }).join("");
+    const bars = values.map((value, index) => { const centerY = top + rowHeight * (index + .5); const barHeight = Math.min(Math.max(strokeWidth, 12), rowHeight * .56); return `<g><text class="block-chart__bar-category" x="${left - 10}" y="${centerY}">${index + 1} · ${escapeHtml(labels[index] ?? `Q${index + 1}`)}</text><line class="block-chart__bar-track-line" x1="${left}" x2="${left + plotWidth}" y1="${centerY}" y2="${centerY}" stroke-width="${barHeight}"/><line class="block-chart__bar-value-line" x1="${left}" x2="${Math.max(xFor(value), left + 4)}" y1="${centerY}" y2="${centerY}" stroke="${escapeAttribute(colors[index] || "var(--chart-color)")}" stroke-width="${barHeight}"/><text class="block-chart__bar-number" x="${Math.min(xFor(value) + 10, width - right + 4)}" y="${centerY}">${formatChartValue(value, valueFormat)}</text></g>`; }).join("");
+    return `<div class="block-chart__line"><svg viewBox="0 0 ${width} ${chartHeight}" preserveAspectRatio="none">${grid}${rowGrid}<text class="block-chart__axis-name" x="712" y="${chartHeight - 3}" text-anchor="end">X</text>${bars}</svg></div>`;
   }
 
   const bars = values
-    .map((value, index) => `<div class="block-chart__bar-wrap"><div class="block-chart__track"><div class="block-chart__bar" style="${escapeAttribute(inlineCss({ height: `${Math.max((value / maxValue) * 100, 4)}%` }))}"></div></div><span class="block-chart__label">${escapeHtml(labels[index] ?? `D${index + 1}`)}</span></div>`)
+    .map((value, index) => `<div class="block-chart__bar-wrap"><span class="block-chart__label">${escapeHtml(labels[index] ?? `Q${index + 1}`)}</span><div class="block-chart__track" style="${escapeAttribute(inlineCss({ height: `${strokeWidth}px` }))}"><div class="block-chart__bar" style="${escapeAttribute(inlineCss({ background: colors[index] || "var(--chart-color)", width: `${Math.max((value / maxValue) * 100, 4)}%` }))}"></div></div><strong>${formatChartValue(value, valueFormat)}</strong></div>`)
     .join("");
 
   return `<div class="block-chart__bars">${bars}</div>`;
 }
 
-function chartTypeProp(value: string | number | undefined): "area" | "bar" | "donut" | "line" | "pie" {
-  if (value === "line" || value === "area" || value === "pie" || value === "donut") {
-    return value;
-  }
-
-  return "bar";
+function chartTypeProp(value: string | number | undefined): ChartType {
+  return normalizeChartType(value);
 }
 
-function pieGradient(values: number[]) {
-  const total = values.reduce((sum, value) => sum + value, 0) || 1;
-  let cursor = 0;
-  const stops = values.map((value, index) => {
-    const start = cursor;
-    const end = cursor + (value / total) * 100;
-    cursor = end;
-    return `${pieColor(index)} ${start}% ${end}%`;
-  });
+function exportCartesianScale(height: number, maxX: number, maxY: number, xAxisStep?: number, yAxisStep?: number) {
+  const left = 60;
+  const right = 704;
+  const top = 20;
+  const bottom = height - 38;
+  const xMax = xAxisStep ? chartAxisMaximum(maxX, xAxisStep) : Math.max(maxX, 1);
+  const yMax = chartAxisMaximum(Math.max(maxY, 1), yAxisStep);
+  const plotWidth = right - left;
+  const plotHeight = Math.max(bottom - top, 1);
 
-  return `conic-gradient(${stops.join(", ")})`;
+  return {
+    bottom,
+    left,
+    plotHeight,
+    plotWidth,
+    right,
+    top,
+    x: (value: number) => left + Math.max(value, 0) / xMax * plotWidth,
+    xMax,
+    y: (value: number) => top + (yMax - Math.max(value, 0)) / yMax * plotHeight,
+    yMax
+  };
 }
 
-function pieColor(index: number) {
-  const colors = [
-    "var(--motion-fg, var(--slide-fg))",
-    "rgba(142,165,255,0.72)",
-    "rgba(94,234,212,0.68)",
-    "rgba(251,191,36,0.78)",
-    "rgba(244,114,182,0.76)"
-  ];
+function renderExportCartesianAxes(height: number, maxX: number, maxY: number, valueFormat: ChartValueFormat, xAxisStep?: number, yAxisStep?: number) {
+  const scale = exportCartesianScale(height, maxX, maxY, xAxisStep, yAxisStep);
+  const xTickCount = Number.isInteger(scale.xMax) && scale.xMax <= 8 ? scale.xMax : 4;
+  const yTicks = chartAxisTicks(0, scale.yMax, yAxisStep).map((tick) => `<line class="block-chart__axis-grid-line" x1="${scale.left}" x2="${scale.right}" y1="${scale.y(tick)}" y2="${scale.y(tick)}"/><text class="block-chart__axis-tick block-chart__axis-tick--y" x="${scale.left - 8}" y="${scale.y(tick)}">${formatChartValue(tick, valueFormat)}</text>`).join("");
+  const xTicks = chartAxisTicks(0, scale.xMax, xAxisStep, xTickCount).map((tick) => `<line class="block-chart__axis-grid-line" x1="${scale.x(tick)}" x2="${scale.x(tick)}" y1="${scale.top}" y2="${scale.bottom}"/><text class="block-chart__axis-tick" x="${scale.x(tick)}" y="${height - 16}">${formatExportChartNumber(tick)}</text>`).join("");
 
-  return colors[index % colors.length];
+  return `<g class="block-chart__axes">${yTicks}${xTicks}<text class="block-chart__axis-name" x="8" y="15">Y</text><text class="block-chart__axis-name" x="712" y="${height - 3}" text-anchor="end">X</text></g>`;
+}
+
+function formatExportChartNumber(value: number) {
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(value);
 }
 
 function cardWidthClassName(value: string | number | undefined) {
@@ -985,7 +1192,7 @@ function chartHeightProp(value: string | number | undefined) {
   const parsed = typeof value === "number" ? value : Number(value);
 
   if (!Number.isFinite(parsed)) {
-    return 156;
+    return 240;
   }
 
   return Math.min(Math.max(parsed, 80), 320);
@@ -1019,6 +1226,11 @@ function backgroundSizeFromFit(value: string | undefined) {
   return "cover";
 }
 
+function clampExportImageScale(value: number | undefined) {
+  if (!Number.isFinite(value)) return 1;
+  return Math.min(Math.max(value ?? 1, 0.1), 4);
+}
+
 function cssImageUrl(value: string) {
   return `url("${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")`;
 }
@@ -1029,7 +1241,7 @@ function renderShapeSvg(props: Record<string, string | number>, blockIndex: numb
   const operation = stringProp(props.operation) ?? "none";
   const shape = stringProp(props.shape) ?? "rectangle";
   const stroke = stringProp(props.stroke) ?? "#ffffff";
-  const strokeWidth = numberProp(props.strokeWidth, shape === "arrow" || shape === "line" ? 4 : 2);
+  const strokeWidth = numberProp(props.strokeWidth, 2);
   const opacity = Math.min(Math.max(numberProp(props.opacity, 1), 0), 1);
   const sides = Math.min(Math.max(Math.round(numberProp(props.sides, 3)), 3), 12);
   const points = Math.min(Math.max(Math.round(numberProp(props.points, 5)), 3), 12);
@@ -1050,12 +1262,20 @@ function renderShapeSvg(props: Record<string, string | number>, blockIndex: numb
         ? `<circle cx="62" cy="44" fill="transparent" opacity="0.9" r="30" stroke="${escapeAttribute(stroke)}" stroke-dasharray="7 7" stroke-width="${strokeWidth}" />`
         : "";
 
-  return `<svg aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 100 100" style="${escapeAttribute(inlineCss({ opacity: String(opacity) }))}"><defs>${maskDefs}</defs><g${maskAttr}>${shapeSvg(shape, fill, stroke, strokeWidth, sides, points)}${booleanLayer}</g></svg>`;
+  const lineEndpoints = shape === "line" ? `${renderLineEndpoint(stringProp(props.arrowStart) ?? "none", "start", stroke, numberProp(props.arrowStartSize, 100))}${renderLineEndpoint(stringProp(props.arrowEnd) ?? "none", "end", stroke, numberProp(props.arrowEndSize, 100))}` : "";
+  return `<svg aria-hidden="true" preserveAspectRatio="none" viewBox="${shape === "line" ? "0 0 100 20" : "0 0 100 100"}" style="${escapeAttribute(inlineCss({ opacity: String(opacity) }))}"><defs>${maskDefs}</defs><g${maskAttr}>${shapeSvg(shape, fill, stroke, strokeWidth, sides, points, stringProp(props.lineStyle) ?? "solid", stringProp(props.arrowStart) ?? "none", stringProp(props.arrowEnd) ?? "none", Math.min(Math.max(numberProp(props.radius ?? props.borderRadius, 0), 0), 50))}${booleanLayer}</g></svg>${lineEndpoints}`;
 }
 
-function shapeSvg(shape: string, fill: string, stroke: string, strokeWidth: number, sides: number, points: number) {
+function renderLineEndpoint(endpoint: string, side: "end" | "start", stroke: string, size: number) {
+  if (endpoint === "none" || !endpoint) return "";
+  const color = stroke === "transparent" ? "#e5e7eb" : stroke;
+  const scale = Math.min(Math.max(size, 25), 300) / 100;
+  return `<span class="shape-line-endpoint shape-line-endpoint--${side} shape-line-endpoint--${escapeAttribute(endpoint)}" style="${escapeAttribute(inlineCss({ "--line-endpoint-color": color, "--line-endpoint-scale": String(scale) }))}"></span>`;
+}
+
+function shapeSvg(shape: string, fill: string, stroke: string, strokeWidth: number, sides: number, points: number, lineStyle: string, arrowStart: string, arrowEnd: string, radius: number) {
   if (shape === "circle") {
-    return `<circle cx="50" cy="50" fill="${escapeAttribute(fill)}" r="38" stroke="${escapeAttribute(stroke)}" stroke-width="${strokeWidth}" />`;
+    return `<circle cx="50" cy="50" fill="${escapeAttribute(fill)}" r="48" stroke="${escapeAttribute(stroke)}" stroke-width="${strokeWidth}" />`;
   }
 
   if (shape === "triangle" || shape === "polygon") {
@@ -1063,7 +1283,10 @@ function shapeSvg(shape: string, fill: string, stroke: string, strokeWidth: numb
   }
 
   if (shape === "line") {
-    return `<path d="M8 50 H92" fill="none" stroke="${escapeAttribute(stroke === "transparent" ? fill : stroke)}" stroke-linecap="round" stroke-width="${strokeWidth}" />`;
+    const resolvedStroke = escapeAttribute(stroke === "transparent" ? "#e5e7eb" : stroke);
+    const dash = lineStyle === "dashed" ? ` stroke-dasharray="8 6"` : lineStyle === "dotted" ? ` stroke-dasharray="1 6"` : "";
+    const isPlainLine = arrowStart === "none" && arrowEnd === "none";
+    return `<g stroke="${resolvedStroke}" stroke-linecap="${isPlainLine && lineStyle === "solid" ? "butt" : "round"}" stroke-linejoin="round" stroke-width="${strokeWidth}"><path d="M0 10H100" fill="none"${dash} vector-effect="non-scaling-stroke" /></g>`;
   }
 
   if (shape === "arrow") {
@@ -1075,10 +1298,19 @@ function shapeSvg(shape: string, fill: string, stroke: string, strokeWidth: numb
     return `<path d="${escapeAttribute(generateStarPath(points))}" fill="${escapeAttribute(fill)}" stroke="${escapeAttribute(stroke)}" stroke-linejoin="round" stroke-width="${strokeWidth}" />`;
   }
 
-  return `<rect fill="${escapeAttribute(fill)}" height="76" rx="14" stroke="${escapeAttribute(stroke)}" stroke-width="${strokeWidth}" width="76" x="12" y="12" />`;
+  const customPaths: Record<string, string> = {
+    chevron: "M1 1H68L99 50 68 99H1L32 50Z",
+    corner: "M1 1H72L99 28V99H1Z",
+    diamond: "M50 1L99 50 50 99 1 50Z",
+    hexagon: "M20 1H80L99 50 80 99H20L1 50Z",
+    parallelogram: "M24 1H99L76 99H1Z"
+  };
+  if (customPaths[shape]) return `<path d="${customPaths[shape]}" fill="${escapeAttribute(fill)}" stroke="${escapeAttribute(stroke)}" stroke-linejoin="round" stroke-width="${strokeWidth}" />`;
+
+  return `<rect fill="${escapeAttribute(fill)}" height="100" rx="${radius}" stroke="${escapeAttribute(stroke)}" stroke-width="${strokeWidth}" width="100" x="0" y="0" />`;
 }
 
-function generatePolygonPath(sides: number, cx = 50, cy = 50, r = 40) {
+function generatePolygonPath(sides: number, cx = 50, cy = 50, r = 48) {
   const angleOffset = -Math.PI / 2;
   const points: string[] = [];
 
@@ -1090,7 +1322,7 @@ function generatePolygonPath(sides: number, cx = 50, cy = 50, r = 40) {
   return `M${points.join(" L")} Z`;
 }
 
-function generateStarPath(points: number, cx = 50, cy = 50, outerR = 42) {
+function generateStarPath(points: number, cx = 50, cy = 50, outerR = 48) {
   const innerR = outerR * 0.42;
   const angleOffset = -Math.PI / 2;
   const vertices: string[] = [];

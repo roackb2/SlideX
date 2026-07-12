@@ -39,6 +39,15 @@ export type AlignmentGuide = {
   orientation: "horizontal" | "vertical";
   position: number;
 };
+export type SelectionSpacingGuide = {
+  axis: "horizontal" | "vertical";
+  crossPosition: number;
+  end: number;
+  gapPercent: number;
+  gapPx: number;
+  start: number;
+  status: "even" | "overlap" | "tight" | "uneven";
+};
 
 export type MovableBlock = Extract<MotionDocBlock, { props: Record<string, string | number> }>;
 export type EditableTextBlock = Extract<MotionDocBlock, { props: Record<string, string | number>; text: string }>;
@@ -74,10 +83,25 @@ export function hiddenEditablePreviewBlockIndices(
     selectedIndices.add(selectedBlockIndex);
   }
 
+  const resolvedIndices = [...selectedIndices];
+  const isMultiSelection = resolvedIndices.length > 1;
+  const isTextOnlyMultiSelection = isMultiSelection && isTextOnlySelection(blocks, resolvedIndices);
+
+  if (isMultiSelection && !isTextOnlyMultiSelection) {
+    return [];
+  }
+
   return blocks
     .map((block, blockIndex) => ({ block, blockIndex }))
     .filter(({ block, blockIndex }) => selectedIndices.has(blockIndex) && isMovableBlock(block) && (isEditableTextBlock(block) || isEditableTableBlock(block)))
     .map(({ blockIndex }) => blockIndex);
+}
+
+export function isTextOnlySelection(blocks: MotionDocScene["blocks"], indices: readonly number[]) {
+  return indices.length > 0 && indices.every((index) => {
+    const block = blocks[index];
+    return block ? isEditableTextBlock(block) : false;
+  });
 }
 
 export function isMovableBlock(block: MotionDocScene["blocks"][number]): block is MovableBlock {
@@ -113,10 +137,16 @@ export function interactionFrameUpdates(interaction: CanvasInteraction, pointer:
   const dy = pointer.y - interaction.startPointer.y;
 
   if (interaction.mode === "resize" && interaction.handle) {
+    const resizedFrame = resizeFrame(interaction.startFrame, dx, dy, interaction.handle);
+
+    if (interaction.startFrames.length > 1) {
+      return resizeSelectionFrames(interaction.startFrame, resizedFrame, interaction.startFrames);
+    }
+
     return [
       {
         blockIndex: interaction.blockIndex,
-        frame: resizeFrame(interaction.startFrame, dx, dy, interaction.handle)
+        frame: resizedFrame
       }
     ];
   }
@@ -128,6 +158,25 @@ export function interactionFrameUpdates(interaction: CanvasInteraction, pointer:
       w: frame.w,
       x: clampFramePosition(frame.x + dx, frame.w),
       y: clampFramePosition(frame.y + dy, frame.h)
+    }
+  }));
+}
+
+export function resizeSelectionFrames(
+  selectionFrame: Frame,
+  resizedSelectionFrame: Frame,
+  frames: readonly FrameUpdate[]
+): FrameUpdate[] {
+  const scaleX = selectionFrame.w === 0 ? 1 : resizedSelectionFrame.w / selectionFrame.w;
+  const scaleY = selectionFrame.h === 0 ? 1 : resizedSelectionFrame.h / selectionFrame.h;
+
+  return frames.map(({ blockIndex, frame }) => ({
+    blockIndex,
+    frame: {
+      h: clampPercent(frame.h * scaleY),
+      w: clampPercent(frame.w * scaleX),
+      x: clampPercent(resizedSelectionFrame.x + (frame.x - selectionFrame.x) * scaleX),
+      y: clampPercent(resizedSelectionFrame.y + (frame.y - selectionFrame.y) * scaleY)
     }
   }));
 }
@@ -188,6 +237,53 @@ export function selectedMovableBlockIndices(blocks: MotionDocScene["blocks"], re
     .filter(({ block }) => isMovableBlock(block))
     .filter(({ block }) => intersectsRect(blockFrame(block), rect))
     .map(({ blockIndex }) => blockIndex);
+}
+
+export function selectionSpacingGuides(frames: readonly Frame[]): SelectionSpacingGuide[] {
+  if (frames.length < 2) return [];
+
+  const xCenters = frames.map((frame) => frame.x + frame.w / 2);
+  const yCenters = frames.map((frame) => frame.y + frame.h / 2);
+  const xSpread = Math.max(...xCenters) - Math.min(...xCenters);
+  const ySpread = Math.max(...yCenters) - Math.min(...yCenters);
+  const axis: SelectionSpacingGuide["axis"] = xSpread >= ySpread ? "horizontal" : "vertical";
+  const sortedFrames = [...frames].sort((a, b) => axis === "horizontal" ? a.x - b.x : a.y - b.y);
+  const rawGuides = sortedFrames.slice(0, -1).map((frame, index) => {
+    const nextFrame = sortedFrames[index + 1];
+    const start = axis === "horizontal" ? frame.x + frame.w : frame.y + frame.h;
+    const end = axis === "horizontal" ? nextFrame.x : nextFrame.y;
+    const gapPercent = end - start;
+    const crossStart = axis === "horizontal" ? Math.max(frame.y, nextFrame.y) : Math.max(frame.x, nextFrame.x);
+    const crossEnd = axis === "horizontal"
+      ? Math.min(frame.y + frame.h, nextFrame.y + nextFrame.h)
+      : Math.min(frame.x + frame.w, nextFrame.x + nextFrame.w);
+    const fallbackCross = axis === "horizontal"
+      ? (frame.y + frame.h / 2 + nextFrame.y + nextFrame.h / 2) / 2
+      : (frame.x + frame.w / 2 + nextFrame.x + nextFrame.w / 2) / 2;
+
+    return {
+      axis,
+      crossPosition: crossEnd >= crossStart ? (crossStart + crossEnd) / 2 : fallbackCross,
+      end,
+      gapPercent,
+      gapPx: Math.round(gapPercent / 100 * (axis === "horizontal" ? CANVAS_WIDTH : CANVAS_HEIGHT)),
+      start
+    };
+  });
+  const positiveGaps = rawGuides.map((guide) => guide.gapPercent).filter((gap) => gap >= 0);
+  const isEven = positiveGaps.length > 1 && Math.max(...positiveGaps) - Math.min(...positiveGaps) <= 0.7;
+  const isUneven = positiveGaps.length > 1 && !isEven;
+
+  return rawGuides.map((guide) => ({
+    ...guide,
+    status: guide.gapPercent < -0.1
+      ? "overlap"
+      : isUneven
+        ? "uneven"
+        : guide.gapPercent < 1.5
+          ? "tight"
+          : "even"
+  }));
 }
 
 export function findAlignmentGuides(blocks: MotionDocScene["blocks"], updates: readonly FrameUpdate[]) {

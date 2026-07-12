@@ -416,14 +416,18 @@ export function updatePositionedBlockFrames(slide: MotionDocScene, updates: Fram
       continue;
     }
 
+    const nextProps = {
+      ...currentBlock.props,
+      w: currentBlock.props.w ?? defaultBlockWidth(currentBlock.type),
+      h: currentBlock.props.h ?? defaultBlockHeight(currentBlock.type),
+      ...frame
+    };
+
     blocks[blockIndex] = {
       ...currentBlock,
-      props: {
-        ...currentBlock.props,
-        w: currentBlock.props.w ?? defaultBlockWidth(currentBlock.type),
-        h: currentBlock.props.h ?? defaultBlockHeight(currentBlock.type),
-        ...frame
-      }
+      props: currentBlock.type === "Icon"
+        ? { ...nextProps, size: Math.round(Math.min(Number(nextProps.w) / 100 * 1920, Number(nextProps.h) / 100 * 1080)) }
+        : nextProps
     };
   }
 

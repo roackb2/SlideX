@@ -1,5 +1,7 @@
 import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
 import { createTableCells, serializeTableCells } from "@/core/motion-doc/application/tableBlock";
+import { chartDefaultProps } from "@/core/motion-doc/application/chartBlock";
+import { normalizeChartType } from "@/core/motion-doc/domain/chartCatalog";
 
 export type AddBlockType =
   | "Title"
@@ -20,6 +22,7 @@ export type AddBlockType =
   | "ChartArea"
   | "ChartPie"
   | "ChartDonut"
+  | "ChartBubble"
   | "Icon"
   | "Table"
   | "ShapeRectangle"
@@ -35,10 +38,12 @@ export function createMotionDocBlock(type: AddBlockType): MotionDocBlock {
       return {
         type: "Table",
         props: {
-          borderColor: "rgba(255,255,255,0.18)",
-          cellBackground: "rgba(255,255,255,0.04)",
+          background: "#ffffff",
+          borderColor: "#d1d5db",
+          borderWidth: 1,
+          cellBackground: "#ffffff",
           cells: serializeTableCells(createTableCells(3, 4)),
-          color: "#ffffff",
+          color: "#000000",
           columns: 4,
           enter: "none",
           fontSize: 16,
@@ -46,7 +51,7 @@ export function createMotionDocBlock(type: AddBlockType): MotionDocBlock {
           headerHeight: 26,
           rowHeaderWidth: 34,
           rows: 3,
-          stripeBackground: "rgba(255,255,255,0.07)",
+          stripeBackground: "#f8fafc",
           w: 56,
           x: 22,
           y: 34
@@ -83,12 +88,14 @@ export function createMotionDocBlock(type: AddBlockType): MotionDocBlock {
       return createChartBlock("pie");
     case "ChartDonut":
       return createChartBlock("donut");
+    case "ChartBubble":
+      return createChartBlock("bubble");
     case "Image":
-      return { type: "ImageBlock", props: { src: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800", alt: "Retro Setup", fit: "cover", enter: "none", radius: 16, x: 10, y: 20, w: 80, h: 54 } } as MotionDocBlock;
+      return { type: "ImageBlock", props: { src: "", alt: "", fit: "cover", scaleX: 1, scaleY: 1, enter: "none", radius: 16, x: 10, y: 20, w: 80, h: 54 } } as MotionDocBlock;
     case "Video":
       return { type: "VideoBlock", props: { src: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", fit: "cover", controls: "true", loop: "true", muted: "true", enter: "none", radius: 16, x: 10, y: 20, w: 80, h: 54 } } as MotionDocBlock;
     case "Icon":
-      return { type: "Icon", props: { icon: "Sparkles", color: "#ffffff", strokeWidth: 2.2, size: 112, enter: "none", radius: 0, x: 42, y: 28, w: 16, h: 28 } } as MotionDocBlock;
+      return { type: "Icon", props: { icon: "Sparkles", color: "#ffffff", strokeWidth: 2.2, size: 112, enter: "none", radius: 0, x: 47.0833, y: 44.8148, w: 5.8333, h: 10.3704 } } as MotionDocBlock;
     case "ShapeRectangle":
       return createShapeBlock("rectangle");
     case "ShapeCircle":
@@ -124,21 +131,19 @@ function createTextPresetBlock(fontSize: number, text: string): MotionDocBlock {
 }
 
 function createChartBlock(chartType: string): MotionDocBlock {
+  const normalizedType = normalizeChartType(chartType);
   return {
     type: "Chart",
     props: {
-      chartType,
-      title: chartType === "bar" ? "Quarterly traction" : "Audience signal",
-      labels: "Q1,Q2,Q3,Q4",
-      values: chartType === "pie" || chartType === "donut" ? "32,24,18,26" : "42,58,73,91",
-      width: "lg",
-      height: 152,
+      ...chartDefaultProps(normalizedType),
+      title: normalizedType === "bar" ? "Quarterly traction" : "Audience signal",
+      width: "full",
       enter: "none",
       radius: 16,
-      x: 10,
-      y: 34,
-      w: 70,
-      h: 42
+      x: 7,
+      y: 24,
+      w: 86,
+      h: 64
     }
   } as MotionDocBlock;
 }
@@ -154,16 +159,16 @@ function createShapeBlock(shape: string): MotionDocBlock {
       ...(isTriangle ? { sides: 3 } : {}),
       ...(isStar ? { points: 5 } : {}),
       fill: isLine ? "transparent" : "rgba(142,165,255,0.72)",
-      stroke: "#ffffff",
-      strokeWidth: isLine ? 4 : 2,
+      stroke: isLine ? "#171717" : "#ffffff",
+      strokeWidth: 2,
       operation: "none",
       mask: "none",
       enter: "none",
-      radius: shape === "rectangle" ? 18 : 0,
+      radius: 0,
       x: isLine ? 16 : 34,
       y: isLine ? 50 : 30,
       w: isLine ? 68 : 28,
-      h: isLine ? 5 : 28
+      h: isLine ? 2.5 : 28
     }
   } as MotionDocBlock;
 }

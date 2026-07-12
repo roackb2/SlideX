@@ -1,9 +1,10 @@
 "use client";
 
-import { Upload, Maximize, Minimize, StretchHorizontal, Shrink, ImagePlus } from "lucide-react";
+import { ImagePlus, Maximize, Minimize, RefreshCcw, Shrink, StretchHorizontal, Upload } from "lucide-react";
 import {
   Field,
   IconSegmentedControl,
+  NumberInput,
   TextInput,
   type BlockFieldProps
 } from "@/features/pitch/ui/inspector/InspectorControls";
@@ -89,11 +90,44 @@ export function ImageFields({
         onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, fit: value })}
       />
 
+      <Field label="Image scale">
+        <div className="grid grid-cols-[1fr_1fr_auto] gap-1.5">
+          <NumberInput
+            min="0.1"
+            max="4"
+            onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, scaleX: value === "" ? 1 : value })}
+            prefix={<span className="text-[9px] font-semibold text-neutral-500">X</span>}
+            step="0.05"
+            suffix="×"
+            value={block.props.scaleX ?? 1}
+          />
+          <NumberInput
+            min="0.1"
+            max="4"
+            onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, scaleY: value === "" ? 1 : value })}
+            prefix={<span className="text-[9px] font-semibold text-neutral-500">Y</span>}
+            step="0.05"
+            suffix="×"
+            value={block.props.scaleY ?? 1}
+          />
+          <button
+            aria-label="Reset image scale"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.055] bg-[#18181b] text-neutral-500 transition-all hover:border-white/10 hover:bg-white/[0.06] hover:text-white active:scale-95"
+            onClick={() => updateBlock(selectedBlockIndex, { ...block.props, scaleX: 1, scaleY: 1 })}
+            title="Reset image scale"
+            type="button"
+          >
+            <RefreshCcw size={13} />
+          </button>
+        </div>
+        <p className="mt-1.5 text-[10px] leading-relaxed text-neutral-600">Scale the image content without changing its frame.</p>
+      </Field>
+
       <ImageFilterSection
         onChange={(updates, options) => updateBlock(selectedBlockIndex, { ...block.props, ...updates }, undefined, options)}
         props={block.props}
       />
-
+      <p className="-mt-2 text-[10px] leading-relaxed text-neutral-600">Fit and scale reset are also available directly on the selected image frame.</p>
     </div>
   );
 }

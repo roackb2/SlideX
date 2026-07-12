@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
 import {
   BarChart3,
-  ChartArea,
   ChartLine,
-  ChartPie,
-  Circle,
+  CircleDot,
   Image as ImageIcon,
+  Shapes,
   Sparkles,
   Table2,
   Type,
@@ -15,7 +14,7 @@ import type { AddBlockType } from "@/core/motion-doc/application/motionDocBlockF
 
 export type { AddBlockType };
 
-export type PitchToolGroupId = "chart" | "icon" | "media" | "table" | "text";
+export type PitchToolGroupId = "chart" | "icon" | "media" | "shape" | "table" | "text";
 
 export type PitchBlockTool = {
   description?: string;
@@ -43,18 +42,19 @@ export const mediaTools = [
 ] satisfies PitchBlockTool[];
 
 export const chartTools = [
-  { icon: <BarChart3 size={16} />, label: "Bar", type: "ChartBar" },
-  { icon: <ChartLine size={16} />, label: "Line", type: "ChartLine" },
-  { icon: <ChartArea size={16} />, label: "Area", type: "ChartArea" },
-  { icon: <ChartPie size={16} />, label: "Pie", type: "ChartPie" },
-  { icon: <Circle size={16} />, label: "Donut", type: "ChartDonut" }
+  { description: "Compare categories", icon: <BarChart3 size={16} />, label: "Comparison", type: "ChartBar" },
+  { description: "Show change over time", icon: <ChartLine size={16} />, label: "Trend", type: "ChartLine" },
+  { description: "Show parts of a whole", icon: <CircleDot size={16} />, label: "Composition", type: "ChartDonut" },
+  { description: "Show correlation", icon: <CircleDot size={16} />, label: "Relationship", type: "ChartBubble" }
 ] satisfies PitchBlockTool[];
 
 export const tableTools = [
   { description: "Editable grid with row and column controls", icon: <Table2 size={16} />, label: "Table", type: "Table" }
 ] satisfies PitchBlockTool[];
 
-// shapeTools removed as requested
+export const shapeTools = [
+  { description: "Shapes, lines, labels, and process blocks", icon: <Shapes size={16} />, label: "Shape", type: "ShapeRectangle" }
+] satisfies PitchBlockTool[];
 
 export const iconTool: PitchBlockTool = {
   description: "Lucide symbol layer",
@@ -66,7 +66,8 @@ export const iconTool: PitchBlockTool = {
 export const toolGroups: PitchToolGroup[] = [
   { icon: <Type size={17} />, id: "text", label: "Text", tools: textPresetTools },
   { icon: <ImageIcon size={17} />, id: "media", label: "Media", tools: mediaTools },
-  { icon: <BarChart3 size={17} />, id: "chart", label: "Chart", tools: chartTools },
+  { icon: <Shapes size={17} />, id: "shape", label: "Shape", modal: true, tools: shapeTools },
+  { icon: <BarChart3 size={17} />, id: "chart", label: "Chart", modal: true, tools: chartTools },
   { icon: <Table2 size={17} />, id: "table", label: "Table", tools: tableTools },
   { icon: <Sparkles size={17} />, id: "icon", label: "Icon", tools: [iconTool] }
 ];
@@ -75,6 +76,7 @@ export const blockTools: PitchBlockTool[] = [
   ...textPresetTools,
   ...mediaTools,
   ...chartTools,
+  ...shapeTools,
   ...tableTools,
   iconTool
 ];

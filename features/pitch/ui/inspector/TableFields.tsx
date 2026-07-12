@@ -1,6 +1,6 @@
 "use client";
 
-import { AlignCenter, AlignLeft, AlignRight, Rows3, Columns3, Grid3X3, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Minus, Rows3, Columns3, Grid3X3, X } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -15,11 +15,14 @@ import {
   updateColOverride,
   updateRowOverride,
   updateTableCell,
+  TABLE_MAX_COLUMNS,
+  TABLE_MAX_ROWS,
   type TableSelection
 } from "@/core/motion-doc/application/tableBlock";
 import {
   Field,
   IconSegmentedControl,
+  NativeSelect,
   NumberInput,
   type BlockFieldProps
 } from "@/features/pitch/ui/inspector/InspectorControls";
@@ -58,6 +61,9 @@ export function TableFields({ block, selectedBlockIndex, updateBlock }: BlockFie
   const borderColor = hasSelection && currentOverride?.borderColor
     ? currentOverride.borderColor
     : String(block.props.borderColor ?? "");
+  const textColor = hasSelection && currentOverride?.textColor
+    ? currentOverride.textColor
+    : String(block.props.color ?? block.props.textColor ?? "");
 
   function onBgChange(value: string) {
     if (hasSelection && selectionIndex !== null) {
@@ -81,6 +87,17 @@ export function TableFields({ block, selectedBlockIndex, updateBlock }: BlockFie
     }
   }
 
+  function onTextChange(value: string) {
+    if (hasSelection && selectionIndex !== null) {
+      const nextProps = selectionKind === "row"
+        ? updateRowOverride(block.props, selectionIndex, { textColor: value })
+        : updateColOverride(block.props, selectionIndex, { textColor: value });
+      updateBlock(selectedBlockIndex, nextProps);
+    } else {
+      updateBlock(selectedBlockIndex, { ...block.props, color: value });
+    }
+  }
+
   function clearOverride() {
     if (!hasSelection || selectionIndex === null) return;
     const nextProps = selectionKind === "row"
@@ -96,7 +113,7 @@ export function TableFields({ block, selectedBlockIndex, updateBlock }: BlockFie
       <div className="grid grid-cols-2 gap-2">
         <Field label="Rows">
           <NumberInput
-            max="10"
+            max={String(TABLE_MAX_ROWS)}
             min="1"
             onChange={(value) => {
               const nextRows = value === "" ? size.rows : value;
@@ -108,7 +125,7 @@ export function TableFields({ block, selectedBlockIndex, updateBlock }: BlockFie
         </Field>
         <Field label="Columns">
           <NumberInput
-            max="10"
+            max={String(TABLE_MAX_COLUMNS)}
             min="1"
             onChange={(value) => {
               const nextColumns = value === "" ? size.columns : value;
@@ -118,6 +135,45 @@ export function TableFields({ block, selectedBlockIndex, updateBlock }: BlockFie
             value={size.columns}
           />
         </Field>
+      </div>
+
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-3">
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <div className="text-[12px] font-semibold text-neutral-200">Table style</div>
+            <div className="mt-0.5 text-[10px] text-neutral-500">Grid, spacing and visual finish</div>
+          </div>
+          <span className="rounded-md bg-pink-500/10 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-pink-300">Visible</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="Grid line">
+            <NativeSelect
+              onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, borderStyle: value })}
+              options={tableBorderStyleOptions}
+              value={tableBorderStyleValue(block.props.borderStyle)}
+            />
+          </Field>
+          <Field label="Line width">
+            <NumberInput
+              max="6"
+              min="0"
+              onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, borderWidth: value === "" ? 1 : value })}
+              step="1"
+              suffix="px"
+              value={block.props.borderWidth ?? 1}
+            />
+          </Field>
+        </div>
+
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <Field label="Cell padding X">
+            <NumberInput max="40" min="0" onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, cellPaddingX: value === "" ? 10 : value })} step="1" suffix="px" value={block.props.cellPaddingX ?? 10} />
+          </Field>
+          <Field label="Cell padding Y">
+            <NumberInput max="40" min="0" onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, cellPaddingY: value === "" ? 8 : value })} step="1" suffix="px" value={block.props.cellPaddingY ?? 8} />
+          </Field>
+        </div>
       </div>
 
       <TableCellMatrix
@@ -133,6 +189,28 @@ export function TableFields({ block, selectedBlockIndex, updateBlock }: BlockFie
         }}
         rows={size.rows}
         selection={tableSelection}
+      />
+
+      <IconSegmentedControl
+        label="Text align"
+        options={[
+          { label: "Left", value: "left", icon: <AlignLeft size={14} /> },
+          { label: "Center", value: "center", icon: <AlignCenter size={14} /> },
+          { label: "Right", value: "right", icon: <AlignRight size={14} /> }
+        ]}
+        value={String(block.props.textAlign ?? "left")}
+        onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, textAlign: value })}
+      />
+
+      <IconSegmentedControl
+        label="Vertical align"
+        options={[
+          { label: "Top", value: "top", icon: <ArrowUp size={14} /> },
+          { label: "Middle", value: "middle", icon: <Minus size={14} /> },
+          { label: "Bottom", value: "bottom", icon: <ArrowDown size={14} /> }
+        ]}
+        value={String(block.props.textVerticalAlign ?? "middle")}
+        onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, textVerticalAlign: value })}
       />
 
       {/* ── Color Palette ───────────────────────────────────────── */}
@@ -164,18 +242,24 @@ export function TableFields({ block, selectedBlockIndex, updateBlock }: BlockFie
         </div>
 
         {/* Color swatches */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <PaletteSwatch
             color={bgColor}
             label="Background"
             onChange={onBgChange}
-            placeholder={hasSelection ? "Inherit" : "rgba(255,255,255,0.02)"}
+            placeholder={hasSelection ? "Inherit" : "#ffffff"}
           />
           <PaletteSwatch
             color={borderColor}
             label="Border"
             onChange={onBorderChange}
-            placeholder={hasSelection ? "Inherit" : "#111827"}
+            placeholder={hasSelection ? "Inherit" : "#d1d5db"}
+          />
+          <PaletteSwatch
+            color={textColor}
+            label="Text"
+            onChange={onTextChange}
+            placeholder={hasSelection ? "Inherit" : "#000000"}
           />
         </div>
       </div>
@@ -192,19 +276,18 @@ export function TableFields({ block, selectedBlockIndex, updateBlock }: BlockFie
         />
       </Field>
 
-      {/* ── Text Align ───────────────────────────────────────── */}
-      <IconSegmentedControl
-        label="Text align"
-        options={[
-          { label: "Left", value: "left", icon: <AlignLeft size={14} /> },
-          { label: "Center", value: "center", icon: <AlignCenter size={14} /> },
-          { label: "Right", value: "right", icon: <AlignRight size={14} /> },
-        ]}
-        value={String(block.props.textAlign ?? "left")}
-        onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, textAlign: value })}
-      />
     </div>
   );
+}
+
+const tableBorderStyleOptions = [
+  { label: "Solid", value: "solid" },
+  { label: "Dashed", value: "dashed" },
+  { label: "Dotted", value: "dotted" }
+] as const;
+
+function tableBorderStyleValue(value: string | number | undefined): "dashed" | "dotted" | "solid" {
+  return value === "dashed" || value === "dotted" ? value : "solid";
 }
 
 function TableCellMatrix({

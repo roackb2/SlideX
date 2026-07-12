@@ -2,7 +2,6 @@
 
 import { Link2, PlayCircle, Upload, Video, Maximize, Minimize, StretchHorizontal, Shrink } from "lucide-react";
 import { OptionButtons, TextInput, IconSegmentedControl, type BlockFieldProps } from "@/features/pitch/ui/inspector/InspectorControls";
-import { imageFitOptions } from "@/features/pitch/ui/pitchOptions";
 
 const booleanOptions = [
   { label: "Off", value: "false" },
@@ -18,14 +17,14 @@ export function VideoFields({
   uploadVideoForBlock: (blockIndex: number, file: File | undefined) => void;
 }) {
   return (
-    <>
+    <div className="flex flex-col gap-5">
       <div className="grid gap-2">
-        <label className="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#8b5cf6]/30 bg-[#090713]/70 px-3 py-3 text-left transition hover:border-[#a78bfa]/55 hover:bg-[#120d24]">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-black/40 text-[#c4b5fd]">
+        <label className="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-white/[0.1] bg-[#18181b] px-3 py-3 text-left transition hover:border-white/20 hover:bg-[#1d1d20] active:scale-[0.99]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-black/35 text-neutral-300 transition group-hover:text-white">
             <Upload size={16} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-xs font-semibold text-white">Import video file</span>
+            <span className="block text-xs font-semibold text-neutral-200">Import video file</span>
             <span className="block truncate text-[10px] text-neutral-500">MP4 / WebM saved into this MDX</span>
           </span>
           <input
@@ -39,7 +38,7 @@ export function VideoFields({
           />
         </label>
         <div className="grid grid-cols-[34px_1fr] items-end gap-2">
-          <span className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-black/35 text-[#c4b5fd]">
+          <span className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-black/35 text-neutral-400">
             {isYoutubeUrl(String(block.props.src ?? "")) ? <PlayCircle size={15} /> : <Link2 size={15} />}
           </span>
           <TextInput
@@ -51,7 +50,7 @@ export function VideoFields({
         </div>
       </div>
       <div className="grid grid-cols-[34px_1fr] items-end gap-2">
-        <span className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-black/35 text-[#c4b5fd]">
+        <span className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-black/35 text-neutral-400">
           <Video size={15} />
         </span>
         <TextInput
@@ -72,10 +71,14 @@ export function VideoFields({
         value={normalizeFit(block.props.fit)}
         onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, fit: value })}
       />
-      <OptionButtons label="Controls" options={booleanOptions} value={normalizeBoolean(block.props.controls, "true")} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, controls: value })} />
-      <OptionButtons label="Loop" options={booleanOptions} value={normalizeBoolean(block.props.loop, "true")} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, loop: value })} />
-      <OptionButtons label="Muted" options={booleanOptions} value={normalizeBoolean(block.props.muted, "true")} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, muted: value })} />
-    </>
+      <div className="grid gap-3 rounded-xl border border-white/[0.055] bg-black/20 p-3">
+        <p className="text-[10px] font-semibold tracking-wide text-neutral-500">PLAYBACK</p>
+        <OptionButtons label="Controls" options={booleanOptions} value={normalizeBoolean(block.props.controls, "true")} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, controls: value })} />
+        <OptionButtons label="Loop" options={booleanOptions} value={normalizeBoolean(block.props.loop, "true")} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, loop: value })} />
+        <OptionButtons label="Muted" options={booleanOptions} value={normalizeBoolean(block.props.muted, "true")} onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, muted: value })} />
+      </div>
+      <p className="-mt-2 text-[10px] leading-relaxed text-neutral-600">Fit, mute, and playback controls are also available directly on the selected video frame.</p>
+    </div>
   );
 }
 

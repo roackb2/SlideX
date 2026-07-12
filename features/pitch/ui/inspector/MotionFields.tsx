@@ -14,7 +14,6 @@ import { MotionThumbnailGrid } from "@/features/pitch/ui/inspector/controls/Moti
 export function MotionFields({
   block,
   inheritedBackgroundColor,
-  inheritedMutedColor,
   inheritedTextColor,
   isTextType,
   selectedBlockIndex,
@@ -22,7 +21,6 @@ export function MotionFields({
   updateBlock
 }: BlockFieldProps & {
   inheritedBackgroundColor: string;
-  inheritedMutedColor: string;
   inheritedTextColor: string;
   isTextType: boolean;
   textValue: string;
@@ -86,15 +84,6 @@ export function MotionFields({
                 onChange={(value) => updateOptionalProp("color", value, ["textColor"])}
                 placeholder={inheritedTextColor || "#ffffff"}
                 value={block.props.color ?? block.props.textColor}
-              />
-            ) : null}
-            {(block.type === "Card" || block.type === "Metric" || block.type === "Chart") ? (
-              <ColorControl
-                displayValue={inheritedMutedColor}
-                label="Muted text"
-                onChange={(value) => updateOptionalProp("mutedColor", value)}
-                placeholder={inheritedMutedColor || "#cbd5e1"}
-                value={block.props.mutedColor}
               />
             ) : null}
           </div>

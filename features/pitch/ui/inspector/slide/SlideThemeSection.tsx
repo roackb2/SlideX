@@ -25,12 +25,10 @@ export function SlideThemeSection(props: SlideThemeSectionProps) {
 
 export function SlideThemeSectionContent({
   background,
-  updateActiveSlideStyle,
-  updateAllSlidesStyle
+  updateActiveSlideStyle
 }: SlideThemeSectionProps) {
   return (
     <SolidFillControl
-      onApplyToDeck={(color) => updateAllSlidesStyle(solidFillUpdates(color))}
       onChange={(color) => updateActiveSlideStyle(solidFillUpdates(color))}
       value={background}
     />

@@ -1,29 +1,32 @@
 "use client";
 
-import { Blend, ChevronLeft, ChevronRight, Circle, CircleMinus, Combine } from "lucide-react";
-import { ColorControl, Field, IconSegmentedControl, NativeSelect, NumberInput, OptionButtons, type BlockFieldProps } from "@/features/pitch/ui/inspector/InspectorControls";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ColorControl, Field, NativeSelect, NumberInput, type BlockFieldProps } from "@/features/pitch/ui/inspector/InspectorControls";
 
 const shapeOptions = [
   { label: "Rectangle", value: "rectangle" },
   { label: "Circle", value: "circle" },
+  { label: "Diamond", value: "diamond" },
   { label: "Arrow", value: "arrow" },
   { label: "Polygon", value: "polygon" },
   { label: "Line", value: "line" },
-  { label: "Star", value: "star" }
+  { label: "Star", value: "star" },
+  { label: "Chevron", value: "chevron" },
+  { label: "Hexagon", value: "hexagon" },
+  { label: "Parallelogram", value: "parallelogram" }
 ] as const;
 
-const operationOptions = [
-  { icon: <Circle size={14} />, label: "None", value: "none" },
-  { icon: <CircleMinus size={14} />, label: "Subtract", value: "subtract" },
-  { icon: <Combine size={14} />, label: "Intersect", value: "intersect" },
-  { icon: <Blend size={14} />, label: "Exclude", value: "exclude" }
+const lineStyleOptions = [
+  { label: "Solid", value: "solid" },
+  { label: "Dashed", value: "dashed" },
+  { label: "Dotted", value: "dotted" }
 ] as const;
 
-const maskOptions = [
+const lineEndOptions = [
   { label: "None", value: "none" },
-  { label: "Alpha", value: "alpha" },
-  { label: "Luma", value: "luma" },
-  { label: "Clip", value: "clip" }
+  { label: "Arrow", value: "arrow" },
+  { label: "Circle", value: "circle" },
+  { label: "Bar", value: "bar" }
 ] as const;
 
 export function ShapeFields({ block, selectedBlockIndex, updateBlock }: BlockFieldProps) {
@@ -71,26 +74,28 @@ export function ShapeFields({ block, selectedBlockIndex, updateBlock }: BlockFie
           <SidesAdjuster value={points} onChange={adjustPoints} min={3} max={12} />
         </Field>
       ) : null}
-      <IconSegmentedControl
-        label="Boolean"
-        onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, operation: value })}
-        options={operationOptions}
-        value={normalizeOperation(block.props.operation)}
-      />
-      <OptionButtons
-        label="Mask"
-        onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, mask: value })}
-        options={maskOptions}
-        value={normalizeMask(block.props.mask)}
-      />
-      <ColorControl
+      {currentShape === "line" ? <>
+        <Field label="Line style"><NativeSelect onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, lineStyle: value })} options={lineStyleOptions} value={normalizeLineStyle(block.props.lineStyle)} /></Field>
+        <Field label="Start"><NativeSelect onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, arrowStart: value })} options={lineEndOptions} value={normalizeLineEnd(block.props.arrowStart)} /></Field>
+        {normalizeLineEnd(block.props.arrowStart) !== "none" ? <Field label="Start size"><NumberInput max="300" min="25" onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, arrowStartSize: value })} placeholder="100" step="5" suffix="%" value={block.props.arrowStartSize ?? 100} /></Field> : null}
+        <Field label="End"><NativeSelect onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, arrowEnd: value })} options={lineEndOptions} value={normalizeLineEnd(block.props.arrowEnd)} /></Field>
+        {normalizeLineEnd(block.props.arrowEnd) !== "none" ? <Field label="End size"><NumberInput max="300" min="25" onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, arrowEndSize: value })} placeholder="100" step="5" suffix="%" value={block.props.arrowEndSize ?? 100} /></Field> : null}
+      </> : null}
+      {currentShape !== "line" ? <ColorControl
         label="Fill"
         onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, fill: value })}
         placeholder="rgba(142,165,255,0.72)"
         value={block.props.fill}
-      />
+      /> : null}
+      <Field label="Text">
+        <input className="h-9 w-full rounded-lg border border-white/[0.08] bg-black/35 px-3 text-sm text-neutral-100 outline-none transition focus:border-[#8ea5ff]/55" onChange={(event) => updateBlock(selectedBlockIndex, { ...block.props, text: event.target.value })} placeholder="Add text" type="text" value={String(block.props.text ?? "")} />
+      </Field>
+      {block.props.text ? <>
+        <ColorControl label="Text color" onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, textColor: value })} placeholder="#ffffff" value={block.props.textColor} />
+        <Field label="Text size"><NumberInput max="96" min="8" onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, fontSize: value })} placeholder="18" step="1" suffix="px" value={block.props.fontSize ?? 18} /></Field>
+      </> : null}
       <ColorControl
-        label="Stroke"
+        label={currentShape === "line" ? "Line color" : "Stroke"}
         onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, stroke: value })}
         placeholder="#ffffff"
         value={block.props.stroke}
@@ -159,7 +164,7 @@ function SidesAdjuster({
 }
 
 function normalizeShape(value: string | number | undefined) {
-  if (value === "arrow" || value === "circle" || value === "polygon" || value === "line" || value === "star") {
+  if (value === "arrow" || value === "chevron" || value === "circle" || value === "diamond" || value === "hexagon" || value === "parallelogram" || value === "polygon" || value === "line" || value === "star") {
     return value;
   }
 
@@ -176,18 +181,10 @@ function normalizeInt(value: string | number | undefined, fallback: number) {
   return Number.isFinite(parsed) ? Math.min(Math.max(parsed, 3), 12) : fallback;
 }
 
-function normalizeOperation(value: string | number | undefined) {
-  if (value === "subtract" || value === "intersect" || value === "exclude") {
-    return value;
-  }
-
-  return "none";
+function normalizeLineStyle(value: string | number | undefined) {
+  return value === "dashed" || value === "dotted" ? value : "solid";
 }
 
-function normalizeMask(value: string | number | undefined) {
-  if (value === "alpha" || value === "luma" || value === "clip") {
-    return value;
-  }
-
-  return "none";
+function normalizeLineEnd(value: string | number | undefined) {
+  return value === "arrow" || value === "circle" || value === "bar" ? value : "none";
 }

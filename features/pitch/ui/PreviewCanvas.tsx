@@ -339,7 +339,11 @@ export function PreviewCanvas({
 
     event.currentTarget.setPointerCapture(event.pointerId);
     
-    const moveIndices = selectedBlockIndices.includes(blockIndex) ? selectedBlockIndices : [blockIndex];
+    const moveIndices = (selectedBlockIndices.includes(blockIndex) ? selectedBlockIndices : [blockIndex])
+      .filter((index) => {
+        const selectedBlock = activeSlide?.blocks[index];
+        return selectedBlock ? !isPositionLocked(selectedBlock) : false;
+      });
 
     const interaction: CanvasInteraction = {
       blockIndex,
@@ -355,7 +359,13 @@ export function PreviewCanvas({
     onBeginBlockTransform();
   }
 
-  function startResize(event: PointerEvent<HTMLSpanElement>, blockIndex: number, handle: ResizeHandle, frame: Frame) {
+  function startResize(
+    event: PointerEvent<HTMLSpanElement>,
+    blockIndex: number,
+    handle: ResizeHandle,
+    frame: Frame,
+    blockIndices: readonly number[] = [blockIndex]
+  ) {
     if (activeCanvasTool !== "select") {
       return;
     }
@@ -383,12 +393,17 @@ export function PreviewCanvas({
       handle,
       mode: "resize",
       startFrame: frame,
-      startFrames: [{ blockIndex, frame }],
+      startFrames: blockIndices.map((index) => ({
+        blockIndex: index,
+        frame: blockFrame(activeSlide?.blocks[index])
+      })),
       startPointer: getCanvasPosition(event)
     };
     canvasInteraction.beginResizing(interaction);
     onBeginBlockTransform();
-    onSelectBlock(blockIndex);
+    if (blockIndices.length === 1) {
+      onSelectBlock(blockIndex);
+    }
   }
 
   function updateInteraction(event: PointerEvent<HTMLDivElement>, commit = false) {

@@ -20,7 +20,6 @@ export function IconBlock({
   size?: number | string;
   strokeWidth?: number | string;
 } & RadiusProps & ColorProps) {
-  const iconSize = normalizePixelValue(size, 96);
   const hasSurface = Boolean(cssColor(background ?? backgroundColor));
 
   return (
@@ -30,27 +29,44 @@ export function IconBlock({
           ? "border border-[var(--slide-border)] bg-[var(--slide-card)] p-4 shadow-xl shadow-black/20 backdrop-blur"
           : "bg-transparent p-0"
       }`}
-      style={surfaceVars({ background, backgroundColor, color, mutedColor, textColor })}
+      style={{ ...surfaceVars({ background, backgroundColor, color, mutedColor, textColor }), "--icon-declared-size": size } as CSSProperties}
       {...animation}
     >
-      <LucideSvg name={icon} size={iconSize} strokeWidth={normalizePixelValue(strokeWidth, 2)} />
+      <LucideSvg name={icon} strokeWidth={normalizePixelValue(strokeWidth, 2)} />
     </MotionBlock>
   );
 }
 
 export function ShapeBlock({
+  arrowEnd = "none",
+  arrowEndSize = 100,
+  arrowStart = "none",
+  arrowStartSize = 100,
   fill = "rgba(142,165,255,0.72)",
+  fontSize = 18,
+  fontWeight = 650,
+  lineStyle = "solid",
   mask = "none",
   operation = "none",
   opacity = 1,
   points,
+  radius = 0,
   shape = "rectangle",
   sides,
   stroke = "#ffffff",
   strokeWidth = 2,
+  text = "",
+  textColor = "#ffffff",
   ...animation
 }: AnimationProps & {
+  arrowEnd?: string;
+  arrowEndSize?: number | string;
+  arrowStart?: string;
+  arrowStartSize?: number | string;
   fill?: string;
+  fontSize?: number | string;
+  fontWeight?: number | string;
+  lineStyle?: string;
   mask?: string;
   operation?: string;
   opacity?: number | string;
@@ -59,6 +75,8 @@ export function ShapeBlock({
   sides?: number | string;
   stroke?: string;
   strokeWidth?: number | string;
+  text?: string;
+  textColor?: string;
 } & RadiusProps) {
   const maskId = useId();
   const normalizedShape = normalizeShape(shape);
@@ -69,10 +87,11 @@ export function ShapeBlock({
   const lineWidth = normalizePixelValue(strokeWidth, normalizedShape === "line" ? 4 : 2);
   const normalizedSides = normalizeIntValue(sides, 3);
   const normalizedPoints = normalizeIntValue(points, 5);
+  const normalizedRadius = Math.min(normalizePixelValue(radius, 0), 50);
 
   return (
-    <MotionBlock className="h-full w-full" style={{ opacity: normalizeOpacity(opacity) }} {...animation}>
-      <svg aria-hidden="true" className="h-full w-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
+    <MotionBlock className="relative h-full w-full" style={{ opacity: normalizeOpacity(opacity) }} {...animation}>
+      <svg aria-hidden="true" className="h-full w-full overflow-visible" preserveAspectRatio="none" viewBox={normalizedShape === "line" ? "0 0 100 20" : "0 0 100 100"}>
         <defs>
           <mask id={maskId}>
             {normalizedMask === "alpha" ? (
@@ -96,12 +115,21 @@ export function ShapeBlock({
           </mask>
         </defs>
         <g mask={normalizedMask === "none" ? undefined : `url(#${maskId})`}>
-          {renderShape(normalizedShape, shapeFill, shapeStroke, lineWidth, normalizedSides, normalizedPoints)}
+          {renderShape(normalizedShape, shapeFill, shapeStroke, lineWidth, normalizedSides, normalizedPoints, lineStyle, arrowStart, arrowEnd, normalizedRadius)}
           {normalizedOperation === "subtract" ? <circle cx="68" cy="34" fill="var(--slide-bg, #030303)" r="22" /> : null}
           {normalizedOperation === "intersect" ? <circle cx="62" cy="44" fill={shapeFill} opacity="0.45" r="30" stroke={shapeStroke} strokeWidth={lineWidth} /> : null}
           {normalizedOperation === "exclude" ? <circle cx="62" cy="44" fill="transparent" opacity="0.9" r="30" stroke={shapeStroke} strokeDasharray="7 7" strokeWidth={lineWidth} /> : null}
         </g>
       </svg>
+      {normalizedShape === "line" ? <>
+        <LineEndpoint color={shapeStroke === "transparent" ? "#e5e7eb" : shapeStroke} endpoint={arrowStart} side="start" size={arrowStartSize} />
+        <LineEndpoint color={shapeStroke === "transparent" ? "#e5e7eb" : shapeStroke} endpoint={arrowEnd} side="end" size={arrowEndSize} />
+      </> : null}
+      {text && normalizedShape !== "line" ? (
+        <span className="pointer-events-none absolute inset-[6%] flex items-center justify-center overflow-hidden text-center leading-tight" style={{ color: cssColor(textColor) ?? "#ffffff", fontSize: normalizePixelValue(fontSize, 18), fontWeight: normalizePixelValue(fontWeight, 650) }}>
+          {text}
+        </span>
+      ) : null}
     </MotionBlock>
   );
 }
@@ -159,7 +187,7 @@ export function StackBlock({
   );
 }
 
-function generatePolygonPath(sides: number, cx = 50, cy = 50, r = 40) {
+function generatePolygonPath(sides: number, cx = 50, cy = 50, r = 48) {
   const angleOffset = -Math.PI / 2;
   const points: string[] = [];
 
@@ -173,7 +201,7 @@ function generatePolygonPath(sides: number, cx = 50, cy = 50, r = 40) {
   return `M${points.join(" L")} Z`;
 }
 
-function generateStarPath(numPoints: number, cx = 50, cy = 50, outerR = 42, innerR?: number) {
+function generateStarPath(numPoints: number, cx = 50, cy = 50, outerR = 48, innerR?: number) {
   const resolvedInnerR = innerR ?? outerR * 0.42;
   const angleOffset = -Math.PI / 2;
   const points: string[] = [];
@@ -191,15 +219,19 @@ function generateStarPath(numPoints: number, cx = 50, cy = 50, outerR = 42, inne
 }
 
 function renderShape(
-  shape: "arrow" | "circle" | "line" | "polygon" | "rectangle" | "star" | "triangle",
+  shape: ReturnType<typeof normalizeShape>,
   fill: string,
   stroke: string,
   strokeWidth: number,
   sides: number,
-  starPoints: number
+  starPoints: number,
+  lineStyle: string,
+  arrowStart: string,
+  arrowEnd: string,
+  radius: number
 ) {
   if (shape === "circle") {
-    return <circle cx="50" cy="50" fill={fill} r="38" stroke={stroke} strokeWidth={strokeWidth} />;
+    return <circle cx="50" cy="50" fill={fill} r="48" stroke={stroke} strokeWidth={strokeWidth} />;
   }
 
   if (shape === "triangle") {
@@ -211,7 +243,11 @@ function renderShape(
   }
 
   if (shape === "line") {
-    return <path d="M8 50 H92" fill="none" stroke={stroke === "transparent" ? fill : stroke} strokeLinecap="round" strokeWidth={strokeWidth} />;
+    const resolvedStroke = stroke === "transparent" ? "#e5e7eb" : stroke;
+    const dashArray = lineStyle === "dashed" ? "8 6" : lineStyle === "dotted" ? "1 6" : undefined;
+    const vectorStyle = { vectorEffect: "non-scaling-stroke" as const };
+    const isPlainLine = arrowStart === "none" && arrowEnd === "none";
+    return <g stroke={resolvedStroke} strokeLinecap={isPlainLine && lineStyle === "solid" ? "butt" : "round"} strokeLinejoin="round" strokeWidth={strokeWidth}><path d="M0 10H100" fill="none" strokeDasharray={dashArray} style={vectorStyle} /></g>;
   }
 
   if (shape === "arrow") {
@@ -228,10 +264,35 @@ function renderShape(
     return <path d={generateStarPath(starPoints)} fill={fill} stroke={stroke} strokeLinejoin="round" strokeWidth={strokeWidth} />;
   }
 
-  return <rect fill={fill} height="76" rx="14" stroke={stroke} strokeWidth={strokeWidth} width="76" x="12" y="12" />;
+  const customPaths: Partial<Record<ReturnType<typeof normalizeShape>, string>> = {
+    chevron: "M1 1H68L99 50 68 99H1L32 50Z",
+    corner: "M1 1H72L99 28V99H1Z",
+    diamond: "M50 1L99 50 50 99 1 50Z",
+    hexagon: "M20 1H80L99 50 80 99H20L1 50Z",
+    parallelogram: "M24 1H99L76 99H1Z"
+  };
+  if (customPaths[shape]) return <path d={customPaths[shape]} fill={fill} stroke={stroke} strokeLinejoin="round" strokeWidth={strokeWidth} />;
+
+  return <rect fill={fill} height="100" rx={radius} stroke={stroke} strokeWidth={strokeWidth} width="100" x="0" y="0" />;
 }
 
-function LucideSvg({ name, size, strokeWidth }: { name: string; size: number; strokeWidth: number }) {
+function LineEndpoint({ color, endpoint, side, size }: { color: string; endpoint: string; side: "end" | "start"; size: number | string }) {
+  if (endpoint === "none" || !endpoint) return null;
+  const scale = Math.min(Math.max(Number(size) || 100, 25), 300) / 100;
+  const sidePosition = side === "start" ? { left: 0 } : { right: 0 };
+  if (endpoint === "circle") {
+    return <span aria-hidden="true" className="pointer-events-none absolute top-1/2 rounded-full" style={{ ...sidePosition, background: color, height: 10 * scale, width: 10 * scale, transform: `translate(${side === "start" ? "-50%" : "50%"}, -50%)` }} />;
+  }
+  if (endpoint === "bar") {
+    return <span aria-hidden="true" className="pointer-events-none absolute top-1/2" style={{ ...sidePosition, background: color, height: 16 * scale, width: Math.max(2 * scale, 1), transform: `translate(${side === "start" ? "-50%" : "50%"}, -50%)` }} />;
+  }
+  if (endpoint === "arrow") {
+    return <span aria-hidden="true" className="pointer-events-none absolute top-1/2 h-0 w-0" style={{ ...sidePosition, borderBottom: `${6 * scale}px solid transparent`, borderTop: `${6 * scale}px solid transparent`, ...(side === "start" ? { borderRight: `${10 * scale}px solid ${color}` } : { borderLeft: `${10 * scale}px solid ${color}` }), transform: "translateY(-50%)" }} />;
+  }
+  return null;
+}
+
+function LucideSvg({ name, strokeWidth }: { name: string; strokeWidth: number }) {
   if (!isSlideXIconName(name)) {
     return null;
   }
@@ -240,13 +301,12 @@ function LucideSvg({ name, size, strokeWidth }: { name: string; size: number; st
     <svg
       aria-hidden="true"
       fill="none"
-      height={size}
+      className="h-full w-full"
       stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={strokeWidth}
       viewBox="0 0 24 24"
-      width={size}
     >
       {lucideIconPaths[name].map((path, index) => renderIconPath(path, `${name}-${index}`))}
     </svg>
@@ -302,8 +362,8 @@ function normalizeOpacity(value: unknown) {
   return Number.isFinite(parsed) ? Math.min(Math.max(parsed, 0), 1) : 1;
 }
 
-function normalizeShape(value: string): "arrow" | "circle" | "line" | "polygon" | "rectangle" | "star" | "triangle" {
-  if (value === "arrow" || value === "circle" || value === "triangle" || value === "line" || value === "star" || value === "polygon") {
+function normalizeShape(value: string): "arrow" | "chevron" | "circle" | "corner" | "diamond" | "hexagon" | "line" | "parallelogram" | "polygon" | "rectangle" | "star" | "triangle" {
+  if (value === "arrow" || value === "chevron" || value === "circle" || value === "corner" || value === "diamond" || value === "hexagon" || value === "triangle" || value === "line" || value === "parallelogram" || value === "star" || value === "polygon") {
     return value;
   }
 

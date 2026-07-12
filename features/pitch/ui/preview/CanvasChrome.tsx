@@ -4,9 +4,11 @@ import { useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Hand, MousePointer2, Plus, X, ZoomIn, ZoomOut } from "lucide-react";
 import { canvasToolOptions, type CanvasTool } from "@/features/pitch/application/canvasTools";
 import type { AddBlockOptions, InsertSlidePlacement } from "@/features/pitch/application/motionDocCommands";
-import { lucideIconLabels, lucideIconPaths, slidexIconNames, type SlideXIconName } from "@/core/motion-doc/domain/lucideIconRegistry";
+import { IconPicker } from "@/features/pitch/ui/IconPicker";
 import type { SlideRow } from "@/features/pitch/ui/LayerSidebar";
 import { TableToolbox } from "@/features/pitch/ui/preview/TableToolbox";
+import { ChartLibraryModal } from "@/features/pitch/ui/preview/ChartLibraryModal";
+import { ShapeLibraryModal } from "@/features/pitch/ui/preview/ShapeLibraryModal";
 import { toolGroups, type AddBlockType, type PitchBlockTool, type PitchToolGroup } from "@/features/pitch/ui/pitchOptions";
 
 export type CanvasZoomDirection = "in" | "out";
@@ -91,7 +93,11 @@ export function CanvasBlockDock({
         />
       ) : null}
       {activeGroup?.modal ? (
-        <ToolModal group={activeGroup} onAddTool={addTool} onClose={() => setOpenGroupId(null)} />
+        activeGroup.id === "chart"
+          ? <ChartLibraryModal onAddTool={addTool} onClose={() => setOpenGroupId(null)} />
+          : activeGroup.id === "shape"
+            ? <ShapeLibraryModal onAddTool={addTool} onClose={() => setOpenGroupId(null)} />
+          : <ToolModal group={activeGroup} onAddTool={addTool} onClose={() => setOpenGroupId(null)} />
       ) : null}
       {isCanvasToolMenuOpen ? (
         <CanvasToolMenu
@@ -124,7 +130,7 @@ export function CanvasBlockDock({
         </button>
         {toolGroups.map((group) => {
           const isOpen = openGroupId === group.id;
-          const isSingleTool = group.tools.length === 1 && group.id !== "icon" && group.id !== "table";
+          const isSingleTool = !group.modal && group.tools.length === 1 && group.id !== "icon" && group.id !== "table";
           return (
             <button
               aria-label={isSingleTool ? `Add ${group.label}` : `Open ${group.label} tools`}
@@ -320,70 +326,18 @@ function IconToolbox({
 }: {
   onAddTool: (type: AddBlockType, options?: AddBlockOptions) => void;
 }) {
-  const icons = slidexIconNames.slice(0, 24);
-
   return (
-    <div className="absolute bottom-[4.25rem] left-1/2 z-[60] w-[300px] -translate-x-1/2 rounded-xl border border-white/[0.04] bg-neutral-950/90 p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.75)] backdrop-blur-2xl sm:bottom-[5rem]">
-      <div className="mb-2 flex items-center justify-between px-1">
-        <span className="text-sm font-bold text-neutral-400">Icon toolbox</span>
-        <span className="text-xs font-medium text-neutral-500">Drag to canvas</span>
-      </div>
-      <div className="grid max-h-[212px] grid-cols-6 gap-1.5 overflow-y-auto pr-0.5 custom-scrollbar">
-        {icons.map((iconName) => (
-          <button
-            aria-label={`Add ${lucideIconLabels[iconName]} icon`}
-            className="group flex h-10 items-center justify-center rounded-lg border border-white/[0.04] bg-white/[0.01] text-neutral-300 transition duration-300 hover:border-[#0ea5e9]/30 hover:bg-[#0ea5e9]/12 hover:text-white active:scale-95"
-            draggable
-            key={iconName}
-            onClick={() => onAddTool("Icon", { props: { icon: iconName } })}
-            onDragStart={(event) => {
-              event.dataTransfer.effectAllowed = "copy";
-              event.dataTransfer.setData("application/x-slidex-tool", JSON.stringify({ props: { icon: iconName }, type: "Icon" }));
-            }}
-            title={lucideIconLabels[iconName]}
-            type="button"
-          >
-            <LucideToolIcon name={iconName} />
-          </button>
-        ))}
-      </div>
+    <div className="absolute bottom-[4.25rem] left-1/2 z-[60] w-[306px] -translate-x-1/2 rounded-xl border border-white/[0.05] bg-neutral-950/95 p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.75)] backdrop-blur-2xl sm:bottom-[5rem]">
+      <IconPicker
+        mode="toolbox"
+        onChange={(iconName) => { if (iconName) onAddTool("Icon", { props: { icon: iconName } }); }}
+        onIconDragStart={(event, iconName) => {
+          event.dataTransfer.effectAllowed = "copy";
+          event.dataTransfer.setData("application/x-slidex-tool", JSON.stringify({ props: { icon: iconName }, type: "Icon" }));
+        }}
+      />
     </div>
   );
-}
-
-function LucideToolIcon({ name }: { name: SlideXIconName }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4 transition-transform group-hover:scale-110"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      {lucideIconPaths[name].map((path, index) => renderIconPath(path, `${name}-${index}`))}
-    </svg>
-  );
-}
-
-function renderIconPath(path: string, key: string) {
-  const [shape, ...parts] = path.split(" ");
-
-  if (shape === "circle") {
-    return <circle cx={parts[0]} cy={parts[1]} key={key} r={parts[2]} />;
-  }
-
-  if (shape === "ellipse") {
-    return <ellipse cx={parts[0]} cy={parts[1]} key={key} rx={parts[2]} ry={parts[3]} />;
-  }
-
-  if (shape === "rect") {
-    return <rect height={parts[3]} key={key} rx={parts[4]} ry={parts[5]} width={parts[2]} x={parts[0]} y={parts[1]} />;
-  }
-
-  return <path d={shape === "path" ? parts.join(" ") : path} key={key} />;
 }
 
 function ToolModal({

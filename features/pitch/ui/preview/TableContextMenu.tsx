@@ -1,14 +1,21 @@
 "use client";
 
 import { Clipboard, Columns3, Copy, Eraser, Rows3, Scissors, Trash2 } from "lucide-react";
-import type { ComponentType, PointerEvent as ReactPointerEvent, RefObject } from "react";
+import type { ComponentType, RefObject } from "react";
 import { createPortal } from "react-dom";
-import type { TableClipboard, TableSelection } from "@/core/motion-doc/application/tableBlock";
+import {
+  TABLE_MAX_COLUMNS,
+  TABLE_MAX_ROWS,
+  type TableClipboard,
+  type TableSelection
+} from "@/core/motion-doc/application/tableBlock";
 
 type MenuIcon = ComponentType<{ className?: string; size?: number }>;
 
 export function TableContextMenu({
   clipboard,
+  canAddColumn,
+  canAddRow,
   canUseColumnActions,
   canUseRowActions,
   menuRef,
@@ -24,6 +31,8 @@ export function TableContextMenu({
   selection
 }: {
   clipboard: TableClipboard | null;
+  canAddColumn: boolean;
+  canAddRow: boolean;
   canUseColumnActions?: boolean;
   canUseRowActions?: boolean;
   menuRef: RefObject<HTMLDivElement | null>;
@@ -61,8 +70,8 @@ export function TableContextMenu({
       <TableMenuItem disabled={!clipboard} icon={Clipboard} label="Paste" onClick={onPaste} shortcut="Cmd V" />
       <TableMenuItem icon={Eraser} label="Clear" onClick={onClear} />
       <div className="my-1 h-px bg-white/[0.07]" role="separator" />
-      {showRowActions ? <TableMenuItem icon={Rows3} label="Add row" onClick={onInsertRow} /> : null}
-      {showColumnActions ? <TableMenuItem icon={Columns3} label="Add column" onClick={onInsertColumn} /> : null}
+      {showRowActions ? <TableMenuItem disabled={!canAddRow} icon={Rows3} label={canAddRow ? "Add row" : `Maximum ${TABLE_MAX_ROWS} rows`} onClick={onInsertRow} /> : null}
+      {showColumnActions ? <TableMenuItem disabled={!canAddColumn} icon={Columns3} label={canAddColumn ? "Add column" : `Maximum ${TABLE_MAX_COLUMNS} columns`} onClick={onInsertColumn} /> : null}
       <div className="my-1 h-px bg-white/[0.07]" role="separator" />
       {showRowActions ? <TableMenuItem danger icon={Trash2} label="Delete row" onClick={onDeleteRow} /> : null}
       {showColumnActions ? <TableMenuItem danger icon={Trash2} label="Delete column" onClick={onDeleteColumn} /> : null}
@@ -98,12 +107,9 @@ function TableMenuItem({
       disabled={disabled}
       onClick={(event) => {
         event.stopPropagation();
-
-        if (event.detail === 0) {
-          onClick();
-        }
+        if (!disabled) onClick();
       }}
-      onPointerDown={(event) => runPointerMenuAction(event, disabled, onClick)}
+      onPointerDown={(event) => event.stopPropagation()}
       role="menuitem"
       type="button"
     >
@@ -118,19 +124,4 @@ function TableMenuItem({
       ) : null}
     </button>
   );
-}
-
-function runPointerMenuAction(
-  event: ReactPointerEvent<HTMLButtonElement>,
-  disabled: boolean,
-  action: () => void
-) {
-  event.preventDefault();
-  event.stopPropagation();
-
-  if (disabled) {
-    return;
-  }
-
-  action();
 }
