@@ -6,6 +6,11 @@ import {
   SlideXAgentClientError
 } from "./slidexAgentClient";
 import {
+  SlideXAgentIdentityError,
+  SlideXAgentIdentityService,
+  type SlideXAgentIdentityClient
+} from "./slidexAgentIdentity";
+import {
   AgentSessionStateSchema,
   SlideXAgentRunProtocol
 } from "./slidexAgentProtocol";
@@ -223,6 +228,76 @@ test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async ()
   ]);
 });
 
+test("reuses an existing anonymous product session for agent authorization", async () => {
+  let anonymousSignIns = 0;
+  const client: SlideXAgentIdentityClient = {
+    auth: {
+      getSession: async () => ({
+        data: { session: { access_token: "existing-access-token" } },
+        error: null
+      }),
+      signInAnonymously: async () => {
+        anonymousSignIns += 1;
+        return {
+          data: { session: { access_token: "new-access-token" } },
+          error: null
+        };
+      }
+    }
+  };
+  const identity = createIdentity(client);
+
+  const headers = new Headers(await identity.authorizationHeaders());
+
+  assert.equal(headers.get("Authorization"), "Bearer existing-access-token");
+  assert.equal(anonymousSignIns, 0);
+});
+
+test("deduplicates concurrent anonymous sign-in and returns only the bearer token", async () => {
+  const sessionRead = deferred<void>();
+  let sessionReads = 0;
+  let anonymousSignIns = 0;
+  const client: SlideXAgentIdentityClient = {
+    auth: {
+      getSession: async () => {
+        sessionReads += 1;
+        await sessionRead.promise;
+        return { data: { session: null }, error: null };
+      },
+      signInAnonymously: async () => {
+        anonymousSignIns += 1;
+        return {
+          data: { session: { access_token: "anonymous-access-token" } },
+          error: null
+        };
+      }
+    }
+  };
+  const identity = createIdentity(client);
+  const first = identity.authorizationHeaders();
+  const second = identity.authorizationHeaders();
+  sessionRead.resolve();
+
+  const headers = await Promise.all([first, second]);
+
+  assert.equal(sessionReads, 1);
+  assert.equal(anonymousSignIns, 1);
+  assert.deepEqual(
+    headers.map((value) => new Headers(value).get("Authorization")),
+    ["Bearer anonymous-access-token", "Bearer anonymous-access-token"]
+  );
+});
+
+test("fails safely when anonymous identity is not configured", async () => {
+  const identity = new SlideXAgentIdentityService({});
+
+  await assert.rejects(
+    identity.authorizationHeaders(),
+    (error: unknown) => error instanceof SlideXAgentIdentityError
+      && error.message.includes("NEXT_PUBLIC_SUPABASE_URL")
+  );
+});
+
 test("uses Heddle's consumer for product cursor, duplicate, and terminal policy", () => {
   const consumer = new ConversationRunConsumerService<{ runId: string }>();
   consumer.select({ runId: "run-1" });
@@ -273,4 +348,22 @@ function createStorage(): SlideXSessionStorage {
       values.delete(key);
     }
   };
+}
+
+function createIdentity(client: SlideXAgentIdentityClient): SlideXAgentIdentityService {
+  return new SlideXAgentIdentityService({
+    supabaseUrl: "https://identity.example.test",
+    supabaseAnonKey: "test-anon-key",
+    createClient: () => client
+  });
+}
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
 }
