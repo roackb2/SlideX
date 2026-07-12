@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type MouseEvent, type PointerEvent, type WheelEvent } from "react";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 import type { CanvasTool } from "@/features/pitch/application/canvasTools";
+import { canvasZoomStepCountFromWheel, nextCanvasZoomScale } from "@/features/pitch/application/canvasZoom";
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -19,10 +20,12 @@ import {
 import { isPositionLocked, type AddBlockOptions, type InsertSlidePlacement } from "@/features/pitch/application/motionDocCommands";
 import type { SlideRow } from "@/features/pitch/ui/LayerSidebar";
 import { CanvasBlockDock, CanvasSlideAddControls, CanvasSlideNav, type CanvasZoomDirection } from "@/features/pitch/ui/preview/CanvasChrome";
+import { MobileEdgePanelHandles } from "@/features/pitch/ui/preview/MobileCanvasChrome";
 import { CanvasContextMenu } from "@/features/pitch/ui/preview/CanvasContextMenu";
 import { CanvasSelectionLayer } from "@/features/pitch/ui/preview/CanvasSelectionLayer";
 import { PreviewPane } from "@/features/pitch/ui/preview/PreviewPane";
 import { useCanvasInteractionEngine } from "@/features/pitch/ui/preview/interaction/useCanvasInteractionEngine";
+import { useCanvasPinchZoom } from "@/features/pitch/ui/preview/interaction/useCanvasPinchZoom";
 import { useTransientFramePreview } from "@/features/pitch/ui/preview/interaction/useTransientFramePreview";
 import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
 import type { AddBlockType } from "@/features/pitch/ui/pitchOptions";
@@ -33,6 +36,13 @@ type CanvasContextMenuState = {
   position: { x: number; y: number };
 };
 type CanvasPanState = {
+  offsetX: number;
+  offsetY: number;
+  pointerId: number;
+  startX: number;
+  startY: number;
+};
+type CanvasPanCandidate = {
   offsetX: number;
   offsetY: number;
   pointerId: number;
@@ -62,6 +72,8 @@ type PreviewCanvasProps = {
   onDuplicateSelectedBlock: () => void;
   onGroupSelectedBlocks: () => void;
   onMoveSelectedBlocksToEdge: (edge: "back" | "front") => void;
+  onOpenMobileInspector: () => void;
+  onOpenMobileLayers: () => void;
   onNextSlide: () => void;
   onPasteCopiedBlock: () => void;
   onPreviousSlide: () => void;
@@ -72,6 +84,7 @@ type PreviewCanvasProps = {
   onCanvasToolChange: (tool: CanvasTool) => void;
   onToggleSelectedBlocksPositionLock: () => void;
   onUngroupSelectedBlocks: () => void;
+  onUndo: () => void;
   onUpdateBlock: BlockUpdater;
   onUpdateBlockFrames: (updates: Array<{ blockIndex: number; frame: FramePatch }>) => void;
   onUseSelectedImageAsBackground: () => void;
@@ -103,11 +116,14 @@ export function PreviewCanvas({
   onDuplicateSelectedBlock,
   onGroupSelectedBlocks,
   onMoveSelectedBlocksToEdge,
+  onOpenMobileInspector,
+  onOpenMobileLayers,
   onPasteCopiedBlock,
   onSelectBlock,
   onSelectBlocks,
   onToggleSelectedBlocksPositionLock,
   onUngroupSelectedBlocks,
+  onUndo,
   onUpdateBlock,
   onUpdateBlockFrames,
   onUseSelectedImageAsBackground,
@@ -130,6 +146,7 @@ export function PreviewCanvas({
   const activeCanvasToolRef = useRef<CanvasTool>(activeCanvasTool);
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const panStateRef = useRef<CanvasPanState | null>(null);
+  const touchPanCandidateRef = useRef<CanvasPanCandidate | null>(null);
   const canvasInteraction = useCanvasInteractionEngine();
   const transientFramePreview = useTransientFramePreview({
     blocks: activeSlide?.blocks ?? emptyBlocks,
@@ -147,7 +164,8 @@ export function PreviewCanvas({
   const [zoomDirection, setZoomDirection] = useState<CanvasZoomDirection>("in");
   const gridColor = gridLineColor(activeSlide);
   const canvasFrameWidth = zoomLevel === "fit" ? fitCanvasWidth : CANVAS_WIDTH * zoomLevel;
-  const canvasStripSidePadding = Math.max(48, Math.round((canvasViewportWidth - canvasFrameWidth) / 2));
+  const canvasStripMinimumPadding = canvasViewportWidth < mobileCanvasBreakpoint ? 12 : 48;
+  const canvasStripSidePadding = Math.max(canvasStripMinimumPadding, Math.round((canvasViewportWidth - canvasFrameWidth) / 2));
   const workspaceGridStyle = workspaceGridStyleForScale(actualScale, canvasViewportOffset);
   const viewportCursorClass = activeCanvasTool === "hand"
     ? isPanningCanvas ? "cursor-grabbing" : "cursor-grab"
@@ -156,6 +174,19 @@ export function PreviewCanvas({
     () => hiddenEditablePreviewBlockIndices(activeSlide?.blocks ?? [], selectedBlockIndex, selectedBlockIndices),
     [activeSlide?.blocks, selectedBlockIndex, selectedBlockIndices]
   );
+  const canvasPinchZoom = useCanvasPinchZoom({
+    actualScale,
+    getScrollArea: () => scrollAreaRef.current,
+    onPinchStart: () => {
+      panStateRef.current = null;
+      touchPanCandidateRef.current = null;
+      setIsPanningCanvas(false);
+      setContextMenu(null);
+      canvasInteraction.clearInteraction();
+      transientFramePreview.reset();
+    },
+    onSetZoomLevel
+  });
 
   useEffect(() => {
     activeCanvasToolRef.current = activeCanvasTool;
@@ -192,8 +223,12 @@ export function PreviewCanvas({
 
     const updateFitWidth = () => {
       const rect = scrollArea.getBoundingClientRect();
+      const isMobileViewport = rect.width < mobileCanvasBreakpoint;
+      const horizontalInset = isMobileViewport ? 24 : 96;
+      const minimumWidth = isMobileViewport ? 240 : 280;
+      const maximumWidth = isMobileViewport ? CANVAS_WIDTH : 799;
       setCanvasViewportWidth(rect.width);
-      setFitCanvasWidth(Math.max(280, Math.min(799, rect.width - 96)));
+      setFitCanvasWidth(Math.max(minimumWidth, Math.min(maximumWidth, rect.width - horizontalInset)));
     };
 
     updateFitWidth();
@@ -586,9 +621,31 @@ export function PreviewCanvas({
   }
 
   function handleCanvasToolPointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (canvasPinchZoom.handlePointerDown(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     const target = event.target as HTMLElement | null;
 
     if (target?.closest("button, [data-canvas-context-menu]")) {
+      return;
+    }
+
+    if (
+      event.pointerType === "touch"
+      && activeCanvasTool === "select"
+      && !isMobileEdgeGestureStart(event.clientX)
+      && isDirectPanSurface(target)
+    ) {
+      touchPanCandidateRef.current = {
+        offsetX: canvasViewportOffset.x,
+        offsetY: canvasViewportOffset.y,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY
+      };
       return;
     }
 
@@ -614,7 +671,7 @@ export function PreviewCanvas({
     event.preventDefault();
     event.stopPropagation();
     const direction = event.deltaY > 0 ? "out" : "in";
-    const stepCount = zoomStepCountFromWheel(event.deltaY);
+    const stepCount = canvasZoomStepCountFromWheel(event.deltaY);
     setZoomDirection(direction);
     zoomCanvasAtPoint(event, direction, stepCount);
   }
@@ -640,6 +697,27 @@ export function PreviewCanvas({
   }
 
   function updateCanvasPan(event: PointerEvent<HTMLDivElement>) {
+    if (canvasPinchZoom.handlePointerMove(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    const panCandidate = touchPanCandidateRef.current;
+
+    if (!panStateRef.current && panCandidate?.pointerId === event.pointerId) {
+      const distance = Math.hypot(event.clientX - panCandidate.startX, event.clientY - panCandidate.startY);
+
+      if (distance >= directPanActivationDistance) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+        panStateRef.current = { ...panCandidate };
+        setContextMenu(null);
+        setIsPanningCanvas(true);
+        canvasInteraction.clearInteraction();
+        transientFramePreview.reset();
+      }
+    }
+
     const panState = panStateRef.current;
 
     if (!panState || panState.pointerId !== event.pointerId) {
@@ -655,7 +733,14 @@ export function PreviewCanvas({
   }
 
   function endCanvasPan(event: PointerEvent<HTMLDivElement>) {
+    if (canvasPinchZoom.handlePointerEnd(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     const panState = panStateRef.current;
+    touchPanCandidateRef.current = null;
 
     if (!panState || panState.pointerId !== event.pointerId) {
       return;
@@ -670,7 +755,7 @@ export function PreviewCanvas({
 
   function zoomCanvasAtPoint(point: CanvasZoomPoint, direction: "in" | "out", stepCount = 1) {
     const scrollArea = scrollAreaRef.current;
-    const nextScale = nextZoomScale(actualScale, direction, stepCount);
+    const nextScale = nextCanvasZoomScale(actualScale, direction, stepCount);
 
     if (!scrollArea || nextScale === actualScale) {
       onSetZoomLevel(nextScale);
@@ -692,6 +777,11 @@ export function PreviewCanvas({
     });
   }
 
+  function fitCanvasToViewport() {
+    setCanvasViewportOffset({ x: 0, y: 0 });
+    onSetZoomLevel("fit");
+  }
+
   return (
     <div
       className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-[#000000]"
@@ -704,9 +794,10 @@ export function PreviewCanvas({
         onPreviousSlide={onPreviousSlide}
         sceneCount={sceneCount}
       />
+      <MobileEdgePanelHandles onOpenInspector={onOpenMobileInspector} onOpenLayers={onOpenMobileLayers} />
 
       <div
-        className={`custom-scrollbar relative z-0 flex min-h-0 flex-1 items-start justify-start overflow-auto bg-[#000000] p-3 pb-14 pt-9 sm:p-4 sm:pb-20 sm:pt-12 md:p-8 md:pb-24 md:pt-16 ${viewportCursorClass}`}
+        className={`custom-scrollbar relative z-0 flex min-h-0 flex-1 touch-none items-center justify-center overflow-auto bg-[#000000] px-3 pb-24 pt-12 sm:touch-auto sm:items-start sm:justify-start sm:p-4 sm:pb-20 sm:pt-12 md:p-8 md:pb-24 md:pt-16 ${viewportCursorClass}`}
         onPointerCancelCapture={endCanvasPan}
         onPointerDownCapture={handleCanvasToolPointerDown}
         onPointerDown={(event) => {
@@ -722,7 +813,7 @@ export function PreviewCanvas({
         style={workspaceGridStyle}
       >
         <div
-          className="relative flex min-w-full shrink-0 items-start justify-start gap-12 sm:gap-14 md:gap-16"
+          className="relative flex min-h-full min-w-full shrink-0 items-center justify-start gap-12 sm:min-h-0 sm:items-start sm:gap-14 md:gap-16"
           style={{
             paddingLeft: canvasStripSidePadding,
             paddingRight: canvasStripSidePadding,
@@ -735,13 +826,13 @@ export function PreviewCanvas({
 
             return (
               <div
-                className={`relative flex shrink-0 flex-col gap-2 ${isActiveSlideFrame ? "z-10" : "z-0 opacity-85 transition-opacity hover:opacity-100"}`}
+                className={`relative shrink-0 flex-col gap-2 ${isActiveSlideFrame ? "z-10 flex" : "z-0 hidden opacity-85 transition-opacity hover:opacity-100 sm:flex"}`}
                 data-slide-frame-index={slide.index}
                 key={slide.index}
                 onPointerDown={(event) => handleSlideFramePointerDown(event, slide.index)}
                 ref={isActiveSlideFrame ? activeSlideFrameRef : undefined}
               >
-                <div className="flex h-6 items-center justify-between px-1 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">
+                <div className="hidden h-6 items-center justify-between px-1 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500 sm:flex">
                   <span className={isActiveSlideFrame ? "text-[#8ea5ff]" : undefined}>Slide {slide.index + 1}</span>
                   <span>{slideScene?.duration ?? slide.duration}s</span>
                 </div>
@@ -854,20 +945,34 @@ export function PreviewCanvas({
         activeCanvasTool={activeCanvasTool}
         onAddBlock={onAddBlock}
         onCanvasToolChange={onCanvasToolChange}
+        onFitMobile={fitCanvasToViewport}
+        onInsertSlideAfter={() => onInsertSlideNearActive("after")}
+        onOpenMobileInspector={onOpenMobileInspector}
+        onOpenMobileLayers={onOpenMobileLayers}
+        onUndoMobile={onUndo}
         zoomDirection={zoomDirection}
       />
     </div>
   );
 }
 
-const minZoomScale = 0.02;
-const maxZoomScale = 64;
 const emptyBlockIndices: number[] = [];
 const emptyBlocks: MotionDocScene["blocks"] = [];
-const zoomStepRatio = 1.18;
 const canvasViewportOffsetLimit = 100000;
 const workspaceGridBaseSize = 24;
 const workspaceGridBaseDotSize = 1.5;
+const directPanActivationDistance = 7;
+const mobileCanvasBreakpoint = 640;
+
+function isDirectPanSurface(target: HTMLElement | null) {
+  return !target?.closest("[data-frame-control], button, input, textarea, select, [contenteditable='true']");
+}
+
+function isMobileEdgeGestureStart(clientX: number) {
+  return clientX <= mobileEdgeGestureWidth || clientX >= window.innerWidth - mobileEdgeGestureWidth;
+}
+
+const mobileEdgeGestureWidth = 28;
 
 function canvasFrameStyle(zoomLevel: number | "fit", fitCanvasWidth: number): CSSProperties {
   if (zoomLevel === "fit") {
@@ -923,26 +1028,6 @@ function clampCanvasViewportOffset(offset: { x: number; y: number }) {
     x: Math.max(-canvasViewportOffsetLimit, Math.min(canvasViewportOffsetLimit, offset.x)),
     y: Math.max(-canvasViewportOffsetLimit, Math.min(canvasViewportOffsetLimit, offset.y))
   };
-}
-
-function nextZoomScale(currentScale: number, direction: "in" | "out", stepCount = 1) {
-  const safeStepCount = Math.max(1, Math.min(24, Math.round(stepCount)));
-  const ratio = Math.pow(zoomStepRatio, safeStepCount);
-  const nextScale = direction === "in" ? currentScale * ratio : currentScale / ratio;
-
-  return roundZoomScale(clampZoomScale(nextScale));
-}
-
-function zoomStepCountFromWheel(deltaY: number) {
-  return Math.max(1, Math.min(8, Math.ceil(Math.abs(deltaY) / 160)));
-}
-
-function clampZoomScale(scale: number) {
-  return Math.max(minZoomScale, Math.min(maxZoomScale, scale));
-}
-
-function roundZoomScale(scale: number) {
-  return Math.round(scale * 10000) / 10000;
 }
 
 function workspaceGridStyleForScale(scale: number, offset: { x: number; y: number }) {

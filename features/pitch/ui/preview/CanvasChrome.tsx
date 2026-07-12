@@ -9,6 +9,7 @@ import type { SlideRow } from "@/features/pitch/ui/LayerSidebar";
 import { TableToolbox } from "@/features/pitch/ui/preview/TableToolbox";
 import { ChartLibraryModal } from "@/features/pitch/ui/preview/ChartLibraryModal";
 import { ShapeLibraryModal } from "@/features/pitch/ui/preview/ShapeLibraryModal";
+import { MobileCanvasDock } from "@/features/pitch/ui/preview/MobileCanvasChrome";
 import { toolGroups, type AddBlockType, type PitchBlockTool, type PitchToolGroup } from "@/features/pitch/ui/pitchOptions";
 
 export type CanvasZoomDirection = "in" | "out";
@@ -57,11 +58,21 @@ export function CanvasBlockDock({
   activeCanvasTool,
   onAddBlock,
   onCanvasToolChange,
+  onFitMobile,
+  onInsertSlideAfter,
+  onOpenMobileInspector,
+  onOpenMobileLayers,
+  onUndoMobile,
   zoomDirection
 }: {
   activeCanvasTool: CanvasTool;
   onAddBlock: (type: AddBlockType, options?: AddBlockOptions) => void;
   onCanvasToolChange: (tool: CanvasTool) => void;
+  onFitMobile: () => void;
+  onInsertSlideAfter: () => void;
+  onOpenMobileInspector: () => void;
+  onOpenMobileLayers: () => void;
+  onUndoMobile: () => void;
   zoomDirection: CanvasZoomDirection;
 }) {
   const [openGroupId, setOpenGroupId] = useState<PitchToolGroup["id"] | null>(null);
@@ -109,10 +120,22 @@ export function CanvasBlockDock({
           zoomDirection={zoomDirection}
         />
       ) : null}
-      <div className="absolute bottom-3 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1.5 rounded-xl border border-white/[0.12] bg-neutral-900/80 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:bottom-5 md:bottom-7 transition-all duration-300 hover:shadow-black/85">
+      <MobileCanvasDock
+        onAddBlock={addTool}
+        onFit={onFitMobile}
+        onInsertSlideAfter={onInsertSlideAfter}
+        onOpenInspector={onOpenMobileInspector}
+        onOpenLayers={onOpenMobileLayers}
+        onOpenToolGroup={(groupId) => {
+          setIsCanvasToolMenuOpen(false);
+          setOpenGroupId(groupId);
+        }}
+        onUndo={onUndoMobile}
+      />
+      <div className="absolute bottom-5 left-1/2 z-50 hidden -translate-x-1/2 items-center gap-1.5 rounded-xl border border-white/[0.12] bg-neutral-900/90 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl transition-all duration-300 hover:shadow-black/85 sm:flex md:bottom-7">
         <button
           aria-label="Open canvas tools"
-          className={`group relative flex h-8 w-10 cursor-pointer items-center justify-center overflow-visible rounded-lg transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.06] active:scale-[0.93] sm:h-9.5 sm:w-11 md:h-10.5 md:w-12 ${
+          className={`group relative flex h-11 w-12 shrink-0 cursor-pointer items-center justify-center overflow-visible rounded-lg transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.06] active:scale-[0.93] sm:h-9.5 sm:w-11 md:h-10.5 md:w-12 ${
             isCanvasToolMenuOpen ? "bg-white/[0.12] text-white border border-white/[0.1]" : "text-neutral-300 hover:bg-white/[0.06] hover:text-white"
           }`}
           onClick={() => {
@@ -134,7 +157,7 @@ export function CanvasBlockDock({
           return (
             <button
               aria-label={isSingleTool ? `Add ${group.label}` : `Open ${group.label} tools`}
-              className={`group relative flex h-8 w-8 cursor-pointer flex-col items-center justify-center overflow-visible rounded-lg transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.06] active:scale-[0.93] sm:h-9.5 sm:w-9.5 md:h-10.5 md:w-10.5 ${
+              className={`group relative flex h-11 w-11 shrink-0 cursor-pointer flex-col items-center justify-center overflow-visible rounded-lg transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.06] active:scale-[0.93] sm:h-9.5 sm:w-9.5 md:h-10.5 md:w-10.5 ${
                 isOpen ? "bg-white/[0.12] text-white border border-white/[0.1]" : "text-neutral-300 hover:bg-white/[0.06] hover:text-white"
               }`}
               key={group.id}
@@ -247,7 +270,7 @@ function CanvasSlideAddButton({
   return (
     <button
       aria-label={label}
-      className={`absolute z-50 flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.12] bg-neutral-950/80 text-neutral-300 shadow-[0_10px_30px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-all duration-200 hover:scale-110 hover:border-white/25 hover:bg-white hover:text-black active:scale-95 ${className}`}
+      className={`absolute z-50 hidden h-8 w-8 items-center justify-center rounded-full border border-white/[0.12] bg-neutral-950/80 text-neutral-300 shadow-[0_10px_30px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-all duration-200 hover:scale-110 hover:border-white/25 hover:bg-white hover:text-black active:scale-95 sm:flex ${className}`}
       onClick={onClick}
       title={label}
       type="button"

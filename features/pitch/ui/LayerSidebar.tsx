@@ -66,7 +66,7 @@ export function LayerSidebar({
   const [dragOverSlideIndex, setDragOverSlideIndex] = useState<number | null>(null);
 
   return (
-    <div id="sidebar-v4" className="flex w-[265px] shrink-0 flex-col overflow-hidden border-r border-white/[0.12] bg-[#111111] select-none h-full relative z-10 transition-all duration-700">
+    <div id="sidebar-v4" className="relative z-10 flex h-full w-full shrink-0 select-none flex-col overflow-hidden bg-[#111111] transition-all duration-700 md:w-[265px] md:border-r md:border-white/[0.12]">
       {/* Sidebar Header / Tabs */}
       <div className="flex shrink-0 items-center border-b border-white/[0.08] p-1.5 bg-white/[0.01]">
         <button
@@ -147,7 +147,8 @@ export function LayerSidebar({
                         </span>
                         {scenes.length > 1 && (
                           <button
-                            className="text-neutral-500 opacity-0 transition-all hover:text-red-400 group-hover/item:opacity-100 cursor-pointer"
+                            aria-label={`Delete slide ${slide.index + 1}`}
+                            className="flex h-9 w-9 items-center justify-center rounded-xl text-red-300/80 transition active:scale-95 active:bg-red-500/15 sm:h-auto sm:w-auto sm:rounded-none sm:text-neutral-500 sm:opacity-0 sm:hover:text-red-400 sm:group-hover/item:opacity-100"
                             onClick={(event) => {
                               event.stopPropagation();
                               deleteSlide(slide.index);
@@ -209,7 +210,8 @@ export function LayerSidebar({
                       </span>
                       {scenes.length > 1 && (
                         <button
-                          className="absolute right-2 bottom-1.5 text-black/40 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+                          aria-label={`Delete slide ${slide.index + 1}`}
+                          className="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.1] bg-black/70 text-red-300 shadow-lg backdrop-blur transition active:scale-95 active:bg-red-500/20 sm:right-2 sm:top-auto sm:bottom-1.5 sm:h-auto sm:w-auto sm:rounded-none sm:border-0 sm:bg-transparent sm:text-black/40 sm:opacity-0 sm:shadow-none sm:backdrop-blur-none sm:hover:text-white sm:group-hover:opacity-100"
                           onClick={(event) => {
                             event.stopPropagation();
                             deleteSlide(slide.index);
@@ -287,6 +289,12 @@ export function LayerSidebar({
                       })}
                     </div>
                   )}
+                  {activeTab === "layers" && isActive && currentSlide && currentSlide.blocks.length === 0 ? (
+                    <div className="ml-4 mt-2 rounded-xl border border-dashed border-white/[0.1] bg-white/[0.025] px-4 py-5 text-center">
+                      <p className="text-xs font-semibold text-neutral-300">No layers yet</p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">Use the center + button to add text, images, or other content.</p>
+                    </div>
+                  ) : null}
                 </div>
               );
             })}

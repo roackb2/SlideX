@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PreviewCanvas } from "@/features/pitch/ui/PreviewCanvas";
 import { PitchHeader } from "@/features/pitch/ui/PitchHeader";
 import { WorkspaceCodeEditorOverlay } from "@/features/pitch/ui/workspace/WorkspaceCodeEditorOverlay";
@@ -9,11 +9,31 @@ import { WorkspaceLayerSidebar } from "@/features/pitch/ui/workspace/WorkspaceLa
 import { WorkspaceScrollbarStyle } from "@/features/pitch/ui/workspace/WorkspaceScrollbarStyle";
 import { WorkspaceTemplateDialog } from "@/features/pitch/ui/workspace/WorkspaceTemplateDialog";
 import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWorkspaceTypes";
+import { useMobileEdgePanels } from "@/features/pitch/ui/hooks/useMobileEdgePanels";
 
 export function PitchWorkspace(props: PitchWorkspaceProps) {
   const sceneCount = props.scenes.length;
+  const setActiveCanvasTool = props.setActiveCanvasTool;
   const [zoomLevel, setZoomLevel] = useState<number | "fit">("fit");
   const [fitScale, setFitScale] = useState(1);
+  useMobileEdgePanels({
+    isLeftPanelOpen: props.isMobileSidebarOpen,
+    isRightPanelOpen: props.isMobileInspectorOpen,
+    setIsLeftPanelOpen: props.setIsMobileSidebarOpen,
+    setIsRightPanelOpen: props.setIsMobileInspectorOpen
+  });
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+
+    function syncMobileCanvasTool() {
+      if (mobileQuery.matches) setActiveCanvasTool("select");
+    }
+
+    syncMobileCanvasTool();
+    mobileQuery.addEventListener("change", syncMobileCanvasTool);
+    return () => mobileQuery.removeEventListener("change", syncMobileCanvasTool);
+  }, [setActiveCanvasTool]);
 
   function selectSlide(index: number) {
     props.setActiveSlideIndex(index);
@@ -22,7 +42,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
   }
 
   return (
-    <main className="flex h-screen flex-col overflow-hidden bg-[#000000] font-sans text-neutral-300">
+    <main className="flex h-[100dvh] flex-col overflow-hidden bg-[#000000] font-sans text-neutral-300">
       <PitchHeader
         exportMenuRef={props.exportMenuRef}
         isExportMenuOpen={props.isExportMenuOpen}
@@ -67,6 +87,14 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
           onDuplicateSelectedBlock={props.duplicateSelectedBlock}
           onGroupSelectedBlocks={props.groupSelectedBlocks}
           onMoveSelectedBlocksToEdge={props.moveSelectedBlocksToEdge}
+          onOpenMobileInspector={() => {
+            props.setIsMobileInspectorOpen(true);
+            props.setIsMobileSidebarOpen(false);
+          }}
+          onOpenMobileLayers={() => {
+            props.setIsMobileSidebarOpen(true);
+            props.setIsMobileInspectorOpen(false);
+          }}
           onNextSlide={props.goToNextSlide}
           onPasteCopiedBlock={props.pasteCopiedBlock}
           onPreviousSlide={props.goToPreviousSlide}
@@ -76,6 +104,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
           onSelectSlide={selectSlide}
           onToggleSelectedBlocksPositionLock={props.toggleSelectedBlocksPositionLock}
           onUngroupSelectedBlocks={props.ungroupSelectedBlocks}
+          onUndo={props.undoLastChange}
           onUpdateBlock={props.updateBlock}
           onUpdateBlockFrames={props.updatePositionedBlockFrames}
           onUseSelectedImageAsBackground={props.useSelectedImageAsBackground}
@@ -87,7 +116,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
           scenes={props.scenes}
           slideRows={props.slideRows}
           source={props.canvasSource}
-          onCanvasToolChange={props.setActiveCanvasTool}
+          onCanvasToolChange={setActiveCanvasTool}
         />
 
         <WorkspaceInspectorPanel {...props} />
