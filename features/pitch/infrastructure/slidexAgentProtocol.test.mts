@@ -68,7 +68,8 @@ test("keeps one project identity across refresh and rotates it for new or import
     projectId: first,
     sessionId: "session-1",
     runId: "run-1",
-    afterSequence: 4
+    afterSequence: 4,
+    baseSourceRevision: "revision-1"
   });
 
   assert.equal(refreshed, first);
@@ -76,7 +77,8 @@ test("keeps one project identity across refresh and rotates it for new or import
     projectId: "project-1",
     sessionId: "session-1",
     runId: "run-1",
-    afterSequence: 4
+    afterSequence: 4,
+    baseSourceRevision: "revision-1"
   });
 
   const imported = rotateProjectInstanceId(storage, () => "project-2");

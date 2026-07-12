@@ -29,9 +29,13 @@ Until SlideX has durable projects, identity and conversation binding use
 `sessionStorage`: refresh can restore the matching server MotionDoc plus chat,
 while a new tab starts clean. The server exposes active-run discovery and the
 editor can replay a retained active run after refresh. The persisted cursor is
-recorded now, but Heddle remote v4.3 cannot seed a consumer with a nonzero
-cursor; add that generic capability in Heddle before relying on cursor-bounded
-refresh recovery instead of retained replay from sequence zero.
+recorded together with the run's base source revision. If retained replay has
+expired, the panel keeps the run detached and lets the user check its durable
+status. A completed result reuses the same source-revision policy as a live
+terminal: unchanged decks apply through the undo-aware path, while diverged
+decks stay pending for review. Heddle remote v4.3 still cannot seed a consumer
+with a nonzero cursor; add that generic capability in Heddle before relying on
+cursor-bounded refresh recovery instead of retained replay from sequence zero.
 
 ## Rollout flag
 
@@ -51,8 +55,9 @@ experience, and enable both for internal validation.
 Run `npm run test:agent:e2e:install` once, then `npm run test:agent:e2e` for the
 deterministic editor lifecycle regression. Playwright starts SlideX with the
 agent flag enabled and verifies multi-turn MotionDoc continuity, visible
-history after refresh, and conversation reset without erasing the deck. The
-same test runs in `.github/workflows/agent-regression.yml`. The route fixture in
+history after refresh, conversation reset without erasing the deck, and
+manual-edit-safe recovery after live replay expires. The same test runs in
+`.github/workflows/agent-regression.yml`. The route fixture in
 `tests/browser/agent-lifecycle.spec.ts` owns only deterministic HTTP/SSE test
 responses; it must not reimplement product session or Heddle run policy. The
 real server repository verifies those policies and route semantics separately.

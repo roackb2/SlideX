@@ -7,7 +7,8 @@ const AgentProjectBindingSchema = z.object({
   projectId: z.string().min(1),
   sessionId: z.string().min(1),
   runId: z.string().min(1).optional(),
-  afterSequence: z.number().int().nonnegative().optional()
+  afterSequence: z.number().int().nonnegative().optional(),
+  baseSourceRevision: z.string().min(1).optional()
 });
 
 export type AgentProjectBinding = z.infer<typeof AgentProjectBindingSchema>;
