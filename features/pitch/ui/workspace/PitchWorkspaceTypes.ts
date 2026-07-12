@@ -1,6 +1,7 @@
 import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction } from "react";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 import type { CanvasTool } from "@/features/pitch/application/canvasTools";
+import type { SlideComment } from "@/features/pitch/application/slideComments";
 import type { AddBlockOptions, FrameUpdate, InsertSlidePlacement } from "@/features/pitch/application/motionDocCommands";
 import type { SlideRow } from "@/features/pitch/ui/LayerSidebar";
 import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
@@ -18,6 +19,7 @@ export type PitchWorkspaceProps = {
   activeSlideLayout: string;
   activeSlideLayoutPreset: string;
   activeSlideMutedColor: string;
+  activeSlideComments: SlideComment[];
   activeSlideShader: string;
   activeSlideShaderAngle: number;
   activeSlideShaderColor1: string;
@@ -72,6 +74,8 @@ export type PitchWorkspaceProps = {
   moveSelectedBlocksToEdge: (edge: "back" | "front") => void;
   newProject: () => void;
   notice: string;
+  onAddActiveSlideComment: (comment: string) => void;
+  onPassActiveSlideComment: (commentId: string) => void;
   projectName: string;
   pushUndoSnapshot: () => void;
   pasteCopiedBlock: () => void;

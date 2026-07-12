@@ -10,6 +10,7 @@ import { WorkspaceScrollbarStyle } from "@/features/pitch/ui/workspace/Workspace
 import { WorkspaceTemplateDialog } from "@/features/pitch/ui/workspace/WorkspaceTemplateDialog";
 import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWorkspaceTypes";
 import { useMobileEdgePanels } from "@/features/pitch/ui/hooks/useMobileEdgePanels";
+import { DesktopSlideNoteFab } from "@/features/pitch/ui/notes/DesktopSlideNoteFab";
 
 export function PitchWorkspace(props: PitchWorkspaceProps) {
   const sceneCount = props.scenes.length;
@@ -69,8 +70,9 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
       <div className="relative flex flex-1 animate-[bubble-appear_0.3s_ease-out] overflow-hidden bg-[#000000]" id="workspace-v4">
         <WorkspaceLayerSidebar {...props} onSelectSlide={selectSlide} />
 
-        <PreviewCanvas
-          activeCanvasTool={props.activeCanvasTool}
+        <div className="relative flex min-w-0 flex-1">
+          <PreviewCanvas
+            activeCanvasTool={props.activeCanvasTool}
           zoomLevel={zoomLevel}
           onFitScaleChange={setFitScale}
           onSetZoomLevel={setZoomLevel}
@@ -116,8 +118,15 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
           scenes={props.scenes}
           slideRows={props.slideRows}
           source={props.canvasSource}
-          onCanvasToolChange={setActiveCanvasTool}
-        />
+            onCanvasToolChange={setActiveCanvasTool}
+          />
+          <DesktopSlideNoteFab
+            comments={props.activeSlideComments}
+            onAddComment={props.onAddActiveSlideComment}
+            onPassComment={props.onPassActiveSlideComment}
+            slideNumber={props.activeSlideIndex + 1}
+          />
+        </div>
 
         <WorkspaceInspectorPanel {...props} />
       </div>
