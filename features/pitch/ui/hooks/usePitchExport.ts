@@ -13,6 +13,7 @@ import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
 import { parseExportSlideSelection } from "@/features/pitch/application/exportSlideSelection";
 import { addEditableSlides } from "@/features/pitch/infrastructure/editablePptxExport";
 import { createPptxPresentation } from "@/features/pitch/infrastructure/pptxBrowser";
+import { hidePptxEditableContent } from "@/features/pitch/infrastructure/pptxVisualFallback";
 
 type UsePitchExportArgs = {
   canvasSource: string;
@@ -299,6 +300,7 @@ async function renderStaticSlidePngDataUrls(source: string, title: string) {
     const images: string[] = [];
     for (const slide of slides) {
       slide.classList.add("is-active");
+      hidePptxEditableContent(slide);
       const canvas = await html2canvas(slide, {
         allowTaint: false,
         backgroundColor: null,
@@ -496,7 +498,7 @@ export function usePitchExport({
       setNotice("Rendering PowerPoint…");
       const localSource = await embedLocalFiles(canvasSource);
       const finalSource = await embedRemoteImages(localSource);
-      const slideImages = await renderStaticSlidePngDataUrls(finalSource, finalTitle);
+      const slideBackgrounds = await renderStaticSlidePngDataUrls(finalSource, finalTitle);
       const pptx = await createPptxPresentation();
       const document = parseMotionDoc(finalSource);
 
@@ -507,7 +509,7 @@ export function usePitchExport({
       pptx.title = finalTitle;
 
       setNotice("Building editable slides…");
-      addEditableSlides(pptx, document, slideImages);
+      addEditableSlides(pptx, document, slideBackgrounds);
 
       setNotice("Building PowerPoint…");
       await pptx.writeFile({ fileName: pptxFilename, compression: true });

@@ -17,22 +17,17 @@ type PropsBlock = Extract<MotionDocBlock, { props: Record<string, string | numbe
 export function addEditableSlides(
   pptx: PptxGenJS,
   document: ParsedMotionDoc,
-  renderedSlides: readonly string[]
+  renderedBackgrounds: readonly string[]
 ) {
   document.scenes.forEach((scene, sceneIndex) => {
     const slide = pptx.addSlide();
     const theme = resolveSlideThemeColors(scene.props);
+    const renderedBackground = renderedBackgrounds[sceneIndex];
 
     slide.background = { color: pptxColor(theme.background, "0F172A") };
 
-    if (needsVisualFallback(scene.blocks, scene.props)) {
-      slide.addImage({
-        data: renderedSlides[sceneIndex],
-        x: 0,
-        y: 0,
-        w: SLIDE_WIDTH,
-        h: SLIDE_HEIGHT
-      });
+    if (renderedBackground && needsVisualFallback(scene.blocks, scene.props)) {
+      slide.background = { data: renderedBackground };
     }
 
     scene.blocks.forEach((block) => {
