@@ -12,11 +12,12 @@ import {
   Check,
   List,
   Minus,
+  MoreHorizontal,
   Plus,
   Type
 } from "lucide-react";
 import { useEffect, useRef } from "react";
-import type { CSSProperties, CompositionEvent } from "react";
+import type { CSSProperties, CompositionEvent, ReactNode } from "react";
 import * as Toolbar from "@radix-ui/react-toolbar";
 import { numberValue } from "@/core/motion-doc/domain/frame";
 import { hexColorValue } from "@/features/pitch/application/colorPalettes";
@@ -33,6 +34,7 @@ type TextFrameEditorProps = {
   onBeginTextEdit: () => void;
   onSelectBlock: (index: number) => void;
   onUpdateBlock: BlockUpdater;
+  toolbarAlignment?: "left" | "right";
   toolbarPlacement?: "above" | "below";
 };
 
@@ -43,6 +45,7 @@ export function TextFrameEditor({
   onBeginTextEdit,
   onSelectBlock,
   onUpdateBlock,
+  toolbarAlignment = "left",
   toolbarPlacement = "above"
 }: TextFrameEditorProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
@@ -89,7 +92,7 @@ export function TextFrameEditor({
 
   return (
     <>
-      <TextStyleToolbar block={block} blockIndex={blockIndex} onUpdateBlock={onUpdateBlock} placement={toolbarPlacement} />
+      <TextStyleToolbar alignment={toolbarAlignment} block={block} blockIndex={blockIndex} onUpdateBlock={onUpdateBlock} placement={toolbarPlacement} />
       <div
         className="absolute z-10 cursor-text overflow-hidden border-0 bg-transparent p-0 text-current outline-none"
         onClick={(event) => event.stopPropagation()}
@@ -143,11 +146,13 @@ export function TextFrameEditor({
 }
 
 function TextStyleToolbar({
+  alignment,
   block,
   blockIndex,
   onUpdateBlock,
   placement
 }: {
+  alignment: "left" | "right";
   block: EditableTextBlock;
   blockIndex: number;
   onUpdateBlock: BlockUpdater;
@@ -223,7 +228,7 @@ function TextStyleToolbar({
 
   return (
     <Toolbar.Root
-      className={`absolute left-0 z-30 flex items-center gap-1 rounded-xl border border-white/[0.1] bg-[#17171a]/95 p-1.5 shadow-[0_18px_48px_rgba(5,4,10,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl ${placement === "below" ? "top-[calc(100%+10px)]" : "-top-[58px]"}`}
+      className={`absolute z-30 flex h-9 items-center gap-0.5 rounded-lg border border-white/[0.09] bg-[#1b1b1e]/94 px-1 shadow-[0_8px_24px_rgba(5,4,10,0.34),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl ${alignment === "right" ? "right-0" : "left-0"} ${placement === "below" ? "top-[calc(100%+8px)]" : "-top-[44px]"}`}
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
       onKeyDown={(event) => event.stopPropagation()}
@@ -233,10 +238,10 @@ function TextStyleToolbar({
 
       <FontPicker onChange={(val) => setProp("fontFamily", val, true)} value={fontFamily} />
 
-      <Toolbar.Separator className="mx-0.5 h-4 w-px bg-white/10 shrink-0" />
+      <Toolbar.Separator className="mx-0.5 h-4 w-px shrink-0 bg-white/[0.08]" />
 
       {/* Font Size Group */}
-      <div className="flex items-center h-7 rounded border border-white/[0.06] bg-black/20 overflow-hidden shrink-0">
+      <div className="flex h-7 shrink-0 items-center overflow-hidden rounded-md bg-black/20">
         <Toolbar.Button aria-label="Decrease font size" className="flex h-full w-7 items-center justify-center text-neutral-400 hover:bg-white/10 hover:text-white transition-colors outline-none focus-visible:ring-1 focus-visible:ring-white/50" onClick={() => adjustFontSize(-1)}>
           <Minus size={12} />
         </Toolbar.Button>
@@ -254,83 +259,63 @@ function TextStyleToolbar({
         </Toolbar.Button>
       </div>
 
-      <Toolbar.Separator className="mx-0.5 h-4 w-px bg-white/10 shrink-0" />
+      <Toolbar.Separator className="mx-0.5 h-4 w-px shrink-0 bg-white/[0.08]" />
 
       {/* Styling */}
-      <div className="flex items-center gap-0.5 shrink-0">
+      <div className="flex shrink-0 items-center">
         <Toolbar.Button aria-label="Bold" className={toolbarButtonClass(isBold)} onClick={() => setProp("fontWeight", isBold ? "" : 700, true)}>
           <Bold size={13} />
         </Toolbar.Button>
-        <Toolbar.Button aria-label="Bullet list" className={toolbarButtonClass(isBulletList)} onClick={toggleList}>
-          <List size={13} />
-        </Toolbar.Button>
       </div>
 
-      <Toolbar.Separator className="mx-0.5 h-4 w-px bg-white/10 shrink-0" />
-
-      {/* Alignment */}
-      <div className="flex items-center gap-0.5 bg-black/20 rounded p-0.5 border border-white/[0.04] shrink-0">
-        <Toolbar.Button aria-label="Align left" className={toolbarButtonClass(textAlign === "left")} onClick={() => setProp("textAlign", "left")}>
-          <AlignLeft size={13} />
-        </Toolbar.Button>
-        <Toolbar.Button aria-label="Align center" className={toolbarButtonClass(textAlign === "center")} onClick={() => setProp("textAlign", "center")}>
-          <AlignCenter size={13} />
-        </Toolbar.Button>
-        <Toolbar.Button aria-label="Align right" className={toolbarButtonClass(textAlign === "right")} onClick={() => setProp("textAlign", "right")}>
-          <AlignRight size={13} />
-        </Toolbar.Button>
-      </div>
-
+      {/* Less common controls stay one click away without widening the canvas toolbar. */}
       <Popover.Root>
         <Popover.Trigger asChild>
-          <Toolbar.Button aria-label="Vertical alignment" className={toolbarButtonClass(verticalAlign !== "top")} title="Vertical alignment">
-            {verticalAlign === "bottom" ? <AlignVerticalJustifyEnd size={13} /> : verticalAlign === "middle" || verticalAlign === "center" ? <AlignVerticalJustifyCenter size={13} /> : <AlignVerticalJustifyStart size={13} />}
+          <Toolbar.Button aria-label="More text options" className={toolbarButtonClass(isBulletList || textAlign !== "left" || verticalAlign !== "top")} title="More text options">
+            <MoreHorizontal size={14} />
           </Toolbar.Button>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content align="center" className="z-[110] flex gap-1 rounded-lg border border-white/10 bg-[#17171a] p-1.5 shadow-2xl" sideOffset={10}>
-            {[
-              { icon: <AlignVerticalJustifyStart size={14} />, label: "Align top", value: "top" },
-              { icon: <AlignVerticalJustifyCenter size={14} />, label: "Align middle", value: "middle" },
-              { icon: <AlignVerticalJustifyEnd size={14} />, label: "Align bottom", value: "bottom" }
-            ].map((option) => (
-              <button className={toolbarButtonClass(verticalAlign === option.value)} key={option.value} onClick={() => setProp("textVerticalAlign", option.value)} title={option.label} type="button">
-                {option.icon}
-              </button>
-            ))}
+          <Popover.Content align="end" className="z-[110] w-[220px] rounded-xl border border-white/10 bg-[#1b1b1e] p-2 shadow-[0_18px_50px_rgba(0,0,0,0.48)]" sideOffset={8}>
+            <TextOptionRow label="Alignment">
+              <button aria-label="Align left" className={toolbarButtonClass(textAlign === "left")} onClick={() => setProp("textAlign", "left")} type="button"><AlignLeft size={13} /></button>
+              <button aria-label="Align center" className={toolbarButtonClass(textAlign === "center")} onClick={() => setProp("textAlign", "center")} type="button"><AlignCenter size={13} /></button>
+              <button aria-label="Align right" className={toolbarButtonClass(textAlign === "right")} onClick={() => setProp("textAlign", "right")} type="button"><AlignRight size={13} /></button>
+            </TextOptionRow>
+            <TextOptionRow label="Vertical">
+              <button aria-label="Align top" className={toolbarButtonClass(verticalAlign === "top")} onClick={() => setProp("textVerticalAlign", "top")} type="button"><AlignVerticalJustifyStart size={13} /></button>
+              <button aria-label="Align middle" className={toolbarButtonClass(verticalAlign === "middle" || verticalAlign === "center")} onClick={() => setProp("textVerticalAlign", "middle")} type="button"><AlignVerticalJustifyCenter size={13} /></button>
+              <button aria-label="Align bottom" className={toolbarButtonClass(verticalAlign === "bottom")} onClick={() => setProp("textVerticalAlign", "bottom")} type="button"><AlignVerticalJustifyEnd size={13} /></button>
+            </TextOptionRow>
+            <div className="my-1 h-px bg-white/[0.07]" />
+            <div className="flex h-9 items-center justify-between px-1.5">
+              <span className="text-[11px] text-neutral-400">Bullet list</span>
+              <button aria-label="Bullet list" className={toolbarButtonClass(isBulletList)} onClick={toggleList} type="button"><List size={13} /></button>
+            </div>
+            <div className="flex h-9 items-center justify-between px-1.5">
+              <span className="text-[11px] text-neutral-400">Text color</span>
+              <label className="group flex h-7 w-7 cursor-pointer items-center justify-center rounded-md hover:bg-white/[0.08]" title="Text color">
+                <span className="h-4 w-4 rounded-[4px] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]" style={{ backgroundColor: color }} />
+                <input aria-label="Text color" className="sr-only" onChange={(event) => setProp("color", event.target.value)} type="color" value={pickerColor} />
+              </label>
+            </div>
+            <label className="flex h-9 items-center justify-between px-1.5">
+              <span className="text-[11px] text-neutral-400">Line height</span>
+              <input aria-label="Line height" className="h-7 w-14 rounded-md bg-black/25 px-2 text-center font-mono text-[11px] text-neutral-200 outline-none focus:ring-1 focus:ring-white/25" max={2.5} min={0.8} onChange={(event) => setProp("lineHeight", event.target.value === "" ? "" : Number(event.target.value), true)} step={0.05} type="number" value={lineHeight} />
+            </label>
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>
-
-      <Toolbar.Separator className="mx-0.5 h-4 w-px bg-white/10 shrink-0" />
-
-      {/* Color */}
-      <label className="group flex h-7 w-7 cursor-pointer items-center justify-center overflow-hidden rounded border border-white/10 bg-black/40 hover:border-white/30 transition-colors shrink-0" title="Text color">
-        <span className="h-4 w-4 rounded-[3px] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] group-hover:scale-110 transition-transform" style={{ backgroundColor: color }} />
-        <input
-          aria-label="Text color"
-          className="sr-only"
-          onChange={(event) => setProp("color", event.target.value)}
-          type="color"
-          value={pickerColor}
-        />
-      </label>
-
-      {/* Line Height */}
-      <div className="ml-0.5 flex h-7 items-center rounded border border-white/[0.06] bg-black/20 px-1.5 hover:border-white/20 transition-colors focus-within:border-white/30 focus-within:bg-black/40 shrink-0">
-        <span className="font-mono text-[9px] text-neutral-500 font-semibold mr-1">LH</span>
-        <input
-          aria-label="Line height"
-          className="h-full w-9 bg-transparent text-center font-mono text-[11px] text-neutral-200 outline-none"
-          max={2.5}
-          min={0.8}
-          onChange={(event) => setProp("lineHeight", event.target.value === "" ? "" : Number(event.target.value), true)}
-          step={0.05}
-          type="number"
-          value={lineHeight}
-        />
-      </div>
     </Toolbar.Root>
+  );
+}
+
+function TextOptionRow({ children, label }: { children: ReactNode; label: string }) {
+  return (
+    <div className="flex h-9 items-center justify-between px-1.5">
+      <span className="text-[11px] text-neutral-400">{label}</span>
+      <div className="flex items-center gap-0.5">{children}</div>
+    </div>
   );
 }
 

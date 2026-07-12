@@ -8,12 +8,10 @@ import {
   CANVAS_WIDTH,
   blockFrame,
   canvasPointFromRect,
-  findAlignmentGuides,
   gridLineColor,
   hiddenEditablePreviewBlockIndices,
   marqueeRect,
   selectedMovableBlockIndices,
-  type AlignmentGuide,
   type CanvasInteraction,
   type Frame,
   type ResizeHandle
@@ -25,6 +23,7 @@ import { CanvasContextMenu } from "@/features/pitch/ui/preview/CanvasContextMenu
 import { CanvasSelectionLayer } from "@/features/pitch/ui/preview/CanvasSelectionLayer";
 import { PreviewPane } from "@/features/pitch/ui/preview/PreviewPane";
 import { useCanvasInteractionEngine } from "@/features/pitch/ui/preview/interaction/useCanvasInteractionEngine";
+import { useTransientFramePreview } from "@/features/pitch/ui/preview/interaction/useTransientFramePreview";
 import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
 import type { AddBlockType } from "@/features/pitch/ui/pitchOptions";
 
@@ -61,6 +60,8 @@ type PreviewCanvasProps = {
   onCopySelectedBlock: () => void;
   onDeleteSelectedBlocks: () => void;
   onDuplicateSelectedBlock: () => void;
+  onGroupSelectedBlocks: () => void;
+  onMoveSelectedBlocksToEdge: (edge: "back" | "front") => void;
   onNextSlide: () => void;
   onPasteCopiedBlock: () => void;
   onPreviousSlide: () => void;
@@ -70,8 +71,9 @@ type PreviewCanvasProps = {
   onInsertSlideNearActive: (placement: InsertSlidePlacement) => void;
   onCanvasToolChange: (tool: CanvasTool) => void;
   onToggleSelectedBlocksPositionLock: () => void;
+  onUngroupSelectedBlocks: () => void;
   onUpdateBlock: BlockUpdater;
-  onUpdateBlockFrames: (updates: Array<{ blockIndex: number; frame: FramePatch }>, commit?: boolean) => void;
+  onUpdateBlockFrames: (updates: Array<{ blockIndex: number; frame: FramePatch }>) => void;
   onUseSelectedImageAsBackground: () => void;
   replayNonce: number;
   sceneCount: number;
@@ -99,10 +101,13 @@ export function PreviewCanvas({
   onCopySelectedBlock,
   onDeleteSelectedBlocks,
   onDuplicateSelectedBlock,
+  onGroupSelectedBlocks,
+  onMoveSelectedBlocksToEdge,
   onPasteCopiedBlock,
   onSelectBlock,
   onSelectBlocks,
   onToggleSelectedBlocksPositionLock,
+  onUngroupSelectedBlocks,
   onUpdateBlock,
   onUpdateBlockFrames,
   onUseSelectedImageAsBackground,
@@ -126,10 +131,13 @@ export function PreviewCanvas({
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const panStateRef = useRef<CanvasPanState | null>(null);
   const canvasInteraction = useCanvasInteractionEngine();
+  const transientFramePreview = useTransientFramePreview({
+    blocks: activeSlide?.blocks ?? emptyBlocks,
+    onCommit: onUpdateBlockFrames
+  });
   const { syncSelection } = canvasInteraction;
   const [canvasScale, setCanvasScale] = useState(1);
   const actualScale = zoomLevel === "fit" ? canvasScale : zoomLevel;
-  const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([]);
   const [contextMenu, setContextMenu] = useState<CanvasContextMenuState | null>(null);
   const [canvasViewportOffset, setCanvasViewportOffset] = useState({ x: 0, y: 0 });
   const [canvasViewportWidth, setCanvasViewportWidth] = useState(0);
@@ -338,6 +346,7 @@ export function PreviewCanvas({
     }
 
     event.currentTarget.setPointerCapture(event.pointerId);
+    transientFramePreview.reset();
     
     const moveIndices = (selectedBlockIndices.includes(blockIndex) ? selectedBlockIndices : [blockIndex])
       .filter((index) => {
@@ -376,6 +385,7 @@ export function PreviewCanvas({
 
     event.preventDefault();
     event.stopPropagation();
+    transientFramePreview.reset();
     const block = activeSlide?.blocks[blockIndex];
 
     if (block && isPositionLocked(block)) {
@@ -413,8 +423,11 @@ export function PreviewCanvas({
       return;
     }
 
-    setAlignmentGuides(findAlignmentGuides(activeSlide?.blocks ?? [], updates));
-    onUpdateBlockFrames(updates, commit);
+    if (commit) {
+      transientFramePreview.commit(updates);
+      return;
+    }
+    transientFramePreview.preview(updates);
   }
 
   function endInteraction(event: PointerEvent<HTMLDivElement>, blockIndex: number) {
@@ -424,7 +437,6 @@ export function PreviewCanvas({
 
     updateInteraction(event, true);
     event.currentTarget.releasePointerCapture(event.pointerId);
-    setAlignmentGuides([]);
     canvasInteraction.finishTransform();
   }
 
@@ -762,8 +774,10 @@ export function PreviewCanvas({
                     >
                       <PreviewPane
                         activeSlideIndex={slide.index}
-                        hiddenBlockIndices={isActiveSlideFrame ? hiddenPreviewBlockIndices : []}
+                        hiddenBlockIndices={isActiveSlideFrame ? hiddenPreviewBlockIndices : emptyBlockIndices}
+                        frameOverrides={isActiveSlideFrame ? transientFramePreview.frameOverrides : undefined}
                         replayNonce={replayNonce}
+                        scene={slideScene}
                         source={source}
                       />
                     </div>
@@ -780,8 +794,9 @@ export function PreviewCanvas({
                     {isActiveSlideFrame ? (
                       <CanvasSelectionLayer
                         activeSlide={activeSlide}
-                        alignmentGuides={alignmentGuides}
+                        alignmentGuides={transientFramePreview.alignmentGuides}
                         canvasScale={actualScale}
+                        frameOverrides={transientFramePreview.frameOverrides}
                         interactionBlockIndex={canvasInteraction.transform?.blockIndex ?? null}
                         interactionMode={canvasInteraction.mode}
                         marqueeSelection={canvasInteraction.marqueeSelection}
@@ -806,13 +821,22 @@ export function PreviewCanvas({
                     ) : null}
                     {isActiveSlideFrame && contextMenu ? (
                       <CanvasContextMenu
+                        canGroup={selectedBlockIndices.length > 1}
                         canPaste={canPasteBlock}
+                        canUngroup={selectedBlockIndices.some((index) => {
+                          const block = activeSlide?.blocks[index];
+                          return Boolean(block && "props" in block && block.props.groupId);
+                        })}
                         onClose={() => setContextMenu(null)}
                         onCopy={onCopySelectedBlock}
                         onDelete={onDeleteSelectedBlocks}
                         onDuplicate={onDuplicateSelectedBlock}
+                        onGroup={onGroupSelectedBlocks}
+                        onMoveToBack={() => onMoveSelectedBlocksToEdge("back")}
+                        onMoveToFront={() => onMoveSelectedBlocksToEdge("front")}
                         onPaste={onPasteCopiedBlock}
                         onToggleLock={onToggleSelectedBlocksPositionLock}
+                        onUngroup={onUngroupSelectedBlocks}
                         onUseAsBackground={onUseSelectedImageAsBackground}
                         position={contextMenu.position}
                         selectedBlock={contextMenu.blockIndex === null ? undefined : activeSlide?.blocks[contextMenu.blockIndex]}
@@ -838,6 +862,8 @@ export function PreviewCanvas({
 
 const minZoomScale = 0.02;
 const maxZoomScale = 64;
+const emptyBlockIndices: number[] = [];
+const emptyBlocks: MotionDocScene["blocks"] = [];
 const zoomStepRatio = 1.18;
 const canvasViewportOffsetLimit = 100000;
 const workspaceGridBaseSize = 24;
@@ -932,7 +958,7 @@ function workspaceGridStyleForScale(scale: number, offset: { x: number; y: numbe
 
 function clampedMenuPosition(event: MouseEvent<HTMLDivElement>) {
   const menuWidth = 224;
-  const menuHeight = 264;
+  const menuHeight = 388;
   const margin = 12;
 
   return {

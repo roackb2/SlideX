@@ -17,7 +17,7 @@ import {
   spacingProp,
   stringProp
 } from "@/features/pitch/application/previewProps";
-import { blockFrame } from "@/features/pitch/application/previewCanvas";
+import { blockFrame, type Frame } from "@/features/pitch/application/previewCanvas";
 import { Card, Chart, IconBlock, ImageBlock, Metric, ShapeBlock, StackBlock, Text, Title, VideoBlock } from "@/features/pitch/ui/preview/motion-blocks";
 import { TableBlock } from "@/features/pitch/ui/preview/motion/TableBlock";
 
@@ -27,11 +27,13 @@ export type PreviewBlockItem = {
 };
 
 type PreviewBlockListProps = {
+  frameOverrides?: ReadonlyMap<number, Frame>;
   hiddenBlockIndices: Set<number>;
   items: PreviewBlockItem[];
 };
 
 export function PreviewBlockList({
+  frameOverrides,
   hiddenBlockIndices,
   items
 }: PreviewBlockListProps) {
@@ -50,7 +52,7 @@ export function PreviewBlockList({
         <div
           className="motion-positioned-block"
           key={`${block.type}-positioned-${originalIndex}`}
-          style={positionedBlockStyle(block, originalIndex)}
+          style={positionedBlockStyle(block, originalIndex, frameOverrides?.get(originalIndex))}
         >
           <PreviewBlock block={block} fillFrame />
         </div>
@@ -302,8 +304,8 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
   return null;
 }
 
-function positionedBlockStyle(block: MotionDocBlock, index: number): CSSProperties {
-  const frame = blockFrame(block);
+function positionedBlockStyle(block: MotionDocBlock, index: number, frameOverride?: Frame): CSSProperties {
+  const frame = frameOverride ?? blockFrame(block);
   const h = "props" in block ? block.props.h : undefined;
 
   return {

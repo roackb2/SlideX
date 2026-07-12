@@ -49,12 +49,13 @@ export function parseMotionDoc(source: string): ParsedMotionDoc {
 }
 
 function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
+  const normalizedSceneSource = expandGroupMarkup(sceneSource);
   const blocks: MotionDocBlock[] = [];
   const blockPattern =
     /<(Title|Text)\b([^>]*)>([\s\S]*?)<\/\1>|<(Card|ImageBlock|VideoBlock|Metric|Chart|Icon|Shape|Stack|Table)\b([\s\S]*?)\/>/g;
-  let markdownSource = sceneSource;
+  let markdownSource = normalizedSceneSource;
 
-  for (const match of sceneSource.matchAll(blockPattern)) {
+  for (const match of normalizedSceneSource.matchAll(blockPattern)) {
     markdownSource = markdownSource.replace(match[0], "\n");
     const pairedType = match[1] as "Title" | "Text" | undefined;
     const selfClosingType = match[4] as
@@ -118,6 +119,24 @@ function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
   }
 
   return blocks;
+}
+
+function expandGroupMarkup(sceneSource: string) {
+  return sceneSource.replace(/<Group\b([^>]*)>([\s\S]*?)<\/Group>/g, (_match, rawProps: string, children: string, offset: number) => {
+    const props = parseProps(rawProps);
+    const groupId = String(props.id ?? props.groupId ?? `group-${offset}`);
+    const groupName = String(props.name ?? props.groupName ?? "Group");
+    const groupAttrs = ` groupId="${encodeInjectedAttribute(groupId)}" groupName="${encodeInjectedAttribute(groupName)}"`;
+
+    return children.replace(
+      /<(Title|Text|Card|ImageBlock|VideoBlock|Metric|Chart|Icon|Shape|Stack|Table)\b/g,
+      (opening) => `${opening}${groupAttrs}`
+    );
+  });
+}
+
+function encodeInjectedAttribute(value: string) {
+  return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
 function parseProps(rawProps: string): Record<string, string | number> {

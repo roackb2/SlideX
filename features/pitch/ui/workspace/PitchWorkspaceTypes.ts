@@ -50,6 +50,7 @@ export type PitchWorkspaceProps = {
   deleteSelectedBlocks: () => void;
   deleteSlide: (slideIndex: number) => void;
   duplicateSelectedBlock: () => void;
+  groupSelectedBlocks: () => void;
   draggedBlockIndex: number | null;
   dragOverBlockIndex: number | null;
 
@@ -67,6 +68,8 @@ export type PitchWorkspaceProps = {
   isTemplateModalOpen: boolean;
   hasCopiedBlock: boolean;
   moveBlock: (blockIndex: number, direction: -1 | 1) => void;
+  moveBlockToEdge: (blockIndex: number, edge: "back" | "front") => void;
+  moveSelectedBlocksToEdge: (edge: "back" | "front") => void;
   newProject: () => void;
   notice: string;
   projectName: string;
@@ -99,6 +102,9 @@ export type PitchWorkspaceProps = {
   slideRows: SlideRow[];
   source: string;
   toggleSelectedBlocksPositionLock: () => void;
+  toggleBlockPositionLock: (blockIndex: number) => void;
+  ungroupSelectedBlocks: () => void;
+  renameBlock: (blockIndex: number, name: string) => void;
   totalDuration: number;
   undoLastChange: () => void;
   updateActiveSlideStyle: (updates: {
@@ -107,7 +113,7 @@ export type PitchWorkspaceProps = {
   }) => void;
   updateAllSlidesStyle: (updates: Record<string, string | number>) => void;
   updateBlock: BlockUpdater;
-  updatePositionedBlockFrames: (updates: FrameUpdate[], commit?: boolean) => void;
+  updatePositionedBlockFrames: (updates: FrameUpdate[]) => void;
   updateSelectionMdx: (value: string) => void;
   useSelectedImageAsBackground: () => void;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;

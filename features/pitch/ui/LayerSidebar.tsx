@@ -1,10 +1,10 @@
 "use client";
 
-import { Layers, Plus, Trash2 } from "lucide-react";
+import { Group, Layers, Plus, Trash2 } from "lucide-react";
 import type { MouseEvent } from "react";
 import { useState } from "react";
 import { LayerRow } from "@/features/pitch/ui/LayerRow";
-import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocBlock, MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 import { SlideThumbnailPreview } from "@/features/pitch/ui/preview/SlideThumbnailPreview";
 
 export type SlideRow = {
@@ -21,11 +21,13 @@ export function LayerSidebar({
   draggedBlockIndex,
   dragOverBlockIndex,
   moveBlock,
+  moveBlockToEdge,
   onAddSlide,
   onSelectBlock,
   onSelectSlide,
   reorderBlock,
   reorderSlide,
+  renameBlock,
   replayNonce,
   scenes,
   selectedBlockIndex,
@@ -33,7 +35,8 @@ export function LayerSidebar({
   setDragOverBlockIndex,
   setDraggedBlockIndex,
   slideRows,
-  source
+  source,
+  toggleBlockPositionLock
 }: {
   activeSlideIndex: number;
   deleteBlock: (index: number) => void;
@@ -41,11 +44,13 @@ export function LayerSidebar({
   draggedBlockIndex: number | null;
   dragOverBlockIndex: number | null;
   moveBlock: (index: number, direction: -1 | 1) => void;
+  moveBlockToEdge: (index: number, edge: "back" | "front") => void;
   onAddSlide: () => void;
   onSelectBlock: (index: number, event: MouseEvent<HTMLDivElement>) => void;
   onSelectSlide: (index: number) => void;
   reorderBlock: (fromIndex: number, toIndex: number) => void;
   reorderSlide: (fromIndex: number, toIndex: number) => void;
+  renameBlock: (index: number, name: string) => void;
   replayNonce: number;
   scenes: MotionDocScene[];
   selectedBlockIndex: number | null;
@@ -54,6 +59,7 @@ export function LayerSidebar({
   setDraggedBlockIndex: (index: number | null) => void;
   slideRows: SlideRow[];
   source: string;
+  toggleBlockPositionLock: (index: number) => void;
 }) {
   const [activeTab, setActiveTab] = useState<"slides" | "layers">("slides");
   const [draggedSlideIndex, setDraggedSlideIndex] = useState<number | null>(null);
@@ -194,6 +200,7 @@ export function LayerSidebar({
                         <SlideThumbnailPreview
                           activeSlideIndex={slide.index}
                           replayNonce={replayNonce}
+                          scene={currentSlide}
                           source={source}
                         />
                       </div>
@@ -218,7 +225,44 @@ export function LayerSidebar({
                   {/* Active layers child lists */}
                   {activeTab === "layers" && isActive && currentSlide && currentSlide.blocks.length > 0 && (
                     <div className="ml-4.5 mt-1.5 flex flex-col gap-1 border-l border-white/[0.06] pl-2.5 animate-[bubble-appear_0.2s_ease-out]">
-                      {currentSlide.blocks.map((block, blockIndex) => {
+                      {layerTreeEntries(currentSlide.blocks).map((entry) => {
+                        if (entry.kind === "group") {
+                          const isGroupSelected = entry.layers.every(({ blockIndex }) => selectedBlockIndices.includes(blockIndex));
+                          return (
+                            <div className={`overflow-hidden rounded-xl border ${isGroupSelected ? "border-[#8ea5ff]/35 bg-[#8ea5ff]/[0.07]" : "border-white/[0.07] bg-white/[0.018]"}`} key={entry.id}>
+                              <div className="flex h-9 cursor-pointer items-center gap-2 border-b border-white/[0.06] px-3 text-[12px] font-semibold text-neutral-300 hover:bg-white/[0.04]" onClick={(event) => onSelectBlock(entry.layers[0].blockIndex, event)}>
+                                <Group className="text-[#8ea5ff]" size={13} />
+                                <span className="min-w-0 flex-1 truncate">{entry.name}</span>
+                                <span className="font-mono text-[10px] text-neutral-600">{entry.layers.length}</span>
+                              </div>
+                              <div className="flex flex-col gap-0.5 p-1.5 pl-3">
+                                {entry.layers.map(({ block, blockIndex }) => (
+                                  <LayerRow
+                                    block={block}
+                                    deleteBlock={deleteBlock}
+                                    draggedBlockIndex={draggedBlockIndex}
+                                    dragOverBlockIndex={dragOverBlockIndex}
+                                    index={blockIndex}
+                                    key={blockIndex}
+                                    moveBlock={moveBlock}
+                                    moveBlockToEdge={moveBlockToEdge}
+                                    onSelectBlock={onSelectBlock}
+                                    reorderBlock={reorderBlock}
+                                    renameBlock={renameBlock}
+                                    selectedBlockIndex={selectedBlockIndex}
+                                    selectedBlockIndices={selectedBlockIndices}
+                                    setDraggedBlockIndex={setDraggedBlockIndex}
+                                    setDragOverBlockIndex={setDragOverBlockIndex}
+                                    totalBlocks={currentSlide.blocks.length}
+                                    toggleBlockPositionLock={toggleBlockPositionLock}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        const { block, blockIndex } = entry;
                         return (
                           <LayerRow
                             block={block}
@@ -228,13 +272,16 @@ export function LayerSidebar({
                             index={blockIndex}
                             key={blockIndex}
                             moveBlock={moveBlock}
+                            moveBlockToEdge={moveBlockToEdge}
                             onSelectBlock={onSelectBlock}
                             reorderBlock={reorderBlock}
+                            renameBlock={renameBlock}
                             selectedBlockIndex={selectedBlockIndex}
                             selectedBlockIndices={selectedBlockIndices}
                             setDraggedBlockIndex={setDraggedBlockIndex}
                             setDragOverBlockIndex={setDragOverBlockIndex}
                             totalBlocks={currentSlide.blocks.length}
+                            toggleBlockPositionLock={toggleBlockPositionLock}
                           />
                         );
                       })}
@@ -249,4 +296,33 @@ export function LayerSidebar({
       </div>
     </div>
   );
+}
+
+type LayerTreeEntry =
+  | { block: MotionDocBlock; blockIndex: number; kind: "layer" }
+  | { id: string; kind: "group"; layers: Array<{ block: MotionDocBlock; blockIndex: number }>; name: string };
+
+function layerTreeEntries(blocks: MotionDocBlock[]): LayerTreeEntry[] {
+  const entries: LayerTreeEntry[] = [];
+  const seenGroups = new Set<string>();
+
+  for (let index = blocks.length - 1; index >= 0; index -= 1) {
+    const block = blocks[index];
+    const groupId = "props" in block && typeof block.props.groupId === "string" ? block.props.groupId : "";
+    if (!groupId) {
+      entries.push({ block, blockIndex: index, kind: "layer" });
+      continue;
+    }
+    if (seenGroups.has(groupId)) continue;
+    seenGroups.add(groupId);
+    const layers = blocks.flatMap((candidate, blockIndex) => (
+      "props" in candidate && candidate.props.groupId === groupId ? [{ block: candidate, blockIndex }] : []
+    )).reverse();
+    const groupName = "props" in block && typeof block.props.groupName === "string" && block.props.groupName.trim()
+      ? block.props.groupName
+      : "Group";
+    entries.push({ id: groupId, kind: "group", layers, name: groupName });
+  }
+
+  return entries;
 }

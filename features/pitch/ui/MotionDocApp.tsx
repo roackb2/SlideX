@@ -79,10 +79,10 @@ export function MotionDocApp() {
     selectedBlockIndex,
     selectedBlockIndices,
     selectSingleBlock
-  } = useLayerSelection(activeSlide?.blocks.length ?? 0);
+  } = useLayerSelection(activeSlide?.blocks ?? []);
   const selectionMdx = useMemo(
-    () => getSelectionMdx(activeSlide, selectedBlockIndex, activeSlideIndex),
-    [activeSlide, activeSlideIndex, selectedBlockIndex]
+    () => getSelectionMdx(activeSlide, selectedBlockIndex, activeSlideIndex, selectedBlockIndices),
+    [activeSlide, activeSlideIndex, selectedBlockIndex, selectedBlockIndices]
   );
   const {
     isMounted,
@@ -149,6 +149,7 @@ export function MotionDocApp() {
     pushUndoSnapshot,
     scenes: sliderDocument.scenes,
     selectBlock,
+    selectBlocks,
     selectedBlockIndex,
     selectedBlockIndices,
     selectSingleBlock,
@@ -229,6 +230,7 @@ export function MotionDocApp() {
     duplicateSelectedBlock: pitchCommands.duplicateSelectedBlock,
     goToNextSlide: pitchCommands.goToNextSlide,
     goToPreviousSlide: pitchCommands.goToPreviousSlide,
+    groupSelectedBlocks: pitchCommands.groupSelectedBlocks,
     isCodeEditorOpen,
     isExportMenuOpen,
     isMobileInspectorOpen,
@@ -237,10 +239,12 @@ export function MotionDocApp() {
     newProject: startNewProject,
     nudgeSelectedBlocks: pitchCommands.nudgeSelectedBlocks,
     pasteCopiedBlock: pitchCommands.pasteCopiedBlock,
+    pasteImageFile: pitchCommands.pasteImageFile,
     selectedBlockIndex,
     selectedBlockIndices,
     setActiveCanvasTool,
-    undoLastChange
+    undoLastChange,
+    ungroupSelectedBlocks: pitchCommands.ungroupSelectedBlocks
   });
 
   if (!isMounted) {
@@ -304,6 +308,7 @@ export function MotionDocApp() {
       deleteSelectedBlocks={pitchCommands.deleteSelectedBlocks}
       deleteSlide={pitchCommands.deleteSlide}
       duplicateSelectedBlock={pitchCommands.duplicateSelectedBlock}
+      groupSelectedBlocks={pitchCommands.groupSelectedBlocks}
       draggedBlockIndex={draggedBlockIndex}
       dragOverBlockIndex={dragOverBlockIndex}
       exportMenuRef={exportMenuRef}
@@ -320,12 +325,15 @@ export function MotionDocApp() {
       isTemplateModalOpen={isTemplateModalOpen}
       hasCopiedBlock={pitchCommands.hasCopiedBlock}
       moveBlock={pitchCommands.moveBlock}
+      moveBlockToEdge={pitchCommands.moveBlockToEdge}
+      moveSelectedBlocksToEdge={pitchCommands.moveSelectedBlocksToEdge}
       newProject={startNewProject}
       notice={notice}
       projectName={projectName}
       pushUndoSnapshot={pushUndoSnapshot}
       pasteCopiedBlock={pitchCommands.pasteCopiedBlock}
       reorderBlock={pitchCommands.reorderBlock}
+      renameBlock={pitchCommands.renameBlock}
       reorderSlide={pitchCommands.reorderSlide}
       replayNonce={replayNonce}
       scenes={sliderDocument.scenes}
@@ -352,6 +360,8 @@ export function MotionDocApp() {
       slideRows={slideRows}
       source={source}
       toggleSelectedBlocksPositionLock={pitchCommands.toggleSelectedBlocksPositionLock}
+      toggleBlockPositionLock={pitchCommands.toggleBlockPositionLock}
+      ungroupSelectedBlocks={pitchCommands.ungroupSelectedBlocks}
       totalDuration={stats.totalDuration}
       undoLastChange={undoLastChange}
       updateActiveSlideStyle={pitchCommands.updateActiveSlideStyle}

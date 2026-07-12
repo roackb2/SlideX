@@ -71,7 +71,7 @@ export function FontPicker({ onChange, value }: FontPickerProps) {
     <Popover.Root onOpenChange={setOpen} open={open}>
       <Popover.Trigger asChild>
         <button
-          className="flex min-w-[128px] items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-[12px] font-medium text-neutral-200 outline-none transition-colors hover:bg-white/[0.08] focus-visible:ring-1 focus-visible:ring-white/40"
+          className="flex w-[112px] items-center justify-between gap-1.5 rounded-md px-2 py-1.5 text-[11px] font-medium text-neutral-200 outline-none transition-colors hover:bg-white/[0.08] focus-visible:ring-1 focus-visible:ring-white/40"
           title="Font Family"
           type="button"
         >

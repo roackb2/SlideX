@@ -25,20 +25,25 @@ import {
   imageBlockAsSlideBackground,
   insertBlankSlideSource,
   isPositionLocked,
+  groupBlocks,
   moveBlockByDirection,
+  moveBlocksToEdge,
   nudgeBlocks,
-  pasteBlockIntoSlide,
+  pasteBlocksIntoSlide,
+  renameLayer,
   reorderBlocks,
   reorderSlideSource,
   replaceSlideSource,
   selectedLayerIndices,
   toggleBlocksPositionLock,
+  ungroupBlocks,
   updateBlockInSlide,
   updatePositionedBlockFrames as buildPositionedBlockFramesSlide,
   type AddBlockOptions,
   type FrameUpdate,
   type InsertSlidePlacement
 } from "@/features/pitch/application/motionDocCommands";
+import { registerPitchLocalFile } from "@/features/pitch/infrastructure/pitchLocalAssets";
 import {
   clearTableEditorSelectionProps,
   tableEditorSelectionFromProps
@@ -55,6 +60,7 @@ type UsePitchCommandsArgs = {
   pushUndoSnapshot: () => void;
   scenes: MotionDocScene[];
   selectBlock: (index: number, options?: { additive?: boolean; range?: boolean }) => void;
+  selectBlocks: (indices: number[], options?: { additive?: boolean }) => void;
   selectedBlockIndex: number | null;
   selectedBlockIndices: number[];
   selectSingleBlock: (index: number | null) => void;
@@ -67,10 +73,6 @@ type UsePitchCommandsArgs = {
   source: string;
 };
 
-type SlideXLocalFilesWindow = Window & {
-  __slidexLocalFiles?: Map<string, File>;
-};
-
 export function usePitchCommands({
   activeSlide,
   activeSlideIndex,
@@ -79,6 +81,7 @@ export function usePitchCommands({
   pushUndoSnapshot,
   scenes,
   selectBlock,
+  selectBlocks,
   selectedBlockIndex,
   selectedBlockIndices,
   selectSingleBlock,
@@ -90,7 +93,7 @@ export function usePitchCommands({
   setSource,
   source
 }: UsePitchCommandsArgs) {
-  const [copiedBlock, setCopiedBlock] = useState<MotionDocBlock | null>(null);
+  const [copiedBlocks, setCopiedBlocks] = useState<MotionDocBlock[]>([]);
 
   function selectBlockFromLayer(index: number, event: ReactMouseEvent<HTMLDivElement>) {
     selectBlock(index, {
@@ -302,6 +305,17 @@ export function usePitchCommands({
       return;
     }
 
+    const indices = selectedLayerIndices(selectedBlockIndices, selectedBlockIndex);
+    if (indices.length > 1) {
+      const blocks = indices.map((index) => activeSlide.blocks[index]).filter((block): block is MotionDocBlock => Boolean(block));
+      const result = pasteBlocksIntoSlide(activeSlide, blocks, indices[indices.length - 1], { offset: true });
+      commitSource((current) => replaceSlideSource(current, activeSlideIndex, result.slide));
+      selectBlocks(result.blockIndices);
+      setReplayNonce((value) => value + 1);
+      setNotice("Layers duplicated");
+      return;
+    }
+
     const result = duplicateBlockAt(activeSlide, selectedBlockIndex);
 
     if (!result) {
@@ -329,26 +343,100 @@ export function usePitchCommands({
       return;
     }
 
-    const block = activeSlide.blocks[selectedBlockIndex];
-
-    if (!block) {
+    const indices = selectedLayerIndices(selectedBlockIndices, selectedBlockIndex);
+    const blocks = indices.map((index) => activeSlide.blocks[index]).filter((block): block is MotionDocBlock => Boolean(block));
+    if (blocks.length === 0) {
       return;
     }
 
-    setCopiedBlock(cloneBlock(block));
-    setNotice("Layer copied");
+    setCopiedBlocks(blocks.map(cloneBlock));
+    setNotice(blocks.length > 1 ? `${blocks.length} layers copied` : "Layer copied");
   }
 
   function pasteCopiedBlock() {
-    if (!activeSlide || !copiedBlock) {
+    if (!activeSlide || copiedBlocks.length === 0) {
       return;
     }
 
-    const { blockIndex, slide } = pasteBlockIntoSlide(activeSlide, copiedBlock, selectedBlockIndex);
+    const { blockIndices, slide } = pasteBlocksIntoSlide(activeSlide, copiedBlocks, selectedBlockIndex);
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
-    selectSingleBlock(blockIndex);
+    selectBlocks(blockIndices);
     setReplayNonce((value) => value + 1);
-    setNotice("Layer pasted");
+    setNotice(blockIndices.length > 1 ? `${blockIndices.length} layers pasted` : "Layer pasted");
+  }
+
+  async function pasteImageFile(file: File) {
+    if (!activeSlide || !file.type.startsWith("image/")) return;
+    try {
+      const src = registerPitchLocalFile(file);
+      const selectedBlock = selectedBlockIndex === null ? undefined : activeSlide.blocks[selectedBlockIndex];
+      if (selectedBlockIndex !== null && selectedBlock?.type === "ImageBlock") {
+        const slide = updateBlockInSlide(activeSlide, selectedBlockIndex, {
+          ...selectedBlock.props,
+          alt: file.name || "Pasted image",
+          fit: selectedBlock.props.fit || "contain",
+          src
+        });
+        if (!slide) return;
+        commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
+        setReplayNonce((value) => value + 1);
+        setNotice("Image pasted into selected layer");
+        return;
+      }
+      const { blockIndex, slide } = appendBlockToSlide(activeSlide, "Image", {
+        props: { alt: file.name || "Pasted image", fit: "contain", src }
+      });
+      commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
+      selectSingleBlock(blockIndex);
+      setReplayNonce((value) => value + 1);
+      setNotice("Image pasted");
+    } catch {
+      setNotice("Unable to paste image");
+    }
+  }
+
+  function moveSelectedBlocksToEdge(edge: "back" | "front") {
+    if (!activeSlide) return;
+    const indices = selectedLayerIndices(selectedBlockIndices, selectedBlockIndex);
+    if (indices.length === 0) return;
+    const result = moveBlocksToEdge(activeSlide, indices, edge);
+    commitSource((current) => replaceSlideSource(current, activeSlideIndex, result.slide));
+    selectBlocks(result.blockIndices);
+    setReplayNonce((value) => value + 1);
+    setNotice(edge === "front" ? "Moved to front" : "Moved to back");
+  }
+
+  function moveBlockToEdge(blockIndex: number, edge: "back" | "front") {
+    if (!activeSlide) return;
+    const result = moveBlocksToEdge(activeSlide, [blockIndex], edge);
+    commitSource((current) => replaceSlideSource(current, activeSlideIndex, result.slide));
+    selectSingleBlock(result.blockIndices[0]);
+    setReplayNonce((value) => value + 1);
+    setNotice(edge === "front" ? "Moved to front" : "Moved to back");
+  }
+
+  function groupSelectedBlocks() {
+    if (!activeSlide) return;
+    const indices = selectedLayerIndices(selectedBlockIndices, selectedBlockIndex);
+    if (indices.length < 2) return;
+    const groupId = `group-${Date.now().toString(36)}`;
+    const result = groupBlocks(activeSlide, indices, groupId);
+    commitSource((current) => replaceSlideSource(current, activeSlideIndex, result.slide));
+    selectBlocks(result.blockIndices);
+    setNotice(`${indices.length} layers grouped`);
+  }
+
+  function ungroupSelectedBlocks() {
+    if (!activeSlide) return;
+    const indices = selectedLayerIndices(selectedBlockIndices, selectedBlockIndex);
+    commitSource((current) => replaceSlideSource(current, activeSlideIndex, ungroupBlocks(activeSlide, indices)));
+    setNotice("Group released");
+  }
+
+  function renameBlock(blockIndex: number, name: string) {
+    if (!activeSlide) return;
+    commitSource((current) => replaceSlideSource(current, activeSlideIndex, renameLayer(activeSlide, blockIndex, name)));
+    setNotice(name.trim() ? "Layer renamed" : "Layer name reset");
   }
 
   function reorderBlock(fromIndex: number, toIndex: number) {
@@ -380,6 +468,14 @@ export function usePitchCommands({
 
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
     setReplayNonce((value) => value + 1);
+    setNotice(locked ? "Layer position locked" : "Layer position unlocked");
+  }
+
+  function toggleBlockPositionLock(blockIndex: number) {
+    if (!activeSlide) return;
+    const { didUpdate, locked, slide } = toggleBlocksPositionLock(activeSlide, [blockIndex]);
+    if (!didUpdate) return;
+    commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
     setNotice(locked ? "Layer position locked" : "Layer position unlocked");
   }
 
@@ -421,16 +517,13 @@ export function usePitchCommands({
     setNotice("Text added");
   }
 
-  function updatePositionedBlockFrames(updates: FrameUpdate[], commit = false) {
+  function updatePositionedBlockFrames(updates: FrameUpdate[]) {
     if (!activeSlide) return;
 
     const nextSlide = buildPositionedBlockFramesSlide(activeSlide, updates);
     setSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
     markProjectDirty();
-
-    if (commit) {
-      setNotice(updates.length > 1 ? "Layers updated" : "Layer updated");
-    }
+    setNotice(updates.length > 1 ? "Layers updated" : "Layer updated");
   }
 
   function nudgeSelectedBlocks(delta: { x: number; y: number }) {
@@ -506,8 +599,7 @@ export function usePitchCommands({
     }
 
     try {
-      const url = URL.createObjectURL(file);
-      localFileStore().set(url, file);
+      const url = registerPitchLocalFile(file);
       
       updateBlock(blockIndex, {
         ...block.props,
@@ -539,8 +631,7 @@ export function usePitchCommands({
 
     try {
       setNotice("Loading video...");
-      const url = URL.createObjectURL(file);
-      localFileStore().set(url, file);
+      const url = registerPitchLocalFile(file);
       
       updateBlock(blockIndex, {
         ...block.props,
@@ -573,6 +664,7 @@ export function usePitchCommands({
       activeSlide,
       activeSlideIndex,
       selectedBlockIndex,
+      selectedBlockIndices,
       source,
       value
     });
@@ -603,20 +695,27 @@ export function usePitchCommands({
     duplicateSelectedBlock,
     goToNextSlide,
     goToPreviousSlide,
-    hasCopiedBlock: copiedBlock !== null,
+    groupSelectedBlocks,
+    hasCopiedBlock: copiedBlocks.length > 0,
     insertSnippet,
     insertSlideNearActive,
     moveBlock,
+    moveBlockToEdge,
     nudgeSelectedBlocks,
+    moveSelectedBlocksToEdge,
+    pasteImageFile,
     pasteCopiedBlock,
     reorderBlock,
     reorderSlide,
+    renameBlock,
     selectBlockFromLayer,
     selectedBlocksLocked: selectedLayerIndices(selectedBlockIndices, selectedBlockIndex).some((index) => {
       const block = activeSlide?.blocks[index];
       return Boolean(block && isPositionLocked(block));
     }),
     toggleSelectedBlocksPositionLock,
+    toggleBlockPositionLock,
+    ungroupSelectedBlocks,
     updateActiveSlideStyle,
     updateAllSlidesStyle,
     updateBlock,
@@ -626,11 +725,4 @@ export function usePitchCommands({
     uploadImageForBlock,
     uploadVideoForBlock
   };
-}
-
-function localFileStore() {
-  const localWindow = window as SlideXLocalFilesWindow;
-  localWindow.__slidexLocalFiles ??= new Map<string, File>();
-
-  return localWindow.__slidexLocalFiles;
 }

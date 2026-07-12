@@ -1,8 +1,10 @@
 "use client";
 
-import { BarChart3, ChevronUp, ChevronDown, Gauge, GripVertical, Image as ImageIcon, MousePointer2, PlaySquare, Rows3, Shapes, Sparkles, Table2, Trash2 } from "lucide-react";
-import type { MouseEvent, PointerEvent } from "react";
+import { BarChart3, ChevronUp, ChevronDown, Gauge, GripVertical, Image as ImageIcon, Link2, Lock, MousePointer2, PlaySquare, Rows3, Shapes, Sparkles, Table2, Trash2 } from "lucide-react";
+import { useState, type MouseEvent, type PointerEvent } from "react";
 import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
+import { isPositionLocked } from "@/features/pitch/application/motionDocCommands";
+import { LayerContextMenu } from "@/features/pitch/ui/LayerContextMenu";
 
 export function LayerTextIcon({ className = "", label }: { className?: string; label: "H" | "T" }) {
   return (
@@ -28,6 +30,7 @@ export function BlockLayerIcon({ block, className = "" }: { block: MotionDocBloc
 }
 
 function blockLayerLabel(block: MotionDocBlock) {
+  if ("props" in block && typeof block.props.layerName === "string" && block.props.layerName.trim()) return block.props.layerName;
   if ("text" in block && block.text.trim()) {
     return block.text;
   }
@@ -50,8 +53,11 @@ export function LayerRow({
   dragOverBlockIndex,
   index,
   moveBlock,
+  moveBlockToEdge,
   onSelectBlock,
   reorderBlock,
+  renameBlock,
+  toggleBlockPositionLock,
   selectedBlockIndex,
   selectedBlockIndices,
   setDraggedBlockIndex,
@@ -64,15 +70,20 @@ export function LayerRow({
   dragOverBlockIndex: number | null;
   index: number;
   moveBlock: (index: number, direction: -1 | 1) => void;
+  moveBlockToEdge: (index: number, edge: "back" | "front") => void;
   onSelectBlock: (index: number, event: MouseEvent<HTMLDivElement>) => void;
   reorderBlock: (fromIndex: number, toIndex: number) => void;
+  renameBlock: (index: number, name: string) => void;
+  toggleBlockPositionLock: (index: number) => void;
   selectedBlockIndex: number | null;
   selectedBlockIndices: number[];
   setDraggedBlockIndex: (index: number | null) => void;
   setDragOverBlockIndex: (index: number | null) => void;
   totalBlocks: number;
 }) {
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const isSelected = selectedBlockIndices.includes(index) || selectedBlockIndex === index;
+  const groupId = "props" in block && typeof block.props.groupId === "string" ? block.props.groupId : "";
   const isDragged = draggedBlockIndex === index;
   const isDragOver = dragOverBlockIndex === index && !isDragged;
   let itemClass = "group flex items-center justify-between px-3 py-2.5 rounded-[0.85rem] transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer border active:scale-[0.97] ";
@@ -94,6 +105,12 @@ export function LayerRow({
       className={itemClass}
       draggable
       onClick={(event) => onSelectBlock(index, event)}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!isSelected) onSelectBlock(index, event);
+        setContextMenu({ x: event.clientX, y: event.clientY });
+      }}
       onDragEnd={() => {
         setDraggedBlockIndex(null);
         setDragOverBlockIndex(null);
@@ -122,13 +139,15 @@ export function LayerRow({
         </div>
         <BlockLayerIcon block={block} />
         <span className="truncate text-sm font-semibold text-neutral-300 group-hover:text-white transition-colors">{blockLayerLabel(block)}</span>
+        {groupId ? <Link2 className="shrink-0 text-[#8ea5ff]/70" size={11} /> : null}
+        {isPositionLocked(block) ? <Lock className="shrink-0 text-neutral-600" size={10} /> : null}
       </div>
       <div className="flex items-center gap-1">
         <div className="flex items-center gap-1 opacity-0 transition-all group-hover:opacity-100">
-        <button className="shrink-0 p-0.5 text-neutral-400 transition-all hover:text-white disabled:opacity-30" disabled={index === 0} onClick={(event) => { event.stopPropagation(); moveBlock(index, -1); }}>
+        <button className="shrink-0 p-0.5 text-neutral-400 transition-all hover:text-white disabled:opacity-30" disabled={index === totalBlocks - 1} onClick={(event) => { event.stopPropagation(); moveBlock(index, 1); }} title="Move forward">
           <ChevronUp size={12} />
         </button>
-        <button className="shrink-0 p-0.5 text-neutral-400 transition-all hover:text-white disabled:opacity-30" disabled={index === totalBlocks - 1} onClick={(event) => { event.stopPropagation(); moveBlock(index, 1); }}>
+        <button className="shrink-0 p-0.5 text-neutral-400 transition-all hover:text-white disabled:opacity-30" disabled={index === 0} onClick={(event) => { event.stopPropagation(); moveBlock(index, -1); }} title="Move backward">
           <ChevronDown size={12} />
         </button>
         <button
@@ -148,6 +167,19 @@ export function LayerRow({
         </button>
         </div>
       </div>
+      {contextMenu ? (
+        <LayerContextMenu
+          isLocked={isPositionLocked(block)}
+          name={blockLayerLabel(block)}
+          onClose={() => setContextMenu(null)}
+          onDelete={() => deleteBlock(index)}
+          onMoveToBack={() => moveBlockToEdge(index, "back")}
+          onMoveToFront={() => moveBlockToEdge(index, "front")}
+          onRename={(name) => renameBlock(index, name)}
+          onToggleLock={() => toggleBlockPositionLock(index)}
+          position={contextMenu}
+        />
+      ) : null}
     </div>
   );
 }

@@ -147,7 +147,7 @@ export function DocsPage() {
           <section className="mt-16 border-t border-white/[0.09] pt-12 scroll-mt-40" id="powerpoint">
             <h2 className="text-[30px] font-semibold tracking-[-0.045em]">{isZh ? "輸出" : "Export"}</h2>
             <h3 className="mt-7 text-[20px] font-semibold tracking-[-0.03em]">PowerPoint</h3>
-            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/52">{isZh ? "PowerPoint 輸出會將每張 16:9 畫布以 1920 × 1080 放入 PPTX，確保版面、字型外觀、shader 與所有視覺效果不會位移。動態內容會以目前狀態轉成靜態畫面。" : "PowerPoint export places every 16:9 canvas into the PPTX at 1920 × 1080, preserving layout, typography appearance, shaders, and visual effects. Dynamic content is captured as a still frame."}</p>
+            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/52">{isZh ? "PPTX 可由 PowerPoint、Keynote 與 Google Slides 開啟。文字、圖片與表格會保留為可編輯的原生物件；shader、動態內容與複雜效果則以目前狀態轉成靜態視覺，兼顧相容性與版面一致。" : "PPTX files open in PowerPoint, Keynote, and Google Slides. Text, images, and tables remain editable native objects, while shaders, motion, and complex effects are captured as still visuals for compatibility and layout fidelity."}</p>
           </section>
 
           <section className="mt-12 scroll-mt-40" id="html">

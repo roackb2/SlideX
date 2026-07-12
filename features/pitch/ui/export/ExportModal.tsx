@@ -25,9 +25,9 @@ type ExportOption = {
 const formatOptions = [
   {
     id: "pptx",
-    label: "PowerPoint",
+    label: "Editable PPTX",
     ext: ".pptx",
-    description: "Exact 16:9 canvas. Motion and shaders are captured as still frames.",
+    description: "Opens in PowerPoint, Keynote, and Google Slides. Text, images, and tables stay editable.",
     icon: Presentation
   },
   {

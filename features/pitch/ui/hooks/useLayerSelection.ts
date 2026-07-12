@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
 
-export function useLayerSelection(activeBlockCount: number) {
+export function useLayerSelection(activeBlocks: MotionDocBlock[]) {
+  const activeBlockCount = activeBlocks.length;
   const [selectedBlockIndex, setSelectedBlockIndex] = useState<number | null>(null);
   const [selectedBlockIndices, setSelectedBlockIndices] = useState<number[]>([]);
 
@@ -43,6 +45,17 @@ export function useLayerSelection(activeBlockCount: number) {
         setSelectedBlockIndex(nextSelection.includes(index) ? index : nextSelection[nextSelection.length - 1] ?? null);
         return nextSelection;
       });
+      return;
+    }
+
+    const block = activeBlocks[index];
+    const groupId = block && "props" in block && typeof block.props.groupId === "string" ? block.props.groupId : "";
+    if (groupId) {
+      const groupedIndices = activeBlocks.flatMap((candidate, candidateIndex) => (
+        "props" in candidate && candidate.props.groupId === groupId ? [candidateIndex] : []
+      ));
+      setSelectedBlockIndices(groupedIndices);
+      setSelectedBlockIndex(index);
       return;
     }
 

@@ -34,6 +34,7 @@ type CanvasSelectionLayerProps = {
   activeSlide: MotionDocScene | undefined;
   alignmentGuides: AlignmentGuide[];
   canvasScale: number;
+  frameOverrides: ReadonlyMap<number, Frame>;
   interactionBlockIndex: number | null;
   interactionMode: CanvasInteractionMode;
   marqueeSelection: MarqueeSelection | null;
@@ -57,6 +58,7 @@ export function CanvasSelectionLayer({
   activeSlide,
   alignmentGuides,
   canvasScale,
+  frameOverrides,
   interactionBlockIndex,
   interactionMode,
   marqueeSelection,
@@ -77,9 +79,9 @@ export function CanvasSelectionLayer({
   const selectedIndices = selectedCanvasIndices(activeSlide, selectedBlockIndex, selectedBlockIndices);
   const isMultiSelection = selectedIndices.length > 1;
   const isTextMultiSelection = isMultiSelection && isTextOnlySelection(activeSlide?.blocks ?? [], selectedIndices);
-  const multiSelectionFrame = isMultiSelection ? combinedSelectionFrame(activeSlide, selectedIndices) : null;
+  const multiSelectionFrame = isMultiSelection ? combinedSelectionFrame(activeSlide, selectedIndices, frameOverrides) : null;
   const spacingGuides = isMultiSelection
-    ? selectionSpacingGuides(selectedIndices.map((index) => blockFrame(activeSlide?.blocks[index])))
+    ? selectionSpacingGuides(selectedIndices.map((index) => frameOverrides.get(index) ?? blockFrame(activeSlide?.blocks[index])))
     : [];
   const unlockedSelectedIndices = selectedIndices.filter((index) => {
     const block = activeSlide?.blocks[index];
@@ -119,7 +121,7 @@ export function CanvasSelectionLayer({
         const isTextShape = block.type === "Shape" && !isLineShape;
         const showIndividualTextEditor = isSelected && isTextBlock && (isTextMultiSelection || (!isMultiSelection && isPrimarySelection));
         const showIndividualControls = !isMultiSelection && isPrimarySelection || isTextMultiSelection && isTextBlock;
-        const frame = blockFrame(block);
+        const frame = frameOverrides.get(blockIndex) ?? blockFrame(block);
         const minFrameSize = minimumFrameSize(block, canvasScale);
 
         return (
@@ -153,6 +155,7 @@ export function CanvasSelectionLayer({
 	                block={block}
 	                blockIndex={blockIndex}
 	                canvasScale={canvasScale}
+	                toolbarAlignment={frame.x + frame.w / 2 >= 50 ? "right" : "left"}
 	                toolbarPlacement={frame.y < 11 ? "below" : "above"}
 	                onBeginTextEdit={() => onBeginTextEdit(blockIndex)}
                 onSelectBlock={onSelectBlock}
@@ -479,8 +482,8 @@ function selectedCanvasIndices(
   });
 }
 
-function combinedSelectionFrame(slide: MotionDocScene | undefined, indices: readonly number[]) {
-  const frames = indices.map((index) => blockFrame(slide?.blocks[index]));
+function combinedSelectionFrame(slide: MotionDocScene | undefined, indices: readonly number[], frameOverrides: ReadonlyMap<number, Frame>) {
+  const frames = indices.map((index) => frameOverrides.get(index) ?? blockFrame(slide?.blocks[index]));
   if (frames.length === 0) return null;
 
   const left = Math.min(...frames.map((frame) => frame.x));

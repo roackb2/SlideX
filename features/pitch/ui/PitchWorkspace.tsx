@@ -65,6 +65,8 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
           onCopySelectedBlock={props.copySelectedBlock}
           onDeleteSelectedBlocks={props.deleteSelectedBlocks}
           onDuplicateSelectedBlock={props.duplicateSelectedBlock}
+          onGroupSelectedBlocks={props.groupSelectedBlocks}
+          onMoveSelectedBlocksToEdge={props.moveSelectedBlocksToEdge}
           onNextSlide={props.goToNextSlide}
           onPasteCopiedBlock={props.pasteCopiedBlock}
           onPreviousSlide={props.goToPreviousSlide}
@@ -73,6 +75,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
           onSelectBlocks={props.selectBlocks}
           onSelectSlide={selectSlide}
           onToggleSelectedBlocksPositionLock={props.toggleSelectedBlocksPositionLock}
+          onUngroupSelectedBlocks={props.ungroupSelectedBlocks}
           onUpdateBlock={props.updateBlock}
           onUpdateBlockFrames={props.updatePositionedBlockFrames}
           onUseSelectedImageAsBackground={props.useSelectedImageAsBackground}

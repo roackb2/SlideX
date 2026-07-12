@@ -14,6 +14,8 @@ type WorkspaceLayerSidebarProps = Pick<
   | "dragOverBlockIndex"
   | "isMobileSidebarOpen"
   | "moveBlock"
+  | "moveBlockToEdge"
+  | "renameBlock"
   | "reorderBlock"
   | "reorderSlide"
   | "replayNonce"
@@ -24,6 +26,7 @@ type WorkspaceLayerSidebarProps = Pick<
   | "setDraggedBlockIndex"
   | "setDragOverBlockIndex"
   | "setIsMobileSidebarOpen"
+  | "toggleBlockPositionLock"
   | "slideRows"
 > & {
   onSelectSlide: (index: number) => void;
@@ -65,9 +68,11 @@ function LayerSidebarContent({
   draggedBlockIndex,
   dragOverBlockIndex,
   moveBlock,
+  moveBlockToEdge,
   onSelectSlide,
   reorderBlock,
   reorderSlide,
+  renameBlock,
   replayNonce,
   scenes,
   selectBlockFromLayer,
@@ -76,6 +81,7 @@ function LayerSidebarContent({
   setDraggedBlockIndex,
   setDragOverBlockIndex,
   setIsMobileSidebarOpen,
+  toggleBlockPositionLock,
   slideRows,
   canvasSource
 }: WorkspaceLayerSidebarProps) {
@@ -91,10 +97,12 @@ function LayerSidebarContent({
       draggedBlockIndex={draggedBlockIndex}
       dragOverBlockIndex={dragOverBlockIndex}
       moveBlock={moveBlock}
+      moveBlockToEdge={moveBlockToEdge}
       onSelectBlock={selectBlockFromLayer}
       onSelectSlide={onSelectSlide}
       reorderBlock={reorderBlock}
       reorderSlide={reorderSlide}
+      renameBlock={renameBlock}
       replayNonce={replayNonce}
       scenes={scenes}
       selectedBlockIndex={selectedBlockIndex}
@@ -103,6 +111,7 @@ function LayerSidebarContent({
       setDragOverBlockIndex={setDragOverBlockIndex}
       slideRows={slideRows}
       source={canvasSource}
+      toggleBlockPositionLock={toggleBlockPositionLock}
     />
   );
 }

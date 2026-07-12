@@ -11,6 +11,7 @@ import {
 } from "@/core/motion-doc/infrastructure/export/motionDocExport";
 import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
 import { parseExportSlideSelection } from "@/features/pitch/application/exportSlideSelection";
+import { addEditableSlides } from "@/features/pitch/infrastructure/editablePptxExport";
 import { createPptxPresentation } from "@/features/pitch/infrastructure/pptxBrowser";
 
 type UsePitchExportArgs = {
@@ -34,8 +35,6 @@ const HTML_EXPORT_IMAGE_QUALITY = 0.94;
 const PNG_EXPORT_HEIGHT = 1080;
 const PNG_EXPORT_WIDTH = 1920;
 const PNG_MULTI_DOWNLOAD_DELAY_MS = 180;
-const PPTX_SLIDE_HEIGHT = 7.5;
-const PPTX_SLIDE_WIDTH = 13.333;
 
 /**
  * Embed a local image with enough source pixels for fullscreen HTML playback.
@@ -499,6 +498,7 @@ export function usePitchExport({
       const finalSource = await embedRemoteImages(localSource);
       const slideImages = await renderStaticSlidePngDataUrls(finalSource, finalTitle);
       const pptx = await createPptxPresentation();
+      const document = parseMotionDoc(finalSource);
 
       pptx.layout = "LAYOUT_WIDE";
       pptx.author = "SlideX Pitch";
@@ -506,23 +506,12 @@ export function usePitchExport({
       pptx.subject = "Presentation exported from SlideX Pitch";
       pptx.title = finalTitle;
 
-      for (let slideIndex = 0; slideIndex < slideImages.length; slideIndex += 1) {
-        setNotice(`Rendering PowerPoint ${slideIndex + 1}/${slideImages.length}…`);
-        const slide = pptx.addSlide();
-
-        slide.background = { color: "000000" };
-        slide.addImage({
-          data: slideImages[slideIndex],
-          x: 0,
-          y: 0,
-          w: PPTX_SLIDE_WIDTH,
-          h: PPTX_SLIDE_HEIGHT
-        });
-      }
+      setNotice("Building editable slides…");
+      addEditableSlides(pptx, document, slideImages);
 
       setNotice("Building PowerPoint…");
       await pptx.writeFile({ fileName: pptxFilename, compression: true });
-      setNotice("PowerPoint exported ✓");
+      setNotice("Editable PowerPoint exported ✓");
     } catch (error) {
       const exportError = error instanceof Error ? error : new Error("PowerPoint export failed");
       setNotice(exportError.message);
