@@ -97,7 +97,7 @@ export function generateBlockString(block: MotionDocBlock) {
 function generateBlockStringWithProps(block: MotionDocBlock, overrideProps: Record<string, string | number> | undefined) {
   if (block.type === "Title" || block.type === "Text") {
     const propsStr = formatTextProps(overrideProps ?? block.props);
-    return `<${block.type}${propsStr ? " " + propsStr : ""}>${block.text}</${block.type}>`;
+    return `<${block.type}${propsStr ? " " + propsStr : ""}>${escapeMdxText(block.text)}</${block.type}>`;
   }
 
   if (block.type === "heading") {
@@ -187,6 +187,15 @@ function escapeMdxAttribute(value: string) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll("\n", "&#10;");
+}
+
+function escapeMdxText(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("{", "&#123;")
+    .replaceAll("}", "&#125;");
 }
 
 function formatTextProps(props: Record<string, string | number>) {

@@ -197,6 +197,9 @@ export const motionDocExportStyles = `      :root {
       .slide.is-active .motion-block {
         animation: enter-motion var(--motion-duration, 0.6s) cubic-bezier(0.22, 1, 0.36, 1) var(--motion-delay, 0s) both;
       }
+      .slide.is-active .motion-block.enter-reveal {
+        animation-name: enter-reveal-motion;
+      }
       .slide.is-active .motion-block.enter-none {
         animation: none;
       }
@@ -231,6 +234,13 @@ export const motionDocExportStyles = `      :root {
         transform: translate3d(0, calc(28px * var(--frame-scale, 1)), 0);
       }
       @keyframes enter-motion {
+        to {
+          filter: blur(0);
+          opacity: 1;
+          transform: translate3d(0, 0, 0) scale(1) rotate(0);
+        }
+      }
+      @keyframes enter-reveal-motion {
         to {
           clip-path: inset(0 0 0 0);
           filter: blur(0);

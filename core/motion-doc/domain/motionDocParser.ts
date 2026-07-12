@@ -171,9 +171,22 @@ function decodeMdxAttribute(value: string) {
 }
 
 function normalizeText(value: string) {
-  return value
+  return decodeMdxText(value)
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
     .join("\n");
+}
+
+function decodeMdxText(value: string) {
+  return value
+    .replaceAll("&#123;", "{")
+    .replaceAll("&#x7B;", "{")
+    .replaceAll("&#x7b;", "{")
+    .replaceAll("&#125;", "}")
+    .replaceAll("&#x7D;", "}")
+    .replaceAll("&#x7d;", "}")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&");
 }
