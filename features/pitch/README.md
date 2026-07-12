@@ -5,14 +5,15 @@ editor. It is a product boundary, not an agent runtime:
 
 - `infrastructure/slidexAgentProtocol.ts` owns the public SlideX activity/result
   schemas and canonical Heddle run-envelope validation.
-- `infrastructure/slidexAgentClient.ts` owns HTTP requests, SSE framing, and
-  transport error classification. It accepts injected sync/async headers for
-  the host's eventual production auth provider, but does not acquire tokens or
-  choose model-credential policy. It does not decide cursor or terminal policy.
+- `infrastructure/slidexAgentClient.ts` composes SlideX's public schemas and
+  product-session routes with Heddle Remote's HTTP/SSE run client. Heddle owns
+  run start/subscribe/cancel requests, framing, validation, abort cleanup, and
+  transport errors. SlideX injects sync/async auth headers and retains its
+  session/reset API, but does not acquire tokens or choose model credentials.
 - `infrastructure/slidexAgentPersistence.ts` owns the tab-scoped project and
   product-conversation binding. Project instance identity survives refresh,
   rotates for new/imported decks, and never derives from a mutable project name.
-- `ui/usePitchAgent.ts` coordinates editor-facing state, retry timers, tool
+- `ui/agent/usePitchAgent.ts` coordinates editor-facing state, retry timers, tool
   progress, history hydration, reset/stale-session recovery, cancellation, and
   stale-source conflict handling. Heddle's
   `ConversationRunConsumerService` owns cursor advancement, duplicate/gap
@@ -33,9 +34,9 @@ recorded together with the run's base source revision. If retained replay has
 expired, the panel keeps the run detached and lets the user check its durable
 status. A completed result reuses the same source-revision policy as a live
 terminal: unchanged decks apply through the undo-aware path, while diverged
-decks stay pending for review. Heddle remote v4.3 still cannot seed a consumer
-with a nonzero cursor; add that generic capability in Heddle before relying on
-cursor-bounded refresh recovery instead of retained replay from sequence zero.
+decks stay pending for review. A matching stored `runId` seeds Heddle's
+consumer at the validated persisted cursor; a different active run deliberately
+starts from zero so a stale project checkpoint cannot skip its events.
 
 ## Rollout flag
 

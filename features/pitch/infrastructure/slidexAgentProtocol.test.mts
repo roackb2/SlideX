@@ -7,7 +7,6 @@ import {
 } from "./slidexAgentClient";
 import {
   AgentSessionStateSchema,
-  parseSlideXAgentSseMessage,
   SlideXAgentRunProtocol
 } from "./slidexAgentProtocol";
 import {
@@ -21,22 +20,18 @@ import {
 
 const timestamp = "2026-07-11T00:00:00.000Z";
 
-test("validates the canonical SlideX run event and its SSE metadata", () => {
-  const event = parseSlideXAgentSseMessage({
-    id: "1",
-    event: "result",
-    data: JSON.stringify({
-      kind: "result",
-      runId: "run-1",
-      sequence: 1,
-      timestamp,
-      result: {
-        session: createSession(),
-        motionDoc: "# Updated deck",
-        assistantMessage: "Updated the deck",
-        baseSourceRevision: "revision-1"
-      }
-    })
+test("validates the product payload carried by Heddle's run protocol", () => {
+  const event = SlideXAgentRunProtocol.parseEvent({
+    kind: "result",
+    runId: "run-1",
+    sequence: 1,
+    timestamp,
+    result: {
+      session: createSession(),
+      motionDoc: "# Updated deck",
+      assistantMessage: "Updated the deck",
+      baseSourceRevision: "revision-1"
+    }
   });
 
   assert.equal(event.kind, "result");
@@ -100,71 +95,132 @@ test("discards stale or malformed browser conversation bindings", () => {
 });
 
 test("applies injected auth headers and preserves stable server error codes", async () => {
-  const originalFetch = globalThis.fetch;
   let authorization: string | null = null;
+  let response = new Response(JSON.stringify({
+    session: createSession(),
+    activeRun: null
+  }), {
+    status: 200,
+    headers: { "content-type": "application/json" }
+  });
   const client = new SlideXAgentClient({
     baseUrl: "https://agent.example.test",
-    getHeaders: async () => ({ Authorization: "Bearer test-token" })
+    getHeaders: async () => ({ Authorization: "Bearer test-token" }),
+    fetch: async (_input, init) => {
+      authorization = new Headers(init?.headers).get("Authorization");
+      return response;
+    }
   });
 
-  try {
-    globalThis.fetch = async (_input, init) => {
-      authorization = new Headers(init?.headers).get("Authorization");
-      return new Response(JSON.stringify({
-        session: createSession(),
-        activeRun: null
-      }), {
-        status: 200,
-        headers: { "content-type": "application/json" }
-      });
-    };
+  const state = await client.session("session-1");
+  assert.equal(authorization, "Bearer test-token");
+  assert.equal(state.session.id, "session-1");
 
-    const state = await client.session("session-1");
-    assert.equal(authorization, "Bearer test-token");
-    assert.equal(state.session.id, "session-1");
+  response = new Response(JSON.stringify({
+    error: {
+      code: "session_not_found",
+      message: "Conversation not found"
+    }
+  }), {
+    status: 404,
+    headers: { "content-type": "application/json" }
+  });
 
-    globalThis.fetch = async () => new Response(JSON.stringify({
-      error: {
-        code: "session_not_found",
-        message: "Conversation not found"
-      }
-    }), {
-      status: 404,
-      headers: { "content-type": "application/json" }
-    });
-
-    await assert.rejects(
-      client.session("missing"),
-      (error: unknown) => error instanceof SlideXAgentClientError
-        && error.status === 404
-        && error.code === "session_not_found"
-    );
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  await assert.rejects(
+    client.session("missing"),
+    (error: unknown) => error instanceof SlideXAgentClientError
+      && error.status === 404
+      && error.code === "session_not_found"
+  );
 });
 
-test("rejects mismatched SSE IDs, event names, and malformed payloads", () => {
-  const data = JSON.stringify({
-    kind: "cancelled",
+test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async () => {
+  const calls: Array<{ url: string; method: string; authorization: string | null }> = [];
+  const resultEvent = SlideXAgentRunProtocol.parseEvent({
+    kind: "result",
     runId: "run-1",
-    sequence: 2,
+    sequence: 1,
     timestamp,
-    reason: "Cancelled by user"
+    result: {
+      session: createSession(),
+      motionDoc: "# Updated deck",
+      assistantMessage: "Updated the deck",
+      baseSourceRevision: "revision-1"
+    }
+  });
+  const fetch: typeof globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    const method = init?.method ?? "GET";
+    calls.push({
+      url,
+      method,
+      authorization: new Headers(init?.headers).get("Authorization")
+    });
+
+    if (method === "POST" && url.endsWith("/api/agent/runs")) {
+      return Response.json({
+        accepted: true,
+        runId: "run-1",
+        acceptedAt: timestamp,
+        session: createSession()
+      });
+    }
+    if (method === "GET" && url.endsWith("/api/agent/runs/run-1/events?after=0")) {
+      return new Response([
+        "id: 1",
+        "event: result",
+        `data: ${SlideXAgentRunProtocol.stringifyEvent(resultEvent)}`,
+        "",
+        ""
+      ].join("\n"), {
+        headers: { "content-type": "text/event-stream" }
+      });
+    }
+    if (method === "POST" && url.endsWith("/api/agent/runs/run-1/cancel")) {
+      return Response.json({ cancelled: true });
+    }
+    return new Response(null, { status: 404 });
+  };
+  const client = new SlideXAgentClient({
+    baseUrl: "https://agent.example.test",
+    getHeaders: () => ({ Authorization: "Bearer test-token" }),
+    fetch
   });
 
-  assert.throws(
-    () => parseSlideXAgentSseMessage({ id: "1", event: "cancelled", data }),
-    /ID did not match/
-  );
-  assert.throws(
-    () => parseSlideXAgentSseMessage({ id: "2", event: "result", data }),
-    /event name did not match/
-  );
-  assert.throws(
-    () => parseSlideXAgentSseMessage({ id: "2", event: "cancelled", data: "{" }),
-    /invalid JSON/
-  );
+  const accepted = await client.runs.start({
+    title: "Deck",
+    message: "Make it clearer",
+    motionDoc: "# Deck",
+    sourceRevision: "revision-1",
+    llmApiKey: "test-key"
+  });
+  const events: unknown[] = [];
+  await client.runs.subscribe({
+    runId: accepted.runId,
+    afterSequence: 0,
+    onEvent: (event) => events.push(event)
+  });
+  const cancellation = await client.runs.cancel(accepted.runId);
+
+  assert.deepEqual(events, [resultEvent]);
+  assert.deepEqual(cancellation, { cancelled: true });
+  assert.deepEqual(calls, [
+    {
+      url: "https://agent.example.test/api/agent/runs",
+      method: "POST",
+      authorization: "Bearer test-token"
+    },
+    {
+      url: "https://agent.example.test/api/agent/runs/run-1/events?after=0",
+      method: "GET",
+      authorization: "Bearer test-token"
+    },
+    {
+      url: "https://agent.example.test/api/agent/runs/run-1/cancel",
+      method: "POST",
+      authorization: "Bearer test-token"
+    }
+  ]);
 });
 
 test("uses Heddle's consumer for product cursor, duplicate, and terminal policy", () => {

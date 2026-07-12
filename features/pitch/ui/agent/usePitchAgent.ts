@@ -9,6 +9,7 @@ import {
   type SetStateAction
 } from "react";
 import { ConversationRunConsumerService } from "@roackb2/heddle-remote";
+import { ConversationRunHttpSseClientError } from "@roackb2/heddle-remote/http-sse";
 import {
   SlideXAgentClient,
   SlideXAgentClientError
@@ -174,15 +175,16 @@ export function usePitchAgent(input: UsePitchAgentInput) {
 
   const subscribeWithReconnect = useCallback(async (
     runId: string,
-    signal: AbortSignal
+    signal: AbortSignal,
+    afterSequence?: number
   ): Promise<void> => {
-    const consumer = createRunConsumer(runId);
+    const consumer = createRunConsumer(runId, afterSequence);
     let lastError: unknown;
 
     while (!consumer.isTerminal()) {
       let handlerError: unknown;
       try {
-        await client.subscribe({
+        await client.runs.subscribe({
           ...requireSubscriptionInput(consumer),
           signal,
           onEvent: async (event) => {
@@ -300,17 +302,24 @@ export function usePitchAgent(input: UsePitchAgentInput) {
           return;
         }
 
-        // The v4.3 remote consumer cannot seed a nonzero persisted cursor yet.
-        // Replaying this retained run from sequence zero preserves its sequence
-        // policy; the next Heddle slice will use binding.afterSequence directly.
-        activeSequenceRef.current = binding.afterSequence;
-        activeSourceRevisionRef.current = binding.baseSourceRevision;
+        const restoresStoredRun = binding.runId === state.activeRun.runId;
+        const afterSequence = restoresStoredRun
+          ? binding.afterSequence
+          : undefined;
+        activeSequenceRef.current = afterSequence;
+        activeSourceRevisionRef.current = restoresStoredRun
+          ? binding.baseSourceRevision
+          : undefined;
         updateActiveRunId(state.activeRun.runId);
-        persistBinding(state.activeRun.runId, binding.afterSequence);
+        persistBinding(state.activeRun.runId, afterSequence);
         setMessages((current) => ensureAssistantPlaceholder(current));
         setStatus("reconnecting");
         setIsHydrating(false);
-        await subscribeWithReconnect(state.activeRun.runId, controller.signal);
+        await subscribeWithReconnect(
+          state.activeRun.runId,
+          controller.signal,
+          afterSequence
+        );
       } catch (caught) {
         if (controller.signal.aborted || !mountedRef.current) {
           return;
@@ -384,7 +393,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
       const currentSessionId = sessionIdRef.current;
       let accepted;
       try {
-        accepted = await client.start({
+        accepted = await client.runs.start({
           ...request,
           ...(currentSessionId ? { sessionId: currentSessionId } : {})
         }, controller.signal);
@@ -395,7 +404,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
         clearAgentProjectBinding(window.sessionStorage);
         updateSessionId(undefined);
         setNotice("The previous conversation was unavailable, so this message started a new one.");
-        accepted = await client.start(request, controller.signal);
+        accepted = await client.runs.start(request, controller.signal);
       }
 
       acceptedRun = true;
@@ -410,7 +419,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
         return;
       }
       let failure = caught;
-      if (caught instanceof SlideXAgentClientError
+      if (isAgentClientError(caught)
         && caught.code === "active_run_conflict"
         && sessionIdRef.current) {
         try {
@@ -463,7 +472,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
       return;
     }
     try {
-      const cancelled = await client.cancel(runId);
+      const { cancelled } = await client.runs.cancel(runId);
       if (!cancelled) {
         throw new Error("The agent run is no longer active");
       }
@@ -693,11 +702,11 @@ function ensureAssistantPlaceholder(messages: PitchAgentMessage[]): PitchAgentMe
     : [...messages, { id: crypto.randomUUID(), role: "assistant", content: "" }];
 }
 
-function createRunConsumer(runId: string): AgentRunConsumer {
+function createRunConsumer(runId: string, afterSequence?: number): AgentRunConsumer {
   const consumer = new ConversationRunConsumerService<{ runId: string }>({
     retry: { maxAttempts: 6, baseDelayMs: 500, maxDelayMs: 4_000 }
   });
-  consumer.select({ runId });
+  consumer.select({ runId }, { afterSequence });
   return consumer;
 }
 
@@ -710,7 +719,7 @@ function requireSubscriptionInput(consumer: AgentRunConsumer) {
 }
 
 function isRetryableSubscriptionError(error: unknown): boolean {
-  if (!(error instanceof SlideXAgentClientError) || error.status === undefined) {
+  if (!isAgentClientError(error) || error.status === undefined) {
     return true;
   }
   return error.status === 408
@@ -720,15 +729,22 @@ function isRetryableSubscriptionError(error: unknown): boolean {
 }
 
 function isMissingSessionError(error: unknown): boolean {
-  return error instanceof SlideXAgentClientError
+  return isAgentClientError(error)
     && error.code === "session_not_found";
 }
 
 function statusAfterRunFailure(error: unknown, hasActiveRun: boolean): AgentStatus {
   return (hasActiveRun
-    || (error instanceof SlideXAgentClientError && error.code === "replay_unavailable"))
+    || (isAgentClientError(error) && error.code === "replay_unavailable"))
     ? "detached"
     : "error";
+}
+
+function isAgentClientError(
+  error: unknown
+): error is SlideXAgentClientError | ConversationRunHttpSseClientError {
+  return error instanceof SlideXAgentClientError
+    || error instanceof ConversationRunHttpSseClientError;
 }
 
 function errorMessage(error: unknown): string {
