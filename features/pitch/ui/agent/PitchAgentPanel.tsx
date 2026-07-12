@@ -164,7 +164,7 @@ export function PitchAgentPanel({
         {agent.status === "detached" && (
           <div className="mb-4 border border-white/[0.12] bg-white/[0.04] p-3">
             <p className="text-pretty text-xs leading-5 text-neutral-300">
-              Live updates expired. Check the durable conversation to see whether the run finished.
+              Live updates are unavailable. Check the durable conversation to see whether the run finished.
             </p>
             <button
               className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-md border border-white/[0.16] px-3 text-sm font-medium text-white hover:bg-white/[0.06] disabled:cursor-wait disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"

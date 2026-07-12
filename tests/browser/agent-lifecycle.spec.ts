@@ -48,6 +48,41 @@ test("keeps one conversational deck across turns, refresh, and chat reset", asyn
   expect(consoleErrors).toEqual([]);
 });
 
+test("isolates conversations when a same-name deck is imported", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Create a conversation for the first Untitled deck");
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  const importedMotionDoc = agent.startRequests[0]?.motionDoc;
+  expect(importedMotionDoc).toBeTruthy();
+
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  const fileDialog = page.getByRole("dialog", { name: "Presentation file" });
+  await fileDialog.getByRole("tab", { name: "Import" }).click();
+  await fileDialog.locator('input[type="file"]').setInputFiles({
+    name: "Untitled.mdx",
+    mimeType: "text/markdown",
+    buffer: Buffer.from(importedMotionDoc ?? "")
+  });
+
+  await expect(fileDialog).toBeHidden();
+  await expect(panel.getByText("Edit this deck conversationally", { exact: true })).toBeVisible();
+  await expect.poll(() => agent.resets).toBe(1);
+
+  await submitAgentMessage(page, "Create a conversation for the imported Untitled deck");
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+
+  expect(agent.startRequests).toHaveLength(2);
+  expect(agent.startRequests.map(({ title }) => title)).toEqual([
+    "Untitled",
+    "Untitled"
+  ]);
+  expect(agent.startRequests[1]?.sessionId).toBeUndefined();
+  expect(agent.startRequests[1]?.motionDoc).toBe(importedMotionDoc);
+  expect(consoleErrors).toEqual([]);
+});
+
 test("recovers a completed run after live replay expires", async ({ page }) => {
   const agent = new DeterministicAgentApi();
   agent.detachNextRun();
@@ -166,6 +201,29 @@ test("reattaches to the server run after an active-run conflict", async ({ page 
   expect(consoleErrors[0]).toContain("409 (Conflict)");
 });
 
+test("recovers an accepted run after its event stream cannot be opened", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  agent.failNextSubscription({
+    status: 400,
+    code: "invalid_request",
+    message: "Live updates could not be opened"
+  });
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Start an edit whose live stream fails");
+  await expect(panel.getByRole("alert")).toHaveText("Live updates could not be opened");
+  await expect(panel.getByText("Live progress unavailable", { exact: true })).toBeVisible();
+  const checkStatus = panel.getByRole("button", { name: "Check status" });
+  await expect(checkStatus).toBeVisible();
+
+  agent.completeActiveRun();
+  await checkStatus.click();
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  await expect(checkStatus).toBeHidden();
+  expect(consoleErrors).toHaveLength(1);
+  expect(consoleErrors[0]).toContain("400 (Bad Request)");
+});
+
 async function openAgentPanel(
   page: Page,
   agent: DeterministicAgentApi
@@ -191,7 +249,9 @@ async function openAgentPanel(
 async function submitAgentMessage(page: Page, message: string): Promise<void> {
   const input = page.getByLabel("Message the SlideX agent");
   await input.fill(message);
-  await page.getByRole("button", { name: "Send" }).click();
+  const send = page.getByRole("button", { name: "Send" });
+  await expect(send).toBeEnabled();
+  await send.click();
 }
 
 type StartRequest = {
@@ -244,6 +304,12 @@ type StartFailure = {
   message: string;
 };
 
+type SubscriptionFailure = {
+  status: number;
+  code: "invalid_request";
+  message: string;
+};
+
 /**
  * Protocol fixture only: it gives the editor deterministic HTTP/SSE responses
  * while the server repository separately verifies its real route and run
@@ -262,6 +328,7 @@ class DeterministicAgentApi {
   private detachUpcomingRun = false;
   private holdUpcomingRun = false;
   private nextStartFailure?: StartFailure;
+  private nextSubscriptionFailure?: SubscriptionFailure;
   private session?: Session;
   private readonly runs = new Map<string, AcceptedRun>();
 
@@ -301,6 +368,18 @@ class DeterministicAgentApi {
       throw new Error("No detached agent run is active");
     }
     this.completeRun(run);
+  }
+
+  completeActiveRun(): void {
+    const run = this.activeRun ? this.runs.get(this.activeRun.runId) : undefined;
+    if (!run) {
+      throw new Error("No agent run is active");
+    }
+    this.completeRun(run);
+  }
+
+  failNextSubscription(failure: SubscriptionFailure): void {
+    this.nextSubscriptionFailure = failure;
   }
 
   async handle(route: Route): Promise<void> {
@@ -437,6 +516,16 @@ class DeterministicAgentApi {
       await route.fulfill({
         json: { error: { code: "run_not_found", message: "Agent run not found" } },
         status: 404
+      });
+      return;
+    }
+
+    if (this.nextSubscriptionFailure) {
+      const failure = this.nextSubscriptionFailure;
+      this.nextSubscriptionFailure = undefined;
+      await route.fulfill({
+        json: { error: { code: failure.code, message: failure.message } },
+        status: failure.status
       });
       return;
     }

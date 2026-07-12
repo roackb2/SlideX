@@ -328,9 +328,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
         }
         const message = errorMessage(caught);
         setError(message);
-        setStatus(caught instanceof SlideXAgentClientError && caught.code === "replay_unavailable"
-          ? "detached"
-          : "error");
+        setStatus(statusAfterRunFailure(caught, Boolean(activeRunIdRef.current)));
       } finally {
         if (mountedRef.current && !controller.signal.aborted) {
           setIsHydrating(false);
@@ -434,9 +432,10 @@ export function usePitchAgent(input: UsePitchAgentInput) {
 
       const caughtMessage = errorMessage(failure);
       setError(caughtMessage);
-      setStatus(failure instanceof SlideXAgentClientError && failure.code === "replay_unavailable"
-        ? "detached"
-        : "error");
+      setStatus(statusAfterRunFailure(
+        failure,
+        acceptedRun || Boolean(activeRunIdRef.current)
+      ));
       if (!acceptedRun) {
         setAssistantMessage(caughtMessage);
         activeSourceRevisionRef.current = undefined;
@@ -723,6 +722,13 @@ function isRetryableSubscriptionError(error: unknown): boolean {
 function isMissingSessionError(error: unknown): boolean {
   return error instanceof SlideXAgentClientError
     && error.code === "session_not_found";
+}
+
+function statusAfterRunFailure(error: unknown, hasActiveRun: boolean): AgentStatus {
+  return (hasActiveRun
+    || (error instanceof SlideXAgentClientError && error.code === "replay_unavailable"))
+    ? "detached"
+    : "error";
 }
 
 function errorMessage(error: unknown): string {
