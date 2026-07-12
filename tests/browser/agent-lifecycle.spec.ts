@@ -48,6 +48,41 @@ test("keeps one conversational deck across turns, refresh, and chat reset", asyn
   expect(consoleErrors).toEqual([]);
 });
 
+test("isolates conversations when a same-name deck is imported", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Create a conversation for the first Untitled deck");
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  const importedMotionDoc = agent.startRequests[0]?.motionDoc;
+  expect(importedMotionDoc).toBeTruthy();
+
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  const fileDialog = page.getByRole("dialog", { name: "Presentation file" });
+  await fileDialog.getByRole("tab", { name: "Import" }).click();
+  await fileDialog.locator('input[type="file"]').setInputFiles({
+    name: "Untitled.mdx",
+    mimeType: "text/markdown",
+    buffer: Buffer.from(importedMotionDoc ?? "")
+  });
+
+  await expect(fileDialog).toBeHidden();
+  await expect(panel.getByText("Edit this deck conversationally", { exact: true })).toBeVisible();
+  await expect.poll(() => agent.resets).toBe(1);
+
+  await submitAgentMessage(page, "Create a conversation for the imported Untitled deck");
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+
+  expect(agent.startRequests).toHaveLength(2);
+  expect(agent.startRequests.map(({ title }) => title)).toEqual([
+    "Untitled",
+    "Untitled"
+  ]);
+  expect(agent.startRequests[1]?.sessionId).toBeUndefined();
+  expect(agent.startRequests[1]?.motionDoc).toBe(importedMotionDoc);
+  expect(consoleErrors).toEqual([]);
+});
+
 test("recovers a completed run after live replay expires", async ({ page }) => {
   const agent = new DeterministicAgentApi();
   agent.detachNextRun();
@@ -214,7 +249,9 @@ async function openAgentPanel(
 async function submitAgentMessage(page: Page, message: string): Promise<void> {
   const input = page.getByLabel("Message the SlideX agent");
   await input.fill(message);
-  await page.getByRole("button", { name: "Send" }).click();
+  const send = page.getByRole("button", { name: "Send" });
+  await expect(send).toBeEnabled();
+  await send.click();
 }
 
 type StartRequest = {
