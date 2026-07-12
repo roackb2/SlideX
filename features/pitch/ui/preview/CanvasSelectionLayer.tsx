@@ -358,7 +358,7 @@ function SelectedFrameControls({
           {label ?? "locked"}
         </span>
       ) : null}
-      {!isLocked && showHandles && !isLineShape ? (
+      {!isLocked && showHandles && !isLineShape && !isTextBlock ? (
         <span className={`pointer-events-none absolute rounded-md border border-violet-300/20 bg-[#17131f]/92 px-1.5 py-0.5 font-mono text-[9px] font-medium tabular-nums text-violet-100 shadow-[0_5px_16px_rgba(20,10,35,0.28)] backdrop-blur-md ${dimensionInside ? "right-1 top-1" : "-bottom-6 right-0"}`}>
           {interactionMode === "dragging" ? "Move · " : interactionMode === "resizing" ? "Resize · " : ""}
           {Math.round(frame.w / 100 * CANVAS_WIDTH)} × {Math.round(frame.h / 100 * CANVAS_HEIGHT)}

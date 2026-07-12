@@ -228,7 +228,7 @@ function TextStyleToolbar({
 
   return (
     <Toolbar.Root
-      className={`absolute z-30 flex h-9 items-center gap-0.5 rounded-lg border border-white/[0.09] bg-[#1b1b1e]/94 px-1 shadow-[0_8px_24px_rgba(5,4,10,0.34),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl ${alignment === "right" ? "right-0" : "left-0"} ${placement === "below" ? "top-[calc(100%+8px)]" : "-top-[44px]"}`}
+      className={`absolute z-30 flex h-9 items-center gap-0.5 rounded-lg border border-white/[0.09] bg-[#1b1b1e]/94 px-1 shadow-[0_8px_24px_rgba(5,4,10,0.34),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl ${alignment === "right" ? "right-0" : "left-0"} ${placement === "below" ? "top-[calc(100%+12px)]" : "-top-[48px]"}`}
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
       onKeyDown={(event) => event.stopPropagation()}
