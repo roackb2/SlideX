@@ -15,7 +15,9 @@
     "mcp:build": "node scripts/build-mcp-server.mjs",
     "mcp:pack": "npm pack ./packages/slidex-mcp-server",
     "mcp:publish": "npm publish ./packages/slidex-mcp-server --access public",
-    "test:agent": "esbuild features/pitch/infrastructure/slidexAgentProtocol.test.mts --bundle --platform=node --format=esm --outfile=.next/agent-protocol-test.mjs && node --test .next/agent-protocol-test.mjs"
+    "test:agent": "esbuild features/pitch/infrastructure/slidexAgentProtocol.test.mts --bundle --platform=node --format=esm --outfile=.next/agent-protocol-test.mjs && node --test .next/agent-protocol-test.mjs",
+    "test:agent:e2e": "playwright test",
+    "test:agent:e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@codemirror/lang-html": "^6.4.11",
@@ -52,6 +54,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.5",
+    "@playwright/test": "1.61.1",
     "@tailwindcss/postcss": "4.3.0",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",

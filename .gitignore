@@ -8,6 +8,8 @@ node_modules/
 .next-turbo/
 out/
 dist/
+playwright-report/
+test-results/
 
 # environment
 .env
