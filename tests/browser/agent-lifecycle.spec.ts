@@ -1,0 +1,670 @@
+import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
+
+const timestamp = "2026-07-12T00:00:00.000Z";
+
+test("keeps one conversational deck across turns, refresh, and chat reset", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Make the opening slide clearer");
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  await expect(panel.getByText("apply motiondoc", { exact: true })).toBeVisible();
+
+  await submitAgentMessage(page, "Now make the title more concise");
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+
+  expect(agent.startRequests).toHaveLength(2);
+  expect(agent.startRequests[0]?.sessionId).toBeUndefined();
+  expect(agent.startRequests[1]?.sessionId).toBe("session-1");
+  expect(agent.startRequests[1]?.motionDoc).toBe(agent.producedMotionDocs[0]);
+
+  await page.reload();
+  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await expect(panel.getByText("Make the opening slide clearer", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+  expect(agent.sessionReads).toBeGreaterThan(0);
+
+  await panel.getByRole("button", { name: "Agent settings" }).click();
+  await panel.getByRole("button", { name: "New conversation" }).click();
+  const resetDialog = page.getByRole("alertdialog", { name: "Start a new conversation?" });
+  await expect(resetDialog).toBeVisible();
+  await resetDialog.getByRole("button", { name: "Keep conversation" }).click();
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+  await panel.getByRole("button", { name: "New conversation" }).click();
+  await resetDialog.getByRole("button", { name: "New conversation" }).click();
+  await expect(panel.getByText("Edit this deck conversationally", { exact: true })).toBeVisible();
+  await expect(panel.getByText(
+    "New conversation started. The current deck was kept.",
+    { exact: true }
+  )).toBeVisible();
+
+  await submitAgentMessage(page, "Add one final polish pass");
+  await expect(panel.getByText("Turn 3 complete", { exact: true })).toBeVisible();
+
+  expect(agent.resets).toBe(1);
+  expect(agent.startRequests).toHaveLength(3);
+  expect(agent.startRequests[2]?.sessionId).toBeUndefined();
+  expect(agent.startRequests[2]?.motionDoc).toBe(agent.producedMotionDocs[1]);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("isolates conversations when a same-name deck is imported", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Create a conversation for the first Untitled deck");
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  const importedMotionDoc = agent.startRequests[0]?.motionDoc;
+  expect(importedMotionDoc).toBeTruthy();
+
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  const fileDialog = page.getByRole("dialog", { name: "Presentation file" });
+  await fileDialog.getByRole("tab", { name: "Import" }).click();
+  await fileDialog.locator('input[type="file"]').setInputFiles({
+    name: "Untitled.mdx",
+    mimeType: "text/markdown",
+    buffer: Buffer.from(importedMotionDoc ?? "")
+  });
+
+  await expect(fileDialog).toBeHidden();
+  await expect(panel.getByText("Edit this deck conversationally", { exact: true })).toBeVisible();
+  await expect.poll(() => agent.resets).toBe(1);
+
+  await submitAgentMessage(page, "Create a conversation for the imported Untitled deck");
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+
+  expect(agent.startRequests).toHaveLength(2);
+  expect(agent.startRequests.map(({ title }) => title)).toEqual([
+    "Untitled",
+    "Untitled"
+  ]);
+  expect(agent.startRequests[1]?.sessionId).toBeUndefined();
+  expect(agent.startRequests[1]?.motionDoc).toBe(importedMotionDoc);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("recovers a completed run after live replay expires", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  agent.detachNextRun();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Make the opening slide bolder");
+  await expect(panel.getByText("Live agent progress is no longer available", {
+    exact: true
+  })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Check status" })).toBeVisible();
+
+  agent.completeDetachedRun();
+  await panel.getByRole("button", { name: "Check status" }).click();
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Check status" })).toBeHidden();
+
+  await submitAgentMessage(page, "Add a concise subtitle");
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+  expect(agent.startRequests[1]?.motionDoc).toBe(agent.producedMotionDocs[0]);
+  expect(consoleErrors).toHaveLength(1);
+  expect(consoleErrors[0]).toContain("409 (Conflict)");
+});
+
+test("protects manual deck edits when a detached run later completes", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  agent.detachNextRun();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Rewrite the opening slide");
+  await expect(panel.getByRole("button", { name: "Check status" })).toBeVisible();
+  await page.getByRole("button", { name: "New Slide Blank slide" }).click();
+
+  agent.completeDetachedRun();
+  await panel.getByRole("button", { name: "Check status" }).click();
+  await expect(panel.getByText("The deck changed during this run", { exact: true })).toBeVisible();
+  await panel.getByRole("button", { name: "Keep mine" }).click();
+
+  await submitAgentMessage(page, "Polish my current version");
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+  expect(agent.startRequests[1]?.motionDoc).not.toBe(agent.producedMotionDocs[0]);
+  expect(consoleErrors).toHaveLength(1);
+  expect(consoleErrors[0]).toContain("409 (Conflict)");
+});
+
+test("clears a stale conversation binding and starts fresh", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Create the first conversation");
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  agent.expireSession();
+
+  await page.reload();
+  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await expect(panel.getByText(
+    "The previous conversation was unavailable, so a new one will start.",
+    { exact: true }
+  )).toBeVisible();
+
+  await submitAgentMessage(page, "Create a fresh conversation");
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+  expect(agent.startRequests[1]?.sessionId).toBeUndefined();
+  expect(consoleErrors).toHaveLength(1);
+  expect(consoleErrors[0]).toContain("404 (Not Found)");
+});
+
+test("cancels an accepted run and returns the composer to idle", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  agent.holdNextRun();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Start a long-running edit");
+  const stop = panel.getByRole("button", { name: "Stop" });
+  await expect(stop).toBeVisible();
+  await stop.click();
+
+  await expect(panel.getByText("Run cancelled.", { exact: true })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Send" })).toBeVisible();
+  expect(agent.cancellations).toBe(1);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("shows a sanitized start failure and allows a clean retry", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  agent.failNextStart({
+    status: 500,
+    code: "internal_error",
+    message: "The agent service could not complete the request"
+  });
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "This request will fail safely");
+  await expect(panel.getByRole("alert")).toHaveText(
+    "The agent service could not complete the request"
+  );
+
+  await submitAgentMessage(page, "Retry the request");
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  expect(agent.startRequests).toHaveLength(1);
+  expect(consoleErrors).toHaveLength(1);
+  expect(consoleErrors[0]).toContain("500 (Internal Server Error)");
+});
+
+test("reattaches to the server run after an active-run conflict", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Create a conversation");
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  agent.startBackgroundRun("Continue editing in the active run");
+
+  await submitAgentMessage(page, "Collide with the active run");
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+  await expect(panel.getByText("The deck changed during this run", { exact: true })).toBeVisible();
+  expect(consoleErrors).toHaveLength(1);
+  expect(consoleErrors[0]).toContain("409 (Conflict)");
+});
+
+test("recovers an accepted run after its event stream cannot be opened", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  agent.failNextSubscription({
+    status: 400,
+    code: "invalid_request",
+    message: "Live updates could not be opened"
+  });
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Start an edit whose live stream fails");
+  await expect(panel.getByRole("alert")).toHaveText("Live updates could not be opened");
+  await expect(panel.getByText("Live progress unavailable", { exact: true })).toBeVisible();
+  const checkStatus = panel.getByRole("button", { name: "Check status" });
+  await expect(checkStatus).toBeVisible();
+
+  agent.completeActiveRun();
+  await checkStatus.click();
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  await expect(checkStatus).toBeHidden();
+  expect(consoleErrors).toHaveLength(1);
+  expect(consoleErrors[0]).toContain("400 (Bad Request)");
+});
+
+async function openAgentPanel(
+  page: Page,
+  agent: DeterministicAgentApi
+): Promise<{ consoleErrors: string[]; panel: Locator }> {
+  const consoleErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+  page.on("pageerror", (error) => consoleErrors.push(error.message));
+  await page.addInitScript(() => {
+    localStorage.setItem("slidex_has_completed_onboarding", "true");
+  });
+  await page.route("**/api/agent/**", (route) => agent.handle(route));
+  await page.goto("/workspace/pitch/");
+  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  const panel = page.getByRole("complementary", { name: "SlideX agent" });
+  await expect(panel).toBeVisible();
+  return { consoleErrors, panel };
+}
+
+async function submitAgentMessage(page: Page, message: string): Promise<void> {
+  const input = page.getByLabel("Message the SlideX agent");
+  await input.fill(message);
+  const send = page.getByRole("button", { name: "Send" });
+  await expect(send).toBeEnabled();
+  await send.click();
+}
+
+type StartRequest = {
+  sessionId?: string;
+  title: string;
+  message: string;
+  motionDoc: string;
+  sourceRevision: string;
+};
+
+type SessionMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+};
+
+type Session = {
+  id: string;
+  title: string;
+  latestMotionDoc: string;
+  messages: SessionMessage[];
+};
+
+type AcceptedRun = {
+  cancelled?: boolean;
+  detached: boolean;
+  events?: FixtureAgentEvent[];
+  held: boolean;
+  release?: () => void;
+  request: StartRequest;
+  runId: string;
+  sessionId: string;
+  turn: number;
+};
+
+type FixtureAgentEvent = {
+  kind: "activity" | "result" | "cancelled";
+  runId: string;
+  sequence: number;
+  timestamp: string;
+  activity?: unknown;
+  reason?: string;
+  result?: unknown;
+};
+
+type StartFailure = {
+  status: number;
+  code: "internal_error";
+  message: string;
+};
+
+type SubscriptionFailure = {
+  status: number;
+  code: "invalid_request";
+  message: string;
+};
+
+/**
+ * Protocol fixture only: it gives the editor deterministic HTTP/SSE responses
+ * while the server repository separately verifies its real route and run
+ * service. Product lifecycle rules must stay in production code, not here.
+ */
+class DeterministicAgentApi {
+  readonly producedMotionDocs: string[] = [];
+  readonly startRequests: StartRequest[] = [];
+  cancellations = 0;
+  resets = 0;
+  sessionReads = 0;
+
+  private nextSession = 1;
+  private nextTurn = 1;
+  private activeRun?: { runId: string; acceptedAt: string };
+  private detachUpcomingRun = false;
+  private holdUpcomingRun = false;
+  private nextStartFailure?: StartFailure;
+  private nextSubscriptionFailure?: SubscriptionFailure;
+  private session?: Session;
+  private readonly runs = new Map<string, AcceptedRun>();
+
+  detachNextRun(): void {
+    this.detachUpcomingRun = true;
+  }
+
+  expireSession(): void {
+    this.activeRun = undefined;
+    this.session = undefined;
+  }
+
+  failNextStart(failure: StartFailure): void {
+    this.nextStartFailure = failure;
+  }
+
+  holdNextRun(): void {
+    this.holdUpcomingRun = true;
+  }
+
+  startBackgroundRun(message: string): void {
+    if (!this.session || this.activeRun) {
+      throw new Error("A settled conversation is required before starting a background run");
+    }
+    this.createRun({
+      sessionId: this.session.id,
+      title: this.session.title,
+      message,
+      motionDoc: this.session.latestMotionDoc,
+      sourceRevision: "background-source-revision"
+    });
+  }
+
+  completeDetachedRun(): void {
+    const run = this.activeRun ? this.runs.get(this.activeRun.runId) : undefined;
+    if (!run?.detached) {
+      throw new Error("No detached agent run is active");
+    }
+    this.completeRun(run);
+  }
+
+  completeActiveRun(): void {
+    const run = this.activeRun ? this.runs.get(this.activeRun.runId) : undefined;
+    if (!run) {
+      throw new Error("No agent run is active");
+    }
+    this.completeRun(run);
+  }
+
+  failNextSubscription(failure: SubscriptionFailure): void {
+    this.nextSubscriptionFailure = failure;
+  }
+
+  async handle(route: Route): Promise<void> {
+    const request = route.request();
+    const url = new URL(request.url());
+
+    if (request.method() === "POST" && url.pathname === "/api/agent/runs") {
+      await this.start(route);
+      return;
+    }
+    if (request.method() === "POST" && /\/api\/agent\/runs\/[^/]+\/cancel$/.test(url.pathname)) {
+      await this.cancel(route, url);
+      return;
+    }
+    if (request.method() === "GET" && /\/api\/agent\/runs\/[^/]+\/events$/.test(url.pathname)) {
+      await this.subscribe(route, url);
+      return;
+    }
+    if (request.method() === "GET" && /\/api\/agent\/sessions\/[^/]+$/.test(url.pathname)) {
+      await this.readSession(route, url);
+      return;
+    }
+    if (request.method() === "DELETE" && /\/api\/agent\/sessions\/[^/]+$/.test(url.pathname)) {
+      this.session = undefined;
+      this.activeRun = undefined;
+      this.resets += 1;
+      await route.fulfill({ json: { reset: true }, status: 200 });
+      return;
+    }
+
+    await route.fulfill({
+      json: { error: { code: "run_not_found", message: "Agent route not found" } },
+      status: 404
+    });
+  }
+
+  private async start(route: Route): Promise<void> {
+    if (this.nextStartFailure) {
+      const failure = this.nextStartFailure;
+      this.nextStartFailure = undefined;
+      await route.fulfill({
+        json: { error: { code: failure.code, message: failure.message } },
+        status: failure.status
+      });
+      return;
+    }
+
+    const request = route.request().postDataJSON() as StartRequest;
+    if (this.activeRun) {
+      await route.fulfill({
+        json: {
+          error: {
+            code: "active_run_conflict",
+            message: "An agent run is already in progress for this conversation"
+          }
+        },
+        status: 409
+      });
+      return;
+    }
+
+    const run = this.createRun(request, {
+      detached: this.detachUpcomingRun,
+      held: this.holdUpcomingRun,
+      recordRequest: true
+    });
+    this.detachUpcomingRun = false;
+    this.holdUpcomingRun = false;
+
+    await route.fulfill({
+      json: {
+        accepted: true,
+        runId: run.runId,
+        acceptedAt: timestamp,
+        session: this.session
+      },
+      status: 202
+    });
+  }
+
+  private createRun(
+    request: StartRequest,
+    options: { detached?: boolean; held?: boolean; recordRequest?: boolean } = {}
+  ): AcceptedRun {
+    const turn = this.nextTurn++;
+    const sessionId = request.sessionId ?? `session-${this.nextSession++}`;
+    if (!this.session || this.session.id !== sessionId) {
+      this.session = {
+        id: sessionId,
+        title: request.title,
+        latestMotionDoc: request.motionDoc,
+        messages: []
+      };
+    }
+    this.session.messages.push({
+      id: `message-user-${turn}`,
+      role: "user",
+      content: request.message,
+      createdAt: timestamp
+    });
+    const runId = `run-${turn}`;
+    const run = {
+      detached: options.detached ?? false,
+      held: options.held ?? false,
+      request,
+      runId,
+      sessionId,
+      turn
+    } satisfies AcceptedRun;
+    this.runs.set(runId, run);
+    this.activeRun = { runId, acceptedAt: timestamp };
+    if (options.recordRequest) {
+      this.startRequests.push(request);
+    }
+    return run;
+  }
+
+  private async cancel(route: Route, url: URL): Promise<void> {
+    const runId = url.pathname.split("/").at(-2) ?? "";
+    const run = this.runs.get(runId);
+    const cancelled = Boolean(run && !run.events && !run.cancelled);
+    if (run && cancelled) {
+      run.cancelled = true;
+      this.cancellations += 1;
+      run.release?.();
+    }
+    await route.fulfill({ json: { cancelled }, status: 200 });
+  }
+
+  private async subscribe(route: Route, url: URL): Promise<void> {
+    const runId = url.pathname.split("/").at(-2) ?? "";
+    const run = this.runs.get(runId);
+    if (!run || !this.session || this.session.id !== run.sessionId) {
+      await route.fulfill({
+        json: { error: { code: "run_not_found", message: "Agent run not found" } },
+        status: 404
+      });
+      return;
+    }
+
+    if (this.nextSubscriptionFailure) {
+      const failure = this.nextSubscriptionFailure;
+      this.nextSubscriptionFailure = undefined;
+      await route.fulfill({
+        json: { error: { code: failure.code, message: failure.message } },
+        status: failure.status
+      });
+      return;
+    }
+
+    if (run.held && !run.cancelled && !run.events) {
+      await new Promise<void>((resolve) => {
+        run.release = resolve;
+      });
+      run.release = undefined;
+    }
+
+    if (run.detached && !run.cancelled && !run.events) {
+      await route.fulfill({
+        json: {
+          error: {
+            code: "replay_unavailable",
+            message: "Live agent progress is no longer available"
+          }
+        },
+        status: 409
+      });
+      return;
+    }
+
+    const events = run.cancelled ? this.completeCancelledRun(run) : this.completeRun(run);
+    const afterSequence = Number(url.searchParams.get("after") ?? "0");
+    const body = events
+      .filter(({ sequence }) => sequence > afterSequence)
+      .map((event) => [
+        `event: ${event.kind}`,
+        `id: ${event.sequence}`,
+        `data: ${JSON.stringify(event)}`,
+        ""
+      ].join("\n"))
+      .join("\n") + "\n";
+
+    await route.fulfill({
+      body,
+      contentType: "text/event-stream; charset=utf-8",
+      status: 200
+    });
+  }
+
+  private completeCancelledRun(run: AcceptedRun): FixtureAgentEvent[] {
+    if (run.events) {
+      return run.events;
+    }
+    if (!this.session || this.session.id !== run.sessionId) {
+      throw new Error("Agent run session is unavailable");
+    }
+    this.session.messages.push({
+      id: `message-assistant-${run.turn}`,
+      role: "assistant",
+      content: "Run cancelled.",
+      createdAt: timestamp
+    });
+    run.events = [{
+      kind: "cancelled",
+      runId: run.runId,
+      sequence: 1,
+      timestamp,
+      reason: "Cancelled by user"
+    }];
+    if (this.activeRun?.runId === run.runId) {
+      this.activeRun = undefined;
+    }
+    return run.events;
+  }
+
+  private completeRun(run: AcceptedRun): FixtureAgentEvent[] {
+    if (run.events) {
+      return run.events;
+    }
+    if (!this.session || this.session.id !== run.sessionId) {
+      throw new Error("Agent run session is unavailable");
+    }
+    const motionDoc = run.request.motionDoc.replace(/^# .+$/m, `# Agent Turn ${run.turn}`);
+    const assistantMessage = `Turn ${run.turn} complete`;
+    this.session.latestMotionDoc = motionDoc;
+    this.session.messages.push({
+      id: `message-assistant-${run.turn}`,
+      role: "assistant",
+      content: assistantMessage,
+      createdAt: timestamp
+    });
+    this.producedMotionDocs.push(motionDoc);
+
+    const events: FixtureAgentEvent[] = [
+      {
+        kind: "activity",
+        runId: run.runId,
+        sequence: 1,
+        timestamp,
+        activity: { type: "tool.calling", tool: "slidex_apply_motiondoc" }
+      },
+      {
+        kind: "activity",
+        runId: run.runId,
+        sequence: 2,
+        timestamp,
+        activity: {
+          type: "tool.completed",
+          tool: "slidex_apply_motiondoc",
+          result: { ok: true }
+        }
+      },
+      {
+        kind: "result",
+        runId: run.runId,
+        sequence: 3,
+        timestamp,
+        result: {
+          session: structuredClone(this.session),
+          motionDoc,
+          assistantMessage,
+          baseSourceRevision: run.request.sourceRevision
+        }
+      }
+    ];
+    run.events = events;
+    if (this.activeRun?.runId === run.runId) {
+      this.activeRun = undefined;
+    }
+    return events;
+  }
+
+  private async readSession(route: Route, url: URL): Promise<void> {
+    this.sessionReads += 1;
+    const sessionId = decodeURIComponent(url.pathname.split("/").at(-1) ?? "");
+    if (!this.session || this.session.id !== sessionId) {
+      await route.fulfill({
+        json: { error: { code: "session_not_found", message: "Conversation not found" } },
+        status: 404
+      });
+      return;
+    }
+    await route.fulfill({
+      json: { session: this.session, activeRun: this.activeRun ?? null },
+      status: 200
+    });
+  }
+}

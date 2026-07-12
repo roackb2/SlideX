@@ -1,0 +1,38 @@
+name: Agent regression
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-regression-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:agent
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:agent:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-regression-artifacts
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

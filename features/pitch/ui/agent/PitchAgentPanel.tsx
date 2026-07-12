@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { AlertTriangle, Bot, Check, RotateCcw, Send, Settings2, Square, Wrench, X } from "lucide-react";
 import type { AgentSession } from "@/features/pitch/domain/agentRun";
 import { usePitchAgent } from "@/features/pitch/ui/agent/usePitchAgent";
@@ -46,15 +47,6 @@ export function PitchAgentPanel({
     void agent.submit(nextMessage, llmApiKey);
   }
 
-  function handleResetConversation(): void {
-    if (!window.confirm(
-      "Start a new conversation? The current deck stays open, but this chat history will be removed."
-    )) {
-      return;
-    }
-    void agent.resetConversation();
-  }
-
   return (
     <aside
       aria-label="SlideX agent"
@@ -66,7 +58,9 @@ export function PitchAgentPanel({
           <div>
             <h2 className="text-sm font-semibold text-white">SlideX Agent</h2>
             <p className="text-xs text-neutral-500">
-              {agent.isHydrating
+              {agent.isCheckingStatus
+                ? "Checking status…"
+                : agent.isHydrating
                 ? "Restoring…"
                 : agent.status === "reconnecting"
                   ? "Reconnecting…"
@@ -104,15 +98,55 @@ export function PitchAgentPanel({
           <p className="mt-2 text-xs leading-5 text-neutral-500">
             The key is sent only to your configured SlideX agent server and is not stored by this editor.
           </p>
-          <button
-            className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-md border border-white/[0.12] px-3 text-sm font-medium text-neutral-200 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-            disabled={!agent.canReset || agent.isResetting}
-            onClick={handleResetConversation}
-            type="button"
-          >
-            <RotateCcw aria-hidden="true" size={15} />
-            {agent.isResetting ? "Starting new conversation…" : "New conversation"}
-          </button>
+          <AlertDialog.Root>
+            <AlertDialog.Trigger asChild>
+              <button
+                className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-md border border-white/[0.12] px-3 text-sm font-medium text-neutral-200 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                disabled={!agent.canReset || agent.isCheckingStatus || agent.isResetting}
+                type="button"
+              >
+                <RotateCcw aria-hidden="true" size={15} />
+                {agent.isResetting ? "Starting new conversation…" : "New conversation"}
+              </button>
+            </AlertDialog.Trigger>
+            <AlertDialog.Portal>
+              <AlertDialog.Overlay className="fixed inset-0 z-50 bg-black/70" />
+              <AlertDialog.Content
+                className="fixed top-1/2 z-50 mx-auto max-w-md -translate-y-1/2 overflow-y-auto border border-white/[0.12] bg-[#18181b] p-5 shadow-xl focus:outline-none"
+                style={{
+                  left: "max(1rem, env(safe-area-inset-left))",
+                  right: "max(1rem, env(safe-area-inset-right))",
+                  maxHeight: "calc(100dvh - max(1rem, env(safe-area-inset-top)) - max(1rem, env(safe-area-inset-bottom)))"
+                }}
+              >
+                <AlertDialog.Title className="text-balance text-base font-semibold text-white">
+                  Start a new conversation?
+                </AlertDialog.Title>
+                <AlertDialog.Description className="mt-2 text-pretty text-sm leading-6 text-neutral-400">
+                  The current deck stays open, but this chat history will be permanently removed.
+                </AlertDialog.Description>
+                <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <AlertDialog.Cancel asChild>
+                    <button
+                      className="h-11 rounded-md border border-white/[0.16] px-4 text-sm font-medium text-white hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                      type="button"
+                    >
+                      Keep conversation
+                    </button>
+                  </AlertDialog.Cancel>
+                  <AlertDialog.Action asChild>
+                    <button
+                      className="h-11 rounded-md bg-red-500 px-4 text-sm font-semibold text-white hover:bg-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                      onClick={() => void agent.resetConversation()}
+                      type="button"
+                    >
+                      New conversation
+                    </button>
+                  </AlertDialog.Action>
+                </div>
+              </AlertDialog.Content>
+            </AlertDialog.Portal>
+          </AlertDialog.Root>
         </div>
       )}
 
@@ -126,6 +160,22 @@ export function PitchAgentPanel({
           <p className="mb-4 border border-white/[0.12] bg-white/[0.04] p-3 text-pretty text-xs leading-5 text-neutral-300" role="status">
             {agent.notice}
           </p>
+        )}
+        {agent.status === "detached" && (
+          <div className="mb-4 border border-white/[0.12] bg-white/[0.04] p-3">
+            <p className="text-pretty text-xs leading-5 text-neutral-300">
+              Live updates are unavailable. Check the durable conversation to see whether the run finished.
+            </p>
+            <button
+              className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-md border border-white/[0.16] px-3 text-sm font-medium text-white hover:bg-white/[0.06] disabled:cursor-wait disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              disabled={agent.isCheckingStatus}
+              onClick={() => void agent.checkRunStatus()}
+              type="button"
+            >
+              <RotateCcw aria-hidden="true" size={15} />
+              {agent.isCheckingStatus ? "Checking status…" : "Check status"}
+            </button>
+          </div>
         )}
         {agent.messages.length === 0 ? (
           <div className="border border-dashed border-white/[0.12] p-4">
@@ -209,7 +259,8 @@ export function PitchAgentPanel({
           <p className="text-xs text-neutral-600">Uses the current MotionDoc as its base</p>
           {agent.isRunning ? (
             <button
-              className="flex h-11 items-center gap-2 rounded-md border border-white/[0.16] px-4 text-sm font-medium text-white hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              className="flex h-11 items-center gap-2 rounded-md border border-white/[0.16] px-4 text-sm font-medium text-white hover:bg-white/[0.06] disabled:cursor-wait disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              disabled={agent.isCheckingStatus}
               onClick={() => void agent.cancel()}
               type="button"
             >

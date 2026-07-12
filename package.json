@@ -15,7 +15,9 @@
     "mcp:build": "node scripts/build-mcp-server.mjs",
     "mcp:pack": "npm pack ./packages/slidex-mcp-server",
     "mcp:publish": "npm publish ./packages/slidex-mcp-server --access public",
-    "test:agent": "esbuild features/pitch/infrastructure/slidexAgentProtocol.test.mts --bundle --platform=node --format=esm --outfile=.next/agent-protocol-test.mjs && node --test .next/agent-protocol-test.mjs"
+    "test:agent": "esbuild features/pitch/infrastructure/slidexAgentProtocol.test.mts --bundle --platform=node --format=esm --outfile=.next/agent-protocol-test.mjs && node --test .next/agent-protocol-test.mjs",
+    "test:agent:e2e": "playwright test",
+    "test:agent:e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@codemirror/lang-html": "^6.4.11",
@@ -24,6 +26,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@paper-design/shaders": "^0.0.77",
     "@paper-design/shaders-react": "^0.0.77",
+    "@radix-ui/react-alert-dialog": "1.1.19",
     "@radix-ui/react-popover": "^1.1.17",
     "@radix-ui/react-toolbar": "^1.1.13",
     "@react-three/drei": "^10.7.7",
@@ -52,6 +55,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.5",
+    "@playwright/test": "1.61.1",
     "@tailwindcss/postcss": "4.3.0",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
