@@ -21,7 +21,9 @@ export default defineConfig({
     command: "npm run dev:no-clean -- --hostname 127.0.0.1 --port 3100",
     env: {
       NEXT_PUBLIC_SLIDEX_AGENT_ENABLED: "true",
-      NEXT_PUBLIC_SLIDEX_AGENT_SERVER_URL: baseURL
+      NEXT_PUBLIC_SLIDEX_AGENT_SERVER_URL: baseURL,
+      NEXT_PUBLIC_SUPABASE_URL: baseURL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key"
     },
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

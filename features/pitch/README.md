@@ -10,6 +10,10 @@ editor. It is a product boundary, not an agent runtime:
   run start/subscribe/cancel requests, framing, validation, abort cleanup, and
   transport errors. SlideX injects sync/async auth headers and retains its
   session/reset API, but does not acquire tokens or choose model credentials.
+- `infrastructure/slidexAgentIdentity.ts` lazily restores or creates the
+  Supabase anonymous product identity and supplies its bearer token to the
+  client. Concurrent requests share one sign-in attempt. This identity may
+  persist across refresh; it never receives the user's model key.
 - `infrastructure/slidexAgentPersistence.ts` owns the tab-scoped project and
   product-conversation binding. Project instance identity survives refresh,
   rotates for new/imported decks, and never derives from a mutable project name.
@@ -26,10 +30,17 @@ to Heddle. Product
 session persistence and MotionDoc artifact finalization belong to the SlideX
 agent server. Do not duplicate either concern in this feature.
 
-Until SlideX has durable projects, identity and conversation binding use
+Until SlideX has durable projects, project and conversation binding use
 `sessionStorage`: refresh can restore the matching server MotionDoc plus chat,
-while a new tab starts clean. The server exposes active-run discovery and the
-editor can replay a retained active run after refresh. The persisted cursor is
+while a new tab starts clean. Supabase separately persists the anonymous
+product session so the server can keep that conversation scoped to one user.
+The OpenAI API key is different: it lives only in `PitchAgentPanel` React state,
+is sent only in a run-start body, and is forgotten on refresh or through the
+explicit **Forget key** action. Never add it to local/session storage, cookies,
+URLs, analytics, run events, or project persistence.
+
+The server exposes active-run discovery and the editor can replay a retained
+active run after refresh. The persisted cursor is
 recorded together with the run's base source revision. If retained replay has
 expired, the panel keeps the run detached and lets the user check its durable
 status. A completed result reuses the same source-revision policy as a live
@@ -45,6 +56,12 @@ change the upstream editor experience. Set
 `NEXT_PUBLIC_SLIDEX_AGENT_ENABLED=true` when building the editor to mount the
 Agent button and panel. Next.js inlines public environment variables into the
 client bundle, so changing the flag requires a rebuild and redeploy.
+
+The enabled editor also requires `NEXT_PUBLIC_SUPABASE_URL` and
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`, with anonymous sign-ins enabled for that
+Supabase project. These values establish product identity only. The user's
+OpenAI key is entered at runtime and must not be placed in an environment
+variable or deployment secret.
 
 The editor flag only controls presentation. A deployment must also set
 `SLIDEX_AGENT_ENABLED=true` on the SlideX agent server to register the

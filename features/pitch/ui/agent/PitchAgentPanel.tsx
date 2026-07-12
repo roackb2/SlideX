@@ -23,7 +23,9 @@ export function PitchAgentPanel({
 }) {
   const [message, setMessage] = useState("");
   const [llmApiKey, setLlmApiKey] = useState("");
+  const [keyError, setKeyError] = useState<string>();
   const [showSettings, setShowSettings] = useState(false);
+  const keyInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const agent = usePitchAgent({
     projectId,
@@ -37,14 +39,50 @@ export function PitchAgentPanel({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [agent.messages, agent.tools]);
 
+  const credentialError = agent.errorCode === "model_credential_rejected"
+    ? agent.error
+    : undefined;
+  const visibleKeyError = keyError ?? credentialError;
+
+  useEffect(() => {
+    if (visibleKeyError) {
+      setShowSettings(true);
+    }
+  }, [visibleKeyError]);
+
+  useEffect(() => {
+    if (showSettings && visibleKeyError) {
+      keyInputRef.current?.focus();
+    }
+  }, [showSettings, visibleKeyError]);
+
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     const nextMessage = message.trim();
     if (!nextMessage) {
       return;
     }
+    if (llmApiKey.trim().length < 8) {
+      setKeyError("Enter a valid OpenAI API key before sending.");
+      setShowSettings(true);
+      return;
+    }
     setMessage("");
+    setKeyError(undefined);
     void agent.submit(nextMessage, llmApiKey);
+  }
+
+  function handleApiKeyChange(value: string): void {
+    setLlmApiKey(value);
+    setKeyError(undefined);
+    agent.clearCredentialError();
+  }
+
+  function forgetApiKey(): void {
+    setLlmApiKey("");
+    setKeyError(undefined);
+    agent.clearCredentialError();
+    keyInputRef.current?.focus();
   }
 
   return (
@@ -87,17 +125,36 @@ export function PitchAgentPanel({
             OpenAI API key
           </label>
           <input
+            aria-describedby={visibleKeyError
+              ? "slidex-agent-api-key-help slidex-agent-api-key-error"
+              : "slidex-agent-api-key-help"}
+            aria-invalid={Boolean(visibleKeyError)}
             autoComplete="off"
             className="h-11 w-full rounded-md border border-white/[0.12] bg-black px-3 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-white/30 focus:ring-2 focus:ring-white/10"
             id="slidex-agent-api-key"
-            onChange={(event) => setLlmApiKey(event.target.value)}
-            placeholder="Blank only uses local development OAuth"
+            onChange={(event) => handleApiKeyChange(event.target.value)}
+            placeholder="sk-…"
+            ref={keyInputRef}
+            spellCheck={false}
             type="password"
             value={llmApiKey}
           />
-          <p className="mt-2 text-xs leading-5 text-neutral-500">
-            The key is sent only to your configured SlideX agent server and is not stored by this editor.
+          {visibleKeyError && (
+            <p className="mt-2 text-pretty text-xs leading-5 text-red-300" id="slidex-agent-api-key-error" role="alert">
+              {visibleKeyError}
+            </p>
+          )}
+          <p className="mt-2 text-pretty text-xs leading-5 text-neutral-500" id="slidex-agent-api-key-help">
+            Current tab only. Forgotten on refresh or when you choose Forget key. Sent only with a run-start request; the editor and server do not store it.
           </p>
+          <button
+            className="mt-3 flex h-11 w-full items-center justify-center rounded-md border border-white/[0.12] px-3 text-sm font-medium text-neutral-200 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+            disabled={!llmApiKey}
+            onClick={forgetApiKey}
+            type="button"
+          >
+            Forget key
+          </button>
           <AlertDialog.Root>
             <AlertDialog.Trigger asChild>
               <button
@@ -151,7 +208,7 @@ export function PitchAgentPanel({
       )}
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4" ref={scrollRef}>
-        {agent.error && (
+        {agent.error && agent.errorCode !== "model_credential_rejected" && (
           <p className="mb-4 border border-red-400/25 bg-red-400/[0.06] p-3 text-xs leading-5 text-red-200" role="alert">
             {agent.error}
           </p>

@@ -14,6 +14,7 @@ import {
   SlideXAgentClient,
   SlideXAgentClientError
 } from "@/features/pitch/infrastructure/slidexAgentClient";
+import { slideXAgentIdentity } from "@/features/pitch/infrastructure/slidexAgentIdentity";
 import {
   clearAgentProjectBinding,
   readAgentProjectBinding,
@@ -26,7 +27,9 @@ import type {
   AgentToolActivity
 } from "@/features/pitch/domain/agentRun";
 
-const client = new SlideXAgentClient();
+const client = new SlideXAgentClient({
+  getHeaders: () => slideXAgentIdentity.authorizationHeaders()
+});
 
 type AgentRunConsumer = ConversationRunConsumerService<{ runId: string }>;
 type AgentStatus = "idle" | "running" | "reconnecting" | "detached" | "error";
@@ -63,6 +66,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
   const [tools, setTools] = useState<AgentToolActivity[]>([]);
   const [status, setStatus] = useState<AgentStatus>("idle");
   const [error, setError] = useState<string>();
+  const [errorCode, setErrorCode] = useState<string>();
   const [notice, setNotice] = useState<string>();
   const [pendingMotionDoc, setPendingMotionDoc] = useState<PendingMotionDoc>();
   const [sessionId, setSessionId] = useState<string>();
@@ -160,16 +164,19 @@ export function usePitchAgent(input: UsePitchAgentInput) {
       });
       setPendingMotionDoc(reconciliation.pending);
       setError(reconciliation.error);
+      setErrorCode(undefined);
       settleRun(reconciliation.error ? "error" : "idle");
       return;
     }
     if (event.kind === "cancelled") {
       setAssistantMessage("Run cancelled.");
+      setErrorCode(undefined);
       settleRun("idle");
       return;
     }
     setAssistantMessage(event.error.message);
     setError(event.error.message);
+    setErrorCode(event.error.code);
     settleRun("error");
   }, [setAssistantMessage, settleRun]);
 
@@ -247,6 +254,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
     updateSessionId(state.session.id);
     setMessages(toPitchMessages(state.session));
     setError(undefined);
+    setErrorCode(undefined);
     setPendingMotionDoc(undefined);
     setTools([]);
     return true;
@@ -268,6 +276,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
     setTools([]);
     setPendingMotionDoc(undefined);
     setError(undefined);
+    setErrorCode(undefined);
     setNotice(undefined);
     setStatus("idle");
     setIsHydrating(false);
@@ -360,12 +369,15 @@ export function usePitchAgent(input: UsePitchAgentInput) {
 
   const submit = useCallback(async (message: string, llmApiKey: string) => {
     const trimmedMessage = message.trim();
-    if (!trimmedMessage || activeRunIdRef.current || isHydrating || isResetting) {
+    const trimmedApiKey = llmApiKey.trim();
+    if (!trimmedMessage || !trimmedApiKey
+      || activeRunIdRef.current || isHydrating || isResetting) {
       return;
     }
 
     setStatus("running");
     setError(undefined);
+    setErrorCode(undefined);
     setNotice(undefined);
     setPendingMotionDoc(undefined);
     setTools([]);
@@ -388,7 +400,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
         message: trimmedMessage,
         motionDoc,
         sourceRevision,
-        llmApiKey: llmApiKey.trim() || "dev-oauth"
+        llmApiKey: trimmedApiKey
       };
       const currentSessionId = sessionIdRef.current;
       let accepted;
@@ -441,6 +453,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
 
       const caughtMessage = errorMessage(failure);
       setError(caughtMessage);
+      setErrorCode(isAgentClientError(failure) ? failure.code : undefined);
       setStatus(statusAfterRunFailure(
         failure,
         acceptedRun || Boolean(activeRunIdRef.current)
@@ -490,6 +503,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
 
     setIsCheckingStatus(true);
     setError(undefined);
+    setErrorCode(undefined);
     try {
       const state = await client.session(currentSessionId);
       if (!mountedRef.current) {
@@ -519,6 +533,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
       setTools([]);
       setPendingMotionDoc(reconciliation.pending);
       setError(reconciliation.error);
+      setErrorCode(undefined);
       activeSourceRevisionRef.current = undefined;
       updateActiveRunId(undefined);
       persistBinding();
@@ -572,6 +587,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
       setTools([]);
       setPendingMotionDoc(undefined);
       setError(undefined);
+      setErrorCode(undefined);
       setStatus("idle");
       setNotice("New conversation started. The current deck was kept.");
     } catch (caught) {
@@ -585,6 +601,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
         setTools([]);
         setPendingMotionDoc(undefined);
         setError(undefined);
+        setErrorCode(undefined);
         setStatus("idle");
         setNotice("The old conversation was already unavailable. A new one will start.");
       } else {
@@ -607,13 +624,23 @@ export function usePitchAgent(input: UsePitchAgentInput) {
     setPendingMotionDoc(undefined);
   }, [pendingMotionDoc]);
 
+  const clearCredentialError = useCallback(() => {
+    if (errorCode !== "model_credential_rejected") {
+      return;
+    }
+    setError(undefined);
+    setErrorCode(undefined);
+  }, [errorCode]);
+
   return {
     applyPendingMotionDoc,
     cancel,
     canReset: Boolean(sessionId || messages.length > 0),
     checkRunStatus,
+    clearCredentialError,
     dismissPendingMotionDoc: () => setPendingMotionDoc(undefined),
     error,
+    errorCode,
     isHydrating,
     isCheckingStatus,
     isResetting,

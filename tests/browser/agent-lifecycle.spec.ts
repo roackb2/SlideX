@@ -1,6 +1,8 @@
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 
 const timestamp = "2026-07-12T00:00:00.000Z";
+const anonymousAccessToken = "test-anonymous-access-token";
+const defaultModelKey = "sk-test-current-tab-only-key";
 
 test("keeps one conversational deck across turns, refresh, and chat reset", async ({ page }) => {
   const agent = new DeterministicAgentApi();
@@ -45,6 +47,52 @@ test("keeps one conversational deck across turns, refresh, and chat reset", asyn
   expect(agent.startRequests).toHaveLength(3);
   expect(agent.startRequests[2]?.sessionId).toBeUndefined();
   expect(agent.startRequests[2]?.motionDoc).toBe(agent.producedMotionDocs[1]);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("keeps the model key only in current-tab memory", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+  const sentinel = "sk-ephemeral-browser-sentinel-key";
+
+  await setAgentApiKey(panel, sentinel);
+  await panel.getByRole("button", { name: "Forget key" }).click();
+  await expect(panel.getByLabel("OpenAI API key")).toHaveValue("");
+  await submitAgentMessage(page, "Use a current-tab key", sentinel);
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+
+  expect(agent.startRequests[0]?.llmApiKey).toBe(sentinel);
+  const browserStorage = await page.evaluate(() => JSON.stringify({
+    local: { ...localStorage },
+    session: { ...sessionStorage },
+    cookies: document.cookie
+  }));
+  expect(browserStorage).not.toContain(sentinel);
+
+  await page.reload();
+  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await panel.getByRole("button", { name: "Agent settings" }).click();
+  await expect(panel.getByLabel("OpenAI API key")).toHaveValue("");
+  expect(agent.authorizationHeaders.every(
+    (header) => header === `Bearer ${anonymousAccessToken}`
+  )).toBe(true);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("puts a rejected model key next to the key input and allows retry", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  agent.rejectNextCredential();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Use a rejected key", "sk-rejected-model-key");
+  await expect(panel.locator("#slidex-agent-api-key-error")).toHaveText(
+    "OpenAI rejected this API key. Check the key and try again."
+  );
+  await expect(panel.getByLabel("OpenAI API key")).toBeFocused();
+
+  await submitAgentMessage(page, "Retry with a working key", "sk-working-model-key");
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+  expect(agent.startRequests).toHaveLength(2);
   expect(consoleErrors).toEqual([]);
 });
 
@@ -268,6 +316,12 @@ async function openAgentPanel(
   await page.addInitScript(() => {
     localStorage.setItem("slidex_has_completed_onboarding", "true");
   });
+  await page.route("**/auth/v1/signup", async (route) => {
+    await route.fulfill({
+      json: createAnonymousSessionResponse(),
+      status: 200
+    });
+  });
   await page.route("**/api/agent/**", (route) => agent.handle(route));
   await page.goto("/workspace/pitch/");
   await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
@@ -276,12 +330,26 @@ async function openAgentPanel(
   return { consoleErrors, panel };
 }
 
-async function submitAgentMessage(page: Page, message: string): Promise<void> {
+async function submitAgentMessage(
+  page: Page,
+  message: string,
+  modelKey = defaultModelKey
+): Promise<void> {
+  const panel = page.getByRole("complementary", { name: "SlideX agent" });
+  await setAgentApiKey(panel, modelKey);
   const input = page.getByLabel("Message the SlideX agent");
   await input.fill(message);
   const send = page.getByRole("button", { name: "Send" });
   await expect(send).toBeEnabled();
   await send.click();
+}
+
+async function setAgentApiKey(panel: Locator, modelKey: string): Promise<void> {
+  const input = panel.getByLabel("OpenAI API key");
+  if (!await input.isVisible()) {
+    await panel.getByRole("button", { name: "Agent settings" }).click();
+  }
+  await input.fill(modelKey);
 }
 
 type StartRequest = {
@@ -290,6 +358,7 @@ type StartRequest = {
   message: string;
   motionDoc: string;
   sourceRevision: string;
+  llmApiKey?: string;
 };
 
 type SessionMessage = {
@@ -308,6 +377,7 @@ type Session = {
 
 type AcceptedRun = {
   cancelled?: boolean;
+  credentialRejected: boolean;
   detached: boolean;
   events?: FixtureAgentEvent[];
   held: boolean;
@@ -319,11 +389,12 @@ type AcceptedRun = {
 };
 
 type FixtureAgentEvent = {
-  kind: "activity" | "result" | "cancelled";
+  kind: "activity" | "result" | "cancelled" | "error";
   runId: string;
   sequence: number;
   timestamp: string;
   activity?: unknown;
+  error?: { code: string; message: string };
   reason?: string;
   result?: unknown;
 };
@@ -346,6 +417,7 @@ type SubscriptionFailure = {
  * service. Product lifecycle rules must stay in production code, not here.
  */
 class DeterministicAgentApi {
+  readonly authorizationHeaders: string[] = [];
   readonly producedMotionDocs: string[] = [];
   readonly startRequests: StartRequest[] = [];
   readonly subscriptionCursors: number[] = [];
@@ -358,6 +430,7 @@ class DeterministicAgentApi {
   private activeRun?: { runId: string; acceptedAt: string };
   private detachUpcomingRun = false;
   private holdUpcomingRun = false;
+  private rejectUpcomingCredential = false;
   private nextStartFailure?: StartFailure;
   private nextSubscriptionFailure?: SubscriptionFailure;
   private session?: Session;
@@ -378,6 +451,10 @@ class DeterministicAgentApi {
 
   holdNextRun(): void {
     this.holdUpcomingRun = true;
+  }
+
+  rejectNextCredential(): void {
+    this.rejectUpcomingCredential = true;
   }
 
   startBackgroundRun(message: string): string {
@@ -416,6 +493,15 @@ class DeterministicAgentApi {
   async handle(route: Route): Promise<void> {
     const request = route.request();
     const url = new URL(request.url());
+    const authorization = request.headers()["authorization"] ?? "";
+    this.authorizationHeaders.push(authorization);
+    if (authorization !== `Bearer ${anonymousAccessToken}`) {
+      await route.fulfill({
+        json: { error: { code: "auth_required", message: "Authentication required" } },
+        status: 401
+      });
+      return;
+    }
 
     if (request.method() === "POST" && url.pathname === "/api/agent/runs") {
       await this.start(route);
@@ -473,10 +559,12 @@ class DeterministicAgentApi {
     }
 
     const run = this.createRun(request, {
+      credentialRejected: this.rejectUpcomingCredential,
       detached: this.detachUpcomingRun,
       held: this.holdUpcomingRun,
       recordRequest: true
     });
+    this.rejectUpcomingCredential = false;
     this.detachUpcomingRun = false;
     this.holdUpcomingRun = false;
 
@@ -493,7 +581,12 @@ class DeterministicAgentApi {
 
   private createRun(
     request: StartRequest,
-    options: { detached?: boolean; held?: boolean; recordRequest?: boolean } = {}
+    options: {
+      credentialRejected?: boolean;
+      detached?: boolean;
+      held?: boolean;
+      recordRequest?: boolean;
+    } = {}
   ): AcceptedRun {
     const turn = this.nextTurn++;
     const sessionId = request.sessionId ?? `session-${this.nextSession++}`;
@@ -513,6 +606,7 @@ class DeterministicAgentApi {
     });
     const runId = `run-${turn}`;
     const run = {
+      credentialRejected: options.credentialRejected ?? false,
       detached: options.detached ?? false,
       held: options.held ?? false,
       request,
@@ -583,7 +677,11 @@ class DeterministicAgentApi {
 
     const afterSequence = Number(url.searchParams.get("after") ?? "0");
     this.subscriptionCursors.push(afterSequence);
-    const events = run.cancelled ? this.completeCancelledRun(run) : this.completeRun(run);
+    const events = run.cancelled
+      ? this.completeCancelledRun(run)
+      : run.credentialRejected
+        ? this.completeCredentialRejectedRun(run)
+        : this.completeRun(run);
     const body = events
       .filter(({ sequence }) => sequence > afterSequence)
       .map((event) => [
@@ -620,6 +718,36 @@ class DeterministicAgentApi {
       sequence: 1,
       timestamp,
       reason: "Cancelled by user"
+    }];
+    if (this.activeRun?.runId === run.runId) {
+      this.activeRun = undefined;
+    }
+    return run.events;
+  }
+
+  private completeCredentialRejectedRun(run: AcceptedRun): FixtureAgentEvent[] {
+    if (run.events) {
+      return run.events;
+    }
+    if (!this.session || this.session.id !== run.sessionId) {
+      throw new Error("Agent run session is unavailable");
+    }
+    const message = "OpenAI rejected this API key. Check the key and try again.";
+    this.session.messages.push({
+      id: `message-assistant-${run.turn}`,
+      role: "assistant",
+      content: message,
+      createdAt: timestamp
+    });
+    run.events = [{
+      kind: "error",
+      runId: run.runId,
+      sequence: 1,
+      timestamp,
+      error: {
+        code: "model_credential_rejected",
+        message
+      }
     }];
     if (this.activeRun?.runId === run.runId) {
       this.activeRun = undefined;
@@ -699,4 +827,29 @@ class DeterministicAgentApi {
       status: 200
     });
   }
+}
+
+function createAnonymousSessionResponse() {
+  const expiresAt = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
+  const user = {
+    id: "anonymous-user",
+    aud: "authenticated",
+    role: "authenticated",
+    email: "",
+    phone: "",
+    app_metadata: { provider: "anonymous", providers: [] },
+    user_metadata: {},
+    identities: [],
+    created_at: timestamp,
+    updated_at: timestamp,
+    is_anonymous: true
+  };
+  return {
+    access_token: anonymousAccessToken,
+    token_type: "bearer",
+    expires_in: 24 * 60 * 60,
+    expires_at: expiresAt,
+    refresh_token: "test-anonymous-refresh-token",
+    user
+  };
 }
