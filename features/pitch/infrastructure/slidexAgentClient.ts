@@ -1,12 +1,9 @@
-import {
-  createParser,
-  type EventSourceMessage
-} from "eventsource-parser";
 import type { ZodType } from "zod";
-import { ConversationRunReplayCursorSchema } from "@roackb2/heddle-remote";
+import { ConversationRunHttpSseClient } from "@roackb2/heddle-remote/http-sse";
 import type {
+  AgentActivity,
   AgentApiErrorCode,
-  AgentRunEvent,
+  AgentRunResult,
   AgentSessionState,
   StartAgentRunResult
 } from "@/features/pitch/domain/agentRun";
@@ -14,8 +11,8 @@ import {
   AgentApiErrorResponseSchema,
   AgentSessionStateSchema,
   CancelAgentRunResultSchema,
-  parseSlideXAgentSseMessage,
   ResetAgentSessionResultSchema,
+  SlideXAgentRunProtocol,
   StartAgentRunResultSchema
 } from "@/features/pitch/infrastructure/slidexAgentProtocol";
 
@@ -45,101 +42,36 @@ export class SlideXAgentClientError extends Error {
 export type SlideXAgentClientOptions = {
   baseUrl?: string;
   getHeaders?: () => HeadersInit | Promise<HeadersInit>;
+  fetch?: typeof globalThis.fetch;
 };
 
+type SlideXAgentRunClient = ConversationRunHttpSseClient<
+  StartAgentRunInput,
+  StartAgentRunResult,
+  AgentActivity,
+  AgentRunResult,
+  { cancelled: boolean }
+>;
+
 export class SlideXAgentClient {
+  readonly runs: SlideXAgentRunClient;
   private readonly baseUrl: string;
+  private readonly fetch: typeof globalThis.fetch;
   private readonly getHeaders?: SlideXAgentClientOptions["getHeaders"];
 
   constructor(options: SlideXAgentClientOptions = {}) {
     const baseUrl = options.baseUrl ?? process.env.NEXT_PUBLIC_SLIDEX_AGENT_SERVER_URL;
-    this.baseUrl = (baseUrl || DEFAULT_AGENT_SERVER_URL).replace(/\/$/, "");
+    this.baseUrl = (baseUrl || DEFAULT_AGENT_SERVER_URL).replace(/\/+$/, "");
+    this.fetch = options.fetch ?? globalThis.fetch.bind(globalThis);
     this.getHeaders = options.getHeaders;
-  }
-
-  async start(input: StartAgentRunInput, signal?: AbortSignal): Promise<StartAgentRunResult> {
-    return this.request("/api/agent/runs", StartAgentRunResultSchema, {
-      method: "POST",
-      body: JSON.stringify(input),
-      signal
+    this.runs = new ConversationRunHttpSseClient({
+      baseUrl: `${this.baseUrl}/api/agent`,
+      protocol: SlideXAgentRunProtocol,
+      accepted: StartAgentRunResultSchema,
+      cancellation: CancelAgentRunResultSchema,
+      getHeaders: options.getHeaders,
+      fetch: this.fetch
     });
-  }
-
-  async subscribe(input: {
-    runId: string;
-    afterSequence: number;
-    signal?: AbortSignal;
-    onEvent: (event: AgentRunEvent) => void | Promise<void>;
-  }): Promise<void> {
-    ConversationRunReplayCursorSchema.parse(input.afterSequence);
-    const headers = await this.createHeaders({ Accept: "text/event-stream" });
-    const response = await fetch(
-      `${this.baseUrl}/api/agent/runs/${encodeURIComponent(input.runId)}/events?after=${input.afterSequence}`,
-      {
-        headers,
-        signal: input.signal
-      }
-    );
-    if (!response.ok || !response.body) {
-      throw await responseError(response);
-    }
-    if (!response.headers.get("content-type")?.startsWith("text/event-stream")) {
-      throw new SlideXAgentClientError(
-        "SlideX agent event response was not an SSE stream",
-        response.status
-      );
-    }
-
-    const pending: EventSourceMessage[] = [];
-    const parser = createParser({
-      onEvent: (event) => pending.push(event),
-      onError: (error) => {
-        throw new SlideXAgentClientError(error.message, response.status);
-      }
-    });
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    const flushPending = async () => {
-      while (pending.length > 0) {
-        input.signal?.throwIfAborted();
-        const message = pending.shift();
-        if (message) {
-          try {
-            await input.onEvent(parseSlideXAgentSseMessage(message));
-          } catch (error) {
-            throw new SlideXAgentClientError(
-              error instanceof Error ? error.message : String(error),
-              response.status
-            );
-          }
-        }
-      }
-    };
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          parser.feed(decoder.decode());
-          parser.reset({ consume: true });
-          await flushPending();
-          return;
-        }
-        parser.feed(decoder.decode(value, { stream: true }));
-        await flushPending();
-      }
-    } finally {
-      reader.releaseLock();
-    }
-  }
-
-  async cancel(runId: string): Promise<boolean> {
-    const result = await this.request(
-      `/api/agent/runs/${encodeURIComponent(runId)}/cancel`,
-      CancelAgentRunResultSchema,
-      { method: "POST" }
-    );
-    return result.cancelled;
   }
 
   session(sessionId: string, signal?: AbortSignal): Promise<AgentSessionState> {
@@ -167,7 +99,7 @@ export class SlideXAgentClient {
     if (init.body !== undefined && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
-    const response = await fetch(`${this.baseUrl}${path}`, {
+    const response = await this.fetch(`${this.baseUrl}${path}`, {
       ...init,
       headers
     });

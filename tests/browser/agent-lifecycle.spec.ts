@@ -48,6 +48,36 @@ test("keeps one conversational deck across turns, refresh, and chat reset", asyn
   expect(consoleErrors).toEqual([]);
 });
 
+test("resumes a refreshed active run from its persisted cursor", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "Create the conversation");
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  const runId = agent.startBackgroundRun("Continue from retained progress");
+  await page.evaluate(({ activeRunId }) => {
+    const projectId = sessionStorage.getItem("slidex_pitch_project_instance");
+    const existing = JSON.parse(
+      sessionStorage.getItem("slidex_agent_project_binding") ?? "{}"
+    ) as Record<string, unknown>;
+    sessionStorage.setItem("slidex_agent_project_binding", JSON.stringify({
+      ...existing,
+      projectId,
+      sessionId: "session-1",
+      runId: activeRunId,
+      afterSequence: 2
+    }));
+  }, { activeRunId: runId });
+
+  await page.reload();
+  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+
+  await expect(panel.getByText("Continue from retained progress", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+  expect(agent.subscriptionCursors.at(-1)).toBe(2);
+  expect(consoleErrors).toEqual([]);
+});
+
 test("isolates conversations when a same-name deck is imported", async ({ page }) => {
   const agent = new DeterministicAgentApi();
   const { consoleErrors, panel } = await openAgentPanel(page, agent);
@@ -318,6 +348,7 @@ type SubscriptionFailure = {
 class DeterministicAgentApi {
   readonly producedMotionDocs: string[] = [];
   readonly startRequests: StartRequest[] = [];
+  readonly subscriptionCursors: number[] = [];
   cancellations = 0;
   resets = 0;
   sessionReads = 0;
@@ -349,17 +380,17 @@ class DeterministicAgentApi {
     this.holdUpcomingRun = true;
   }
 
-  startBackgroundRun(message: string): void {
+  startBackgroundRun(message: string): string {
     if (!this.session || this.activeRun) {
       throw new Error("A settled conversation is required before starting a background run");
     }
-    this.createRun({
+    return this.createRun({
       sessionId: this.session.id,
       title: this.session.title,
       message,
       motionDoc: this.session.latestMotionDoc,
       sourceRevision: "background-source-revision"
-    });
+    }).runId;
   }
 
   completeDetachedRun(): void {
@@ -550,8 +581,9 @@ class DeterministicAgentApi {
       return;
     }
 
-    const events = run.cancelled ? this.completeCancelledRun(run) : this.completeRun(run);
     const afterSequence = Number(url.searchParams.get("after") ?? "0");
+    this.subscriptionCursors.push(afterSequence);
+    const events = run.cancelled ? this.completeCancelledRun(run) : this.completeRun(run);
     const body = events
       .filter(({ sequence }) => sequence > afterSequence)
       .map((event) => [

@@ -1,10 +1,8 @@
-import type { EventSourceMessage } from "eventsource-parser";
 import { z } from "zod";
 import { ConversationRunProtocolCodec } from "@roackb2/heddle-remote";
 import type {
   AgentActivity,
   AgentApiErrorCode,
-  AgentRunEvent,
   AgentRunResult,
   AgentSessionState,
   StartAgentRunResult
@@ -82,21 +80,3 @@ export const SlideXAgentRunProtocol = new ConversationRunProtocolCodec({
   activity: AgentActivitySchema,
   result: AgentRunResultSchema
 });
-
-export function parseSlideXAgentSseMessage(message: EventSourceMessage): AgentRunEvent {
-  let body: unknown;
-  try {
-    body = JSON.parse(message.data);
-  } catch {
-    throw new Error("SlideX agent event contained invalid JSON");
-  }
-
-  const event = SlideXAgentRunProtocol.parseEvent(body);
-  if (message.id !== String(event.sequence)) {
-    throw new Error("SlideX agent event ID did not match its canonical sequence");
-  }
-  if (message.event !== event.kind) {
-    throw new Error("SlideX agent SSE event name did not match its payload kind");
-  }
-  return event;
-}
