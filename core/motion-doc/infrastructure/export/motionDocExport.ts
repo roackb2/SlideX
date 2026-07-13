@@ -16,6 +16,7 @@ import { makeMotionDocExportRuntime } from "@/core/motion-doc/infrastructure/exp
 import { normalizeChartType, type ChartType } from "@/core/motion-doc/domain/chartCatalog";
 import { chartAxisBounds, chartAxisMaximum, chartAxisTicks, normalizeChartAxisStep } from "@/core/motion-doc/domain/chartAxis";
 import { formatChartValue, formatSignedChartValue, normalizeChartValueFormat, type ChartValueFormat } from "@/core/motion-doc/domain/chartValue";
+import { youtubeEmbedUrl } from "@/core/motion-doc/domain/videoSource";
 import { motionDocExportStyles } from "@/core/motion-doc/infrastructure/export/motionDocExportStyles";
 import { resolveContrastingTextColor } from "@/common/util/colorContrast";
 
@@ -471,14 +472,32 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
       );
     }
 
-    const controls = boolProp(block.props.controls, true) ? " controls" : "";
-    const loop = boolProp(block.props.loop, true) ? " loop" : "";
-    const muted = boolProp(block.props.muted, true) ? " muted autoplay playsinline" : "";
+    const controlsEnabled = boolProp(block.props.controls, true);
+    const loopEnabled = boolProp(block.props.loop, true);
+    const mutedEnabled = boolProp(block.props.muted, true);
+    const src = String(block.props.src ?? "");
+    const youtubeSrc = youtubeEmbedUrl(src, {
+      autoplay: mutedEnabled,
+      controls: controlsEnabled,
+      loop: loopEnabled,
+      muted: mutedEnabled
+    });
+
+    if (youtubeSrc) {
+      return renderMotionBlock(
+        block,
+        `<figure class="block-image block-video"><iframe src="${escapeAttribute(youtubeSrc)}" title="YouTube video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></figure>`
+      );
+    }
+
+    const controls = controlsEnabled ? " controls" : "";
+    const loop = loopEnabled ? " loop" : "";
+    const muted = mutedEnabled ? " muted autoplay playsinline" : "";
     const posterAttr = poster ? ` poster="${escapeAttribute(poster)}"` : "";
 
     return renderMotionBlock(
       block,
-      `<figure class="block-image block-video"><video src="${escapeAttribute(String(block.props.src ?? ""))}"${posterAttr}${controls}${loop}${muted} style="${escapeAttribute(inlineCss({ "object-fit": fit }))}"></video></figure>`
+      `<figure class="block-image block-video"><video src="${escapeAttribute(src)}"${posterAttr}${controls}${loop}${muted} style="${escapeAttribute(inlineCss({ "object-fit": fit }))}"></video></figure>`
     );
   }
 

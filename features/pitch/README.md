@@ -63,7 +63,7 @@ Agent button and panel. Next.js inlines public environment variables into the
 client bundle, so changing the flag requires a rebuild and redeploy.
 
 The enabled editor also requires `NEXT_PUBLIC_SUPABASE_URL` and
-`NEXT_PUBLIC_SUPABASE_ANON_KEY`, with anonymous sign-ins enabled for that
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, with anonymous sign-ins enabled for that
 Supabase project. These values establish product identity only. The user's
 OpenAI key is entered at runtime and must not be placed in an environment
 variable or deployment secret.

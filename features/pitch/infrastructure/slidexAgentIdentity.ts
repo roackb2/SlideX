@@ -23,12 +23,15 @@ export type SlideXAgentIdentityClient = {
 
 export type SlideXAgentIdentityServiceOptions = {
   supabaseUrl?: string;
-  supabaseAnonKey?: string;
-  createClient?: (url: string, anonKey: string) => SlideXAgentIdentityClient;
+  supabasePublishableKey?: string;
+  createClient?: (
+    url: string,
+    publishableKey: string
+  ) => SlideXAgentIdentityClient;
 };
 
 const IDENTITY_CONFIGURATION_ERROR =
-  "SlideX agent sign-in is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.";
+  "SlideX agent sign-in is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
 const IDENTITY_SESSION_ERROR =
   "SlideX could not create an anonymous session. Try again.";
 
@@ -95,12 +98,12 @@ export class SlideXAgentIdentityService {
     if (this.client) {
       return this.client;
     }
-    if (!this.options.supabaseUrl || !this.options.supabaseAnonKey) {
+    if (!this.options.supabaseUrl || !this.options.supabasePublishableKey) {
       throw new SlideXAgentIdentityError(IDENTITY_CONFIGURATION_ERROR);
     }
     this.client = this.createClient(
       this.options.supabaseUrl,
-      this.options.supabaseAnonKey
+      this.options.supabasePublishableKey
     );
     return this.client;
   }
@@ -115,11 +118,14 @@ export class SlideXAgentIdentityError extends Error {
 
 export const slideXAgentIdentity = new SlideXAgentIdentityService({
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  supabasePublishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 });
 
-function createBrowserClient(url: string, anonKey: string): SupabaseClient {
-  return createSupabaseClient(url, anonKey, {
+function createBrowserClient(
+  url: string,
+  publishableKey: string
+): SupabaseClient {
+  return createSupabaseClient(url, publishableKey, {
     auth: {
       autoRefreshToken: true,
       detectSessionInUrl: false,

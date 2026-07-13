@@ -39,6 +39,7 @@
     ".next-turbo/dev/types/**/*.ts"
   ],
   "exclude": [
+    "media-library-site",
     "node_modules"
   ]
 }

@@ -23,7 +23,7 @@ export default defineConfig({
       NEXT_PUBLIC_SLIDEX_AGENT_ENABLED: "true",
       NEXT_PUBLIC_SLIDEX_AGENT_SERVER_URL: baseURL,
       NEXT_PUBLIC_SUPABASE_URL: baseURL,
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key"
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "test-publishable-key"
     },
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

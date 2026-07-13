@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { ImagePlus } from "lucide-react";
+import { youtubeEmbedUrl } from "@/core/motion-doc/domain/videoSource";
 import { MotionBlock, type AnimationProps, type RadiusProps } from "@/features/pitch/ui/preview/motion/MotionBlock";
 import { surfaceStyle } from "@/features/pitch/ui/preview/motion/blockStyles";
 import { PaperImageFilterLayer } from "@/features/pitch/ui/preview/paperImageFilterRenderers";
@@ -131,7 +132,12 @@ export function VideoBlock({
   backgroundColor?: string;
 }) {
   const fillFrame = Boolean(animation.fillFrame);
-  const youtubeEmbedUrl = youtubeEmbedSrc(src);
+  const youtubeSrc = youtubeEmbedUrl(src, {
+    autoplay: muted,
+    controls,
+    loop,
+    muted
+  });
 
   return (
     <MotionBlock
@@ -145,12 +151,12 @@ export function VideoBlock({
       style={surfaceStyle({ background, backgroundColor })}
       {...animation}
     >
-      {youtubeEmbedUrl ? (
+      {youtubeSrc ? (
         <iframe
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
           className={full || fillFrame ? "h-full w-full" : "aspect-video w-full"}
-          src={youtubeEmbedUrl}
+          src={youtubeSrc}
           title="YouTube video"
         />
       ) : (
@@ -176,40 +182,4 @@ function normalizeImageFit(value: string | undefined): ImageFit {
   }
 
   return "cover";
-}
-
-function youtubeEmbedSrc(src: string) {
-  const id = youtubeVideoId(src);
-
-  if (!id) {
-    return null;
-  }
-
-  return `https://www.youtube.com/embed/${id}`;
-}
-
-function youtubeVideoId(src: string) {
-  try {
-    const url = new URL(src);
-
-    if (url.hostname === "youtu.be") {
-      return url.pathname.replace("/", "").slice(0, 32) || null;
-    }
-
-    if (url.hostname.endsWith("youtube.com")) {
-      if (url.pathname.startsWith("/shorts/")) {
-        return url.pathname.split("/")[2]?.slice(0, 32) || null;
-      }
-
-      if (url.pathname.startsWith("/embed/")) {
-        return url.pathname.split("/")[2]?.slice(0, 32) || null;
-      }
-
-      return url.searchParams.get("v")?.slice(0, 32) || null;
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
 }

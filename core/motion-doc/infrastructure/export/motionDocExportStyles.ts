@@ -702,11 +702,13 @@ export const motionDocExportStyles = `      :root {
         aspect-ratio: auto;
         object-fit: cover;
       }
-      .block-video video {
+      .block-video video,
+      .block-video iframe {
         display: block;
         width: 100%;
         height: 100%;
         aspect-ratio: auto;
+        border: 0;
         object-fit: cover;
       }
       .block-icon {
@@ -823,7 +825,8 @@ export const motionDocExportStyles = `      :root {
         border-radius: var(--motion-radius, 0);
       }
       .motion-block--full .block-image img,
-      .motion-block--full .block-video video {
+      .motion-block--full .block-video video,
+      .motion-block--full .block-video iframe {
         height: 100%;
         aspect-ratio: auto;
       }

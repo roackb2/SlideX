@@ -1,6 +1,7 @@
 import type PptxGenJS from "pptxgenjs";
 import { lucideIconSvgDataUri } from "@/core/motion-doc/application/lucideIconSvg";
 import { shapeNeedsExactSvgExport, shapeVectorSvgDataUri } from "@/core/motion-doc/application/shapeVectorSvg";
+import { getPaperImageFilterDefinition } from "@/core/motion-doc/application/shaders/paperImageFilterCatalog";
 import { resolveSlideThemeColors } from "@/core/motion-doc/application/slideTheme";
 import {
   tableCellsFromProps,
@@ -10,6 +11,7 @@ import {
 import type { MotionDocBlock, ParsedMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
 import { blockFrame } from "@/features/pitch/application/previewCanvas";
 import { addEditablePptxChart, isNativePptxChartType } from "@/features/pitch/infrastructure/pptxChartExport";
+import { portablePptxImageData } from "@/features/pitch/infrastructure/pptxImageExport";
 import { addPptxVideo } from "@/features/pitch/infrastructure/pptxVideoExport";
 
 const SLIDE_HEIGHT = 7.5;
@@ -58,40 +60,62 @@ const STAR_SHAPES: Record<number, PptxShapeName> = {
   12: "star12"
 };
 
-export function addEditableSlides(
+export async function addEditableSlides(
   pptx: PptxGenJS,
   document: ParsedMotionDoc,
-  renderedBackgrounds: readonly string[]
+  renderedBackgrounds: readonly string[],
+  filteredImagesBySlide: readonly (readonly string[])[] = []
 ) {
-  document.scenes.forEach((scene, sceneIndex) => {
+  for (let sceneIndex = 0; sceneIndex < document.scenes.length; sceneIndex += 1) {
+    const scene = document.scenes[sceneIndex];
     const slide = pptx.addSlide();
     const theme = resolveSlideThemeColors(scene.props);
     const renderedBackground = renderedBackgrounds[sceneIndex];
+    const hasVisualFallback = Boolean(renderedBackground && needsVisualFallback(scene.blocks, scene.props));
 
     slide.background = { color: pptxColor(theme.background, "0F172A") };
 
-    if (renderedBackground && needsVisualFallback(scene.blocks, scene.props)) {
+    if (hasVisualFallback) {
       slide.background = { data: renderedBackground };
     }
 
-    scene.blocks.forEach((block) => {
+    let filteredImageIndex = 0;
+
+    for (const block of scene.blocks) {
       if (block.type === "Title" || block.type === "Text" || block.type === "heading") {
         addEditableText(slide, block, theme.foreground, theme.muted);
       } else if (block.type === "ImageBlock") {
-        addEditableImage(slide, block);
+        const needsFilterRasterization = imageNeedsPptxFilterRasterization(block);
+        const filteredImageData = needsFilterRasterization
+          ? filteredImagesBySlide[sceneIndex]?.[filteredImageIndex++]
+          : undefined;
+
+        if (needsFilterRasterization && !filteredImageData) {
+          throw new Error(`Filtered image ${filteredImageIndex} on slide ${sceneIndex + 1} could not be rendered`);
+        }
+
+        await addEditableImage(slide, block, filteredImageData);
       } else if (block.type === "Icon") {
-        addEditableIcon(slide, block, theme.foreground);
+        await addEditableIcon(slide, block, theme.isLight);
       } else if (block.type === "Shape") {
-        addEditableShape(slide, block);
+        await addEditableShape(slide, block);
       } else if (block.type === "Table") {
         addEditableTable(slide, block, theme.foreground);
       } else if (block.type === "Chart") {
         addEditablePptxChart(slide, block.props, pptxFrame(blockFrame(block)), theme);
       } else if (block.type === "VideoBlock") {
-        addPptxVideo(slide, block.props, pptxFrame(blockFrame(block)));
+        await addPptxVideo(slide, block.props, pptxFrame(blockFrame(block)));
       }
-    });
-  });
+    }
+  }
+}
+
+export function documentNeedsPptxVisualFallback(document: ParsedMotionDoc) {
+  return document.scenes.some((scene) => needsVisualFallback(scene.blocks, scene.props));
+}
+
+export function documentNeedsPptxFilteredImages(document: ParsedMotionDoc) {
+  return document.scenes.some((scene) => scene.blocks.some(imageNeedsPptxFilterRasterization));
 }
 
 function addEditableText(
@@ -120,45 +144,57 @@ function addEditableText(
   });
 }
 
-function addEditableImage(slide: PptxSlide, block: PropsBlock) {
+async function addEditableImage(slide: PptxSlide, block: PropsBlock, renderedData?: string) {
   const src = stringProp(block.props.src);
   if (!src) return;
 
+  const frame = pptxFrame(blockFrame(block));
+  const data = renderedData ?? await portablePptxImageData(src, frame);
+
   slide.addImage({
-    data: src,
-    ...pptxFrame(blockFrame(block)),
+    data,
+    ...frame,
     transparency: 0
   });
 }
 
-function addEditableIcon(slide: PptxSlide, block: PropsBlock, foreground: string) {
-  const data = lucideIconSvgDataUri(
-    stringProp(block.props.icon) ?? "Sparkles",
+async function addEditableIcon(slide: PptxSlide, block: PropsBlock, isLightBackground: boolean) {
+  const iconName = stringProp(block.props.icon) ?? "Sparkles";
+  const svgData = lucideIconSvgDataUri(
+    iconName,
     {
-      color: stringProp(block.props.color ?? block.props.textColor) ?? foreground,
+      color: isLightBackground ? "#000000" : "#ffffff",
       strokeWidth: numericProp(block.props.strokeWidth, 2)
     }
   );
 
-  if (!data) return;
+  if (!svgData) return;
+
+  const frame = pptxFrame(blockFrame(block));
+  const data = await portablePptxImageData(svgData, frame);
 
   slide.addImage({
+    altText: `${iconName} icon`,
     data,
-    ...pptxFrame(blockFrame(block)),
+    ...frame,
     transparency: 0
   });
 }
 
-function addEditableShape(slide: PptxSlide, block: PropsBlock) {
+async function addEditableShape(slide: PptxSlide, block: PropsBlock) {
   const props = block.props;
   const sourceShape = stringProp(props.shape) ?? "rectangle";
   const opacity = clamp(numericProp(props.opacity, 1), 0, 1);
   const frame = pptxFrame(blockFrame(block));
 
   if (shapeNeedsExactSvgExport(props)) {
+    const data = await portablePptxImageData(
+      shapeVectorSvgDataUri(props, `pptx-${sourceShape}`),
+      frame
+    );
     slide.addImage({
       altText: `${sourceShape} vector shape`,
-      data: shapeVectorSvgDataUri(props, `pptx-${sourceShape}`),
+      data,
       ...frame,
       transparency: 0
     });
@@ -229,8 +265,13 @@ function needsVisualFallback(blocks: readonly MotionDocBlock[], props: Record<st
     props.shader ||
     props.backgroundImage ||
     (background && !isSimpleColor(background)) ||
-    blocks.some((block) => !isNativePptxBlock(block)) ||
-    blocks.some((block) => block.type === "ImageBlock" && Boolean(block.props.filter ?? block.props.filterPreset))
+    blocks.some((block) => !isNativePptxBlock(block))
+  );
+}
+
+function imageNeedsPptxFilterRasterization(block: MotionDocBlock) {
+  return block.type === "ImageBlock" && Boolean(
+    getPaperImageFilterDefinition(stringProp(block.props.filter))
   );
 }
 

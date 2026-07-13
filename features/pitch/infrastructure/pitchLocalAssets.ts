@@ -2,10 +2,22 @@ type SlideXLocalFilesWindow = Window & {
   __slidexLocalFiles?: Map<string, File>;
 };
 
-export function registerPitchLocalFile(file: File) {
+import { preparePitchAssetFile } from "@/features/pitch/infrastructure/pitchAssetFiles";
+
+export function registerPitchLocalFile(file: File, exportFile = file) {
   const url = URL.createObjectURL(file);
-  localFileStore().set(url, file);
+  localFileStore().set(url, exportFile);
   return url;
+}
+
+export async function prepareAndRegisterPitchLocalFile(file: File) {
+  const preparedAsset = await preparePitchAssetFile(file);
+  return {
+    ...preparedAsset,
+    // Render the optimized preview in the editor, while exports resolve the
+    // same blob URL back to the original PNG/JPEG bytes.
+    url: registerPitchLocalFile(preparedAsset.file, preparedAsset.originalFile)
+  };
 }
 
 export async function externalizeEmbeddedPitchImages(source: string) {
@@ -20,7 +32,8 @@ export async function externalizeEmbeddedPitchImages(source: string) {
     const response = await fetch(src);
     const blob = await response.blob();
     const file = new File([blob], alt, { type: blob.type || mediaTypeFromDataUrl(src) });
-    replacements.set(src, registerPitchLocalFile(file));
+    const preparedAsset = await prepareAndRegisterPitchLocalFile(file);
+    replacements.set(src, preparedAsset.url);
   }));
 
   if (replacements.size === 0) return source;

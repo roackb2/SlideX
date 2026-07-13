@@ -148,7 +148,7 @@ export function DocsPage() {
           <section className="mt-16 border-t border-white/[0.09] pt-12 scroll-mt-40" id="powerpoint">
             <h2 className="text-[30px] font-semibold tracking-[-0.045em]">{isZh ? "輸出" : "Export"}</h2>
             <h3 className="mt-7 text-[20px] font-semibold tracking-[-0.03em]">PowerPoint</h3>
-            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/52">{isZh ? "PPTX 可由 PowerPoint、Keynote 與 Google Slides 開啟。文字、圖片、表格與一般形狀會保留為可編輯原生物件；特殊形狀與圖示使用 SVG 向量。常用圖表保留為可編輯 Chart，特殊圖表保留完整靜態視覺；影片則同時提供媒體物件、SVG 播放封面與連結回退，降低跨平台匯入後消失的風險。" : "PPTX files open in PowerPoint, Keynote, and Google Slides. Text, images, tables, and standard shapes remain editable native objects; exact shapes and icons use SVG vectors. Common charts remain editable charts, specialty charts preserve their full static appearance, and videos include media objects plus an SVG playback cover and link fallback for safer cross-platform import."}</p>
+            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/52">{isZh ? "PPTX 可由 PowerPoint、Keynote 與 Google Slides 開啟。文字、表格、一般形狀與常用圖表保留為可編輯物件；圖片濾鏡會烘焙進單獨的 PNG 圖片物件，因此跨品牌仍保留效果，也可以在簡報中移動、縮放或刪除。圖示會依投影片背景自動輸出成黑色或白色 PNG，影片則保留媒體物件與可點擊的封面連結。" : "PPTX files open in PowerPoint, Keynote, and Google Slides. Text, tables, standard shapes, and common charts remain editable; each filtered image is baked into its own PNG object, preserving the effect across apps while remaining movable, resizable, and removable. Icons export as black or white PNGs based on the slide background, and videos retain their media object plus a clickable cover link."}</p>
           </section>
 
           <section className="mt-12 scroll-mt-40" id="html">

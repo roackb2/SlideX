@@ -353,7 +353,7 @@ function createStorage(): SlideXSessionStorage {
 function createIdentity(client: SlideXAgentIdentityClient): SlideXAgentIdentityService {
   return new SlideXAgentIdentityService({
     supabaseUrl: "https://identity.example.test",
-    supabaseAnonKey: "test-anon-key",
+    supabasePublishableKey: "test-publishable-key",
     createClient: () => client
   });
 }
