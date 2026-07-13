@@ -26,7 +26,6 @@ import type { CanvasInteractionMode } from "@/features/pitch/ui/preview/interact
 import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
 import { TableFrameEditor } from "@/features/pitch/ui/preview/TableFrameEditor";
 import { TextFrameEditor } from "@/features/pitch/ui/preview/TextFrameEditor";
-import { ShapeTextEditor } from "@/features/pitch/ui/preview/ShapeTextEditor";
 import { VisualFrameEditor } from "@/features/pitch/ui/preview/VisualFrameEditor";
 
 type CanvasSelectionLayerProps = {
@@ -118,7 +117,6 @@ export function CanvasSelectionLayer({
         const isTextBlock = isEditableTextBlock(block);
         const isVisualBlock = block.type === "Icon" || block.type === "ImageBlock" || block.type === "VideoBlock";
         const isLineShape = block.type === "Shape" && block.props.shape === "line";
-        const isTextShape = block.type === "Shape" && !isLineShape;
         const showIndividualTextEditor = isSelected && isTextBlock && (isTextMultiSelection || (!isMultiSelection && isPrimarySelection));
         const showIndividualControls = !isMultiSelection && isPrimarySelection || isTextMultiSelection && isTextBlock;
         const frame = frameOverrides.get(blockIndex) ?? blockFrame(block);
@@ -161,9 +159,6 @@ export function CanvasSelectionLayer({
                 onSelectBlock={onSelectBlock}
                 onUpdateBlock={onUpdateBlock}
               />
-            ) : null}
-            {isSelected && isPrimarySelection && !isMultiSelection && isTextShape ? (
-              <ShapeTextEditor block={block} blockIndex={blockIndex} onSelectBlock={onSelectBlock} onUpdateBlock={onUpdateBlock} />
             ) : null}
             {isSelected && isPrimarySelection && !isMultiSelection && isVisualBlock && !isLocked ? (
               <VisualFrameEditor

@@ -1,4 +1,6 @@
 import type PptxGenJS from "pptxgenjs";
+import { lucideIconSvgDataUri } from "@/core/motion-doc/application/lucideIconSvg";
+import { shapeNeedsExactSvgExport, shapeVectorSvgDataUri } from "@/core/motion-doc/application/shapeVectorSvg";
 import { resolveSlideThemeColors } from "@/core/motion-doc/application/slideTheme";
 import {
   tableCellsFromProps,
@@ -7,12 +9,54 @@ import {
 } from "@/core/motion-doc/application/tableBlock";
 import type { MotionDocBlock, ParsedMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
 import { blockFrame } from "@/features/pitch/application/previewCanvas";
+import { addEditablePptxChart, isNativePptxChartType } from "@/features/pitch/infrastructure/pptxChartExport";
+import { addPptxVideo } from "@/features/pitch/infrastructure/pptxVideoExport";
 
 const SLIDE_HEIGHT = 7.5;
 const SLIDE_WIDTH = 13.333;
 
 type PptxSlide = ReturnType<PptxGenJS["addSlide"]>;
 type PropsBlock = Extract<MotionDocBlock, { props: Record<string, string | number> }>;
+type PptxShapeFillProps = PptxGenJS.ShapeFillProps;
+type PptxShapeLineProps = PptxGenJS.ShapeLineProps;
+type PptxShapeName = PptxGenJS.SHAPE_NAME;
+
+const NATIVE_PPTX_BLOCK_TYPES = new Set([
+  "Title",
+  "Text",
+  "heading",
+  "Icon",
+  "ImageBlock",
+  "Shape",
+  "Table",
+  "VideoBlock"
+]);
+
+const POLYGON_SHAPES: Record<number, PptxShapeName> = {
+  3: "triangle",
+  4: "diamond",
+  5: "pentagon",
+  6: "hexagon",
+  7: "heptagon",
+  8: "octagon",
+  9: "decagon",
+  10: "decagon",
+  11: "dodecagon",
+  12: "dodecagon"
+};
+
+const STAR_SHAPES: Record<number, PptxShapeName> = {
+  3: "star4",
+  4: "star4",
+  5: "star5",
+  6: "star6",
+  7: "star7",
+  8: "star8",
+  9: "star10",
+  10: "star10",
+  11: "star12",
+  12: "star12"
+};
 
 export function addEditableSlides(
   pptx: PptxGenJS,
@@ -35,8 +79,16 @@ export function addEditableSlides(
         addEditableText(slide, block, theme.foreground, theme.muted);
       } else if (block.type === "ImageBlock") {
         addEditableImage(slide, block);
+      } else if (block.type === "Icon") {
+        addEditableIcon(slide, block, theme.foreground);
+      } else if (block.type === "Shape") {
+        addEditableShape(slide, block);
       } else if (block.type === "Table") {
         addEditableTable(slide, block, theme.foreground);
+      } else if (block.type === "Chart") {
+        addEditablePptxChart(slide, block.props, pptxFrame(blockFrame(block)), theme);
+      } else if (block.type === "VideoBlock") {
+        addPptxVideo(slide, block.props, pptxFrame(blockFrame(block)));
       }
     });
   });
@@ -76,6 +128,63 @@ function addEditableImage(slide: PptxSlide, block: PropsBlock) {
     data: src,
     ...pptxFrame(blockFrame(block)),
     transparency: 0
+  });
+}
+
+function addEditableIcon(slide: PptxSlide, block: PropsBlock, foreground: string) {
+  const data = lucideIconSvgDataUri(
+    stringProp(block.props.icon) ?? "Sparkles",
+    {
+      color: stringProp(block.props.color ?? block.props.textColor) ?? foreground,
+      strokeWidth: numericProp(block.props.strokeWidth, 2)
+    }
+  );
+
+  if (!data) return;
+
+  slide.addImage({
+    data,
+    ...pptxFrame(blockFrame(block)),
+    transparency: 0
+  });
+}
+
+function addEditableShape(slide: PptxSlide, block: PropsBlock) {
+  const props = block.props;
+  const sourceShape = stringProp(props.shape) ?? "rectangle";
+  const opacity = clamp(numericProp(props.opacity, 1), 0, 1);
+  const frame = pptxFrame(blockFrame(block));
+
+  if (shapeNeedsExactSvgExport(props)) {
+    slide.addImage({
+      altText: `${sourceShape} vector shape`,
+      data: shapeVectorSvgDataUri(props, `pptx-${sourceShape}`),
+      ...frame,
+      transparency: 0
+    });
+    return;
+  }
+
+  if (sourceShape === "line") {
+    slide.addShape("line", {
+      ...frame,
+      h: 0,
+      y: frame.y + frame.h / 2,
+      line: shapeLineOptions(props, opacity)
+    });
+    return;
+  }
+
+  const fillSource = stringProp(props.fill) ?? "rgba(142,165,255,0.72)";
+  const sourceStroke = stringProp(props.stroke) ?? "#FFFFFF";
+  const shapeName = shapeNameForPptx(sourceShape, props);
+  const radius = clamp(numericProp(props.radius ?? props.borderRadius, 0), 0, 50);
+
+  slide.addShape(shapeName, {
+    ...frame,
+    fill: shapeFillOptions(fillSource, opacity, "8EA5FF"),
+    line: shapeLineOptions(props, opacity, sourceStroke),
+    ...(shapeName === "roundRect" ? { rectRadius: radius / 50 } : {})
   });
 }
 
@@ -120,9 +229,75 @@ function needsVisualFallback(blocks: readonly MotionDocBlock[], props: Record<st
     props.shader ||
     props.backgroundImage ||
     (background && !isSimpleColor(background)) ||
-    blocks.some((block) => !["Title", "Text", "heading", "ImageBlock", "Table"].includes(block.type)) ||
+    blocks.some((block) => !isNativePptxBlock(block)) ||
     blocks.some((block) => block.type === "ImageBlock" && Boolean(block.props.filter ?? block.props.filterPreset))
   );
+}
+
+function isNativePptxBlock(block: MotionDocBlock) {
+  if (block.type === "Chart") return isNativePptxChartType(block.props.chartType);
+  return NATIVE_PPTX_BLOCK_TYPES.has(block.type);
+}
+
+function shapeNameForPptx(shape: string, props: Record<string, string | number>): PptxShapeName {
+  if (shape === "circle") return "ellipse";
+  if (shape === "triangle") return "triangle";
+  if (shape === "diamond") return "diamond";
+  if (shape === "arrow") return "rightArrow";
+  if (shape === "chevron") return "chevron";
+  if (shape === "corner") return "corner";
+  if (shape === "hexagon") return "hexagon";
+  if (shape === "parallelogram") return "parallelogram";
+  if (shape === "polygon") return POLYGON_SHAPES[clamp(Math.round(numericProp(props.sides, 3)), 3, 12)];
+  if (shape === "star") return STAR_SHAPES[clamp(Math.round(numericProp(props.points, 5)), 3, 12)];
+
+  const radius = numericProp(props.radius ?? props.borderRadius, 0);
+  return radius > 0 ? "roundRect" : "rect";
+}
+
+function shapeFillOptions(
+  value: string | undefined,
+  opacity: number,
+  fallback: string
+): PptxShapeFillProps {
+  if (isTransparentColor(value)) return { type: "none" };
+
+  return {
+    color: pptxColor(value ?? fallback, fallback),
+    transparency: combinedTransparency(value, opacity)
+  };
+}
+
+function shapeLineOptions(
+  props: Record<string, string | number>,
+  opacity: number,
+  colorOverride?: string
+): PptxShapeLineProps {
+  const stroke = colorOverride ?? stringProp(props.stroke) ?? "#FFFFFF";
+  const width = numericProp(props.strokeWidth, 2);
+
+  if (width <= 0 || isTransparentColor(stroke)) return { type: "none" };
+
+  return {
+    beginArrowType: lineArrowType(props.arrowStart),
+    color: pptxColor(stroke, "FFFFFF"),
+    dashType: lineDashType(props.lineStyle),
+    endArrowType: lineArrowType(props.arrowEnd),
+    transparency: combinedTransparency(stroke, opacity),
+    width: Math.max(width * 0.75, 0.25)
+  };
+}
+
+function lineDashType(value: string | number | undefined): PptxShapeLineProps["dashType"] {
+  if (value === "dashed") return "dash";
+  if (value === "dotted") return "sysDot";
+  return "solid";
+}
+
+function lineArrowType(value: string | number | undefined): PptxShapeLineProps["beginArrowType"] {
+  if (value === "arrow") return "arrow";
+  if (value === "circle") return "oval";
+  return "none";
 }
 
 function pptxFrame(frame: { h: number; w: number; x: number; y: number }) {
@@ -158,8 +333,32 @@ function isSimpleColor(value: string) {
 }
 
 function colorTransparency(value: string) {
-  const alpha = value.match(/^rgba?\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\s*\)$/i)?.[1];
-  return alpha === undefined ? 0 : Math.round((1 - Math.min(Math.max(Number(alpha), 0), 1)) * 100);
+  return combinedTransparency(value, 1);
+}
+
+function combinedTransparency(value: string | undefined, opacity: number) {
+  return Math.round((1 - colorAlpha(value) * opacity) * 100);
+}
+
+function colorAlpha(value: string | undefined) {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized || normalized === "transparent") return 0;
+
+  const rgbaAlpha = normalized.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\s*\)$/i)?.[1];
+  if (rgbaAlpha !== undefined) return clamp(Number(rgbaAlpha), 0, 1);
+
+  const hexAlpha = normalized.match(/^#?[0-9a-f]{6}([0-9a-f]{2})$/i)?.[1];
+  if (hexAlpha) return parseInt(hexAlpha, 16) / 255;
+
+  return 1;
+}
+
+function isTransparentColor(value: string | undefined) {
+  return colorAlpha(value) === 0;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
 }
 
 function pptxColor(value: string, fallback: string) {

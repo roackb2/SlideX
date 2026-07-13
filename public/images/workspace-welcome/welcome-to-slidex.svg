@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description">
+  <title id="title">Welcome to SlideX presentation cover</title>
+  <desc id="description">Orange editorial cover for Welcome to SlideX, matching the first slide of the presentation.</desc>
+  <rect width="1600" height="900" fill="#ec5f39"/>
+  <text x="58" y="70" fill="#FFFFFF" font-family="Roboto, Arial, sans-serif" font-size="28" font-weight="600">2026</text>
+  <text x="1542" y="68" fill="#FFFFFF" font-family="Roboto, Arial, sans-serif" font-size="28" font-weight="600" text-anchor="end">SlideX</text>
+  <text x="51" y="306" fill="#FFFFFF" font-family="Roboto, Arial, sans-serif" font-size="112" font-weight="700" letter-spacing="-4.5">Create presentations that feel</text>
+  <text x="51" y="446" fill="#FFFFFF" font-family="Roboto, Arial, sans-serif" font-size="112" font-weight="700" letter-spacing="-4.5">like modern websites.</text>
+  <text x="54" y="824" fill="#FFFFFF" font-family="Roboto, Arial, sans-serif" font-size="28" font-weight="600">Level up team collaboration</text>
+  <text x="1546" y="848" fill="#FFFFFF" font-family="Roboto, Arial, sans-serif" font-size="28" font-weight="600" text-anchor="end">SlideX.com</text>
+</svg>

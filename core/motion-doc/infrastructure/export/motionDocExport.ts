@@ -1,5 +1,5 @@
 import { parseMotionDoc, type MotionDocBlock, type MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
-import { isSlideXIconName, lucideIconPaths } from "@/core/motion-doc/domain/lucideIconRegistry";
+import { renderLucideIconSvg } from "@/core/motion-doc/application/lucideIconSvg";
 import { getPaperImageFilterDefinition } from "@/core/motion-doc/application/shaders/paperImageFilterCatalog";
 import { resolveSlideThemeColors } from "@/core/motion-doc/application/slideTheme";
 import { MOTION_DOC_CANVAS_HEIGHT, MOTION_DOC_CANVAS_WIDTH } from "@/core/motion-doc/domain/viewport";
@@ -414,7 +414,7 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
     return renderMotionBlock(
       block,
       `<article class="block-card${cardLayoutClass}${cardWidthClass}">${
-        icon ? `<div class="block-card__icon">${renderLucideIcon(icon)}</div>` : ""
+        icon ? `<div class="block-card__icon">${renderLucideIconSvg(icon)}</div>` : ""
       }<div class="block-card__content"><h3>${escapeHtml(String(block.props.title ?? "Card"))}</h3><p>${escapeHtml(String(block.props.text ?? ""))}</p></div></article>`
     );
   }
@@ -527,7 +527,7 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
 
     return renderMotionBlock(
       block,
-      `<article class="block-chart${chartWidthClass}" style="${escapeAttribute(inlineCss({ "--chart-color": chartColor, "--chart-font-size": `${chartFontSize}px`, "--chart-height": `${chartHeight}px`, "--chart-weight": String(Math.min(Math.max(numberProp(block.props.strokeWidth, 16), 2), 32)), ...(chartTextColor ? { "--motion-fg": chartTextColor, "--motion-muted": chartTextColor } : {}) }))}"><h3>${escapeHtml(String(block.props.title ?? "Chart"))}</h3>${chartBody}</article>`
+      `<article class="block-chart${chartWidthClass}" data-chart-type="${escapeAttribute(chartType)}" style="${escapeAttribute(inlineCss({ "--chart-color": chartColor, "--chart-font-size": `${chartFontSize}px`, "--chart-height": `${chartHeight}px`, "--chart-weight": String(Math.min(Math.max(numberProp(block.props.strokeWidth, 16), 2), 32)), ...(chartTextColor ? { "--motion-fg": chartTextColor, "--motion-muted": chartTextColor } : {}) }))}"><h3>${escapeHtml(String(block.props.title ?? "Chart"))}</h3>${chartBody}</article>`
     );
   }
 
@@ -535,18 +535,14 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
     const strokeWidth = numberProp(block.props.strokeWidth, 2);
     return renderMotionBlock(
       block,
-      `<div class="block-icon">${renderLucideIcon(String(block.props.icon ?? "Sparkles"), strokeWidth)}</div>`
+      `<div class="block-icon">${renderLucideIconSvg(String(block.props.icon ?? "Sparkles"), { strokeWidth })}</div>`
     );
   }
 
   if (block.type === "Shape") {
-    const shapeText = String(block.props.text ?? "");
-    const textLayer = shapeText
-      ? `<span class="block-shape__text" style="${escapeAttribute(inlineCss({ color: stringProp(block.props.textColor ?? block.props.color) ?? "#ffffff", fontSize: `${numberProp(block.props.fontSize, 18)}px`, fontWeight: String(numberProp(block.props.fontWeight, 650)) }))}">${escapeHtml(shapeText)}</span>`
-      : "";
     return renderMotionBlock(
       block,
-      `<div class="block-shape">${renderShapeSvg(block.props, blockIndex)}${textLayer}</div>`
+      `<div class="block-shape">${renderShapeSvg(block.props, blockIndex)}</div>`
     );
   }
 
@@ -1270,16 +1266,23 @@ function renderLineEndpoint(endpoint: string, side: "end" | "start", stroke: str
   if (endpoint === "none" || !endpoint) return "";
   const color = stroke === "transparent" ? "#e5e7eb" : stroke;
   const scale = Math.min(Math.max(size, 25), 300) / 100;
-  return `<span class="shape-line-endpoint shape-line-endpoint--${side} shape-line-endpoint--${escapeAttribute(endpoint)}" style="${escapeAttribute(inlineCss({ "--line-endpoint-color": color, "--line-endpoint-scale": String(scale) }))}"></span>`;
+  const geometry = endpoint === "circle"
+    ? `<circle cx="10" cy="10" fill="${escapeAttribute(color)}" r="9"/>`
+    : endpoint === "bar"
+      ? `<path d="M10 1V19" fill="none" stroke="${escapeAttribute(color)}" stroke-linecap="round" stroke-width="3" vector-effect="non-scaling-stroke"/>`
+      : `<path d="${side === "start" ? "M19 1L1 10 19 19Z" : "M1 1L19 10 1 19Z"}" fill="${escapeAttribute(color)}"/>`;
+  const width = endpoint === "bar" ? 4 * scale : endpoint === "circle" ? 10 * scale : 11 * scale;
+  const height = endpoint === "bar" ? 16 * scale : endpoint === "circle" ? 10 * scale : 12 * scale;
+  return `<svg aria-hidden="true" class="shape-line-vector-endpoint shape-line-vector-endpoint--${side}" preserveAspectRatio="none" viewBox="0 0 20 20" style="${escapeAttribute(inlineCss({ height: `${height}px`, width: `${width}px` }))}">${geometry}</svg>`;
 }
 
 function shapeSvg(shape: string, fill: string, stroke: string, strokeWidth: number, sides: number, points: number, lineStyle: string, arrowStart: string, arrowEnd: string, radius: number) {
   if (shape === "circle") {
-    return `<circle cx="50" cy="50" fill="${escapeAttribute(fill)}" r="48" stroke="${escapeAttribute(stroke)}" stroke-width="${strokeWidth}" />`;
+    return `<circle cx="50" cy="50" fill="${escapeAttribute(fill)}" r="48" stroke="${escapeAttribute(stroke)}" stroke-width="${strokeWidth}" vector-effect="non-scaling-stroke" />`;
   }
 
   if (shape === "triangle" || shape === "polygon") {
-    return `<path d="${escapeAttribute(generatePolygonPath(shape === "triangle" ? 3 : sides))}" fill="${escapeAttribute(fill)}" stroke="${escapeAttribute(stroke)}" stroke-linejoin="round" stroke-width="${strokeWidth}" />`;
+    return `<path d="${escapeAttribute(generatePolygonPath(shape === "triangle" ? 3 : sides))}" fill="${escapeAttribute(fill)}" stroke="${escapeAttribute(stroke)}" stroke-linejoin="round" stroke-width="${strokeWidth}" vector-effect="non-scaling-stroke" />`;
   }
 
   if (shape === "line") {
@@ -1291,11 +1294,11 @@ function shapeSvg(shape: string, fill: string, stroke: string, strokeWidth: numb
 
   if (shape === "arrow") {
     const arrowStroke = escapeAttribute(stroke === "transparent" ? fill : stroke);
-    return `<g fill="none" stroke="${arrowStroke}" stroke-linecap="round" stroke-linejoin="round" stroke-width="${strokeWidth}"><path d="M10 74 L88 18" /><path d="M56 18 H88 V50" /></g>`;
+    return `<path d="M2 22H58V2L98 50 58 98V78H2Z" fill="${escapeAttribute(fill)}" stroke="${arrowStroke}" stroke-linejoin="round" stroke-width="${strokeWidth}" vector-effect="non-scaling-stroke" />`;
   }
 
   if (shape === "star") {
-    return `<path d="${escapeAttribute(generateStarPath(points))}" fill="${escapeAttribute(fill)}" stroke="${escapeAttribute(stroke)}" stroke-linejoin="round" stroke-width="${strokeWidth}" />`;
+    return `<path d="${escapeAttribute(generateStarPath(points))}" fill="${escapeAttribute(fill)}" stroke="${escapeAttribute(stroke)}" stroke-linejoin="round" stroke-width="${strokeWidth}" vector-effect="non-scaling-stroke" />`;
   }
 
   const customPaths: Record<string, string> = {
@@ -1305,9 +1308,9 @@ function shapeSvg(shape: string, fill: string, stroke: string, strokeWidth: numb
     hexagon: "M20 1H80L99 50 80 99H20L1 50Z",
     parallelogram: "M24 1H99L76 99H1Z"
   };
-  if (customPaths[shape]) return `<path d="${customPaths[shape]}" fill="${escapeAttribute(fill)}" stroke="${escapeAttribute(stroke)}" stroke-linejoin="round" stroke-width="${strokeWidth}" />`;
+  if (customPaths[shape]) return `<path d="${customPaths[shape]}" fill="${escapeAttribute(fill)}" stroke="${escapeAttribute(stroke)}" stroke-linejoin="round" stroke-width="${strokeWidth}" vector-effect="non-scaling-stroke" />`;
 
-  return `<rect fill="${escapeAttribute(fill)}" height="100" rx="${radius}" stroke="${escapeAttribute(stroke)}" stroke-width="${strokeWidth}" width="100" x="0" y="0" />`;
+  return `<rect fill="${escapeAttribute(fill)}" height="100" rx="${radius}" stroke="${escapeAttribute(stroke)}" stroke-width="${strokeWidth}" vector-effect="non-scaling-stroke" width="100" x="0" y="0" />`;
 }
 
 function generatePolygonPath(sides: number, cx = 50, cy = 50, r = 48) {
@@ -1336,34 +1339,6 @@ function generateStarPath(points: number, cx = 50, cy = 50, outerR = 48) {
   return `M${vertices.join(" L")} Z`;
 }
 
-function renderLucideIcon(name: string, strokeWidth = 2) {
-  if (!isSlideXIconName(name)) {
-    return "";
-  }
-
-  const children = lucideIconPaths[name]
-    .map((path) => {
-      const [shape, ...parts] = path.split(" ");
-
-      if (shape === "circle") {
-        return `<circle cx="${parts[0]}" cy="${parts[1]}" r="${parts[2]}" />`;
-      }
-
-      if (shape === "ellipse") {
-        return `<ellipse cx="${parts[0]}" cy="${parts[1]}" rx="${parts[2]}" ry="${parts[3]}" />`;
-      }
-
-      if (shape === "rect") {
-        return `<rect x="${parts[0]}" y="${parts[1]}" width="${parts[2]}" height="${parts[3]}" rx="${parts[4]}" ry="${parts[5]}" />`;
-      }
-
-      return `<path d="${escapeAttribute(shape === "path" ? parts.join(" ") : path)}" />`;
-    })
-    .join("");
-
-  return `<svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="${strokeWidth}" viewBox="0 0 24 24">${children}</svg>`;
-}
-
 function inlineCss(styles: Record<string, string>) {
   return Object.entries(styles)
     .map(([key, value]) => `${key}:${value}`)
@@ -1389,7 +1364,8 @@ function escapeCdata(value: string) {
 
 export function slugifyFilename(name: string) {
   return name
+    .normalize("NFKC")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
     .replace(/^-+|-+$/g, "") || "slidex-deck";
 }

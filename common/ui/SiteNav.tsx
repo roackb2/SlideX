@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, Globe2, Menu, X } from "lucide-react";
+import { appRoutes } from "@/common/lib/appRoutes";
 import { useI18n } from "@/common/lib/I18nProvider";
 
 const languages = [
@@ -81,7 +82,7 @@ export function SiteNav() {
             <Link className="inline-flex h-10 items-center whitespace-nowrap px-3 text-[15px] font-medium tracking-[-0.02em] text-white/58 transition-colors hover:text-white" href={localePath("/login")}>
               {isZh ? "登入" : "Log in"}
             </Link>
-            <Link className="group inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-md bg-[#f4f4f1] px-4 text-[14px] font-semibold text-[#0b0c0f] transition-colors hover:bg-white active:translate-y-px" href="/workspace/pitch">
+            <Link className="group inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-md bg-[#f4f4f1] px-4 text-[14px] font-semibold text-[#0b0c0f] transition-colors hover:bg-white active:translate-y-px" href={appRoutes.workspace}>
               {isZh ? "開始使用" : "Start using"}
               <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </Link>
@@ -157,7 +158,7 @@ export function SiteNav() {
               <Link className="inline-flex h-11 items-center justify-center rounded-md border border-white/[0.14] text-[14px] font-semibold text-white" href={localePath("/login")}>
                 {isZh ? "登入" : "Log in"}
               </Link>
-              <Link className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#f4f4f1] text-[14px] font-semibold text-[#0b0c0f]" href="/workspace/pitch">
+              <Link className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#f4f4f1] text-[14px] font-semibold text-[#0b0c0f]" href={appRoutes.workspace}>
                 {isZh ? "開始使用" : "Start using"}
                 <ArrowUpRight className="h-4 w-4" />
               </Link>

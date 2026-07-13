@@ -74,6 +74,7 @@ export type PitchWorkspaceProps = {
   moveSelectedBlocksToEdge: (edge: "back" | "front") => void;
   newProject: () => void;
   notice: string;
+  openPresentationPreview: () => void;
   onAddActiveSlideComment: (comment: string) => void;
   onPassActiveSlideComment: (commentId: string) => void;
   projectName: string;

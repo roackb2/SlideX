@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DesktopWelcome } from "@/features/pitch/ui/DesktopWelcome";
 
 import { PitchWorkspace } from "@/features/pitch/ui/PitchWorkspace";
 import { ExportModal, type ExportFormat } from "@/features/pitch/ui/export/ExportModal";
@@ -21,13 +20,24 @@ import { slideCommentsDeckId } from "@/features/pitch/infrastructure/slideCommen
 import { useMobilePitchViewport } from "@/features/pitch/ui/hooks/useMobilePitchViewport";
 import { useSlideComments } from "@/features/pitch/ui/hooks/useSlideComments";
 import { MobilePitchViewer } from "@/features/pitch/ui/mobile/MobilePitchViewer";
-import { MobilePitchWelcome } from "@/features/pitch/ui/mobile/MobilePitchWelcome";
+import { PresentationPreviewModal } from "@/features/pitch/ui/PresentationPreviewModal";
 
-export function MotionDocApp() {
+export type MotionDocInitialProject = {
+  name: string;
+  source: string;
+  templateId?: string;
+};
+
+type MotionDocAppProps = {
+  initialProject?: MotionDocInitialProject;
+  onProjectSourceChange?: (source: string, title: string) => void;
+};
+
+export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDocAppProps = {}) {
   const isMobileViewport = useMobilePitchViewport();
-  const [source, setSource] = useState(defaultMdx);
+  const [source, setSource] = useState(initialProject?.source ?? defaultMdx);
   const [replayNonce, setReplayNonce] = useState(0);
-  const [selectedTemplateId, setSelectedTemplateId] = useState(defaultTemplate.id);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(initialProject?.templateId ?? defaultTemplate.id);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [notice, setNotice] = useState("Ready");
   const [draggedBlockIndex, setDraggedBlockIndex] = useState<number | null>(null);
@@ -35,6 +45,7 @@ export function MotionDocApp() {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [isPresentationPreviewOpen, setIsPresentationPreviewOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [fileModalMode, setFileModalMode] = useState<"export" | "import">("export");
   const [isCanvasGridVisible, setIsCanvasGridVisible] = useState(false);
@@ -93,7 +104,6 @@ export function MotionDocApp() {
   );
   const {
     isMounted,
-    hasEnteredPitch,
     isProjectDirty,
     markProjectDirty,
     newProject,
@@ -101,6 +111,7 @@ export function MotionDocApp() {
   } = usePitchProject({
     canvasSource,
     documentTitle: sliderDocument.title,
+    initialProject,
     resetSelection: clearBlockSelection,
     setActiveSlideIndex,
     setNotice,
@@ -183,6 +194,14 @@ export function MotionDocApp() {
   }, [sliderDocument.scenes.length]);
 
   useEffect(() => {
+    if (!onProjectSourceChange || !initialProject) return;
+    const saveTimer = window.setTimeout(() => {
+      onProjectSourceChange(source, projectName);
+    }, 450);
+    return () => window.clearTimeout(saveTimer);
+  }, [initialProject, onProjectSourceChange, projectName, source]);
+
+  useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       if (!isExportMenuOpen) {
         return;
@@ -235,6 +254,7 @@ export function MotionDocApp() {
     closeExportMenu: () => setIsExportMenuOpen(false),
     closeMobileInspector: () => setIsMobileInspectorOpen(false),
     closeMobileSidebar: () => setIsMobileSidebarOpen(false),
+    closePresentationPreview: () => setIsPresentationPreviewOpen(false),
     closeTemplateModal: () => setIsTemplateModalOpen(false),
     copySelectedBlock: pitchCommands.copySelectedBlock,
     cutSelectedBlocks: pitchCommands.cutSelectedBlocks,
@@ -248,6 +268,7 @@ export function MotionDocApp() {
     isExportMenuOpen,
     isMobileInspectorOpen,
     isMobileSidebarOpen,
+    isPresentationPreviewOpen,
     isTemplateModalOpen,
     newProject: startNewProject,
     nudgeSelectedBlocks: pitchCommands.nudgeSelectedBlocks,
@@ -262,19 +283,6 @@ export function MotionDocApp() {
 
   if (!isMounted) {
     return <div className="flex h-screen w-full bg-[#050505]" />;
-  }
-
-  if (isMobileViewport && !hasEnteredPitch) {
-    return <MobilePitchWelcome importPitchFile={importPitchFile} newProject={startNewProject} />;
-  }
-
-  if (!hasEnteredPitch) {
-    return (
-      <DesktopWelcome
-        importPitchFile={importPitchFile}
-        newProject={startNewProject}
-      />
-    );
   }
 
   if (isMobileViewport) {
@@ -384,6 +392,7 @@ export function MotionDocApp() {
       moveSelectedBlocksToEdge={pitchCommands.moveSelectedBlocksToEdge}
       newProject={startNewProject}
       notice={notice}
+      openPresentationPreview={() => setIsPresentationPreviewOpen(true)}
       onAddActiveSlideComment={(comment) => addSlideComment(activeSlideIndex, comment)}
       onPassActiveSlideComment={(commentId) => passSlideComment(activeSlideIndex, commentId)}
       projectName={projectName}
@@ -429,6 +438,19 @@ export function MotionDocApp() {
       useSelectedImageAsBackground={pitchCommands.useSelectedImageAsBackground}
       uploadImageForBlock={pitchCommands.uploadImageForBlock}
       uploadVideoForBlock={pitchCommands.uploadVideoForBlock}
+    />
+    <PresentationPreviewModal
+      activeSlideIndex={activeSlideIndex}
+      documentTitle={sliderDocument.title}
+      isOpen={isPresentationPreviewOpen}
+      onClose={() => setIsPresentationPreviewOpen(false)}
+      onExport={() => {
+        setIsPresentationPreviewOpen(false);
+        setFileModalMode("export");
+        setIsExportMenuOpen(true);
+      }}
+      scenes={sliderDocument.scenes}
+      source={canvasSource}
     />
     <ExportModal
       isOpen={isExportMenuOpen}

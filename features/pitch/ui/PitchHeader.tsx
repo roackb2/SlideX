@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState, type RefObject } from "react";
 import * as Popover from "@radix-ui/react-popover";
-import { Check, ChevronDown, Download, Layers, PanelRight, RotateCcw, Undo2 } from "lucide-react";
+import { Check, ChevronDown, Download, Layers, PanelRight, Play, Undo2 } from "lucide-react";
+import { appRoutes } from "@/common/lib/appRoutes";
 
 export function PitchHeader({
   exportMenuRef,
@@ -15,7 +16,7 @@ export function PitchHeader({
   setZoomLevel,
   actualScale,
 
-  onReplay,
+  onPlay,
   onUndo,
   onToggleInspector,
   onToggleSidebar,
@@ -31,7 +32,7 @@ export function PitchHeader({
   setZoomLevel: (z: number | "fit") => void;
   actualScale: number;
 
-  onReplay: () => void;
+  onPlay: () => void;
   onUndo: () => void;
   onToggleInspector: () => void;
   onToggleSidebar: () => void;
@@ -56,9 +57,9 @@ export function PitchHeader({
         </button>
 
         <Link
-          aria-label="SlideX home"
+          aria-label="SlideX workspace home"
           className="flex items-center whitespace-nowrap text-sm font-semibold tracking-tight text-white transition-opacity hover:opacity-85 active:opacity-70"
-          href="/"
+          href={appRoutes.workspace}
         >
           <img src="/logo.png" alt="SlideX" className="h-auto w-[68px] rounded object-contain sm:w-[84px]" />
         </Link>
@@ -124,15 +125,15 @@ export function PitchHeader({
           <span className="hidden sm:inline">Undo</span>
         </button>
 
-        {/* Replay action button */}
+        {/* Presentation preview action button */}
         <button
           className="hidden h-8.5 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02] hover:bg-neutral-900/50 hover:text-neutral-200 active:scale-[0.96] sm:flex"
-          onClick={onReplay}
+          onClick={onPlay}
           type="button"
-          title="Replay"
+          title="Play presentation"
         >
-          <RotateCcw size={14} />
-          <span className="hidden sm:inline">Replay</span>
+          <Play size={14} fill="currentColor" />
+          <span className="hidden sm:inline">Play</span>
         </button>
 
         {/* Export visual white pill */}

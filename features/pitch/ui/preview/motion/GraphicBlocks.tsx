@@ -24,7 +24,7 @@ export function IconBlock({
 
   return (
     <MotionBlock
-      className={`inline-flex h-full w-full items-center justify-center text-[var(--slide-fg)] ${
+      className={`inline-flex h-full w-full items-center justify-center text-[var(--block-fg,var(--slide-fg))] ${
         hasSurface
           ? "border border-[var(--slide-border)] bg-[var(--slide-card)] p-4 shadow-xl shadow-black/20 backdrop-blur"
           : "bg-transparent p-0"
@@ -43,8 +43,6 @@ export function ShapeBlock({
   arrowStart = "none",
   arrowStartSize = 100,
   fill = "rgba(142,165,255,0.72)",
-  fontSize = 18,
-  fontWeight = 650,
   lineStyle = "solid",
   mask = "none",
   operation = "none",
@@ -55,8 +53,6 @@ export function ShapeBlock({
   sides,
   stroke = "#ffffff",
   strokeWidth = 2,
-  text = "",
-  textColor = "#ffffff",
   ...animation
 }: AnimationProps & {
   arrowEnd?: string;
@@ -64,8 +60,6 @@ export function ShapeBlock({
   arrowStart?: string;
   arrowStartSize?: number | string;
   fill?: string;
-  fontSize?: number | string;
-  fontWeight?: number | string;
   lineStyle?: string;
   mask?: string;
   operation?: string;
@@ -75,8 +69,6 @@ export function ShapeBlock({
   sides?: number | string;
   stroke?: string;
   strokeWidth?: number | string;
-  text?: string;
-  textColor?: string;
 } & RadiusProps) {
   const maskId = useId();
   const normalizedShape = normalizeShape(shape);
@@ -125,11 +117,6 @@ export function ShapeBlock({
         <LineEndpoint color={shapeStroke === "transparent" ? "#e5e7eb" : shapeStroke} endpoint={arrowStart} side="start" size={arrowStartSize} />
         <LineEndpoint color={shapeStroke === "transparent" ? "#e5e7eb" : shapeStroke} endpoint={arrowEnd} side="end" size={arrowEndSize} />
       </> : null}
-      {text && normalizedShape !== "line" ? (
-        <span className="pointer-events-none absolute inset-[6%] flex items-center justify-center overflow-hidden text-center leading-tight" style={{ color: cssColor(textColor) ?? "#ffffff", fontSize: normalizePixelValue(fontSize, 18), fontWeight: normalizePixelValue(fontWeight, 650) }}>
-          {text}
-        </span>
-      ) : null}
     </MotionBlock>
   );
 }
@@ -230,16 +217,18 @@ function renderShape(
   arrowEnd: string,
   radius: number
 ) {
+  const shapeStyle = { vectorEffect: "non-scaling-stroke" as const };
+
   if (shape === "circle") {
-    return <circle cx="50" cy="50" fill={fill} r="48" stroke={stroke} strokeWidth={strokeWidth} />;
+    return <circle cx="50" cy="50" fill={fill} r="48" stroke={stroke} strokeWidth={strokeWidth} style={shapeStyle} />;
   }
 
   if (shape === "triangle") {
-    return <path d={generatePolygonPath(3)} fill={fill} stroke={stroke} strokeLinejoin="round" strokeWidth={strokeWidth} />;
+    return <path d={generatePolygonPath(3)} fill={fill} stroke={stroke} strokeLinejoin="round" strokeWidth={strokeWidth} style={shapeStyle} />;
   }
 
   if (shape === "polygon") {
-    return <path d={generatePolygonPath(sides)} fill={fill} stroke={stroke} strokeLinejoin="round" strokeWidth={strokeWidth} />;
+    return <path d={generatePolygonPath(sides)} fill={fill} stroke={stroke} strokeLinejoin="round" strokeWidth={strokeWidth} style={shapeStyle} />;
   }
 
   if (shape === "line") {
@@ -252,16 +241,11 @@ function renderShape(
 
   if (shape === "arrow") {
     const resolvedStroke = stroke === "transparent" ? fill : stroke;
-    return (
-      <g fill="none" stroke={resolvedStroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}>
-        <path d="M10 74 L88 18" />
-        <path d="M56 18 H88 V50" />
-      </g>
-    );
+    return <path d="M2 22H58V2L98 50 58 98V78H2Z" fill={fill} stroke={resolvedStroke} strokeLinejoin="round" strokeWidth={strokeWidth} style={shapeStyle} />;
   }
 
   if (shape === "star") {
-    return <path d={generateStarPath(starPoints)} fill={fill} stroke={stroke} strokeLinejoin="round" strokeWidth={strokeWidth} />;
+    return <path d={generateStarPath(starPoints)} fill={fill} stroke={stroke} strokeLinejoin="round" strokeWidth={strokeWidth} style={shapeStyle} />;
   }
 
   const customPaths: Partial<Record<ReturnType<typeof normalizeShape>, string>> = {
@@ -271,25 +255,31 @@ function renderShape(
     hexagon: "M20 1H80L99 50 80 99H20L1 50Z",
     parallelogram: "M24 1H99L76 99H1Z"
   };
-  if (customPaths[shape]) return <path d={customPaths[shape]} fill={fill} stroke={stroke} strokeLinejoin="round" strokeWidth={strokeWidth} />;
+  if (customPaths[shape]) return <path d={customPaths[shape]} fill={fill} stroke={stroke} strokeLinejoin="round" strokeWidth={strokeWidth} style={shapeStyle} />;
 
-  return <rect fill={fill} height="100" rx={radius} stroke={stroke} strokeWidth={strokeWidth} width="100" x="0" y="0" />;
+  return <rect fill={fill} height="100" rx={radius} stroke={stroke} strokeWidth={strokeWidth} style={shapeStyle} width="100" x="0" y="0" />;
 }
 
 function LineEndpoint({ color, endpoint, side, size }: { color: string; endpoint: string; side: "end" | "start"; size: number | string }) {
   if (endpoint === "none" || !endpoint) return null;
   const scale = Math.min(Math.max(Number(size) || 100, 25), 300) / 100;
   const sidePosition = side === "start" ? { left: 0 } : { right: 0 };
-  if (endpoint === "circle") {
-    return <span aria-hidden="true" className="pointer-events-none absolute top-1/2 rounded-full" style={{ ...sidePosition, background: color, height: 10 * scale, width: 10 * scale, transform: `translate(${side === "start" ? "-50%" : "50%"}, -50%)` }} />;
-  }
-  if (endpoint === "bar") {
-    return <span aria-hidden="true" className="pointer-events-none absolute top-1/2" style={{ ...sidePosition, background: color, height: 16 * scale, width: Math.max(2 * scale, 1), transform: `translate(${side === "start" ? "-50%" : "50%"}, -50%)` }} />;
-  }
-  if (endpoint === "arrow") {
-    return <span aria-hidden="true" className="pointer-events-none absolute top-1/2 h-0 w-0" style={{ ...sidePosition, borderBottom: `${6 * scale}px solid transparent`, borderTop: `${6 * scale}px solid transparent`, ...(side === "start" ? { borderRight: `${10 * scale}px solid ${color}` } : { borderLeft: `${10 * scale}px solid ${color}` }), transform: "translateY(-50%)" }} />;
-  }
-  return null;
+  const width = endpoint === "bar" ? 4 * scale : endpoint === "circle" ? 10 * scale : 11 * scale;
+  const height = endpoint === "bar" ? 16 * scale : endpoint === "circle" ? 10 * scale : 12 * scale;
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="pointer-events-none absolute top-1/2 overflow-visible"
+      preserveAspectRatio="none"
+      style={{ ...sidePosition, height, width, transform: `translate(${side === "start" ? "-50%" : "50%"}, -50%)` }}
+      viewBox="0 0 20 20"
+    >
+      {endpoint === "circle" ? <circle cx="10" cy="10" fill={color} r="9" /> : null}
+      {endpoint === "bar" ? <path d="M10 1V19" fill="none" stroke={color} strokeLinecap="round" strokeWidth="3" vectorEffect="non-scaling-stroke" /> : null}
+      {endpoint === "arrow" ? <path d={side === "start" ? "M19 1L1 10 19 19Z" : "M1 1L19 10 1 19Z"} fill={color} /> : null}
+    </svg>
+  );
 }
 
 function LucideSvg({ name, strokeWidth }: { name: string; strokeWidth: number }) {

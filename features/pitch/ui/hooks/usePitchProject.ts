@@ -11,6 +11,10 @@ export type NewPitchProjectOptions = {
 type UsePitchProjectArgs = {
   canvasSource: string;
   documentTitle: string;
+  initialProject?: {
+    name: string;
+    source: string;
+  };
   resetSelection: () => void;
   setActiveSlideIndex: Dispatch<SetStateAction<number>>;
   setNotice: Dispatch<SetStateAction<string>>;
@@ -21,32 +25,25 @@ type UsePitchProjectArgs = {
 
 export function usePitchProject({
   resetSelection,
+  initialProject,
   setActiveSlideIndex,
   setNotice,
   setReplayNonce,
   setSource,
   undoStackRef
 }: UsePitchProjectArgs) {
-  const [projectName, setProjectName] = useState("Untitled");
+  const [projectName, setProjectName] = useState(initialProject?.name ?? "Untitled");
   const [isProjectDirty, setIsProjectDirty] = useState(false);
-  const [hasEnteredPitch, setHasEnteredPitch] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    if (typeof window !== "undefined" && localStorage.getItem("slidex_has_completed_onboarding") === "true") {
-      setHasEnteredPitch(true);
-    }
   }, []);
 
   function newProject(options: NewPitchProjectOptions = {}) {
     setSource(options.source ?? defaultMdx);
     setProjectName(options.name ?? "Untitled");
     setIsProjectDirty(false);
-    setHasEnteredPitch(true);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("slidex_has_completed_onboarding", "true");
-    }
     undoStackRef.current = [];
     setActiveSlideIndex(0);
     resetSelection();
@@ -56,7 +53,6 @@ export function usePitchProject({
 
   return {
     isMounted,
-    hasEnteredPitch,
     isProjectDirty,
     markProjectDirty: () => setIsProjectDirty(true),
     newProject,

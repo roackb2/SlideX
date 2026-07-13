@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowUpRight, Monitor } from "lucide-react";
+import { appRoutes } from "@/common/lib/appRoutes";
 import { useI18n } from "@/common/lib/I18nProvider";
 
 export function DownloadPage() {
@@ -18,7 +19,7 @@ export function DownloadPage() {
         <p className="mt-6 max-w-xl text-[17px] leading-8 text-white/58">
           {isZh ? "目前可以直接使用瀏覽器中的 Pitch 工作區。Mac 版還沒有可下載版本。" : "Pitch is available in the browser today. A Mac download is not available yet."}
         </p>
-        <Link className="group mt-8 inline-flex h-12 items-center gap-2 rounded-md bg-[#f4f4f1] px-5 text-[14px] font-semibold text-[#0b0c0f] transition-colors hover:bg-white active:translate-y-px" href="/workspace/pitch">
+        <Link className="group mt-8 inline-flex h-12 items-center gap-2 rounded-md bg-[#f4f4f1] px-5 text-[14px] font-semibold text-[#0b0c0f] transition-colors hover:bg-white active:translate-y-px" href={appRoutes.workspace}>
           {isZh ? "開啟網頁工作區" : "Open web workspace"}
           <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </Link>
