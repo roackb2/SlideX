@@ -15,8 +15,8 @@ import { usePitchShortcuts } from "@/features/pitch/ui/hooks/usePitchShortcuts";
 import { usePitchUndo } from "@/features/pitch/ui/hooks/usePitchUndo";
 import { defaultTemplate } from "@/core/motion-doc/presets/templates";
 import { defaultCanvasTool, type CanvasTool } from "@/features/pitch/application/canvasTools";
-import type { AgentSession } from "@/features/pitch/domain/agentRun";
 import { PitchAgentPanel } from "@/features/pitch/ui/agent/PitchAgentPanel";
+import { PitchAgentProvider } from "@/features/pitch/ui/agent/PitchAgentProvider";
 import { importPitchProjectFile } from "@/features/pitch/infrastructure/pitchImport";
 import { slideCommentsDeckId } from "@/features/pitch/infrastructure/slideComments";
 import { useMobilePitchViewport } from "@/features/pitch/ui/hooks/useMobilePitchViewport";
@@ -35,9 +35,14 @@ export type MotionDocInitialProject = {
 type MotionDocAppProps = {
   initialProject?: MotionDocInitialProject;
   onProjectSourceChange?: (source: string, title: string) => void;
+  presentationId?: string;
 };
 
-export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDocAppProps = {}) {
+export function MotionDocApp({
+  initialProject,
+  onProjectSourceChange,
+  presentationId
+}: MotionDocAppProps = {}) {
   const isMobileViewport = useMobilePitchViewport();
   const [source, setSource] = useState(initialProject?.source ?? defaultMdx);
   const [replayNonce, setReplayNonce] = useState(0);
@@ -108,13 +113,10 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
     [activeSlide, activeSlideIndex, selectedBlockIndex, selectedBlockIndices]
   );
   const {
-    isMounted,
     isProjectDirty,
     markProjectDirty,
     newProject,
-    projectId,
     projectName,
-    restoreProject,
   } = usePitchProject({
     canvasSource,
     documentTitle: sliderDocument.title,
@@ -148,16 +150,11 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
   });
   const applyAgentMotionDoc = useCallback((motionDoc: string, summary: string) => {
     commitSource(motionDoc);
+    onProjectSourceChange?.(motionDoc, projectName);
     setReplayNonce((value) => value + 1);
     clearBlockSelection();
     setNotice(summary || "Agent changes applied");
-  }, [clearBlockSelection, commitSource]);
-  const restoreAgentSession = useCallback((session: AgentSession): boolean => {
-    return restoreProject({
-      name: session.title,
-      source: session.latestMotionDoc
-    });
-  }, [restoreProject]);
+  }, [clearBlockSelection, commitSource, onProjectSourceChange, projectName]);
 
   const handleExportFromModal = useCallback(async (format: ExportFormat, filename: string) => {
     setIsExporting(true);
@@ -300,13 +297,9 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
     ungroupSelectedBlocks: pitchCommands.ungroupSelectedBlocks
   });
 
-  if (!isMounted) {
-    return <div className="flex h-dvh w-full bg-[#050505]" />;
-  }
-
-  if (isMobileViewport) {
-    return (
-      <>
+  const isAgentAvailable = isSlideXAgentEnabled && Boolean(presentationId);
+  const mobileExperience = (
+    <>
         <MobilePitchViewer
           activeSlideIndex={activeSlideIndex}
           comments={(slideComments[activeSlideIndex] ?? []).filter((comment) => comment.status === "open")}
@@ -337,22 +330,14 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
           onExport={handleExportFromModal}
           onImport={importPitchFile}
         />
-      </>
-    );
-  }
+    </>
+  );
 
-  return (
+  const desktopExperience = (
     <>
     <PitchWorkspace
-      agentPanel={isSlideXAgentEnabled ? (
-        <PitchAgentPanel
-          isOpen={isAgentPanelOpen}
-          onApplyMotionDoc={applyAgentMotionDoc}
-          onRestoreSession={restoreAgentSession}
-          projectId={projectId}
-          projectName={projectName}
-          source={source}
-        />
+      agentPanel={isAgentAvailable && isAgentPanelOpen ? (
+        <PitchAgentPanel />
       ) : null}
       activeSlide={activeSlide}
       activeSlideAccent={activeSlideAccent}
@@ -409,7 +394,8 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
       insertSnippet={pitchCommands.insertSnippet}
       insertSlideNearActive={pitchCommands.insertSlideNearActive}
       isCanvasGridVisible={isCanvasGridVisible}
-      isAgentPanelOpen={isSlideXAgentEnabled && isAgentPanelOpen}
+      isAgentEnabled={isAgentAvailable}
+      isAgentPanelOpen={isAgentAvailable && isAgentPanelOpen}
       isCodeEditorOpen={isCodeEditorOpen}
       isExportMenuOpen={isExportMenuOpen}
       isMobileInspectorOpen={isMobileInspectorOpen}
@@ -494,4 +480,16 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
     />
     </>
   );
+  const experience = isMobileViewport ? mobileExperience : desktopExperience;
+
+  return isAgentAvailable && presentationId ? (
+    <PitchAgentProvider
+      onApplyMotionDoc={applyAgentMotionDoc}
+      presentationId={presentationId}
+      presentationTitle={projectName}
+      source={source}
+    >
+      {experience}
+    </PitchAgentProvider>
+  ) : experience;
 }

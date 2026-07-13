@@ -7,7 +7,7 @@ const defaultModelKey = "sk-test-current-tab-only-key";
 const workspaceOwnerId = "test-workspace-user";
 const workspacePresentationId = "test-presentation";
 
-test("keeps one conversational deck across turns, refresh, and chat reset", async ({ page }) => {
+test("keeps one conversational deck across turns, refresh, detach, and explicit delete", async ({ page }) => {
   const agent = new DeterministicAgentApi();
   const { consoleErrors, panel } = await openAgentPanel(page, agent);
 
@@ -39,17 +39,55 @@ test("keeps one conversational deck across turns, refresh, and chat reset", asyn
   await resetDialog.getByRole("button", { name: "New conversation" }).click();
   await expect(panel.getByText("Edit this deck conversationally", { exact: true })).toBeVisible();
   await expect(panel.getByText(
-    "New conversation started. The current deck was kept.",
+    "New conversation started. The previous conversation was kept.",
     { exact: true }
   )).toBeVisible();
+  expect(agent.resets).toBe(0);
 
   await submitAgentMessage(page, "Add one final polish pass");
   await expect(panel.getByText("Turn 3 complete", { exact: true })).toBeVisible();
 
-  expect(agent.resets).toBe(1);
   expect(agent.startRequests).toHaveLength(3);
   expect(agent.startRequests[2]?.sessionId).toBeUndefined();
   expect(agent.startRequests[2]?.motionDoc).toBe(agent.producedMotionDocs[1]);
+
+  await panel.getByRole("button", { name: "Delete conversation" }).click();
+  const deleteDialog = page.getByRole("alertdialog", {
+    name: "Delete this conversation?"
+  });
+  await expect(deleteDialog).toBeVisible();
+  await deleteDialog.getByRole("button", { name: "Keep conversation" }).click();
+  await expect(panel.getByText("Turn 3 complete", { exact: true })).toBeVisible();
+  await panel.getByRole("button", { name: "Delete conversation" }).click();
+  await deleteDialog.getByRole("button", { name: "Delete conversation" }).click();
+  await expect(panel.getByText("Conversation deleted. The current deck was kept.", {
+    exact: true
+  })).toBeVisible();
+  expect(agent.resets).toBe(1);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("keeps the agent runtime and current-tab composer state when the panel remounts", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  agent.holdNextRun();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await setAgentApiKey(panel, "sk-panel-remount-key");
+  await page.getByLabel("Message the SlideX agent").fill("Keep running while hidden");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(panel.getByRole("button", { name: "Stop" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await expect(panel).toBeHidden();
+  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await expect(panel.getByRole("button", { name: "Stop" })).toBeVisible();
+  await panel.getByRole("button", { name: "Agent settings" }).click();
+  await expect(panel.getByLabel("OpenAI API key")).toHaveValue(
+    "sk-panel-remount-key"
+  );
+
+  await panel.getByRole("button", { name: "Stop" }).click();
+  await expect(panel.getByText("Run cancelled.", { exact: true })).toBeVisible();
   expect(consoleErrors).toEqual([]);
 });
 
@@ -147,19 +185,25 @@ test("resumes a refreshed active run from its persisted cursor", async ({ page }
   await submitAgentMessage(page, "Create the conversation");
   await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
   const runId = agent.startBackgroundRun("Continue from retained progress");
-  await page.evaluate(({ activeRunId }) => {
-    const projectId = sessionStorage.getItem("slidex_pitch_project_instance");
-    const existing = JSON.parse(
-      sessionStorage.getItem("slidex_agent_project_binding") ?? "{}"
-    ) as Record<string, unknown>;
-    sessionStorage.setItem("slidex_agent_project_binding", JSON.stringify({
-      ...existing,
-      projectId,
-      sessionId: "session-1",
-      runId: activeRunId,
-      afterSequence: 2
+  await page.evaluate(({ activeRunId, presentationId }) => {
+    const storageKey = "slidex_agent_presentation_bindings_v1";
+    const bindings = JSON.parse(
+      sessionStorage.getItem(storageKey) ?? "{}"
+    ) as Record<string, Record<string, unknown>>;
+    sessionStorage.setItem(storageKey, JSON.stringify({
+      ...bindings,
+      [presentationId]: {
+        ...bindings[presentationId],
+        presentationId,
+        sessionId: "session-1",
+        runId: activeRunId,
+        afterSequence: 2
+      }
     }));
-  }, { activeRunId: runId });
+  }, {
+    activeRunId: runId,
+    presentationId: workspacePresentationId
+  });
 
   await page.reload();
   await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
@@ -170,7 +214,7 @@ test("resumes a refreshed active run from its persisted cursor", async ({ page }
   expect(consoleErrors).toEqual([]);
 });
 
-test("isolates conversations when a same-name deck is imported", async ({ page }) => {
+test("keeps the selected conversation when content is imported into the same presentation", async ({ page }) => {
   const agent = new DeterministicAgentApi();
   const { consoleErrors, panel } = await openAgentPanel(page, agent);
 
@@ -189,10 +233,13 @@ test("isolates conversations when a same-name deck is imported", async ({ page }
   });
 
   await expect(fileDialog).toBeHidden();
-  await expect(panel.getByText("Edit this deck conversationally", { exact: true })).toBeVisible();
-  await expect.poll(() => agent.resets).toBe(1);
+  await expect(panel.getByText(
+    "Create a conversation for the first Untitled deck",
+    { exact: true }
+  )).toBeVisible();
+  expect(agent.resets).toBe(0);
 
-  await submitAgentMessage(page, "Create a conversation for the imported Untitled deck");
+  await submitAgentMessage(page, "Continue the conversation after importing content");
   await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
 
   expect(agent.startRequests).toHaveLength(2);
@@ -200,7 +247,7 @@ test("isolates conversations when a same-name deck is imported", async ({ page }
     "Untitled",
     "Untitled"
   ]);
-  expect(agent.startRequests[1]?.sessionId).toBeUndefined();
+  expect(agent.startRequests[1]?.sessionId).toBe("session-1");
   expect(agent.startRequests[1]?.motionDoc).toBe(importedMotionDoc);
   expect(consoleErrors).toEqual([]);
 });
@@ -367,16 +414,19 @@ async function openAgentPanel(
         id: ownerId
       }
     }));
-    localStorage.setItem(`slidex_local_presentations_v1:${ownerId}`, JSON.stringify([{
-      createdAt,
-      id: presentationId,
-      kind: "presentation",
-      lastOpenedAt: createdAt,
-      ownerId,
-      source,
-      title: "Untitled",
-      updatedAt: createdAt
-    }]));
+    const presentationsKey = `slidex_local_presentations_v1:${ownerId}`;
+    if (!localStorage.getItem(presentationsKey)) {
+      localStorage.setItem(presentationsKey, JSON.stringify([{
+        createdAt,
+        id: presentationId,
+        kind: "presentation",
+        lastOpenedAt: createdAt,
+        ownerId,
+        source,
+        title: "Untitled",
+        updatedAt: createdAt
+      }]));
+    }
   }, {
     createdAt: timestamp,
     ownerId: workspaceOwnerId,

@@ -10,7 +10,7 @@ import type { AddBlockType } from "@/features/pitch/ui/pitchOptions";
 export type SelectionMdx = { label: string; source: string };
 
 export type PitchWorkspaceProps = {
-  agentPanel: ReactNode;
+  agentPanel?: ReactNode;
   activeSlide: MotionDocScene | undefined;
   activeSlideAccent: string;
   activeSlideAlignX: string;
@@ -63,6 +63,7 @@ export type PitchWorkspaceProps = {
   insertSnippet: (code: string) => void;
   insertSlideNearActive: (placement: InsertSlidePlacement) => void;
   isCanvasGridVisible: boolean;
+  isAgentEnabled: boolean;
   isAgentPanelOpen: boolean;
   isCodeEditorOpen: boolean;
   isExportMenuOpen: boolean;

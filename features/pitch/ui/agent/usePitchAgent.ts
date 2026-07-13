@@ -16,9 +16,9 @@ import {
 } from "@/features/pitch/infrastructure/slidexAgentClient";
 import { slideXAgentIdentity } from "@/features/pitch/infrastructure/slidexAgentIdentity";
 import {
-  clearAgentProjectBinding,
-  readAgentProjectBinding,
-  writeAgentProjectBinding
+  clearAgentPresentationBinding,
+  readAgentPresentationBinding,
+  writeAgentPresentationBinding
 } from "@/features/pitch/infrastructure/slidexAgentPersistence";
 import type {
   AgentRunEvent,
@@ -32,7 +32,7 @@ const client = new SlideXAgentClient({
 });
 
 type AgentRunConsumer = ConversationRunConsumerService<{ runId: string }>;
-type AgentStatus = "idle" | "running" | "reconnecting" | "detached" | "error";
+export type AgentStatus = "idle" | "running" | "reconnecting" | "detached" | "error";
 
 export type PitchAgentMessage = {
   id: string;
@@ -40,7 +40,7 @@ export type PitchAgentMessage = {
   content: string;
 };
 
-type PendingMotionDoc = {
+export type PendingMotionDoc = {
   motionDoc: string;
   assistantMessage: string;
 };
@@ -50,15 +50,14 @@ type MotionDocReconciliation = {
   error?: string;
 };
 
-type UsePitchAgentInput = {
-  projectId: string;
-  projectName: string;
+export type PitchAgentRuntimeInput = {
+  presentationId: string;
+  presentationTitle: string;
   source: string;
   onApplyMotionDoc: (motionDoc: string, summary: string) => void;
-  onRestoreSession: (session: AgentSession) => boolean;
 };
 
-export function usePitchAgent(input: UsePitchAgentInput) {
+export function usePitchAgent(input: PitchAgentRuntimeInput) {
   const inputRef = useRef(input);
   const sourceRef = useRef(input.source);
 
@@ -73,13 +72,12 @@ export function usePitchAgent(input: UsePitchAgentInput) {
   const [activeRunId, setActiveRunId] = useState<string>();
   const [isHydrating, setIsHydrating] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const sessionIdRef = useRef<string | undefined>(undefined);
   const activeRunIdRef = useRef<string | undefined>(undefined);
   const activeSequenceRef = useRef<number | undefined>(undefined);
   const activeSourceRevisionRef = useRef<string | undefined>(undefined);
   const requestAbortRef = useRef<AbortController | undefined>(undefined);
-  const projectIdRef = useRef(input.projectId);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -115,8 +113,8 @@ export function usePitchAgent(input: UsePitchAgentInput) {
     } else if (afterSequence !== undefined) {
       activeSequenceRef.current = afterSequence;
     }
-    writeAgentProjectBinding(window.sessionStorage, {
-      projectId: inputRef.current.projectId,
+    writeAgentPresentationBinding(window.sessionStorage, {
+      presentationId: inputRef.current.presentationId,
       sessionId: currentSessionId,
       ...(runId ? { runId } : {}),
       ...(runId && activeSequenceRef.current !== undefined
@@ -127,6 +125,20 @@ export function usePitchAgent(input: UsePitchAgentInput) {
         : {})
     });
   }, []);
+
+  const resetRuntimeState = useCallback((nextNotice?: string) => {
+    activeSequenceRef.current = undefined;
+    activeSourceRevisionRef.current = undefined;
+    updateSessionId(undefined);
+    updateActiveRunId(undefined);
+    setMessages([]);
+    setTools([]);
+    setPendingMotionDoc(undefined);
+    setError(undefined);
+    setErrorCode(undefined);
+    setStatus("idle");
+    setNotice(nextNotice);
+  }, [updateActiveRunId, updateSessionId]);
 
   const setAssistantMessage = useCallback((content: string) => {
     setMessages((current) => {
@@ -239,50 +251,27 @@ export function usePitchAgent(input: UsePitchAgentInput) {
     }
   }, [handleEvent, persistBinding]);
 
-  const restoreSessionState = useCallback((
-    state: AgentSessionState,
-    options: { restoreProject?: boolean } = {}
-  ): boolean => {
-    if (options.restoreProject !== false
-      && !inputRef.current.onRestoreSession(state.session)) {
-      clearAgentProjectBinding(window.sessionStorage);
-      updateSessionId(undefined);
-      setNotice("The previous conversation was not restored because this deck has changed.");
-      return false;
-    }
-
+  const restoreSessionState = useCallback((state: AgentSessionState): void => {
     updateSessionId(state.session.id);
     setMessages(toPitchMessages(state.session));
     setError(undefined);
     setErrorCode(undefined);
     setPendingMotionDoc(undefined);
     setTools([]);
-    return true;
   }, [updateSessionId]);
 
   useEffect(() => {
-    const previousProjectId = projectIdRef.current;
-    const previousSessionId = sessionIdRef.current;
-    const projectChanged = previousProjectId !== input.projectId;
-    projectIdRef.current = input.projectId;
     requestAbortRef.current?.abort();
     const controller = new AbortController();
     requestAbortRef.current = controller;
-    updateSessionId(undefined);
-    updateActiveRunId(undefined);
-    activeSequenceRef.current = undefined;
-    activeSourceRevisionRef.current = undefined;
-    setMessages([]);
-    setTools([]);
-    setPendingMotionDoc(undefined);
-    setError(undefined);
-    setErrorCode(undefined);
-    setNotice(undefined);
-    setStatus("idle");
+    resetRuntimeState();
     setIsHydrating(false);
 
-    const binding = readAgentProjectBinding(window.sessionStorage, input.projectId);
-    if (!binding && !(projectChanged && previousSessionId)) {
+    const binding = readAgentPresentationBinding(
+      window.sessionStorage,
+      input.presentationId
+    );
+    if (!binding) {
       requestAbortRef.current = undefined;
       return () => controller.abort();
     }
@@ -290,22 +279,11 @@ export function usePitchAgent(input: UsePitchAgentInput) {
     setIsHydrating(true);
     void (async () => {
       try {
-        if (projectChanged && previousSessionId) {
-          try {
-            await client.resetSession(previousSessionId);
-          } catch (resetError) {
-            if (!isMissingSessionError(resetError)) {
-              setNotice("The new deck is isolated, but the previous conversation could not be closed.");
-            }
-          }
-        }
-        if (!binding) {
-          return;
-        }
         const state = await client.session(binding.sessionId, controller.signal);
-        if (controller.signal.aborted || !restoreSessionState(state)) {
+        if (controller.signal.aborted) {
           return;
         }
+        restoreSessionState(state);
         if (!state.activeRun) {
           persistBinding();
           return;
@@ -334,14 +312,13 @@ export function usePitchAgent(input: UsePitchAgentInput) {
           return;
         }
         if (isMissingSessionError(caught)) {
-          clearAgentProjectBinding(window.sessionStorage);
-          updateSessionId(undefined);
-          updateActiveRunId(undefined);
-          activeSequenceRef.current = undefined;
-          activeSourceRevisionRef.current = undefined;
-          setMessages([]);
-          setStatus("idle");
-          setNotice("The previous conversation was unavailable, so a new one will start.");
+          clearAgentPresentationBinding(
+            window.sessionStorage,
+            input.presentationId
+          );
+          resetRuntimeState(
+            "The previous conversation was unavailable, so a new one will start."
+          );
           return;
         }
         const message = errorMessage(caught);
@@ -359,19 +336,20 @@ export function usePitchAgent(input: UsePitchAgentInput) {
 
     return () => controller.abort();
   }, [
-    input.projectId,
+    input.presentationId,
     persistBinding,
+    resetRuntimeState,
     restoreSessionState,
     subscribeWithReconnect,
-    updateActiveRunId,
-    updateSessionId
+    updateActiveRunId
   ]);
 
   const submit = useCallback(async (message: string, llmApiKey: string) => {
     const trimmedMessage = message.trim();
     const trimmedApiKey = llmApiKey.trim();
     if (!trimmedMessage || !trimmedApiKey
-      || activeRunIdRef.current || isHydrating || isResetting) {
+      || activeRunIdRef.current || isHydrating || isDeleting
+      || isCheckingStatus) {
       return;
     }
 
@@ -396,7 +374,7 @@ export function usePitchAgent(input: UsePitchAgentInput) {
       const motionDoc = sourceRef.current;
       const sourceRevision = await hashSource(motionDoc);
       const request = {
-        title: inputRef.current.projectName,
+        title: inputRef.current.presentationTitle,
         message: trimmedMessage,
         motionDoc,
         sourceRevision,
@@ -413,7 +391,10 @@ export function usePitchAgent(input: UsePitchAgentInput) {
         if (!currentSessionId || !isMissingSessionError(caught)) {
           throw caught;
         }
-        clearAgentProjectBinding(window.sessionStorage);
+        clearAgentPresentationBinding(
+          window.sessionStorage,
+          inputRef.current.presentationId
+        );
         updateSessionId(undefined);
         setNotice("The previous conversation was unavailable, so this message started a new one.");
         accepted = await client.runs.start(request, controller.signal);
@@ -436,7 +417,8 @@ export function usePitchAgent(input: UsePitchAgentInput) {
         && sessionIdRef.current) {
         try {
           const state = await client.session(sessionIdRef.current, controller.signal);
-          if (state.activeRun && restoreSessionState(state, { restoreProject: false })) {
+          if (state.activeRun) {
+            restoreSessionState(state);
             acceptedRun = true;
             activeSourceRevisionRef.current = undefined;
             updateActiveRunId(state.activeRun.runId);
@@ -470,7 +452,8 @@ export function usePitchAgent(input: UsePitchAgentInput) {
     }
   }, [
     isHydrating,
-    isResetting,
+    isDeleting,
+    isCheckingStatus,
     persistBinding,
     restoreSessionState,
     setAssistantMessage,
@@ -546,16 +529,13 @@ export function usePitchAgent(input: UsePitchAgentInput) {
         return;
       }
       if (isMissingSessionError(caught)) {
-        clearAgentProjectBinding(window.sessionStorage);
-        activeSequenceRef.current = undefined;
-        activeSourceRevisionRef.current = undefined;
-        updateSessionId(undefined);
-        updateActiveRunId(undefined);
-        setMessages([]);
-        setTools([]);
-        setPendingMotionDoc(undefined);
-        setStatus("idle");
-        setNotice("The previous conversation was unavailable, so a new one will start.");
+        clearAgentPresentationBinding(
+          window.sessionStorage,
+          inputRef.current.presentationId
+        );
+        resetRuntimeState(
+          "The previous conversation was unavailable, so a new one will start."
+        );
         return;
       }
       setError(errorMessage(caught));
@@ -565,53 +545,61 @@ export function usePitchAgent(input: UsePitchAgentInput) {
         setIsCheckingStatus(false);
       }
     }
-  }, [isCheckingStatus, persistBinding, updateActiveRunId, updateSessionId]);
+  }, [
+    isCheckingStatus,
+    persistBinding,
+    resetRuntimeState,
+    updateActiveRunId,
+    updateSessionId
+  ]);
 
-  const resetConversation = useCallback(async () => {
-    if (isResetting) {
+  const startNewConversation = useCallback(() => {
+    if (activeRunIdRef.current || isHydrating || isDeleting || isCheckingStatus) {
       return;
     }
-    setIsResetting(true);
-    requestAbortRef.current?.abort();
+    clearAgentPresentationBinding(
+      window.sessionStorage,
+      inputRef.current.presentationId
+    );
+    resetRuntimeState(
+      "New conversation started. The previous conversation was kept."
+    );
+  }, [isCheckingStatus, isDeleting, isHydrating, resetRuntimeState]);
+
+  const deleteConversation = useCallback(async () => {
+    if (activeRunIdRef.current || isDeleting || isHydrating || isCheckingStatus) {
+      return;
+    }
+    const currentSessionId = sessionIdRef.current;
+    if (!currentSessionId) {
+      return;
+    }
+
+    setIsDeleting(true);
     try {
-      const currentSessionId = sessionIdRef.current;
-      if (currentSessionId) {
-        await client.resetSession(currentSessionId);
-      }
-      clearAgentProjectBinding(window.sessionStorage);
-      activeSequenceRef.current = undefined;
-      activeSourceRevisionRef.current = undefined;
-      updateSessionId(undefined);
-      updateActiveRunId(undefined);
-      setMessages([]);
-      setTools([]);
-      setPendingMotionDoc(undefined);
-      setError(undefined);
-      setErrorCode(undefined);
-      setStatus("idle");
-      setNotice("New conversation started. The current deck was kept.");
+      await client.deleteSession(currentSessionId);
+      clearAgentPresentationBinding(
+        window.sessionStorage,
+        inputRef.current.presentationId
+      );
+      resetRuntimeState("Conversation deleted. The current deck was kept.");
     } catch (caught) {
       if (isMissingSessionError(caught)) {
-        clearAgentProjectBinding(window.sessionStorage);
-        activeSequenceRef.current = undefined;
-        activeSourceRevisionRef.current = undefined;
-        updateSessionId(undefined);
-        updateActiveRunId(undefined);
-        setMessages([]);
-        setTools([]);
-        setPendingMotionDoc(undefined);
-        setError(undefined);
-        setErrorCode(undefined);
-        setStatus("idle");
-        setNotice("The old conversation was already unavailable. A new one will start.");
+        clearAgentPresentationBinding(
+          window.sessionStorage,
+          inputRef.current.presentationId
+        );
+        resetRuntimeState(
+          "The conversation was already unavailable. A new one will start."
+        );
       } else {
         setError(errorMessage(caught));
         setStatus("error");
       }
     } finally {
-      setIsResetting(false);
+      setIsDeleting(false);
     }
-  }, [isResetting, updateActiveRunId, updateSessionId]);
+  }, [isCheckingStatus, isDeleting, isHydrating, resetRuntimeState]);
 
   const applyPendingMotionDoc = useCallback(() => {
     if (!pendingMotionDoc) {
@@ -633,27 +621,38 @@ export function usePitchAgent(input: UsePitchAgentInput) {
   }, [errorCode]);
 
   return {
-    applyPendingMotionDoc,
-    cancel,
-    canReset: Boolean(sessionId || messages.length > 0),
-    checkRunStatus,
-    clearCredentialError,
-    dismissPendingMotionDoc: () => setPendingMotionDoc(undefined),
-    error,
-    errorCode,
-    isHydrating,
-    isCheckingStatus,
-    isResetting,
-    isRunning: Boolean(activeRunId),
-    messages,
-    notice,
-    pendingMotionDoc,
-    resetConversation,
-    status,
-    submit,
-    tools
+    state: {
+      error,
+      errorCode,
+      messages,
+      notice,
+      pendingMotionDoc,
+      status,
+      tools
+    },
+    actions: {
+      applyPendingMotionDoc,
+      cancel,
+      checkRunStatus,
+      clearCredentialError,
+      deleteConversation,
+      dismissPendingMotionDoc: () => setPendingMotionDoc(undefined),
+      startNewConversation,
+      submit
+    },
+    meta: {
+      canDeleteConversation: Boolean(sessionId) && !activeRunId,
+      canStartNewConversation: Boolean(sessionId || messages.length > 0)
+        && !activeRunId,
+      isCheckingStatus,
+      isDeleting,
+      isHydrating,
+      isRunning: Boolean(activeRunId)
+    }
   };
 }
+
+export type PitchAgentRuntime = ReturnType<typeof usePitchAgent>;
 
 function applyActivity(
   event: Extract<AgentRunEvent, { kind: "activity" }>,

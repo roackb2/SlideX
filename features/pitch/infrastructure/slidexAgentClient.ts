@@ -82,7 +82,7 @@ export class SlideXAgentClient {
     );
   }
 
-  async resetSession(sessionId: string): Promise<void> {
+  async deleteSession(sessionId: string): Promise<void> {
     await this.request(
       `/api/agent/sessions/${encodeURIComponent(sessionId)}`,
       ResetAgentSessionResultSchema,

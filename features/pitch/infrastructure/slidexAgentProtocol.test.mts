@@ -15,11 +15,9 @@ import {
   SlideXAgentRunProtocol
 } from "./slidexAgentProtocol";
 import {
-  clearAgentProjectBinding,
-  readAgentProjectBinding,
-  resolveProjectInstanceId,
-  rotateProjectInstanceId,
-  writeAgentProjectBinding,
+  clearAgentPresentationBinding,
+  readAgentPresentationBinding,
+  writeAgentPresentationBinding,
   type SlideXSessionStorage
 } from "./slidexAgentPersistence";
 
@@ -60,43 +58,60 @@ test("validates hydrated conversation history and active-run discovery", () => {
   assert.equal(state.activeRun?.runId, "run-1");
 });
 
-test("keeps one project identity across refresh and rotates it for new or imported decks", () => {
+test("keeps an active conversation binding for each canonical presentation", () => {
   const storage = createStorage();
-  const first = resolveProjectInstanceId(storage, () => "project-1");
-  const refreshed = resolveProjectInstanceId(storage, () => "project-ignored");
-  writeAgentProjectBinding(storage, {
-    projectId: first,
+  writeAgentPresentationBinding(storage, {
+    presentationId: "presentation-1",
     sessionId: "session-1",
     runId: "run-1",
     afterSequence: 4,
     baseSourceRevision: "revision-1"
   });
+  writeAgentPresentationBinding(storage, {
+    presentationId: "presentation-2",
+    sessionId: "session-2"
+  });
 
-  assert.equal(refreshed, first);
-  assert.deepEqual(readAgentProjectBinding(storage, first), {
-    projectId: "project-1",
+  assert.deepEqual(readAgentPresentationBinding(storage, "presentation-1"), {
+    presentationId: "presentation-1",
     sessionId: "session-1",
     runId: "run-1",
     afterSequence: 4,
     baseSourceRevision: "revision-1"
   });
+  assert.deepEqual(readAgentPresentationBinding(storage, "presentation-2"), {
+    presentationId: "presentation-2",
+    sessionId: "session-2"
+  });
 
-  const imported = rotateProjectInstanceId(storage, () => "project-2");
-  assert.notEqual(imported, first);
-  assert.equal(readAgentProjectBinding(storage, imported), undefined);
+  clearAgentPresentationBinding(storage, "presentation-1");
+  assert.equal(
+    readAgentPresentationBinding(storage, "presentation-1"),
+    undefined
+  );
+  assert.equal(
+    readAgentPresentationBinding(storage, "presentation-2")?.sessionId,
+    "session-2"
+  );
 });
 
 test("discards stale or malformed browser conversation bindings", () => {
   const storage = createStorage();
-  writeAgentProjectBinding(storage, {
-    projectId: "project-1",
+  writeAgentPresentationBinding(storage, {
+    presentationId: "presentation-1",
     sessionId: "session-1"
   });
 
-  assert.equal(readAgentProjectBinding(storage, "project-2"), undefined);
-  storage.setItem("slidex_agent_project_binding", "not json");
-  assert.equal(readAgentProjectBinding(storage, "project-2"), undefined);
-  clearAgentProjectBinding(storage);
+  assert.equal(
+    readAgentPresentationBinding(storage, "presentation-2"),
+    undefined
+  );
+  storage.setItem("slidex_agent_presentation_bindings_v1", "not json");
+  assert.equal(
+    readAgentPresentationBinding(storage, "presentation-1"),
+    undefined
+  );
+  clearAgentPresentationBinding(storage, "presentation-1");
 });
 
 test("applies injected auth headers and preserves stable server error codes", async () => {

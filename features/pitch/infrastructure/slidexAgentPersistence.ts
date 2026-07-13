@@ -1,17 +1,24 @@
 import { z } from "zod";
 
-const ACTIVE_PROJECT_ID_KEY = "slidex_pitch_project_instance";
-const AGENT_PROJECT_BINDING_KEY = "slidex_agent_project_binding";
+const AGENT_PRESENTATION_BINDINGS_KEY = "slidex_agent_presentation_bindings_v1";
+const LEGACY_AGENT_PROJECT_BINDING_KEY = "slidex_agent_project_binding";
 
-const AgentProjectBindingSchema = z.object({
-  projectId: z.string().min(1),
+const AgentPresentationBindingSchema = z.object({
+  presentationId: z.string().min(1),
   sessionId: z.string().min(1),
   runId: z.string().min(1).optional(),
   afterSequence: z.number().int().nonnegative().optional(),
   baseSourceRevision: z.string().min(1).optional()
 });
 
-export type AgentProjectBinding = z.infer<typeof AgentProjectBindingSchema>;
+const AgentPresentationBindingsSchema = z.record(
+  z.string().min(1),
+  AgentPresentationBindingSchema
+);
+
+export type AgentPresentationBinding = z.infer<
+  typeof AgentPresentationBindingSchema
+>;
 
 export type SlideXSessionStorage = Pick<
   Storage,
@@ -19,63 +26,74 @@ export type SlideXSessionStorage = Pick<
 >;
 
 /**
- * Owns the tab-scoped binding between one editor project instance and its
- * product conversation. Session storage intentionally survives refresh but
- * not a new browser tab, matching SlideX's current non-durable project model.
+ * Owns the tab-scoped active conversation selection for each durable
+ * presentation. The catalog remains server-owned; this map only remembers
+ * which conversation the current tab last selected for a presentation.
  */
-export function resolveProjectInstanceId(
+export function readAgentPresentationBinding(
   storage: SlideXSessionStorage,
-  createId: () => string = () => crypto.randomUUID()
-): string {
-  const existing = storage.getItem(ACTIVE_PROJECT_ID_KEY)?.trim();
-  if (existing) {
-    return existing;
+  presentationId: string
+): AgentPresentationBinding | undefined {
+  const bindings = readBindings(storage);
+  const binding = bindings[presentationId];
+  return binding?.presentationId === presentationId ? binding : undefined;
+}
+
+export function writeAgentPresentationBinding(
+  storage: SlideXSessionStorage,
+  binding: AgentPresentationBinding
+): void {
+  const parsedBinding = AgentPresentationBindingSchema.parse(binding);
+  const bindings = readBindings(storage);
+  storage.setItem(
+    AGENT_PRESENTATION_BINDINGS_KEY,
+    JSON.stringify({
+      ...bindings,
+      [parsedBinding.presentationId]: parsedBinding
+    })
+  );
+  storage.removeItem(LEGACY_AGENT_PROJECT_BINDING_KEY);
+}
+
+export function clearAgentPresentationBinding(
+  storage: SlideXSessionStorage,
+  presentationId: string
+): void {
+  const bindings = readBindings(storage);
+  const remainingBindings = Object.fromEntries(
+    Object.entries(bindings).filter(([id]) => id !== presentationId)
+  );
+
+  if (Object.keys(remainingBindings).length === 0) {
+    storage.removeItem(AGENT_PRESENTATION_BINDINGS_KEY);
+  } else {
+    storage.setItem(
+      AGENT_PRESENTATION_BINDINGS_KEY,
+      JSON.stringify(remainingBindings)
+    );
   }
-  return rotateProjectInstanceId(storage, createId);
+  storage.removeItem(LEGACY_AGENT_PROJECT_BINDING_KEY);
 }
 
-export function rotateProjectInstanceId(
-  storage: SlideXSessionStorage,
-  createId: () => string = () => crypto.randomUUID()
-): string {
-  const projectId = createId();
-  storage.setItem(ACTIVE_PROJECT_ID_KEY, projectId);
-  storage.removeItem(AGENT_PROJECT_BINDING_KEY);
-  return projectId;
-}
-
-export function readAgentProjectBinding(
-  storage: SlideXSessionStorage,
-  projectId: string
-): AgentProjectBinding | undefined {
-  const raw = storage.getItem(AGENT_PROJECT_BINDING_KEY);
+function readBindings(
+  storage: SlideXSessionStorage
+): Record<string, AgentPresentationBinding> {
+  const raw = storage.getItem(AGENT_PRESENTATION_BINDINGS_KEY);
   if (!raw) {
-    return undefined;
+    storage.removeItem(LEGACY_AGENT_PROJECT_BINDING_KEY);
+    return {};
   }
 
   try {
-    const parsed = AgentProjectBindingSchema.safeParse(JSON.parse(raw));
-    if (parsed.success && parsed.data.projectId === projectId) {
+    const parsed = AgentPresentationBindingsSchema.safeParse(JSON.parse(raw));
+    if (parsed.success) {
       return parsed.data;
     }
   } catch {
     // Invalid browser state is discarded below and recovered as a fresh chat.
   }
 
-  storage.removeItem(AGENT_PROJECT_BINDING_KEY);
-  return undefined;
-}
-
-export function writeAgentProjectBinding(
-  storage: SlideXSessionStorage,
-  binding: AgentProjectBinding
-): void {
-  storage.setItem(
-    AGENT_PROJECT_BINDING_KEY,
-    JSON.stringify(AgentProjectBindingSchema.parse(binding))
-  );
-}
-
-export function clearAgentProjectBinding(storage: SlideXSessionStorage): void {
-  storage.removeItem(AGENT_PROJECT_BINDING_KEY);
+  storage.removeItem(AGENT_PRESENTATION_BINDINGS_KEY);
+  storage.removeItem(LEGACY_AGENT_PROJECT_BINDING_KEY);
+  return {};
 }
