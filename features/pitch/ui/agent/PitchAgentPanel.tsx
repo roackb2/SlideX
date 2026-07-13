@@ -88,7 +88,7 @@ export function PitchAgentPanel({
   return (
     <aside
       aria-label="SlideX agent"
-      className={`${isOpen ? "flex" : "hidden"} w-[360px] shrink-0 flex-col border-l border-white/[0.12] bg-[#111111] text-neutral-200`}
+      className={`${isOpen ? "flex" : "hidden"} h-full min-h-0 w-[360px] shrink-0 flex-col overflow-hidden border-l border-white/[0.12] bg-[#111111] text-neutral-200`}
     >
       <div className="flex h-14 shrink-0 items-center justify-between border-b border-white/[0.08] px-4">
         <div className="flex items-center gap-2">
@@ -207,7 +207,13 @@ export function PitchAgentPanel({
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4" ref={scrollRef}>
+      <div
+        aria-label="Agent conversation and activity"
+        className="min-h-0 flex-1 overflow-y-auto p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/30"
+        ref={scrollRef}
+        role="region"
+        tabIndex={0}
+      >
         {agent.error && agent.errorCode !== "model_credential_rejected" && (
           <p className="mb-4 border border-red-400/25 bg-red-400/[0.06] p-3 text-xs leading-5 text-red-200" role="alert">
             {agent.error}

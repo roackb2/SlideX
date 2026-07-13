@@ -50,6 +50,47 @@ test("keeps one conversational deck across turns, refresh, and chat reset", asyn
   expect(consoleErrors).toEqual([]);
 });
 
+test("keeps long conversations inside a scrollable agent panel", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+  const longRequest = [
+    "Preserve the existing deck while explaining every requested change clearly.",
+    "Keep all unaffected slides unchanged and validate the final MotionDoc.",
+    "Use concise presentation copy and maintain the established visual system."
+  ].join(" ").repeat(5);
+
+  for (let turn = 1; turn <= 3; turn += 1) {
+    await submitAgentMessage(page, `${longRequest} Turn ${turn}.`);
+    await expect(panel.getByText(`Turn ${turn} complete`, { exact: true })).toBeVisible();
+  }
+
+  const scrollRegion = panel.getByRole("region", {
+    name: "Agent conversation and activity"
+  });
+  const layout = await scrollRegion.evaluate((element) => {
+    const panelElement = element.closest("aside");
+    const composer = panelElement?.querySelector("form");
+    return {
+      clientHeight: element.clientHeight,
+      composerBottom: composer?.getBoundingClientRect().bottom ?? Number.POSITIVE_INFINITY,
+      panelBottom: panelElement?.getBoundingClientRect().bottom ?? Number.POSITIVE_INFINITY,
+      scrollHeight: element.scrollHeight,
+      viewportHeight: window.innerHeight
+    };
+  });
+
+  expect(layout.panelBottom).toBeLessThanOrEqual(layout.viewportHeight + 1);
+  expect(layout.composerBottom).toBeLessThanOrEqual(layout.viewportHeight + 1);
+  expect(layout.scrollHeight).toBeGreaterThan(layout.clientHeight);
+
+  await scrollRegion.evaluate((element) => {
+    element.scrollTop = 0;
+    element.scrollTo({ top: element.scrollHeight });
+  });
+  await expect.poll(() => scrollRegion.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  expect(consoleErrors).toEqual([]);
+});
+
 test("keeps the model key only in current-tab memory", async ({ page }) => {
   const agent = new DeterministicAgentApi();
   const { consoleErrors, panel } = await openAgentPanel(page, agent);
