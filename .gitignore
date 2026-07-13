@@ -16,6 +16,10 @@ test-results/
 .env.local
 .env.*.local
 
+# local database SQL
+supabase/*.sql
+supabase/**/*.sql
+
 # IDE
 .vscode/
 .idea/

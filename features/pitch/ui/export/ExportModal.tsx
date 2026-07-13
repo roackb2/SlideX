@@ -28,7 +28,7 @@ const formatOptions = [
     id: "pptx",
     label: "Editable PPTX",
     ext: ".pptx",
-    description: "Opens in PowerPoint, Keynote, and Google Slides. Native content stays editable; filtered images remain movable image objects with their effect baked into PNG pixels.",
+    description: "Opens in PowerPoint, Keynote, and Google Slides. Charts and filtered images export as movable PNG objects for reliable cross-app display; other native content stays editable.",
     icon: Presentation
   },
   {

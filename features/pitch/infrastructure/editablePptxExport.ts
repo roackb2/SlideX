@@ -10,7 +10,6 @@ import {
 } from "@/core/motion-doc/application/tableBlock";
 import type { MotionDocBlock, ParsedMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
 import { blockFrame } from "@/features/pitch/application/previewCanvas";
-import { addEditablePptxChart, isNativePptxChartType } from "@/features/pitch/infrastructure/pptxChartExport";
 import { portablePptxImageData } from "@/features/pitch/infrastructure/pptxImageExport";
 import { addPptxVideo } from "@/features/pitch/infrastructure/pptxVideoExport";
 
@@ -64,7 +63,8 @@ export async function addEditableSlides(
   pptx: PptxGenJS,
   document: ParsedMotionDoc,
   renderedBackgrounds: readonly string[],
-  filteredImagesBySlide: readonly (readonly string[])[] = []
+  filteredImagesBySlide: readonly (readonly string[])[] = [],
+  chartImagesBySlide: readonly (readonly string[])[] = []
 ) {
   for (let sceneIndex = 0; sceneIndex < document.scenes.length; sceneIndex += 1) {
     const scene = document.scenes[sceneIndex];
@@ -80,6 +80,7 @@ export async function addEditableSlides(
     }
 
     let filteredImageIndex = 0;
+    let chartImageIndex = 0;
 
     for (const block of scene.blocks) {
       if (block.type === "Title" || block.type === "Text" || block.type === "heading") {
@@ -102,7 +103,11 @@ export async function addEditableSlides(
       } else if (block.type === "Table") {
         addEditableTable(slide, block, theme.foreground);
       } else if (block.type === "Chart") {
-        addEditablePptxChart(slide, block.props, pptxFrame(blockFrame(block)), theme);
+        const chartImageData = chartImagesBySlide[sceneIndex]?.[chartImageIndex++];
+        if (!chartImageData) {
+          throw new Error(`Chart ${chartImageIndex} on slide ${sceneIndex + 1} could not be rendered`);
+        }
+        addPptxChartImage(slide, block, chartImageData);
       } else if (block.type === "VideoBlock") {
         await addPptxVideo(slide, block.props, pptxFrame(blockFrame(block)));
       }
@@ -116,6 +121,10 @@ export function documentNeedsPptxVisualFallback(document: ParsedMotionDoc) {
 
 export function documentNeedsPptxFilteredImages(document: ParsedMotionDoc) {
   return document.scenes.some((scene) => scene.blocks.some(imageNeedsPptxFilterRasterization));
+}
+
+export function documentNeedsPptxChartImages(document: ParsedMotionDoc) {
+  return document.scenes.some((scene) => scene.blocks.some((block) => block.type === "Chart"));
 }
 
 function addEditableText(
@@ -177,6 +186,15 @@ async function addEditableIcon(slide: PptxSlide, block: PropsBlock, isLightBackg
     altText: `${iconName} icon`,
     data,
     ...frame,
+    transparency: 0
+  });
+}
+
+function addPptxChartImage(slide: PptxSlide, block: PropsBlock, data: string) {
+  slide.addImage({
+    altText: stringProp(block.props.title) ?? "Chart",
+    data,
+    ...pptxFrame(blockFrame(block)),
     transparency: 0
   });
 }
@@ -276,7 +294,7 @@ function imageNeedsPptxFilterRasterization(block: MotionDocBlock) {
 }
 
 function isNativePptxBlock(block: MotionDocBlock) {
-  if (block.type === "Chart") return isNativePptxChartType(block.props.chartType);
+  if (block.type === "Chart") return true;
   return NATIVE_PPTX_BLOCK_TYPES.has(block.type);
 }
 
