@@ -190,7 +190,7 @@ export default async function OpenGraphImage() {
                 fontFamily: "monospace"
               }}
             >
-              slide-x-psi.vercel.app
+              Motion decks, focused
             </div>
           </div>
         </div>

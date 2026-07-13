@@ -5,7 +5,9 @@ import { defaultLocale, dictionaries } from "@/common/lib/i18n";
 import "./globals.css";
 
 const defaultMetadata = dictionaries[defaultLocale].metadata;
-const siteUrl = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://slide-x-psi.vercel.app/");
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
+  : undefined;
 const ogImage = {
   alt: "SlideX motion deck editor preview",
   height: 630,
