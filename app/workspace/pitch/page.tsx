@@ -18,7 +18,9 @@ function LocalPitchWorkspace() {
         source: presentation.source,
         templateId: presentation.templateId
       }}
+      key={presentation.id}
       onProjectSourceChange={save}
+      presentationId={presentation.id}
     />
   );
 }

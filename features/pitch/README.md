@@ -14,35 +14,48 @@ This file remains authoritative for the editor-local boundary.
   product-session routes with Heddle Remote's HTTP/SSE run client. Heddle owns
   run start/subscribe/cancel requests, framing, validation, abort cleanup, and
   transport errors. SlideX injects sync/async auth headers and retains its
-  session/reset API, but does not acquire tokens or choose model credentials.
+  session/delete API, but does not acquire tokens or choose model credentials.
 - `infrastructure/slidexAgentIdentity.ts` lazily restores or creates the
   Supabase anonymous product identity and supplies its bearer token to the
   client. Concurrent requests share one sign-in attempt. This identity may
   persist across refresh; it never receives the user's model key.
-- `infrastructure/slidexAgentPersistence.ts` owns the tab-scoped project and
-  product-conversation binding. Project instance identity survives refresh,
-  rotates for new/imported decks, and never derives from a mutable project name.
+- `infrastructure/slidexAgentPersistence.ts` owns the tab-scoped active
+  conversation selection for each canonical presentation ID. It preserves
+  independent bindings when the user moves between presentations; it is not a
+  session catalog and does not invent editor-only project identity.
 - `ui/agent/usePitchAgent.ts` coordinates editor-facing state, retry timers, tool
-  progress, history hydration, reset/stale-session recovery, cancellation, and
-  stale-source conflict handling. Heddle's
+  progress, history hydration, detach/delete semantics, stale-session recovery,
+  cancellation, and stale-source conflict handling. Heddle's
   `ConversationRunConsumerService` owns cursor advancement, duplicate/gap
   detection, terminal state, and bounded retry attempts.
-- `ui/PitchAgentPanel.tsx` renders the conversation and delegates MotionDoc
-  application back to the editor's existing undo-aware `commitSource` path.
+- `ui/agent/PitchAgentProvider.tsx` owns the live run and current-tab composer
+  state independently from the visual surface. A panel, sheet, or FAB may
+  unmount without cancelling the run or forgetting the in-memory model key.
+- `ui/agent/PitchAgentPanel.tsx` renders the current surface and delegates
+  MotionDoc application back to the editor's existing undo-aware `commitSource`
+  path.
 
 Execution, event replay, run-consumer policy, and cancellation semantics belong
 to Heddle. Product
 session persistence and MotionDoc artifact finalization belong to the SlideX
 agent server. Do not duplicate either concern in this feature.
 
-Until SlideX has durable projects, project and conversation binding use
-`sessionStorage`: refresh can restore the matching server MotionDoc plus chat,
-while a new tab starts clean. Supabase separately persists the anonymous
-product session so the server can keep that conversation scoped to one user.
-The OpenAI API key is different: it lives only in `PitchAgentPanel` React state,
-is sent only in a run-start body, and is forgotten on refresh or through the
-explicit **Forget key** action. Never add it to local/session storage, cookies,
-URLs, analytics, run events, or project persistence.
+The workspace route must pass its durable presentation ID into `MotionDocApp`.
+Without that identity the agent is not mounted, because SlideX cannot safely
+relate a conversation to the artifact. `sessionStorage` remembers only the
+active session ID and replay cursor for each presentation in the current tab;
+the server remains authoritative for durable session records. Hydration restores
+chat/run state but never replaces the canonical presentation with a session
+snapshot.
+
+**New conversation** only detaches the current selection and keeps the old
+server session for the session list. **Delete conversation** is the separate,
+confirmed destructive action. Neither action erases or replaces the current
+deck. The OpenAI API key is different: it lives only in
+`PitchAgentProvider` React state, is sent only in a run-start body, and is
+forgotten on refresh or through the explicit **Forget key** action. Never add it
+to local/session storage, cookies, URLs, analytics, run events, or project
+persistence.
 
 The server exposes active-run discovery and the editor can replay a retained
 active run after refresh. The persisted cursor is
@@ -78,14 +91,15 @@ experience, and enable both for internal validation.
 Run `npm run test:agent:e2e:install` once, then `npm run test:agent:e2e` for the
 deterministic editor lifecycle regression. Playwright starts SlideX with the
 agent flag enabled and verifies multi-turn MotionDoc continuity, visible
-history after refresh, conversation reset without erasing the deck, and
-manual-edit-safe recovery after live replay expires. It proves that importing a
-second same-name deck rotates project identity and resets the old conversation.
-It also locks stale-session self-healing, explicit cancellation, sanitized
-start failure with retry, and active-run conflict reattachment. An accepted run
-whose event stream cannot be opened enters the same durable status-recovery
-path instead of leaving the composer locked behind a generic error. The same
-test runs in `.github/workflows/agent-regression.yml`. The route fixture in
+history after refresh, non-destructive conversation detach, explicit deletion,
+and manual-edit-safe recovery after live replay expires. It proves that the
+runtime and current-tab composer state survive visual-panel remounts and that
+importing content into one presentation keeps its selected conversation. It
+also locks stale-session self-healing, explicit cancellation, sanitized start
+failure with retry, and active-run conflict reattachment. An accepted run whose
+event stream cannot be opened enters the same durable status-recovery path
+instead of leaving the composer locked behind a generic error. The same test
+runs in `.github/workflows/agent-regression.yml`. The route fixture in
 `tests/browser/agent-lifecycle.spec.ts` owns only deterministic HTTP/SSE test
 responses; it must not reimplement product session or Heddle run policy. The
 real server repository verifies those policies and route semantics separately.

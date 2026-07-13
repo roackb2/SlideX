@@ -14,7 +14,6 @@ import { DesktopSlideNoteFab } from "@/features/pitch/ui/notes/DesktopSlideNoteF
 
 export function PitchWorkspace(props: PitchWorkspaceProps) {
   const sceneCount = props.scenes.length;
-  const isAgentEnabled = Boolean(props.agentPanel);
   const setActiveCanvasTool = props.setActiveCanvasTool;
   const [zoomLevel, setZoomLevel] = useState<number | "fit">("fit");
   const [fitScale, setFitScale] = useState(1);
@@ -54,7 +53,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
         zoomLevel={zoomLevel}
         setZoomLevel={setZoomLevel}
         actualScale={zoomLevel === "fit" ? fitScale : zoomLevel}
-        isAgentEnabled={isAgentEnabled}
+        isAgentEnabled={props.isAgentEnabled}
         isAgentPanelOpen={props.isAgentPanelOpen}
         onPlay={props.openPresentationPreview}
         onToggleInspector={() => {
@@ -133,7 +132,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
         </div>
 
         <WorkspaceInspectorPanel {...props} />
-        {isAgentEnabled ? (
+        {props.agentPanel ? (
           <div className="absolute inset-y-0 right-0 z-[70] shadow-[-20px_0_50px_rgba(0,0,0,0.45)]">
             {props.agentPanel}
           </div>
