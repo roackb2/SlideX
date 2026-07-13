@@ -3,6 +3,11 @@
 This feature owns the conversational editing experience inside the SlideX pitch
 editor. It is a product boundary, not an agent runtime:
 
+The cross-repository system map, deployment contract, operations checklist, and
+next session-list design live in `docs/conversational-agent.md` in the companion
+[SlideX agent server repository](https://github.com/zz41354899/slidex-agent-server).
+This file remains authoritative for the editor-local boundary.
+
 - `infrastructure/slidexAgentProtocol.ts` owns the public SlideX activity/result
   schemas and canonical Heddle run-envelope validation.
 - `infrastructure/slidexAgentClient.ts` composes SlideX's public schemas and
