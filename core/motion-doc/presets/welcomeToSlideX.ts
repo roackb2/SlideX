@@ -1,5 +1,5 @@
 export const welcomePresentationId = "welcome-to-slidex";
-export const welcomePresentationSeedVersion = 6;
+export const welcomePresentationSeedVersion = 7;
 export const welcomePresentationTitle = "Welcome to SlideX";
 
 export const welcomePresentationSource = `# Welcome to SlideX
@@ -20,11 +20,11 @@ Instead of working with static slides, you can create flexible, web-based presen
   <Text fontSize={18} fontWeight={600} x={67.7} y={90.2} w={28.9} h={4.3} enter="fadeIn" textAlign="right" color="#020617" delay={0.88} duration={0.48}>SlideX.com</Text>
   <Text fontSize={18} fontWeight={600} x={56.3} y={4.3} w={40} h={2.5} enter="fadeIn" textAlign="right" color="#020617" delay={0.18} duration={0.38}>SlideX</Text>
   <Text fontSize={18} fontWeight={600} x={3.5} y={4.6} w={40} h={2.5} enter="fadeIn" color="#000000" delay={0.12} duration={0.38}>2026</Text>
-  <ImageBlock fit="cover" scaleX={1} scaleY={1} enter="blurIn" radius={16} x={61} y={15} w={36} h={65.1} alt="Astronaut and android looking toward Earth from the moon" src="/images/workspace-welcome/moon-collaboration.jpg" delay={0.06} duration={0.9} />
+  <ImageBlock fit="cover" scaleX={1} scaleY={1} enter="blurIn" radius={16} x={61} y={15} w={36} h={65.1} alt="Astronaut and android looking toward Earth from the moon" src="https://animark-media-library.zz41354899.chatgpt.site/media/optimized/project/moon-collaboration.webp" delay={0.06} duration={0.9} />
 </Slide>
 
 <Slide duration={7} theme="light" background="#f2eee8" accent="#111315" textColor="#111315" mutedColor="#65615b" slideTransition="fade">
-  <ImageBlock fit="cover" scaleX={1} scaleY={1} enter="blurIn" radius={18} x={55} y={11} w={40} h={76} alt="Editorial 3D visualization of the SlideX presentation canvas" src="/images/workspace-welcome/precision-canvas.png" delay={0.08} duration={0.9} />
+  <ImageBlock fit="cover" scaleX={1} scaleY={1} enter="blurIn" radius={18} x={55} y={11} w={40} h={76} alt="Editorial 3D visualization of the SlideX presentation canvas" src="https://animark-media-library.zz41354899.chatgpt.site/media/optimized/project/precision-canvas.webp" delay={0.08} duration={0.9} />
   <Title fontSize={44} fontWeight={700} lineHeight={1.02} x={3.5} y={17} w={44} h={30} enter="slideLeft" color="#111315" delay={0}>Keep every element exactly where it belongs.</Title>
   <Text fontSize={18} lineHeight={1.48} x={3.7} y={53} w={42} h={20} enter="fadeUp" color="#4f4b46" delay={0.12}>Arrange text, data, and media on one precise canvas. Keep every position intact from editing through playback and export.</Text>
   <Text fontSize={16} fontWeight={700} x={3.6} y={4.7} w={30} h={3} enter="fadeIn" color="#111315">03 / PRECISE CANVAS</Text>
@@ -69,5 +69,5 @@ Instead of working with static slides, you can create flexible, web-based presen
 </Slide>
 
 <Slide duration={15.02} theme="dark" background="#000000" accent="#ffffff" textColor="#ffffff" slideTransition="fade" transitionDuration={0.5}>
-  <VideoBlock title="SlideX intro" fit="cover" src="/images/workspace-welcome/slidex-intro.mp4" controls={false} loop={false} muted={true} radius={0} x={0} y={0} w={100} h={100} enter="fadeIn" delay={0} duration={0.4} />
+  <VideoBlock title="SlideX intro" fit="cover" src="https://animark-media-library.zz41354899.chatgpt.site/media/optimized/project/slidex-intro.mp4" controls={false} loop={false} muted={true} radius={0} x={0} y={0} w={100} h={100} enter="fadeIn" delay={0} duration={0.4} />
 </Slide>`;

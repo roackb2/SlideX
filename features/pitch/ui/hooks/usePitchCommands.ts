@@ -43,7 +43,8 @@ import {
   type FrameUpdate,
   type InsertSlidePlacement
 } from "@/features/pitch/application/motionDocCommands";
-import { registerPitchLocalFile } from "@/features/pitch/infrastructure/pitchLocalAssets";
+import { PitchAssetFileError } from "@/features/pitch/infrastructure/pitchAssetFiles";
+import { prepareAndRegisterPitchLocalFile } from "@/features/pitch/infrastructure/pitchLocalAssets";
 import {
   clearTableEditorSelectionProps,
   tableEditorSelectionFromProps
@@ -368,7 +369,8 @@ export function usePitchCommands({
   async function pasteImageFile(file: File) {
     if (!activeSlide || !file.type.startsWith("image/")) return;
     try {
-      const src = registerPitchLocalFile(file);
+      const preparedAsset = await prepareAndRegisterPitchLocalFile(file);
+      const src = preparedAsset.url;
       const selectedBlock = selectedBlockIndex === null ? undefined : activeSlide.blocks[selectedBlockIndex];
       if (selectedBlockIndex !== null && selectedBlock?.type === "ImageBlock") {
         const slide = updateBlockInSlide(activeSlide, selectedBlockIndex, {
@@ -380,7 +382,7 @@ export function usePitchCommands({
         if (!slide) return;
         commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
         setReplayNonce((value) => value + 1);
-        setNotice("Image pasted into selected layer");
+        setNotice(preparedAsset.optimized ? "Image optimized and pasted into selected layer" : "Image pasted into selected layer");
         return;
       }
       const { blockIndex, slide } = appendBlockToSlide(activeSlide, "Image", {
@@ -389,9 +391,9 @@ export function usePitchCommands({
       commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
       selectSingleBlock(blockIndex);
       setReplayNonce((value) => value + 1);
-      setNotice("Image pasted");
-    } catch {
-      setNotice("Unable to paste image");
+      setNotice(preparedAsset.optimized ? "Image optimized and pasted" : "Image pasted");
+    } catch (error) {
+      setNotice(error instanceof PitchAssetFileError ? error.message : "Unable to paste image");
     }
   }
 
@@ -599,7 +601,8 @@ export function usePitchCommands({
     }
 
     try {
-      const url = registerPitchLocalFile(file);
+      const preparedAsset = await prepareAndRegisterPitchLocalFile(file);
+      const url = preparedAsset.url;
       
       updateBlock(blockIndex, {
         ...block.props,
@@ -607,9 +610,9 @@ export function usePitchCommands({
         fit: stringValue(block.props.fit) || "cover",
         src: url
       });
-      setNotice("Local image loaded");
-    } catch {
-      setNotice("Failed to load local image");
+      setNotice(preparedAsset.optimized ? "Image optimized and loaded" : "Local image loaded");
+    } catch (error) {
+      setNotice(error instanceof PitchAssetFileError ? error.message : "Failed to load local image");
     }
   }
 
@@ -631,7 +634,8 @@ export function usePitchCommands({
 
     try {
       setNotice("Loading video...");
-      const url = registerPitchLocalFile(file);
+      const preparedAsset = await prepareAndRegisterPitchLocalFile(file);
+      const url = preparedAsset.url;
       
       updateBlock(blockIndex, {
         ...block.props,
@@ -640,8 +644,8 @@ export function usePitchCommands({
         src: url
       });
       setNotice("Local video loaded");
-    } catch {
-      setNotice("Failed to load local video");
+    } catch (error) {
+      setNotice(error instanceof PitchAssetFileError ? error.message : "Failed to load local video");
     }
   }
 

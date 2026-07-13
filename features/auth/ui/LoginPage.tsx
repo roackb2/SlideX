@@ -57,9 +57,6 @@ export function LoginPage() {
               <span className="absolute left-4"><GoogleMark /></span>
               Continue with Google
             </button>
-            <button className="relative flex h-11 w-full items-center justify-center rounded-[7px] border border-white/[0.14] bg-white/[0.025] px-4 text-[13px] font-medium text-white/78 transition-colors hover:border-white/[0.24] hover:bg-white/[0.05] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/10" onClick={() => continueWith("github")} type="button">
-              Continue with GitHub
-            </button>
           </div>
 
           <p className="mt-6 border-t border-white/[0.07] pt-5 text-center text-[10px] leading-4 text-white/26">

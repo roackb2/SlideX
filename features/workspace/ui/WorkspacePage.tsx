@@ -104,25 +104,6 @@ export function WorkspacePage() {
     router.push(`${appRoutes.pitch}?presentation=${encodeURIComponent(presentationId)}`);
   }
 
-  function openWelcomePresentation() {
-    if (!session) return;
-    const seededPresentations = ensureLocalPresentationSeed({
-      kind: "template",
-      ownerId: session.user.id,
-      seedId: welcomePresentationId,
-      source: welcomePresentationSource,
-      templateId: welcomePresentationId,
-      title: welcomePresentationTitle,
-      version: welcomePresentationSeedVersion
-    });
-    const presentation = seededPresentations.find((item) => (
-      item.kind === "template" && item.templateId === welcomePresentationId
-    ));
-    setPresentations(seededPresentations);
-    if (!presentation) return;
-    openPresentation(presentation.id);
-  }
-
   function duplicatePresentation(presentation: WorkspacePresentation) {
     if (!session) return;
     const title = createUntitledPresentationName(presentations.map((item) => item.title), `${presentation.title} copy`);

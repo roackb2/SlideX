@@ -20,8 +20,8 @@ const NATIVE_CHART_TYPES = new Set([
 export function hidePptxEditableContent(slide: HTMLElement) {
   slide.querySelectorAll<HTMLElement>(".motion-block").forEach((block) => {
     const hasEditableContent = Array.from(block.children).some((child) => {
-      if (child instanceof HTMLElement && child.matches(".block-chart")) {
-        return NATIVE_CHART_TYPES.has(child.dataset.chartType ?? "");
+      if (child.matches(".block-chart")) {
+        return NATIVE_CHART_TYPES.has((child as HTMLElement).dataset.chartType ?? "");
       }
 
       return EDITABLE_CONTENT_SELECTORS.some((selector) => child.matches(selector));

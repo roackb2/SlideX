@@ -28,7 +28,7 @@ const formatOptions = [
     id: "pptx",
     label: "Editable PPTX",
     ext: ".pptx",
-    description: "Opens in PowerPoint, Keynote, and Google Slides. Shapes and icons stay vector; standard charts stay editable; videos include a playback cover and link fallback.",
+    description: "Opens in PowerPoint, Keynote, and Google Slides. Native content stays editable; filtered images remain movable image objects with their effect baked into PNG pixels.",
     icon: Presentation
   },
   {

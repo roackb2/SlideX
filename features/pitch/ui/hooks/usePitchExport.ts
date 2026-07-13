@@ -10,10 +10,15 @@ import {
   slugifyFilename
 } from "@/core/motion-doc/infrastructure/export/motionDocExport";
 import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
+import { youtubeVideoId } from "@/core/motion-doc/domain/videoSource";
 import { parseExportSlideSelection } from "@/features/pitch/application/exportSlideSelection";
-import { addEditableSlides } from "@/features/pitch/infrastructure/editablePptxExport";
+import {
+  addEditableSlides,
+  documentNeedsPptxFilteredImages,
+  documentNeedsPptxVisualFallback
+} from "@/features/pitch/infrastructure/editablePptxExport";
 import { createPptxPresentation } from "@/features/pitch/infrastructure/pptxBrowser";
-import { hidePptxEditableContent } from "@/features/pitch/infrastructure/pptxVisualFallback";
+import { renderPptxRasterAssets } from "@/features/pitch/infrastructure/pptxRasterExport";
 
 type UsePitchExportArgs = {
   canvasSource: string;
@@ -37,6 +42,13 @@ const PNG_EXPORT_HEIGHT = 1080;
 const PNG_EXPORT_WIDTH = 1920;
 const PNG_MULTI_DOWNLOAD_DELAY_MS = 180;
 const PPTX_EMBEDDED_VIDEO_MAX_BYTES = 80 * 1024 * 1024;
+const STATIC_EXPORT_API_MAX_ATTEMPTS = 120;
+const STATIC_EXPORT_RENDERER_LOAD_TIMEOUT_MS = 30_000;
+const REMOTE_VIDEO_EMBED_HOSTS = new Set([
+  "animark-media-library.zz41354899.chatgpt.site",
+  "interactive-examples.mdn.mozilla.net",
+  "www.w3schools.com"
+]);
 
 /**
  * Embed a local image with enough source pixels for fullscreen HTML playback.
@@ -177,7 +189,7 @@ async function embedRemoteVideos(sourceText: string) {
 
   const replacements = new Map<string, string>();
   for (const url of urls) {
-    if (/(?:youtube\.com|youtu\.be)/i.test(url)) continue;
+    if (youtubeVideoId(url) || !canEmbedRemoteVideo(url)) continue;
     try {
       const response = await fetch(url, { mode: "cors", credentials: "omit" });
       if (!response.ok) continue;
@@ -196,8 +208,24 @@ async function embedRemoteVideos(sourceText: string) {
   });
 }
 
+function canEmbedRemoteVideo(value: string) {
+  try {
+    return REMOTE_VIDEO_EMBED_HOSTS.has(new URL(value).hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
 function escapeMotionDocAttribute(value: string) {
   return value.replaceAll("&", "&amp;").replaceAll("\"", "&quot;");
+}
+
+function assertPortableVideoSources(sourceText: string) {
+  const unavailableLocalVideo = /<VideoBlock\b[^>]*?\bsrc\s*=\s*(["'])blob:[^"'<>]+\1/i.test(sourceText);
+
+  if (unavailableLocalVideo) {
+    throw new Error("A local video is no longer available. Re-import it before exporting HTML.");
+  }
 }
 
 async function embedRootRelativeImages(sourceText: string) {
@@ -291,7 +319,7 @@ function waitForIframeLoad(iframe: HTMLIFrameElement) {
   return new Promise<void>((resolve, reject) => {
     const timeout = window.setTimeout(() => {
       reject(new Error("Export renderer timed out"));
-    }, 8000);
+    }, STATIC_EXPORT_RENDERER_LOAD_TIMEOUT_MS);
     iframe.addEventListener("load", () => {
       window.clearTimeout(timeout);
       resolve();
@@ -300,7 +328,7 @@ function waitForIframeLoad(iframe: HTMLIFrameElement) {
 }
 
 async function waitForExportApi(frameWindow: MotionDocExportWindow) {
-  for (let attempt = 0; attempt < 60; attempt += 1) {
+  for (let attempt = 0; attempt < STATIC_EXPORT_API_MAX_ATTEMPTS; attempt += 1) {
     if (frameWindow.__motionDocExport?.prepareStaticExport) {
       return frameWindow.__motionDocExport;
     }
@@ -316,17 +344,14 @@ async function prepareStaticExportWindow(frameWindow: MotionDocExportWindow) {
 
 async function renderStaticSlideHtml(source: string, title: string) {
   const rasterHtml = buildMotionDocRasterHtml(source, title);
-  const blob = new Blob([rasterHtml], { type: "text/html;charset=utf-8" });
-  const blobUrl = URL.createObjectURL(blob);
-
   const iframe = document.createElement("iframe");
   iframe.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:1024px;height:576px;pointer-events:none;opacity:0;";
   document.body.appendChild(iframe);
-  iframe.src = blobUrl;
+  const iframeLoad = waitForIframeLoad(iframe);
+  iframe.srcdoc = rasterHtml;
 
   try {
-    await waitForIframeLoad(iframe);
-    URL.revokeObjectURL(blobUrl);
+    await iframeLoad;
 
     const frameWindow = iframe.contentWindow as MotionDocExportWindow | null;
 
@@ -352,51 +377,6 @@ async function renderStaticSlideHtml(source: string, title: string) {
   }
 }
 
-async function renderStaticSlidePngDataUrls(source: string, title: string) {
-  const rasterHtml = buildMotionDocRasterHtml(source, title);
-  const blob = new Blob([rasterHtml], { type: "text/html;charset=utf-8" });
-  const blobUrl = URL.createObjectURL(blob);
-  const iframe = document.createElement("iframe");
-  iframe.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:1024px;height:576px;pointer-events:none;opacity:0;";
-  document.body.appendChild(iframe);
-  iframe.src = blobUrl;
-
-  try {
-    await waitForIframeLoad(iframe);
-    URL.revokeObjectURL(blobUrl);
-    const frameWindow = iframe.contentWindow as MotionDocExportWindow | null;
-    if (!frameWindow?.document) throw new Error("Export renderer failed to load");
-
-    await prepareStaticExportWindow(frameWindow);
-    const slides = Array.from(frameWindow.document.querySelectorAll<HTMLElement>(".slide"));
-    if (slides.length === 0) throw new Error("No slides to export");
-
-    const { default: html2canvas } = await import("html2canvas-pro");
-    const images: string[] = [];
-    for (const slide of slides) {
-      slide.classList.add("is-active");
-      hidePptxEditableContent(slide);
-      const canvas = await html2canvas(slide, {
-        allowTaint: false,
-        backgroundColor: null,
-        height: 576,
-        logging: false,
-        scale: PNG_EXPORT_WIDTH / 1024,
-        useCORS: true,
-        width: 1024,
-        windowHeight: 576,
-        windowWidth: 1024
-      });
-      images.push(canvas.toDataURL("image/png"));
-      slide.classList.remove("is-active");
-    }
-    return images;
-  } finally {
-    URL.revokeObjectURL(blobUrl);
-    iframe.remove();
-  }
-}
-
 export function usePitchExport({
   canvasSource,
   documentTitle,
@@ -411,7 +391,7 @@ export function usePitchExport({
     const localFiles = (window as SlideXLocalFilesWindow).__slidexLocalFiles;
     if (!localFiles) return sourceText;
 
-    const blobRegex = /src="(blob:[^"]+)"/g;
+    const blobRegex = /src\s*=\s*(["'])(blob:[^"'<>]+)\1/g;
     const matches = [...sourceText.matchAll(blobRegex)];
     if (matches.length === 0) return sourceText;
 
@@ -419,7 +399,7 @@ export function usePitchExport({
 
     await Promise.all(
       matches.map(async (match) => {
-        const url = match[1];
+        const url = match[2];
         if (replacements.has(url)) return;
         const file = localFiles.get(url);
         if (!file) return;
@@ -436,7 +416,11 @@ export function usePitchExport({
 
     if (replacements.size === 0) return sourceText;
 
-    return sourceText.replace(/blob:[^"]+/g, (match) => replacements.get(match) ?? match);
+    let embeddedSource = sourceText;
+    replacements.forEach((dataUrl, url) => {
+      embeddedSource = embeddedSource.replaceAll(url, dataUrl);
+    });
+    return embeddedSource;
   };
 
   const copySource = useCallback(async () => {
@@ -472,7 +456,10 @@ export function usePitchExport({
     try {
       setNotice("Preparing export…");
       const localSource = await embedLocalFiles(canvasSource);
-      const finalSource = await embedRootRelativeImages(localSource);
+      const bundledImageSource = await embedRootRelativeImages(localSource);
+      const bundledVideoSource = await embedRootRelativeVideos(bundledImageSource);
+      const finalSource = await embedRemoteVideos(bundledVideoSource);
+      assertPortableVideoSources(finalSource);
       const html = buildMotionDocHtml(finalSource, finalTitle);
 
       downloadFile(defaultFilename, html, "text/html;charset=utf-8");
@@ -578,9 +565,16 @@ export function usePitchExport({
       const bundledMediaSource = await embedRootRelativeVideos(bundledSource);
       const embeddedMediaSource = await embedRemoteVideos(bundledMediaSource);
       const finalSource = await embedRemoteImages(embeddedMediaSource);
-      const slideBackgrounds = await renderStaticSlidePngDataUrls(finalSource, finalTitle);
-      const pptx = await createPptxPresentation();
       const document = parseMotionDoc(finalSource);
+      const captureSlideBackgrounds = documentNeedsPptxVisualFallback(document);
+      const captureFilteredImages = documentNeedsPptxFilteredImages(document);
+      const rasterAssets = captureSlideBackgrounds || captureFilteredImages
+        ? await renderPptxRasterAssets(buildMotionDocRasterHtml(finalSource, finalTitle), {
+            captureFilteredImages,
+            captureSlideBackgrounds
+          })
+        : { filteredImagesBySlide: [], slideBackgrounds: [] };
+      const pptx = await createPptxPresentation();
 
       pptx.layout = "LAYOUT_WIDE";
       pptx.author = "SlideX Pitch";
@@ -589,7 +583,12 @@ export function usePitchExport({
       pptx.title = finalTitle;
 
       setNotice("Building editable slides…");
-      addEditableSlides(pptx, document, slideBackgrounds);
+      await addEditableSlides(
+        pptx,
+        document,
+        rasterAssets.slideBackgrounds,
+        rasterAssets.filteredImagesBySlide
+      );
 
       setNotice("Building PowerPoint…");
       await pptx.writeFile({ fileName: pptxFilename, compression: true });

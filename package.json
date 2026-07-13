@@ -10,7 +10,11 @@
     "build": "next build --webpack",
     "build:clean": "npm run clean && npm run build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset",
+    "supabase:types": "supabase gen types typescript --local --schema public"
   },
   "dependencies": {
     "@codemirror/lang-html": "^6.4.11",
@@ -23,6 +27,8 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@react-three/postprocessing": "^3.0.4",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.110.2",
     "@tiptap/extension-bubble-menu": "^3.27.1",
     "@tiptap/extension-placeholder": "^3.27.1",
     "@tiptap/pm": "^3.27.1",
@@ -34,11 +40,11 @@
     "geist": "^1.7.2",
     "html2canvas-pro": "^2.2.3",
     "lucide-react": "^1.16.0",
-    "next": "16.2.6",
+    "next": "16.2.10",
     "next-themes": "0.4.6",
     "pptxgenjs": "^4.0.1",
-    "react": "19.2.6",
-    "react-dom": "19.2.6",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
     "three": "^0.184.0",
     "zod": "^4.4.3"
   },
@@ -52,9 +58,10 @@
     "@webgpu/types": "^0.1.70",
     "esbuild": "^0.28.0",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.2.10",
     "eslint-plugin-boundaries": "^6.0.2",
     "postcss": "8.5.14",
+    "supabase": "^2.109.1",
     "tailwindcss": "4.3.0",
     "typescript": "5.9.3"
   },

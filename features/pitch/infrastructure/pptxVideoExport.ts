@@ -1,10 +1,12 @@
 import type PptxGenJS from "pptxgenjs";
 import { escapeSvgAttribute, svgDataUri } from "@/core/motion-doc/application/svgDataUri";
+import { youtubeEmbedUrl } from "@/core/motion-doc/domain/videoSource";
+import { portablePptxImageData } from "@/features/pitch/infrastructure/pptxImageExport";
 
 type PptxSlide = ReturnType<PptxGenJS["addSlide"]>;
 type PptxFrame = { h: number; w: number; x: number; y: number };
 
-export function addPptxVideo(
+export async function addPptxVideo(
   slide: PptxSlide,
   props: Record<string, string | number>,
   frame: PptxFrame
@@ -13,29 +15,33 @@ export function addPptxVideo(
   const poster = stringProp(props.poster);
   const link = sourceLink(stringProp(props.sourceUrl) ?? src);
   const hyperlink = link ? { tooltip: "Open video", url: link } : undefined;
+  const posterData = poster?.startsWith("data:image/")
+    ? await portablePptxImageData(poster, frame)
+    : undefined;
+  const coverData = await portablePptxImageData(videoFallbackSvgDataUri(src, Boolean(posterData)), frame);
 
-  if (poster?.startsWith("data:image/")) {
-    slide.addImage({ data: poster, ...frame, hyperlink, transparency: 0 });
+  if (posterData) {
+    slide.addImage({ data: posterData, ...frame, hyperlink, transparency: 0 });
   }
 
   slide.addImage({
     altText: "Video playback cover",
-    data: videoFallbackSvgDataUri(src, Boolean(poster)),
+    data: coverData,
     ...frame,
     hyperlink,
     transparency: 0
   });
 
-  const youtube = youtubeEmbedUrl(src);
+  const youtube = src ? youtubeEmbedUrl(src) : null;
   if (youtube) {
-    slide.addMedia({ ...frame, link: youtube, type: "online" });
+    slide.addMedia({ ...frame, cover: coverData, link: youtube, type: "online" });
     return;
   }
 
   if (src?.startsWith("data:video/") && src.includes("base64,")) {
     slide.addMedia({
       ...frame,
-      cover: poster?.startsWith("data:image/png;base64,") ? poster : undefined,
+      cover: posterData ?? coverData,
       data: src,
       extn: videoExtension(src),
       type: "video"
@@ -60,23 +66,6 @@ function videoLabel(src: string | undefined) {
 
 function sourceLink(src: string | undefined) {
   return src && /^https?:\/\//i.test(src) ? src : undefined;
-}
-
-function youtubeEmbedUrl(src: string | undefined) {
-  if (!src) return undefined;
-  try {
-    const url = new URL(src);
-    let id: string | null = null;
-    if (url.hostname === "youtu.be") id = url.pathname.slice(1);
-    if (url.hostname.endsWith("youtube.com")) {
-      id = url.pathname.startsWith("/embed/") || url.pathname.startsWith("/shorts/")
-        ? url.pathname.split("/")[2] ?? null
-        : url.searchParams.get("v");
-    }
-    return id ? `https://www.youtube.com/embed/${id.slice(0, 32)}` : undefined;
-  } catch {
-    return undefined;
-  }
 }
 
 function videoExtension(dataUrl: string) {
