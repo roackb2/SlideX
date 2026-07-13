@@ -4,13 +4,17 @@ import type {
   AgentActivity,
   AgentApiErrorCode,
   AgentRunResult,
+  AgentSessionPage,
   AgentSessionState,
+  AttachAgentSessionResult,
   StartAgentRunResult
 } from "@/features/pitch/domain/agentRun";
 
 const AgentSessionSchema = z.object({
   id: z.string().min(1),
   title: z.string(),
+  presentationId: z.string().min(1).optional(),
+  presentationTitle: z.string().min(1).optional(),
   latestMotionDoc: z.string(),
   messages: z.array(z.object({
     id: z.string().min(1),
@@ -18,6 +22,25 @@ const AgentSessionSchema = z.object({
     content: z.string(),
     createdAt: z.string().min(1)
   }))
+});
+
+export const AgentSessionPageSchema: z.ZodType<AgentSessionPage> = z.object({
+  items: z.array(z.object({
+    id: z.string().min(1),
+    title: z.string().min(1),
+    presentation: z.object({
+      id: z.string().min(1),
+      title: z.string().min(1)
+    }),
+    createdAt: z.iso.datetime(),
+    lastActivityAt: z.iso.datetime(),
+    messageCount: z.number().int().nonnegative()
+  })),
+  nextCursor: z.string().min(1).optional()
+});
+
+export const AttachAgentSessionResultSchema: z.ZodType<AttachAgentSessionResult> = z.object({
+  session: AgentSessionSchema
 });
 
 const AgentActivitySchema: z.ZodType<AgentActivity> = z.object({

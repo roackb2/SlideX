@@ -9,7 +9,16 @@ import { useLocalPitchPresentation } from "@/features/workspace";
 function LocalPitchWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { accessMode, error, isReady, presentation, save } = useLocalPitchPresentation();
+  const {
+    accessMode,
+    agentSessionId,
+    error,
+    isReady,
+    openAgentSession,
+    presentation,
+    save,
+    selectAgentSession
+  } = useLocalPitchPresentation();
   const resumeIntent = searchParams.get("intent") === "export"
     ? "export"
     : searchParams.get("view") === "preview"
@@ -45,13 +54,16 @@ function LocalPitchWorkspace() {
         source: presentation.source,
         templateId: presentation.templateId
       }}
+      initialAgentSessionId={agentSessionId}
       initialResumeIntent={resumeIntent}
       key={presentation.id}
+      onOpenAgentSession={openAgentSession}
       onSignInRequested={(intent) => {
         const nextPath = `${appRoutes.liveDemo}&intent=${intent}`;
         router.push(loginPath(nextPath));
       }}
       onProjectSourceChange={save}
+      onSelectedAgentSessionChange={selectAgentSession}
       presentationId={presentation.id}
     />
   );

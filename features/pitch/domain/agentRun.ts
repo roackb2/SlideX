@@ -10,8 +10,27 @@ export type AgentActivity = {
 export type AgentSession = {
   id: string;
   title: string;
+  presentationId?: string;
+  presentationTitle?: string;
   latestMotionDoc: string;
   messages: AgentSessionMessage[];
+};
+
+export type AgentSessionSummary = {
+  id: string;
+  title: string;
+  presentation: {
+    id: string;
+    title: string;
+  };
+  createdAt: string;
+  lastActivityAt: string;
+  messageCount: number;
+};
+
+export type AgentSessionPage = {
+  items: AgentSessionSummary[];
+  nextCursor?: string;
 };
 
 export type AgentSessionMessage = {
@@ -29,6 +48,10 @@ export type ActiveAgentRun = {
 export type AgentSessionState = {
   session: AgentSession;
   activeRun: ActiveAgentRun | null;
+};
+
+export type AttachAgentSessionResult = {
+  session: AgentSession;
 };
 
 export type AgentApiErrorCode =
