@@ -154,6 +154,66 @@ test("applies injected auth headers and preserves stable server error codes", as
   );
 });
 
+test("lists and attaches presentation conversations through product routes", async () => {
+  const calls: Array<{ body?: unknown; method: string; url: string }> = [];
+  const client = new SlideXAgentClient({
+    baseUrl: "https://agent.example.test",
+    fetch: async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+      calls.push({
+        ...(typeof init?.body === "string" ? { body: JSON.parse(init.body) } : {}),
+        method,
+        url
+      });
+      if (method === "GET") {
+        return Response.json({
+          items: [{
+            id: "session-1",
+            title: "Clarify the opening",
+            presentation: { id: "presentation-1", title: "Deck" },
+            createdAt: timestamp,
+            lastActivityAt: timestamp,
+            messageCount: 2
+          }],
+          nextCursor: "next-page"
+        });
+      }
+      return Response.json({
+        session: {
+          ...createSession(),
+          presentationId: "presentation-1",
+          presentationTitle: "Deck"
+        }
+      });
+    }
+  });
+
+  const page = await client.sessions({ limit: 20, cursor: "cursor-1" });
+  const attached = await client.attachSession("session-1", {
+    presentationId: "presentation-1",
+    presentationTitle: "Deck"
+  });
+
+  assert.equal(page.items[0]?.presentation.id, "presentation-1");
+  assert.equal(page.nextCursor, "next-page");
+  assert.equal(attached.session.presentationId, "presentation-1");
+  assert.deepEqual(calls, [
+    {
+      method: "GET",
+      url: "https://agent.example.test/api/agent/sessions?limit=20&cursor=cursor-1"
+    },
+    {
+      method: "PUT",
+      url: "https://agent.example.test/api/agent/sessions/session-1/presentation",
+      body: {
+        presentationId: "presentation-1",
+        presentationTitle: "Deck"
+      }
+    }
+  ]);
+});
+
 test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async () => {
   const calls: Array<{ url: string; method: string; authorization: string | null }> = [];
   const resultEvent = SlideXAgentRunProtocol.parseEvent({
@@ -208,7 +268,8 @@ test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async ()
   });
 
   const accepted = await client.runs.start({
-    title: "Deck",
+    presentationId: "presentation-1",
+    presentationTitle: "Deck",
     message: "Make it clearer",
     motionDoc: "# Deck",
     sourceRevision: "revision-1",
