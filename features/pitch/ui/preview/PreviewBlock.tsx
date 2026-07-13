@@ -17,7 +17,7 @@ import {
   spacingProp,
   stringProp
 } from "@/features/pitch/application/previewProps";
-import { blockFrame } from "@/features/pitch/application/previewCanvas";
+import { blockFrame, type Frame } from "@/features/pitch/application/previewCanvas";
 import { Card, Chart, IconBlock, ImageBlock, Metric, ShapeBlock, StackBlock, Text, Title, VideoBlock } from "@/features/pitch/ui/preview/motion-blocks";
 import { TableBlock } from "@/features/pitch/ui/preview/motion/TableBlock";
 
@@ -27,11 +27,13 @@ export type PreviewBlockItem = {
 };
 
 type PreviewBlockListProps = {
+  frameOverrides?: ReadonlyMap<number, Frame>;
   hiddenBlockIndices: Set<number>;
   items: PreviewBlockItem[];
 };
 
 export function PreviewBlockList({
+  frameOverrides,
   hiddenBlockIndices,
   items
 }: PreviewBlockListProps) {
@@ -50,7 +52,7 @@ export function PreviewBlockList({
         <div
           className="motion-positioned-block"
           key={`${block.type}-positioned-${originalIndex}`}
-          style={positionedBlockStyle(block, originalIndex)}
+          style={positionedBlockStyle(block, originalIndex, frameOverrides?.get(originalIndex))}
         >
           <PreviewBlock block={block} fillFrame />
         </div>
@@ -122,7 +124,7 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
         icon={stringProp(block.props.icon)}
         layout={cardLayoutProp(block.props.layout)}
         mutedColor={stringProp(block.props.mutedColor)}
-        radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
+        radius={spacingProp(block.props.radius ?? block.props.borderRadius ?? 0)}
         text={String(block.props.text ?? "")}
         title={String(block.props.title ?? "Card")}
         width={cardWidthProp(block.props.width)}
@@ -150,6 +152,8 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
         fit={fitProp(block.props.fit)}
         full={booleanProp(block.props.full)}
         radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
+        scaleX={numberProp(block.props.scaleX)}
+        scaleY={numberProp(block.props.scaleY)}
         src={String(block.props.src ?? "")}
       />
     );
@@ -198,19 +202,28 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
     return (
       <Chart
         background={stringProp(block.props.background ?? block.props.backgroundColor ?? block.props.bg)}
+        chartColor={stringProp(block.props.chartColor)}
         chartType={stringProp(block.props.chartType ?? block.props.type)}
         color={stringProp(block.props.color ?? block.props.textColor)}
+        colors={stringProp(block.props.colors)}
         delay={numberProp(block.props.delay)}
         duration={numberProp(block.props.duration)}
         enter={enterProp(block.props.enter)}
         fillFrame={fillFrame}
-        height={sizeNumberProp(block.props.height, 144)}
+        fontSize={sizeNumberProp(block.props.fontSize, 18)}
+        height={sizeNumberProp(block.props.height, 240)}
         labels={stringProp(block.props.labels)}
         mutedColor={stringProp(block.props.mutedColor)}
         radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
+        strokeWidth={sizeNumberProp(block.props.strokeWidth, 16)}
+        sizes={stringProp(block.props.sizes)}
         title={String(block.props.title ?? "Chart")}
+        valueFormat={stringProp(block.props.valueFormat)}
         values={stringProp(block.props.values)}
+        xAxisStep={sizeNumberProp(block.props.xAxisStep, undefined)}
+        xValues={stringProp(block.props.xValues)}
         width={blockWidthProp(block.props.width, "lg")}
+        yAxisStep={sizeNumberProp(block.props.yAxisStep, undefined)}
       />
     );
   }
@@ -241,6 +254,13 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
         enter={enterProp(block.props.enter)}
         fill={stringProp(block.props.fill)}
         fillFrame={fillFrame}
+        arrowEnd={stringProp(block.props.arrowEnd)}
+        arrowEndSize={spacingProp(block.props.arrowEndSize)}
+        arrowStart={stringProp(block.props.arrowStart)}
+        arrowStartSize={spacingProp(block.props.arrowStartSize)}
+        fontSize={sizeNumberProp(block.props.fontSize, 18)}
+        fontWeight={spacingProp(block.props.fontWeight)}
+        lineStyle={stringProp(block.props.lineStyle)}
         mask={stringProp(block.props.mask)}
         operation={stringProp(block.props.operation)}
         opacity={opacityProp(block.props.opacity)}
@@ -250,6 +270,8 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
         sides={spacingProp(block.props.sides)}
         stroke={stringProp(block.props.stroke)}
         strokeWidth={spacingProp(block.props.strokeWidth)}
+        text={String(block.props.text ?? "")}
+        textColor={stringProp(block.props.textColor ?? block.props.color)}
       />
     );
   }
@@ -282,8 +304,8 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
   return null;
 }
 
-function positionedBlockStyle(block: MotionDocBlock, index: number): CSSProperties {
-  const frame = blockFrame(block);
+function positionedBlockStyle(block: MotionDocBlock, index: number, frameOverride?: Frame): CSSProperties {
+  const frame = frameOverride ?? blockFrame(block);
   const h = "props" in block ? block.props.h : undefined;
 
   return {

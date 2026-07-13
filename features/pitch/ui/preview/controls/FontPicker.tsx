@@ -38,15 +38,16 @@ function FontPreviewItem({ font, isSelected, onClick }: { font: string; isSelect
   return (
     <button
       ref={ref}
-      className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-[13px] transition-colors hover:bg-white/10 ${
-        isSelected ? "bg-white/5 text-white" : "text-neutral-300"
+      className={`group flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors ${
+        isSelected ? "bg-white text-black" : "text-neutral-300 hover:bg-white/[0.08] hover:text-white"
       }`}
       onClick={onClick}
       type="button"
       style={isVisible ? { fontFamily: `"${font}", sans-serif` } : {}}
     >
-      <span className="truncate">{font}</span>
-      {isSelected && <Check className="shrink-0 ml-2" size={14} />}
+      <span className={`grid h-7 w-8 shrink-0 place-items-center rounded-md text-[13px] ${isSelected ? "bg-black/10" : "bg-white/[0.05] text-neutral-400 group-hover:text-white"}`}>Aa</span>
+      <span className="min-w-0 flex-1 truncate">{font}</span>
+      {isSelected && <Check className="shrink-0" size={14} />}
     </button>
   );
 }
@@ -70,7 +71,7 @@ export function FontPicker({ onChange, value }: FontPickerProps) {
     <Popover.Root onOpenChange={setOpen} open={open}>
       <Popover.Trigger asChild>
         <button
-          className="flex w-full items-center justify-between rounded-lg bg-white/[0.03] px-2.5 py-1.5 text-[13px] font-medium text-neutral-200 outline-none transition-colors hover:bg-white/[0.05] focus-visible:bg-white/[0.06] focus-visible:ring-1 focus-visible:ring-white/[0.12]"
+          className="flex w-[112px] items-center justify-between gap-1.5 rounded-md px-2 py-1.5 text-[11px] font-medium text-neutral-200 outline-none transition-colors hover:bg-white/[0.08] focus-visible:ring-1 focus-visible:ring-white/40"
           title="Font Family"
           type="button"
         >
@@ -81,11 +82,12 @@ export function FontPicker({ onChange, value }: FontPickerProps) {
       <Popover.Portal>
         <Popover.Content
           align="start"
-          className="z-[100] flex w-[220px] flex-col overflow-hidden rounded-lg border border-white/[0.08] bg-[#18181b] p-1 shadow-2xl animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
+          className="z-[100] flex w-[280px] flex-col overflow-hidden rounded-xl border border-white/[0.1] bg-[#17171a] p-1.5 shadow-[0_24px_70px_rgba(0,0,0,0.58)] animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
           onOpenAutoFocus={(e) => e.preventDefault()}
           sideOffset={8}
         >
-          <div className="flex items-center gap-2 border-b border-white/[0.06] px-2 pb-2 pt-1">
+          <div className="px-2 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-500">Font family</div>
+          <div className="flex items-center gap-2 rounded-lg bg-white/[0.05] px-2.5 py-2 focus-within:ring-1 focus-within:ring-white/20">
             <Search className="text-neutral-500" size={14} />
             <input
               className="w-full bg-transparent text-[12px] text-neutral-200 outline-none placeholder:text-neutral-500"
@@ -95,15 +97,16 @@ export function FontPicker({ onChange, value }: FontPickerProps) {
               value={search}
             />
           </div>
-          <div className="custom-scrollbar mt-1 max-h-[240px] overflow-y-auto">
+          <div className="custom-scrollbar mt-1.5 max-h-[300px] overflow-y-auto">
             <button
-              className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-[12px] transition-colors hover:bg-white/10 ${
-                value === "" ? "bg-white/5 text-white" : "text-neutral-300"
+              className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-[12px] transition-colors ${
+                value === "" ? "bg-white text-black" : "text-neutral-300 hover:bg-white/[0.08] hover:text-white"
               }`}
               onClick={() => handleSelect("")}
               type="button"
             >
-              <span>Default Font</span>
+              <span className={`grid h-7 w-8 place-items-center rounded-md text-[13px] ${value === "" ? "bg-black/10" : "bg-white/[0.05] text-neutral-400"}`}>Aa</span>
+              <span className="flex-1">Default Font</span>
               {value === "" && <Check size={14} />}
             </button>
             {filteredFonts.map((font) => (

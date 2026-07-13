@@ -275,6 +275,85 @@ export function pasteBlockIntoSlide(slide: MotionDocScene, copiedBlock: MotionDo
   };
 }
 
+export function pasteBlocksIntoSlide(slide: MotionDocScene, copiedBlocks: MotionDocBlock[], selectedBlockIndex: number | null, options: { offset?: boolean } = {}) {
+  const blocks = [...slide.blocks];
+  const insertIndex = selectedBlockIndex === null ? blocks.length : Math.min(selectedBlockIndex + 1, blocks.length);
+  const groupIds = new Map<string, string>();
+  const pastedBlocks = copiedBlocks.map((block) => {
+    const clone = options.offset ? offsetDuplicatedBlock(cloneBlock(block)) : cloneBlock(block);
+    if (!("props" in clone) || typeof clone.props.groupId !== "string") return clone;
+    const nextGroupId = groupIds.get(clone.props.groupId) ?? `group-${Date.now().toString(36)}-${groupIds.size}`;
+    groupIds.set(clone.props.groupId, nextGroupId);
+    return { ...clone, props: { ...clone.props, groupId: nextGroupId } } as MotionDocBlock;
+  });
+
+  blocks.splice(insertIndex, 0, ...pastedBlocks);
+
+  return {
+    blockIndices: pastedBlocks.map((_, offset) => insertIndex + offset),
+    slide: { ...slide, blocks }
+  };
+}
+
+export function moveBlocksToEdge(slide: MotionDocScene, blockIndices: number[], edge: "back" | "front") {
+  const selected = new Set(blockIndices);
+  const moving = slide.blocks.filter((_, index) => selected.has(index));
+  const remaining = slide.blocks.filter((_, index) => !selected.has(index));
+  const blocks = edge === "front" ? [...remaining, ...moving] : [...moving, ...remaining];
+
+  return {
+    blockIndices: edge === "front"
+      ? moving.map((_, offset) => remaining.length + offset)
+      : moving.map((_, offset) => offset),
+    slide: { ...slide, blocks }
+  };
+}
+
+export function groupBlocks(slide: MotionDocScene, blockIndices: number[], groupId: string) {
+  const sortedIndices = [...new Set(blockIndices)].sort((a, b) => a - b);
+  const selected = new Set(sortedIndices);
+  const insertionIndex = sortedIndices[0] ?? 0;
+  const grouped = slide.blocks.filter((_, index) => selected.has(index)).map((block) => {
+    if (!("props" in block)) return block;
+    return { ...block, props: { ...block.props, groupId, groupName: "Group" } } as MotionDocBlock;
+  });
+  const remaining = slide.blocks.filter((_, index) => !selected.has(index));
+  remaining.splice(insertionIndex, 0, ...grouped);
+  return {
+    blockIndices: grouped.map((_, offset) => insertionIndex + offset),
+    slide: { ...slide, blocks: remaining }
+  };
+}
+
+export function ungroupBlocks(slide: MotionDocScene, blockIndices: number[]) {
+  const groupIds = new Set(blockIndices.map((index) => {
+    const block = slide.blocks[index];
+    return block && "props" in block && typeof block.props.groupId === "string" ? block.props.groupId : "";
+  }).filter(Boolean));
+
+  return {
+    ...slide,
+    blocks: slide.blocks.map((block) => {
+      if (!("props" in block) || typeof block.props.groupId !== "string" || !groupIds.has(block.props.groupId)) return block;
+      const props = { ...block.props };
+      delete props.groupId;
+      delete props.groupName;
+      return { ...block, props } as MotionDocBlock;
+    })
+  };
+}
+
+export function renameLayer(slide: MotionDocScene, blockIndex: number, name: string) {
+  const block = slide.blocks[blockIndex];
+  if (!block || !("props" in block)) return slide;
+  const blocks = [...slide.blocks];
+  const props = { ...block.props };
+  if (name.trim()) props.layerName = name.trim();
+  else delete props.layerName;
+  blocks[blockIndex] = { ...block, props } as MotionDocBlock;
+  return { ...slide, blocks };
+}
+
 export function reorderBlocks(slide: MotionDocScene, fromIndex: number, toIndex: number) {
   if (fromIndex === toIndex) {
     return null;
@@ -416,14 +495,18 @@ export function updatePositionedBlockFrames(slide: MotionDocScene, updates: Fram
       continue;
     }
 
+    const nextProps = {
+      ...currentBlock.props,
+      w: currentBlock.props.w ?? defaultBlockWidth(currentBlock.type),
+      h: currentBlock.props.h ?? defaultBlockHeight(currentBlock.type),
+      ...frame
+    };
+
     blocks[blockIndex] = {
       ...currentBlock,
-      props: {
-        ...currentBlock.props,
-        w: currentBlock.props.w ?? defaultBlockWidth(currentBlock.type),
-        h: currentBlock.props.h ?? defaultBlockHeight(currentBlock.type),
-        ...frame
-      }
+      props: currentBlock.type === "Icon"
+        ? { ...nextProps, size: Math.round(Math.min(Number(nextProps.w) / 100 * 1920, Number(nextProps.h) / 100 * 1080)) }
+        : nextProps
     };
   }
 
@@ -559,12 +642,14 @@ export function applySelectionMdxSource({
   activeSlide,
   activeSlideIndex,
   selectedBlockIndex,
+  selectedBlockIndices,
   source,
   value
 }: {
   activeSlide: MotionDocScene;
   activeSlideIndex: number;
   selectedBlockIndex: number | null;
+  selectedBlockIndices?: number[];
   source: string;
   value: string;
 }): ApplySelectionMdxResult {
@@ -583,14 +668,22 @@ export function applySelectionMdxSource({
   }
 
   const parsed = parseMotionDoc(`<Slide duration={5}>\n${value}\n</Slide>`);
-  const nextBlock = parsed.scenes[0]?.blocks[0];
+  const nextBlocks = parsed.scenes[0]?.blocks ?? [];
+  const nextBlock = nextBlocks[0];
 
   if (!nextBlock) {
     return { error: "Selection MDX needs one layer" };
   }
 
+  const indices = selectedLayerIndices(selectedBlockIndices ?? [], selectedBlockIndex);
   const blocks = [...activeSlide.blocks];
-  blocks[selectedBlockIndex] = nextBlock;
+  if (indices.length > 1 || nextBlocks.length > 1) {
+    const insertIndex = indices[0] ?? selectedBlockIndex;
+    for (const index of [...indices].sort((a, b) => b - a)) blocks.splice(index, 1);
+    blocks.splice(insertIndex, 0, ...nextBlocks);
+  } else {
+    blocks[selectedBlockIndex] = nextBlock;
+  }
 
   return {
     notice: "Layer MDX updated",

@@ -399,10 +399,10 @@ function registerWorkspaceSkills() {
 
     try {
       const content = fs.readFileSync(skillFilePath, "utf8");
-      
+
       let name = dirName;
       let description = `Skill: ${dirName}`;
-      
+
       const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
       if (frontmatterMatch) {
         const yaml = frontmatterMatch[1];

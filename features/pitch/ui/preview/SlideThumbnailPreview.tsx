@@ -3,16 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/features/pitch/application/previewCanvas";
 import { PreviewPane } from "@/features/pitch/ui/preview/PreviewPane";
+import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 
 type SlideThumbnailPreviewProps = {
   activeSlideIndex: number;
   replayNonce: number;
+  scene?: MotionDocScene;
   source: string;
 };
 
 export function SlideThumbnailPreview({
   activeSlideIndex,
   replayNonce,
+  scene,
   source
 }: SlideThumbnailPreviewProps) {
   const frameRef = useRef<HTMLDivElement | null>(null);
@@ -52,6 +55,7 @@ export function SlideThumbnailPreview({
         <PreviewPane
           activeSlideIndex={activeSlideIndex}
           replayNonce={replayNonce}
+          scene={scene}
           source={source}
         />
       </div>

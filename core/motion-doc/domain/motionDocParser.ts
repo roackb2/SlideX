@@ -49,12 +49,13 @@ export function parseMotionDoc(source: string): ParsedMotionDoc {
 }
 
 function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
+  const normalizedSceneSource = expandGroupMarkup(sceneSource);
   const blocks: MotionDocBlock[] = [];
   const blockPattern =
     /<(Title|Text)\b([^>]*)>([\s\S]*?)<\/\1>|<(Card|ImageBlock|VideoBlock|Metric|Chart|Icon|Shape|Stack|Table)\b([\s\S]*?)\/>/g;
-  let markdownSource = sceneSource;
+  let markdownSource = normalizedSceneSource;
 
-  for (const match of sceneSource.matchAll(blockPattern)) {
+  for (const match of normalizedSceneSource.matchAll(blockPattern)) {
     markdownSource = markdownSource.replace(match[0], "\n");
     const pairedType = match[1] as "Title" | "Text" | undefined;
     const selfClosingType = match[4] as
@@ -120,6 +121,24 @@ function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
   return blocks;
 }
 
+function expandGroupMarkup(sceneSource: string) {
+  return sceneSource.replace(/<Group\b([^>]*)>([\s\S]*?)<\/Group>/g, (_match, rawProps: string, children: string, offset: number) => {
+    const props = parseProps(rawProps);
+    const groupId = String(props.id ?? props.groupId ?? `group-${offset}`);
+    const groupName = String(props.name ?? props.groupName ?? "Group");
+    const groupAttrs = ` groupId="${encodeInjectedAttribute(groupId)}" groupName="${encodeInjectedAttribute(groupName)}"`;
+
+    return children.replace(
+      /<(Title|Text|Card|ImageBlock|VideoBlock|Metric|Chart|Icon|Shape|Stack|Table)\b/g,
+      (opening) => `${opening}${groupAttrs}`
+    );
+  });
+}
+
+function encodeInjectedAttribute(value: string) {
+  return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
 function parseProps(rawProps: string): Record<string, string | number> {
   const props: Record<string, string | number> = {};
   const propPattern = /([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|\{([^}]*)\})/g;
@@ -133,7 +152,7 @@ function parseProps(rawProps: string): Record<string, string | number> {
       : decodeMdxAttribute(quotedValue);
     const numericValue = Number(value);
 
-    props[key] = Number.isFinite(numericValue) && value.trim() !== "" ? numericValue : value;
+    props[key] = key !== "text" && Number.isFinite(numericValue) && value.trim() !== "" ? numericValue : value;
   }
 
   return props;
@@ -152,9 +171,22 @@ function decodeMdxAttribute(value: string) {
 }
 
 function normalizeText(value: string) {
-  return value
+  return decodeMdxText(value)
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
     .join("\n");
+}
+
+function decodeMdxText(value: string) {
+  return value
+    .replaceAll("&#123;", "{")
+    .replaceAll("&#x7B;", "{")
+    .replaceAll("&#x7b;", "{")
+    .replaceAll("&#125;", "}")
+    .replaceAll("&#x7D;", "}")
+    .replaceAll("&#x7d;", "}")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&");
 }

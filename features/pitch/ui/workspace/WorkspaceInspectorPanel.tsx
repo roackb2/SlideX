@@ -1,6 +1,7 @@
 "use client";
 
 import { PitchInspector } from "@/features/pitch/ui/PitchInspector";
+import { SlidersHorizontal, X } from "lucide-react";
 import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWorkspaceTypes";
 
 type WorkspaceInspectorPanelProps = Pick<
@@ -56,10 +57,27 @@ export function WorkspaceInspectorPanel(props: WorkspaceInspectorPanelProps) {
       {props.isMobileInspectorOpen ? (
         <>
           <div
-            className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm md:hidden"
             onClick={() => props.setIsMobileInspectorOpen(false)}
           />
-          <div className="fixed inset-y-0 right-0 z-40 flex w-[260px] flex-col border-l border-white/[0.12] bg-[#0a0a0a] shadow-2xl sm:w-[280px] md:hidden">
+          <aside className="fixed inset-y-0 right-0 z-[80] flex w-[min(88vw,340px)] flex-col overflow-hidden rounded-l-[1.5rem] border-l border-white/[0.12] bg-[#0a0a0a] shadow-[-24px_0_80px_rgba(0,0,0,0.72)] md:hidden" aria-label="Options panel">
+            <div className="flex h-14 shrink-0 items-center justify-between border-b border-white/[0.08] px-4">
+              <div className="flex items-center gap-2.5">
+                <SlidersHorizontal size={16} className="text-[#8ea5ff]" />
+                <div>
+                  <p className="text-sm font-semibold text-white">Options</p>
+                  <p className="text-[10px] text-neutral-500">Swipe right to close</p>
+                </div>
+              </div>
+              <button
+                aria-label="Close options"
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-400 transition active:scale-95 active:bg-white/[0.08] active:text-white"
+                onClick={() => props.setIsMobileInspectorOpen(false)}
+                type="button"
+              >
+                <X size={18} />
+              </button>
+            </div>
             <PitchInspectorContent
               {...props}
               onOpenMdxEditor={() => {
@@ -67,7 +85,7 @@ export function WorkspaceInspectorPanel(props: WorkspaceInspectorPanelProps) {
                 props.setIsCodeEditorOpen(true);
               }}
             />
-          </div>
+          </aside>
         </>
       ) : null}
     </>

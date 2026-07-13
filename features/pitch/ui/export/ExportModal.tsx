@@ -12,6 +12,7 @@ type ExportModalProps = {
   onImport: (file: File) => Promise<void>;
   documentTitle: string;
   isExporting: boolean;
+  initialMode?: "export" | "import";
 };
 
 type ExportOption = {
@@ -25,9 +26,9 @@ type ExportOption = {
 const formatOptions = [
   {
     id: "pptx",
-    label: "PowerPoint",
+    label: "Editable PPTX",
     ext: ".pptx",
-    description: "Exact 16:9 canvas. Motion and shaders are captured as still frames.",
+    description: "Opens in PowerPoint, Keynote, and Google Slides. Text, images, and tables stay editable.",
     icon: Presentation
   },
   {
@@ -46,13 +47,19 @@ const formatOptions = [
   }
 ] satisfies ExportOption[];
 
+const actionTabs = [
+  { id: "import", icon: Upload, label: "Import" },
+  { id: "export", icon: Download, label: "Export" }
+] as const;
+
 export function ExportModal({
   isOpen,
   onClose,
   onExport,
   onImport,
   documentTitle,
-  isExporting
+  isExporting,
+  initialMode = "export"
 }: ExportModalProps) {
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("pptx");
   const [mode, setMode] = useState<"export" | "import">("export");
@@ -89,13 +96,18 @@ export function ExportModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    setMode(initialMode);
     setFilename(documentTitle || "slidesx-deck");
     setErrorMessage("");
+  }, [documentTitle, initialMode, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
     const timer = window.setTimeout(() => {
       if (mode === "export") inputRef.current?.select();
     }, 120);
     return () => window.clearTimeout(timer);
-  }, [documentTitle, isOpen, mode]);
+  }, [isOpen, mode]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -122,7 +134,7 @@ export function ExportModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/72 px-4 py-6 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/72 px-0 py-0 backdrop-blur-sm sm:items-center sm:px-4 sm:py-6"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -130,11 +142,11 @@ export function ExportModal({
       <section
         aria-labelledby="export-dialog-title"
         aria-modal="true"
-        className="w-full max-w-[560px] overflow-hidden rounded-xl border border-white/[0.1] bg-[#111214] shadow-[0_30px_100px_rgba(0,0,0,0.52)]"
+        className="w-full max-w-[560px] overflow-hidden rounded-t-[1.5rem] border border-white/[0.1] bg-[#111214] shadow-[0_30px_100px_rgba(0,0,0,0.52)] sm:rounded-xl"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
       >
-        <header className="flex items-start justify-between border-b border-white/[0.08] px-6 py-5">
+        <header className="flex items-start justify-between border-b border-white/[0.08] px-4 py-4 sm:px-6 sm:py-5">
           <div>
             <h2 className="text-[18px] font-semibold tracking-[-0.03em] text-white" id="export-dialog-title">Presentation file</h2>
             <p className="mt-1 text-[13px] leading-5 text-neutral-500">Bring a deck in or prepare it for sharing.</p>
@@ -149,24 +161,28 @@ export function ExportModal({
           </button>
         </header>
 
-        <div className="border-b border-white/[0.08] px-6 pt-4">
-          <div className="flex gap-5" role="tablist" aria-label="Presentation file action">
-            {(["export", "import"] as const).map((item) => (
+        <div className="border-b border-white/[0.08] px-4 py-3 sm:px-6">
+          <div className="grid grid-cols-2 rounded-xl bg-black/30 p-1" role="tablist" aria-label="Presentation file action">
+            {actionTabs.map((item) => {
+              const Icon = item.icon;
+              return (
               <button
-                aria-selected={mode === item}
-                className={`border-b-2 pb-3 text-[13px] font-semibold capitalize transition-colors ${mode === item ? "border-white text-white" : "border-transparent text-neutral-500 hover:text-neutral-300"}`}
-                key={item}
-                onClick={() => { setMode(item); setErrorMessage(""); }}
+                aria-selected={mode === item.id}
+                className={`flex h-10 items-center justify-center gap-2 rounded-lg text-[13px] font-semibold transition ${mode === item.id ? "bg-white text-black shadow-sm" : "text-neutral-500 hover:bg-white/[0.04] hover:text-neutral-300"}`}
+                key={item.id}
+                onClick={() => { setMode(item.id); setErrorMessage(""); }}
                 role="tab"
                 type="button"
               >
-                {item}
+                <Icon size={15} />
+                {item.label}
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        <div className="max-h-[min(72dvh,620px)] overflow-y-auto px-6 py-5">
+        <div className="max-h-[min(66dvh,620px)] overflow-y-auto px-4 py-4 sm:max-h-[min(72dvh,620px)] sm:px-6 sm:py-5">
           {mode === "export" ? <>
           <p className="mb-3 text-[12px] font-semibold text-neutral-400">Format</p>
           <div className="overflow-hidden rounded-lg border border-white/[0.08]">
@@ -241,7 +257,7 @@ export function ExportModal({
           {errorMessage ? <p className="mt-3 rounded-md border border-red-400/20 bg-red-400/[0.06] px-3 py-2.5 text-[12px] leading-5 text-red-200" role="alert">{errorMessage}</p> : null}
         </div>
 
-        <footer className="flex items-center justify-between gap-4 border-t border-white/[0.08] px-6 py-4">
+        <footer className="flex items-center justify-between gap-4 border-t border-white/[0.08] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:py-4">
           <p className="hidden text-[11px] text-neutral-600 sm:block">Esc to close</p>
           <div className="ml-auto flex items-center gap-2">
             <button className="h-10 rounded-md px-4 text-[13px] font-semibold text-neutral-400 transition-colors hover:bg-white/[0.04] hover:text-white" onClick={onClose} type="button">Cancel</button>

@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { ImagePlus } from "lucide-react";
 import { MotionBlock, type AnimationProps, type RadiusProps } from "@/features/pitch/ui/preview/motion/MotionBlock";
 import { surfaceStyle } from "@/features/pitch/ui/preview/motion/blockStyles";
 import { PaperImageFilterLayer } from "@/features/pitch/ui/preview/paperImageFilterRenderers";
@@ -21,12 +22,16 @@ export function ImageBlock({
   filterSpeed,
   fit = "cover",
   full = false,
+  scaleX = 1,
+  scaleY = 1,
   src,
   ...animation
 }: AnimationProps & {
   alt: string;
   fit?: string;
   full?: boolean;
+  scaleX?: number;
+  scaleY?: number;
   src: string;
   filter?: string;
   filterAngle?: number;
@@ -43,39 +48,63 @@ export function ImageBlock({
   const fillFrame = Boolean(animation.fillFrame);
   const mediaClassName = full || fillFrame ? "h-full w-full" : "aspect-video w-full";
   const objectFit = normalizeImageFit(fit);
+  const hasSource = Boolean(src.trim());
+  const mediaTransform: CSSProperties = {
+    transform: `scale(${clampImageScale(scaleX)}, ${clampImageScale(scaleY)})`,
+    transformOrigin: "center"
+  };
 
   return (
     <MotionBlock
       className={
         full
           ? "absolute -inset-8 z-0 w-auto max-w-none overflow-hidden rounded-none border-0 bg-white/[0.08]"
-          : "w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-white/[0.08]"
+          : fillFrame
+            ? "h-full w-full max-w-none overflow-hidden"
+            : "w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-white/[0.08]"
       }
       style={surfaceStyle({ background, backgroundColor })}
       {...animation}
     >
       <div className={`relative overflow-hidden ${mediaClassName}`} style={{ borderRadius: "inherit" }}>
-        <img
-          alt={alt}
-          className="absolute inset-0 h-full w-full"
-          src={src}
-          style={{ objectFit }}
-        />
-        <PaperImageFilterLayer
-          filter={filter}
-          filterAngle={filterAngle}
-          filterContrast={filterContrast}
-          filterDetail={filterDetail}
-          filterDistortion={filterDistortion}
-          filterPreset={filterPreset}
-          filterSize={filterSize}
-          filterSpeed={filterSpeed}
-          fit={fit}
-          src={src}
-        />
+        {hasSource ? (
+          <div className="absolute inset-0" style={mediaTransform}>
+            <img
+              alt={alt}
+              className="absolute inset-0 h-full w-full"
+              src={src}
+              style={{ objectFit }}
+            />
+            <PaperImageFilterLayer
+              filter={filter}
+              filterAngle={filterAngle}
+              filterContrast={filterContrast}
+              filterDetail={filterDetail}
+              filterDistortion={filterDistortion}
+              filterPreset={filterPreset}
+              filterSize={filterSize}
+              filterSpeed={filterSpeed}
+              fit={fit}
+              src={src}
+            />
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[radial-gradient(circle_at_50%_40%,rgba(139,92,246,0.09),transparent_60%)] text-neutral-500">
+            <span className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-neutral-400 shadow-sm">
+              <ImagePlus size={18} strokeWidth={1.7} />
+            </span>
+            <span className="text-[12px] font-semibold text-neutral-300">Import an image</span>
+            <span className="text-[10px] text-neutral-600">Choose a file from the right panel</span>
+          </div>
+        )}
       </div>
     </MotionBlock>
   );
+}
+
+function clampImageScale(value: number | undefined) {
+  if (!Number.isFinite(value)) return 1;
+  return Math.min(Math.max(value ?? 1, 0.1), 4);
 }
 
 export function VideoBlock({
@@ -109,7 +138,9 @@ export function VideoBlock({
       className={
         full
           ? "absolute -inset-8 z-0 w-auto max-w-none overflow-hidden rounded-none border-0 bg-white/[0.08]"
-          : "w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-white/[0.08]"
+          : fillFrame
+            ? "h-full w-full max-w-none overflow-hidden"
+            : "w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-white/[0.08]"
       }
       style={surfaceStyle({ background, backgroundColor })}
       {...animation}

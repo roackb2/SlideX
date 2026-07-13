@@ -1,6 +1,7 @@
 import type { Dispatch, MouseEvent as ReactMouseEvent, ReactNode, RefObject, SetStateAction } from "react";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 import type { CanvasTool } from "@/features/pitch/application/canvasTools";
+import type { SlideComment } from "@/features/pitch/application/slideComments";
 import type { AddBlockOptions, FrameUpdate, InsertSlidePlacement } from "@/features/pitch/application/motionDocCommands";
 import type { SlideRow } from "@/features/pitch/ui/LayerSidebar";
 import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
@@ -19,6 +20,7 @@ export type PitchWorkspaceProps = {
   activeSlideLayout: string;
   activeSlideLayoutPreset: string;
   activeSlideMutedColor: string;
+  activeSlideComments: SlideComment[];
   activeSlideShader: string;
   activeSlideShaderAngle: number;
   activeSlideShaderColor1: string;
@@ -51,6 +53,7 @@ export type PitchWorkspaceProps = {
   deleteSelectedBlocks: () => void;
   deleteSlide: (slideIndex: number) => void;
   duplicateSelectedBlock: () => void;
+  groupSelectedBlocks: () => void;
   draggedBlockIndex: number | null;
   dragOverBlockIndex: number | null;
 
@@ -69,8 +72,12 @@ export type PitchWorkspaceProps = {
   isTemplateModalOpen: boolean;
   hasCopiedBlock: boolean;
   moveBlock: (blockIndex: number, direction: -1 | 1) => void;
+  moveBlockToEdge: (blockIndex: number, edge: "back" | "front") => void;
+  moveSelectedBlocksToEdge: (edge: "back" | "front") => void;
   newProject: () => void;
   notice: string;
+  onAddActiveSlideComment: (comment: string) => void;
+  onPassActiveSlideComment: (commentId: string) => void;
   projectName: string;
   pushUndoSnapshot: () => void;
   pasteCopiedBlock: () => void;
@@ -102,6 +109,9 @@ export type PitchWorkspaceProps = {
   source: string;
   toggleSelectedBlocksPositionLock: () => void;
   toggleAgentPanel: () => void;
+  toggleBlockPositionLock: (blockIndex: number) => void;
+  ungroupSelectedBlocks: () => void;
+  renameBlock: (blockIndex: number, name: string) => void;
   totalDuration: number;
   undoLastChange: () => void;
   updateActiveSlideStyle: (updates: {
@@ -110,7 +120,7 @@ export type PitchWorkspaceProps = {
   }) => void;
   updateAllSlidesStyle: (updates: Record<string, string | number>) => void;
   updateBlock: BlockUpdater;
-  updatePositionedBlockFrames: (updates: FrameUpdate[], commit?: boolean) => void;
+  updatePositionedBlockFrames: (updates: FrameUpdate[]) => void;
   updateSelectionMdx: (value: string) => void;
   useSelectedImageAsBackground: () => void;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;

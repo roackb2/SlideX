@@ -1,8 +1,13 @@
 "use client";
 
+import { normalizeChartAxisStep } from "@/core/motion-doc/domain/chartAxis";
 import { isSlideXIconName, lucideIconPaths } from "@/core/motion-doc/domain/lucideIconRegistry";
+import { normalizeChartType } from "@/core/motion-doc/domain/chartCatalog";
+import { normalizeChartValueFormat } from "@/core/motion-doc/domain/chartValue";
+import { resolveContrastingTextColor } from "@/common/util/colorContrast";
 import { MotionBlock, type AnimationProps, type ColorProps, type RadiusProps } from "@/features/pitch/ui/preview/motion/MotionBlock";
 import { cardWidthClass, chartWidthClass, metricWidthClass, surfaceVars } from "@/features/pitch/ui/preview/motion/blockStyles";
+import { ChartVisual } from "@/features/pitch/ui/preview/motion/ChartVisual";
 
 export function Card({
   background,
@@ -98,113 +103,114 @@ export function Chart({
   background,
   backgroundColor,
   chartType = "bar",
+  chartColor,
+  colors = "",
   color,
-  height = 144,
+  fontSize = 18,
+  strokeWidth,
+  height = 240,
   labels = "",
   mutedColor,
   textColor,
   title,
+  sizes = "",
+  valueFormat = "number",
   values = "",
   width = "lg",
+  xAxisStep,
+  xValues = "",
+  yAxisStep,
   ...animation
 }: AnimationProps & {
   chartType?: string;
+  chartColor?: string;
+  colors?: string;
+  fontSize?: number | string;
+  strokeWidth?: number | string;
   height?: number | string;
   labels?: string;
   title: string;
+  sizes?: string;
+  valueFormat?: string;
   values?: string;
+  xValues?: string;
   width?: string;
+  xAxisStep?: number | string;
+  yAxisStep?: number | string;
 } & RadiusProps & ColorProps) {
-  const chartValues = parseChartValues(values);
-  const chartLabels = labels.split(",").map((item) => item.trim()).filter(Boolean);
-  const maxValue = Math.max(...chartValues, 1);
-  const chartHeight = normalizeChartHeight(height);
   const normalizedChartType = normalizeChartType(chartType);
+  const chartValues = parseChartValues(values, normalizedChartType === "waterfall");
+  const chartLabels = labels.split(",").map((item) => item.trim()).filter(Boolean);
+  const chartColors = colors.split(",").map((item) => item.trim()).filter(Boolean);
+  const chartSizes = sizes.split(",").map(Number).filter(Number.isFinite);
+  const chartXValues = xValues.split(",").map(Number).filter(Number.isFinite);
+  const maxValue = Math.max(...chartValues.map(Math.abs), 1);
+  const chartHeight = normalizeChartHeight(height);
+  const normalizedFontSize = Math.min(Math.max(Number(fontSize) || 18, 10), 32);
+  const normalizedStrokeWidth = Math.min(Math.max(Number(strokeWidth) || 16, 2), 32);
+  const normalizedValueFormat = normalizeChartValueFormat(valueFormat);
+  const normalizedXAxisStep = normalizeChartAxisStep(xAxisStep);
+  const normalizedYAxisStep = normalizeChartAxisStep(yAxisStep);
+  const resolvedTextColor = resolveContrastingTextColor(background ?? backgroundColor, color ?? textColor);
 
   return (
     <MotionBlock
       className={`${chartWidthClass(width)} flex h-full flex-col rounded-2xl border border-[var(--slide-border)] bg-[var(--slide-card)] p-5 shadow-xl shadow-black/20 backdrop-blur`}
-      style={surfaceVars({ background, backgroundColor, color, mutedColor, textColor })}
+      style={{ ...surfaceVars({ background, backgroundColor, color: resolvedTextColor, mutedColor: mutedColor ?? resolvedTextColor }), "--chart-color": chartColor || chartColors[0] || "#3b82f6", "--chart-font-size": `${normalizedFontSize}px`, "--chart-weight": normalizedStrokeWidth } as React.CSSProperties}
       {...animation}
     >
       <h3 className="text-xl font-semibold text-[var(--slide-fg)]" style={{ color: "var(--block-fg, var(--slide-fg))" }}>
         {title}
       </h3>
-      {normalizedChartType === "bar" ? (
-        <BarChartBody chartHeight={chartHeight} labels={chartLabels} maxValue={maxValue} values={chartValues} />
-      ) : null}
-      {normalizedChartType === "line" || normalizedChartType === "area" ? (
-        <LineChartBody chartHeight={chartHeight} labels={chartLabels} maxValue={maxValue} mode={normalizedChartType} values={chartValues} />
-      ) : null}
-      {normalizedChartType === "pie" || normalizedChartType === "donut" ? (
-        <PieChartBody chartHeight={chartHeight} labels={chartLabels} mode={normalizedChartType} values={chartValues} />
-      ) : null}
+      <div className="flex min-h-0 w-full flex-1 flex-col justify-center"><div className="flex max-h-full w-full flex-col" style={{ height: chartHeight }}><ChartVisual colors={chartColors} height={chartHeight} labels={chartLabels} maxValue={maxValue} sizes={chartSizes} strokeWidth={normalizedStrokeWidth} type={normalizedChartType} valueFormat={normalizedValueFormat} values={chartValues} xAxisStep={normalizedXAxisStep} xValues={chartXValues} yAxisStep={normalizedYAxisStep} /></div></div>
     </MotionBlock>
   );
 }
 
 function BarChartBody({
-  chartHeight,
+  colors,
   labels,
   maxValue,
+  thickness,
   values
 }: {
-  chartHeight: number;
+  colors: string[];
   labels: string[];
   maxValue: number;
+  thickness: number;
   values: number[];
 }) {
-  const gridLines = 4;
   return (
-    <div className="relative mt-6 flex flex-1 flex-col justify-end min-h-0">
-      <div className="absolute inset-0 flex flex-col justify-between pb-8">
-        {Array.from({ length: gridLines }).map((_, i) => (
-          <div key={i} className="h-px w-full bg-[var(--slide-border)] opacity-40" />
-        ))}
-      </div>
-      <div className="relative z-10 flex h-full items-end gap-3 pb-8 pt-4">
+    <div className="mt-5 flex flex-1 flex-col justify-center gap-3 min-h-0">
         {values.map((value, index) => {
           const percentage = Math.max((value / maxValue) * 100, 4);
           return (
-            <div className="group flex min-w-0 flex-1 flex-col items-center justify-end h-full relative" key={`${value}-${index}`}>
-              <div 
-                className="absolute -top-6 text-[10px] font-bold text-[var(--slide-fg)] opacity-0 transition-opacity group-hover:opacity-100"
-                style={{ color: "var(--block-fg, var(--slide-fg))" }}
-              >
-                {value}
+            <div className="grid min-w-0 grid-cols-[minmax(44px,auto)_1fr_auto] items-center gap-3" key={`${value}-${index}`}>
+              <span className="max-w-28 truncate text-right font-medium" style={{ fontSize: "var(--chart-font-size)" }}>{labels[index] ?? `Q${index + 1}`}</span>
+              <div className="w-full overflow-hidden rounded-full bg-white/[0.06]" style={{ height: thickness }}>
+                <div className="h-full rounded-full transition-[width] duration-500" style={{ background: colors[index] || "var(--chart-color)", width: `${percentage}%` }} />
               </div>
-              <div className="flex w-full items-end justify-center rounded-t-lg bg-white/[0.04] backdrop-blur-sm transition-all h-full max-h-full">
-                <div
-                  className="w-full rounded-t-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] transition-all duration-500 ease-out"
-                  style={{ 
-                    background: "var(--block-fg, var(--slide-fg))", 
-                    height: `${percentage}%`,
-                    opacity: 0.9
-                  }}
-                />
-              </div>
-              <span className="absolute -bottom-6 max-w-full truncate text-[10px] tracking-wide text-[var(--slide-muted)]" style={{ color: "var(--block-muted, var(--slide-muted))" }}>
-                {labels[index] ?? `D${index + 1}`}
-              </span>
+              <span className="min-w-8 text-right font-mono font-semibold" style={{ color: colors[index] || "var(--chart-color)", fontSize: "var(--chart-font-size)" }}>{value}</span>
             </div>
           );
         })}
-      </div>
     </div>
   );
 }
 
 function LineChartBody({
   chartHeight,
+  colors,
   labels,
   maxValue,
-  mode,
+  strokeWidth,
   values
 }: {
   chartHeight: number;
+  colors: string[];
   labels: string[];
   maxValue: number;
-  mode: "area" | "line";
+  strokeWidth: number;
   values: number[];
 }) {
   const width = 720;
@@ -225,7 +231,6 @@ function LineChartBody({
     }).join("")
   ) : "";
 
-  const areaPath = smoothPath ? `${smoothPath} L ${points[points.length - 1].x},${height} L ${points[0].x},${height} Z` : "";
   const gridLines = 4;
 
   return (
@@ -235,25 +240,23 @@ function LineChartBody({
           <div key={i} className="h-px w-full bg-[var(--slide-border)] opacity-40" />
         ))}
       </div>
-      <svg aria-hidden="true" className="relative z-10 w-full flex-1 overflow-visible" preserveAspectRatio="none" viewBox={`0 0 ${width} ${height}`} style={{ color: "var(--block-fg, var(--slide-fg))" }}>
+      <svg aria-hidden="true" className="relative z-10 w-full flex-1 overflow-visible" preserveAspectRatio="none" viewBox={`0 0 ${width} ${height}`} style={{ color: "var(--chart-color)" }}>
         <defs>
-          <linearGradient id={`chart-area-fill-${mode}`} x1="0" x2="0" y1="0" y2="1">
+          <linearGradient id="chart-area-fill" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="currentColor" stopOpacity="0.4" />
             <stop offset="100%" stopColor="currentColor" stopOpacity="0.0" />
           </linearGradient>
         </defs>
-        {mode === "area" ? <path d={areaPath} fill={`url(#chart-area-fill-${mode})`} vectorEffect="nonScalingStroke" /> : null}
-        <path d={smoothPath} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6" vectorEffect="nonScalingStroke" />
+        <path d={smoothPath} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} vectorEffect="nonScalingStroke" />
         {points.map((point, index) => (
           <g key={`point-${index}`}>
-            <circle cx={point.x} cy={point.y} fill="var(--slide-card)" r="7" stroke="currentColor" strokeWidth="4" />
-            <circle cx={point.x} cy={point.y} fill="currentColor" r="2.5" />
+            <circle cx={point.x} cy={point.y} fill={colors[index] || "currentColor"} r={Math.max(strokeWidth, 5)} stroke="var(--slide-card)" strokeWidth="3" />
           </g>
         ))}
       </svg>
       <div className="relative z-10 grid grid-flow-col auto-cols-fr gap-2 mt-1">
         {values.map((value, index) => (
-          <span className="truncate text-center text-[10px] tracking-wide text-[var(--slide-muted)]" key={`${value}-label-${index}`} style={{ color: "var(--block-muted, var(--slide-muted))" }}>
+          <span className="truncate text-center tracking-wide text-[var(--slide-muted)]" key={`${value}-label-${index}`} style={{ color: "var(--block-muted, var(--slide-muted))", fontSize: "var(--chart-font-size)" }}>
             {labels[index] ?? `D${index + 1}`}
           </span>
         ))}
@@ -362,11 +365,12 @@ function describeArc(x: number, y: number, radius: number, startAngle: number, e
   ].join(" ");
 }
 
-function parseChartValues(values: string) {
+function parseChartValues(values: string, allowNegative = false) {
   const parsed = values
     .split(",")
     .map((item) => Number(item.trim()))
-    .filter((value) => Number.isFinite(value) && value >= 0);
+    .filter((value) => Number.isFinite(value))
+    .map((value) => allowNegative ? value : Math.max(value, 0));
 
   return parsed.length > 0 ? parsed : [24, 42, 68, 54];
 }
@@ -375,18 +379,10 @@ function normalizeChartHeight(value: number | string | undefined) {
   const parsed = typeof value === "number" ? value : Number(value);
 
   if (!Number.isFinite(parsed)) {
-    return 144;
+    return 240;
   }
 
   return Math.min(Math.max(parsed, 80), 320);
-}
-
-function normalizeChartType(value: string | undefined): "area" | "bar" | "donut" | "line" | "pie" {
-  if (value === "line" || value === "area" || value === "pie" || value === "donut") {
-    return value;
-  }
-
-  return "bar";
 }
 
 // Removed pieGradient because we are now using pure SVG arcs

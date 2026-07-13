@@ -43,8 +43,51 @@ export function replaceSlideContent(source: string, slideIndex: number, newSlide
 
 export function generateSlideString(slide: MotionDocScene) {
   const tag = formatSlideTag(slide.props);
-  const blockStrings = slide.blocks.map((block) => `  ${generateBlockString(block)}`);
+  const blockStrings: string[] = [];
+
+  for (let index = 0; index < slide.blocks.length;) {
+    const block = slide.blocks[index];
+    const groupId = groupIdOf(block);
+    if (!groupId) {
+      blockStrings.push(`  ${generateBlockString(block)}`);
+      index += 1;
+      continue;
+    }
+
+    const groupedBlocks: MotionDocBlock[] = [];
+    while (index < slide.blocks.length && groupIdOf(slide.blocks[index]) === groupId) {
+      groupedBlocks.push(slide.blocks[index]);
+      index += 1;
+    }
+    blockStrings.push(indentGroupString(generateGroupString(groupedBlocks, groupId)));
+  }
   return `${tag}\n${blockStrings.join("\n")}\n</Slide>`;
+}
+
+export function generateGroupString(blocks: MotionDocBlock[], groupId: string) {
+  const namedBlock = blocks.find((block): block is Extract<MotionDocBlock, { props: Record<string, string | number> }> => (
+    "props" in block && typeof block.props.groupName === "string"
+  ));
+  const groupName = namedBlock?.props.groupName;
+  const nameAttr = typeof groupName === "string" && groupName.trim() ? ` name="${escapeMdxAttribute(groupName)}"` : "";
+  const children = blocks.map((block) => `  ${generateBlockStringWithProps(block, withoutGroupProps("props" in block ? block.props : undefined))}`);
+  return `<Group id="${escapeMdxAttribute(groupId)}"${nameAttr}>\n${children.join("\n")}\n</Group>`;
+}
+
+function indentGroupString(value: string) {
+  return value.split("\n").map((line) => `  ${line}`).join("\n");
+}
+
+function groupIdOf(block: MotionDocBlock) {
+  return "props" in block && typeof block.props.groupId === "string" && block.props.groupId.trim() ? block.props.groupId : "";
+}
+
+function withoutGroupProps(props: Record<string, string | number> | undefined) {
+  if (!props) return props;
+  const { groupId, groupName, ...rest } = props;
+  void groupId;
+  void groupName;
+  return rest;
 }
 
 export function generateBlockString(block: MotionDocBlock) {
@@ -54,7 +97,7 @@ export function generateBlockString(block: MotionDocBlock) {
 function generateBlockStringWithProps(block: MotionDocBlock, overrideProps: Record<string, string | number> | undefined) {
   if (block.type === "Title" || block.type === "Text") {
     const propsStr = formatTextProps(overrideProps ?? block.props);
-    return `<${block.type}${propsStr ? " " + propsStr : ""}>${block.text}</${block.type}>`;
+    return `<${block.type}${propsStr ? " " + propsStr : ""}>${escapeMdxText(block.text)}</${block.type}>`;
   }
 
   if (block.type === "heading") {
@@ -69,7 +112,7 @@ function generateBlockStringWithProps(block: MotionDocBlock, overrideProps: Reco
   return "";
 }
 
-export function getSelectionMdx(slide: MotionDocScene | undefined, selectedBlockIndex: number | null, activeSlideIndex: number) {
+export function getSelectionMdx(slide: MotionDocScene | undefined, selectedBlockIndex: number | null, activeSlideIndex: number, selectedBlockIndices: number[] = []) {
   if (!slide) {
     return { label: "selection.mdx", source: "" };
   }
@@ -82,6 +125,22 @@ export function getSelectionMdx(slide: MotionDocScene | undefined, selectedBlock
   }
 
   const block = slide.blocks[selectedBlockIndex];
+  const groupId = block ? groupIdOf(block) : "";
+  if (groupId) {
+    const groupBlocks = slide.blocks.filter((candidate) => groupIdOf(candidate) === groupId);
+    return {
+      label: `${groupId}.mdx`,
+      source: generateGroupString(groupBlocks, groupId)
+    };
+  }
+
+  if (selectedBlockIndices.length > 1) {
+    const selected = selectedBlockIndices.map((index) => slide.blocks[index]).filter((candidate): candidate is MotionDocBlock => Boolean(candidate));
+    return {
+      label: `layers-${selected.length}.mdx`,
+      source: selected.map(generateBlockString).join("\n")
+    };
+  }
 
   return {
     label: block ? `${block.type.toLowerCase()}-${selectedBlockIndex + 1}.mdx` : "layer.mdx",
@@ -128,6 +187,15 @@ function escapeMdxAttribute(value: string) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll("\n", "&#10;");
+}
+
+function escapeMdxText(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("{", "&#123;")
+    .replaceAll("}", "&#125;");
 }
 
 function formatTextProps(props: Record<string, string | number>) {

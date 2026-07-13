@@ -47,13 +47,13 @@ export function PitchHeader({
   const zoomOptions = ["fit", 0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
   return (
-    <header className="z-50 flex shrink-0 items-center justify-between border-b border-white/[0.12] bg-[#111111] px-4 py-2.5 sm:px-6 select-none transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] h-[52px]">
+    <header className="z-50 flex h-11 shrink-0 select-none items-center justify-between border-b border-white/[0.1] bg-[#111111] px-3 py-2 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] sm:h-[52px] sm:px-6 sm:py-2.5">
       
       {/* Left side actions */}
       <div className="flex shrink-0 items-center gap-3">
         {/* Mobile sidebar toggle */}
         <button
-          className={`md:hidden flex h-8.5 w-8.5 items-center justify-center rounded-xl transition-all active:scale-95 ${isMobileSidebarOpen ? "bg-white/[0.08] text-white" : "text-neutral-400 hover:bg-white/[0.05] hover:text-white"}`}
+          className={`hidden h-8.5 w-8.5 items-center justify-center rounded-xl transition-all active:scale-95 sm:flex md:hidden ${isMobileSidebarOpen ? "bg-white/[0.08] text-white" : "text-neutral-400 hover:bg-white/[0.05] hover:text-white"}`}
           onClick={onToggleSidebar}
           type="button"
           aria-label="Toggle layers"
@@ -66,7 +66,7 @@ export function PitchHeader({
           className="flex items-center whitespace-nowrap text-sm font-semibold tracking-tight text-white transition-opacity hover:opacity-85 active:opacity-70"
           href="/"
         >
-          <img src="/logo.png" alt="SlideX" className="h-auto w-[72px] rounded object-contain sm:w-[84px]" />
+          <img src="/logo.png" alt="SlideX" className="h-auto w-[68px] rounded object-contain sm:w-[84px]" />
         </Link>
         <span className="hidden whitespace-nowrap rounded-md border border-white/[0.12] px-1.5 py-0.5 text-[10px] font-semibold text-neutral-500 sm:inline-flex">
           Pitch Beta
@@ -134,7 +134,7 @@ export function PitchHeader({
 
         {/* Undo action button */}
         <button
-          className="flex h-8.5 px-3 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-neutral-900/50 hover:text-neutral-200 hover:scale-[1.02] cursor-pointer active:scale-[0.96]"
+          className="hidden h-8.5 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02] hover:bg-neutral-900/50 hover:text-neutral-200 active:scale-[0.96] sm:flex"
           onClick={onUndo}
           type="button"
           title="Undo"
@@ -145,7 +145,7 @@ export function PitchHeader({
 
         {/* Replay action button */}
         <button
-          className="flex h-8.5 px-3 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-neutral-900/50 hover:text-neutral-200 hover:scale-[1.02] cursor-pointer active:scale-[0.96]"
+          className="hidden h-8.5 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02] hover:bg-neutral-900/50 hover:text-neutral-200 active:scale-[0.96] sm:flex"
           onClick={onReplay}
           type="button"
           title="Replay"
@@ -157,7 +157,8 @@ export function PitchHeader({
         {/* Export visual white pill */}
         <div className="relative" ref={exportMenuRef}>
           <button
-            className="flex h-8.5 items-center justify-center gap-1.5 rounded-xl bg-white px-4 text-sm font-bold text-black transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-neutral-100 hover:scale-[1.02] active:scale-[0.96] cursor-pointer shadow-md shadow-white/[0.01]"
+            aria-label="Export presentation"
+            className="flex h-8 items-center justify-center gap-1.5 rounded-xl bg-white px-3 text-sm font-bold text-black shadow-md shadow-white/[0.01] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02] hover:bg-neutral-100 active:scale-[0.96] sm:h-8.5 sm:px-4"
             onClick={() => setIsExportMenuOpen((current) => !current)}
             type="button"
           >
@@ -169,7 +170,7 @@ export function PitchHeader({
 
         {/* Mobile inspector toggle */}
         <button
-          className={`md:hidden flex h-8.5 w-8.5 items-center justify-center rounded-xl transition-all active:scale-95 ${isMobileInspectorOpen ? "bg-white/[0.08] text-white" : "text-neutral-400 hover:bg-white/[0.05] hover:text-white"}`}
+          className={`hidden h-8.5 w-8.5 items-center justify-center rounded-xl transition-all active:scale-95 sm:flex md:hidden ${isMobileInspectorOpen ? "bg-white/[0.08] text-white" : "text-neutral-400 hover:bg-white/[0.05] hover:text-white"}`}
           onClick={onToggleInspector}
           type="button"
           aria-label="Toggle properties"

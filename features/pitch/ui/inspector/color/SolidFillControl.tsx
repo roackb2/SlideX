@@ -5,7 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { hexColorValue } from "@/features/pitch/application/colorPalettes";
 
 const templateColors = [
-  "#050505",
+  "#000000",
   "#ffffff",
   "#d7d7d4",
   "#8b8b89",
@@ -21,13 +21,12 @@ const templateColors = [
 
 type SolidFillControlProps = {
   value: string;
-  onApplyToDeck: (color: string) => void;
   onChange: (color: string) => void;
 };
 
-export function SolidFillControl({ value, onApplyToDeck, onChange }: SolidFillControlProps) {
+export function SolidFillControl({ value, onChange }: SolidFillControlProps) {
   const [isOpen, setIsOpen] = useState(true);
-  const color = hexColorValue(value) ?? "#050505";
+  const color = hexColorValue(value) ?? "#000000";
 
   return (
     <div className="rounded-xl border border-white/[0.07] bg-[#09090a] p-2">
@@ -75,17 +74,6 @@ export function SolidFillControl({ value, onApplyToDeck, onChange }: SolidFillCo
                 type="button"
               />
             ))}
-          </div>
-
-          <div className="mt-4 border-t border-white/[0.07] pt-3">
-            <span className="block text-[11px] leading-4 text-neutral-500">Apply this fill across every slide in the deck.</span>
-            <button
-              className="mt-2 inline-flex h-8 w-full items-center justify-center whitespace-nowrap rounded-md bg-white px-3 text-[11px] font-semibold text-black transition-colors hover:bg-neutral-200 active:translate-y-px"
-              onClick={() => onApplyToDeck(color)}
-              type="button"
-            >
-              Apply to all slides
-            </button>
           </div>
         </div>
       ) : null}

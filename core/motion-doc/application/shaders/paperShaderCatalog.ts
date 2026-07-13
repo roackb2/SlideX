@@ -50,6 +50,7 @@ export type PaperShaderDefinition = {
   name: string;
   presets: readonly PaperShaderPreset[];
   thumbnail: string;
+  visibleColorCount?: number;
 };
 
 const paperShaderIds = [
@@ -586,7 +587,7 @@ export const paperShaderDefinitions = [
   },
   {
     category: "organic",
-    colorLabels: colorLabels.light,
+    colorLabels: ["Back", "Highlight", "", "", "", ""],
     controls: [
       control("shaderIntensity", "Caustic", 0, 1, 0.01, 0.1),
       control("shaderSoftness", "Waves", 0, 1, 0.01, 0.3),
@@ -599,40 +600,41 @@ export const paperShaderDefinitions = [
     id: "water",
     name: "Water",
     presets: [
-      makePreset("Default", ["#909090", "#ffffff", "#bae6fd", "#0ea5e9", "#082f49", "#e0f2fe"], {
+      makePreset("Default", ["#063b5c", "#e0f2fe", "#bae6fd", "#0ea5e9", "#082f49", "#e0f2fe"], {
         background: "#063b5c",
         shaderDetail: 1,
         shaderIntensity: 0.1,
         shaderScale: 0.8,
         shaderSoftness: 0.3,
         shaderSpeed: 1
-      }, { caustic: 0.1, colorBack: "#909090", colorHighlight: "#ffffff", edges: 0.8, highlights: 0.07, layering: 0.5, rotation: 0, scale: 0.8, size: 1, speed: 1, waves: 0.3 }),
-      makePreset("Slow-mo", ["#909090", "#ffffff", "#dbeafe", "#67e8f9", "#155e75", "#f0f9ff"], {
+      }, { caustic: 0.1, colorBack: "#063b5c", colorHighlight: "#e0f2fe", edges: 0.8, highlights: 0.07, layering: 0.5, rotation: 0, scale: 0.8, size: 1, speed: 1, waves: 0.3 }),
+      makePreset("Slow-mo", ["#155e75", "#f0f9ff", "#dbeafe", "#67e8f9", "#155e75", "#f0f9ff"], {
         background: "#155e75",
         shaderDetail: 0.7,
         shaderIntensity: 0.2,
         shaderScale: 1,
         shaderSoftness: 0,
         shaderSpeed: 0.1
-      }, { caustic: 0.2, colorBack: "#909090", colorHighlight: "#ffffff", edges: 0, highlights: 0.4, layering: 0, rotation: 0, scale: 1, size: 0.7, speed: 0.1, waves: 0 }),
-      makePreset("Abstract", ["#909090", "#ffffff", "#67e8f9", "#0f766e", "#021923", "#cffafe"], {
+      }, { caustic: 0.2, colorBack: "#155e75", colorHighlight: "#f0f9ff", edges: 0, highlights: 0.4, layering: 0, rotation: 0, scale: 1, size: 0.7, speed: 0.1, waves: 0 }),
+      makePreset("Abstract", ["#021923", "#67e8f9", "#cffafe", "#0f766e", "#021923", "#cffafe"], {
         background: "#021923",
         shaderDetail: 0.15,
         shaderIntensity: 0.4,
         shaderScale: 3,
         shaderSoftness: 1,
         shaderSpeed: 1
-      }, { caustic: 0.4, colorBack: "#909090", colorHighlight: "#ffffff", edges: 1, highlights: 0, layering: 0, rotation: 0, scale: 3, size: 0.15, speed: 1, waves: 1 }),
-      makePreset("Streaming", ["#909090", "#ffffff", "#0ea5e9", "#bae6fd", "#082f49", "#f0f9ff"], {
+      }, { caustic: 0.4, colorBack: "#021923", colorHighlight: "#67e8f9", edges: 1, highlights: 0.28, layering: 0, rotation: 0, scale: 3, size: 0.15, speed: 1, waves: 1 }),
+      makePreset("Streaming", ["#082f49", "#bae6fd", "#0ea5e9", "#bae6fd", "#082f49", "#f0f9ff"], {
         background: "#082f49",
         shaderDetail: 0.5,
         shaderIntensity: 0,
         shaderScale: 0.4,
         shaderSoftness: 0.5,
         shaderSpeed: 2
-      }, { caustic: 0, colorBack: "#909090", colorHighlight: "#ffffff", edges: 0, highlights: 0, layering: 0, rotation: 0, scale: 0.4, size: 0.5, speed: 2, waves: 0.5 })
+      }, { caustic: 0, colorBack: "#082f49", colorHighlight: "#bae6fd", edges: 0, highlights: 0.18, layering: 0, rotation: 0, scale: 0.4, size: 0.5, speed: 2, waves: 0.5 })
     ],
-    thumbnail: "radial-gradient(circle at 30% 26%, #e0f2fe 0%, transparent 38%), linear-gradient(135deg, #063b5c 0%, #0ea5e9 52%, #cffafe 100%)"
+    thumbnail: "radial-gradient(circle at 30% 26%, #e0f2fe 0%, transparent 38%), linear-gradient(135deg, #063b5c 0%, #0ea5e9 52%, #cffafe 100%)",
+    visibleColorCount: 2
   },
   {
     category: "geometric",

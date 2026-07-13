@@ -1,7 +1,7 @@
 "use client";
 
 import { Minus, Paintbrush, Palette, SquareSlash, Type as TypeIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
 import {
@@ -21,6 +21,8 @@ import {
   tableRowTrackValuesFromProps,
   tableSizeFromProps,
   tableTrackTemplate,
+  TABLE_MAX_COLUMNS,
+  TABLE_MAX_ROWS,
   updateColOverride,
   updateRowOverride,
   updateTableColumnTrackValues,
@@ -36,6 +38,7 @@ import { defaultColorPresets } from "@/features/pitch/ui/inspector/color/palette
 import { useCustomSwatches } from "@/features/pitch/ui/inspector/color/useCustomSwatches";
 import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
 import { TableContextMenu } from "@/features/pitch/ui/preview/TableContextMenu";
+import { TableTrackResizeGuides } from "@/features/pitch/ui/preview/TableTrackResizeGuides";
 
 export type TableBlock = {
   props: Record<string, string | number>;
@@ -88,6 +91,7 @@ export function TableFrameEditor({
   const headerHeight = Math.max(22, numberFromProp(block.props.headerHeight, 26));
   const rowHeaderWidth = Math.max(28, numberFromProp(block.props.rowHeaderWidth, 34));
   const borderWidth = numberFromProp(block.props.borderWidth, 1);
+  const borderStyle = tableBorderStyle(block.props.borderStyle);
   const colors = tableColors(block.props);
   const textAlign = tableTextAlign(block.props.textAlign);
   const verticalAlign = tableVerticalAlign(block.props.textVerticalAlign);
@@ -111,13 +115,16 @@ export function TableFrameEditor({
   };
   const baseCellStyle = tableCellStyle({
     borderColor: colors.border,
+    borderStyle,
     borderWidth,
+    paddingX: numberFromProp(block.props.cellPaddingX, 10),
+    paddingY: numberFromProp(block.props.cellPaddingY, 8),
     fontSize: numberFromProp(block.props.fontSize, 18),
     textAlign,
     verticalAlign
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     latestPropsRef.current = cleanTableEditorProps(block.props);
   }, [block.props]);
 
@@ -424,7 +431,7 @@ export function TableFrameEditor({
           style={{
             ...tableGridStyle,
             background: colors.background,
-            border: `${borderWidth}px solid ${colors.border}`,
+            border: `${borderWidth}px ${borderStyle} ${colors.border}`,
             boxSizing: "border-box"
           }}
         >
@@ -469,6 +476,12 @@ export function TableFrameEditor({
           />
         ) : null}
 
+        <TableTrackResizeGuides
+          columnTracks={columnTracks}
+          onResizeStart={startTableTrackResize}
+          rowTracks={rowTracks}
+        />
+
         {/* ── Floating style bar for selected row/column ── */}
         {selection ? (
           <TableSelectionStyleBar
@@ -486,6 +499,8 @@ export function TableFrameEditor({
       {contextMenu ? (
         <TableContextMenu
           clipboard={clipboard}
+          canAddColumn={columns < TABLE_MAX_COLUMNS}
+          canAddRow={rows < TABLE_MAX_ROWS}
           canUseColumnActions={contextMenu.target.columnIndex !== undefined}
           canUseRowActions={contextMenu.target.rowIndex !== undefined}
           menuRef={menuRef}
@@ -547,61 +562,71 @@ function EditableTableCell({
     : {};
 
   return (
-    <textarea
-      aria-label={`Edit cell ${rowIndex + 1}, ${columnIndex + 1}`}
-      className="pointer-events-auto h-full w-full resize-none overflow-hidden bg-transparent outline-none"
-      data-table-context-target
-      onChange={(event) => onUpdate(event.currentTarget.value, true)}
-      onClick={(event) => event.stopPropagation()}
-      onContextMenu={onContextMenu}
-      onFocus={() => onSelect()}
-      onKeyDown={(event) => event.stopPropagation()}
-      onPointerDown={onPointerDown}
-      onBlur={(event) => {
-        const nextValue = event.currentTarget.value;
+    <div
+      className="min-h-0 min-w-0 overflow-hidden"
+      style={{ ...baseStyle, ...borderStyle, background, color }}
+    >
+      <textarea
+        aria-label={`Edit cell ${rowIndex + 1}, ${columnIndex + 1}`}
+        className="pointer-events-auto w-full resize-none overflow-hidden bg-transparent p-0 outline-none"
+        data-table-context-target
+        onChange={(event) => onUpdate(event.currentTarget.value, true)}
+        onClick={(event) => event.stopPropagation()}
+        onContextMenu={onContextMenu}
+        onFocus={() => onSelect()}
+        onKeyDown={(event) => event.stopPropagation()}
+        onPointerDown={onPointerDown}
+        onBlur={(event) => {
+          const nextValue = event.currentTarget.value;
 
-        if (nextValue !== value) {
-          onUpdate(nextValue, false);
-        }
-      }}
-      spellCheck={false}
-      style={{
-        ...baseStyle,
-        ...borderStyle,
-        background,
-        color,
-        display: "block",
-        fontFamily: "inherit",
-        height: "100%",
-        outline: "none",
-        resize: "none",
-        width: "100%"
-      }}
-      value={value}
-    />
+          if (nextValue !== value) {
+            onUpdate(nextValue, false);
+          }
+        }}
+        rows={1}
+        spellCheck={false}
+        style={{
+          color: "inherit",
+          fieldSizing: "content",
+          fontFamily: "inherit",
+          fontSize: "inherit",
+          lineHeight: "inherit",
+          maxHeight: "100%",
+          minHeight: "1.25em",
+          textAlign: baseStyle.textAlign
+        }}
+        value={value}
+      />
+    </div>
   );
 }
 
 function tableCellStyle({
   borderColor,
+  borderStyle,
   borderWidth,
   fontSize,
+  paddingX,
+  paddingY,
   textAlign,
   verticalAlign
 }: {
   borderColor: string;
+  borderStyle: "dashed" | "dotted" | "solid";
   borderWidth: number;
   fontSize: number;
+  paddingX: number;
+  paddingY: number;
   textAlign: "center" | "left" | "right";
   verticalAlign: "center" | "flex-end" | "flex-start";
 }): CSSProperties {
   return {
     alignItems: verticalAlign,
     borderBottomColor: borderColor,
-    borderBottomStyle: "solid",
+    borderBottomStyle: borderStyle,
     borderBottomWidth: `${borderWidth}px`,
     borderRightColor: borderColor,
-    borderRightStyle: "solid",
+    borderRightStyle: borderStyle,
     borderRightWidth: `${borderWidth}px`,
     boxSizing: "border-box",
     display: "flex",
@@ -610,9 +635,13 @@ function tableCellStyle({
     lineHeight: 1.25,
     minHeight: 0,
     minWidth: 0,
-    padding: "8px 10px",
+    padding: `${paddingY}px ${paddingX}px`,
     textAlign
   };
+}
+
+function tableBorderStyle(value: string | number | undefined): "dashed" | "dotted" | "solid" {
+  return value === "dashed" || value === "dotted" ? value : "solid";
 }
 
 const editorControlColors = {
@@ -625,13 +654,13 @@ const editorControlColors = {
 
 function tableColors(props: Record<string, string | number>) {
   return {
-    background: colorValue(props.background ?? props.backgroundColor ?? props.bg, "rgba(255,255,255,0.02)"),
-    border: colorValue(props.borderColor, "#111827"),
-    cellBackground: colorValue(props.cellBackground, "rgba(255,255,255,0)"),
+    background: colorValue(props.background ?? props.backgroundColor ?? props.bg, "#ffffff"),
+    border: colorValue(props.borderColor, "#d1d5db"),
+    cellBackground: colorValue(props.cellBackground, "#ffffff"),
     selection: "rgba(236,72,153,0.62)",
     selectionSoft: "rgba(236,72,153,0.18)",
-    stripeBackground: colorValue(props.stripeBackground, "rgba(17,24,39,0.04)"),
-    text: colorValue(props.color ?? props.textColor, "#111827")
+    stripeBackground: colorValue(props.stripeBackground, "#f8fafc"),
+    text: colorValue(props.color ?? props.textColor, "#000000")
   };
 }
 
@@ -779,7 +808,6 @@ function TableSelectionResizeOverlay({
           className="appearance-none p-0"
           onPointerDown={(event) => onResizeStart(selection, event)}
           style={handleStyle}
-          title={isColumn ? "Drag to resize column" : "Drag to resize row"}
           type="button"
         />
       ) : null}

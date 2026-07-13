@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Code2, ChevronDown, ChevronRight, List, AlignCenter, AlignLeft, AlignRight } from "lucide-react";
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  AlignVerticalJustifyCenter,
+  AlignVerticalJustifyEnd,
+  AlignVerticalJustifyStart,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Code2,
+  List
+} from "lucide-react";
 import { MotionFields } from "@/features/pitch/ui/inspector/MotionFields";
 import { SlideSettings } from "@/features/pitch/ui/inspector/SlideSettings";
 import { SlideLayoutSelector } from "@/features/pitch/ui/inspector/SlideLayoutSelector";
@@ -244,7 +256,6 @@ function ElementSettings({
   const inheritedTextColor =
     stringValue(activeSlide?.props.textColor ?? activeSlide?.props.foreground ?? activeSlide?.props.color) ??
     (slideTheme === "light" || slideTheme === "paper" ? "#111827" : "#ffffff");
-  const inheritedMutedColor = stringValue(activeSlide?.props.mutedColor) ?? (slideTheme === "light" || slideTheme === "paper" ? "#475569" : "#cbd5e1");
 	  const inheritedBackgroundColor = block.type === "Card" || block.type === "Metric" || block.type === "Chart" || block.type === "Stack"
 	    ? defaultCardBackground(slideTheme, slideBackground)
 	    : "transparent";
@@ -312,7 +323,6 @@ function ElementSettings({
           <MotionFields
             block={block}
             inheritedBackgroundColor={inheritedBackgroundColor}
-            inheritedMutedColor={inheritedMutedColor}
             inheritedTextColor={inheritedTextColor}
             isTextType={isTextType}
             selectedBlockIndex={selectedBlockIndex}
@@ -356,14 +366,11 @@ function isLightBackground(background: string) {
 }
 
 const textStyleOptions = [
-  { label: "Title · 96", size: 96, role: "title" },
-  { label: "Header 1 · 60", size: 60, role: "title" },
-  { label: "Header 2 · 48", size: 48, role: "title" },
-  { label: "Header 3 · 36", size: 36, role: "title" },
-  { label: "Body 1 · 36", size: 36, role: "content" },
-  { label: "Body 2 · 30", size: 30, role: "content" },
-  { label: "Body 3 · 24", size: 24, role: "content" },
-  { label: "Note · 20", size: 20, role: "content" }
+  { description: "Large statement", label: "Display", lineHeight: 1, size: 72, weight: 700, role: "title" },
+  { description: "Section heading", label: "Heading", lineHeight: 1.08, size: 48, weight: 650, role: "title" },
+  { description: "Introductory copy", label: "Lead", lineHeight: 1.28, size: 30, weight: 560, role: "content" },
+  { description: "Comfortable reading", label: "Body", lineHeight: 1.45, size: 24, weight: 400, role: "content" },
+  { description: "Details and notes", label: "Caption", lineHeight: 1.35, size: 18, weight: 500, role: "content" }
 ];
 
 function TextTypeFields({
@@ -383,28 +390,18 @@ function TextTypeFields({
   
   useDynamicFont(fontFamily);
 
-  const currentValue = `${currentRole}_${currentFontSize}`;
-  
-  // Find if current matches any option, otherwise default to first
-  const isValidOption = textStyleOptions.some(opt => `${opt.role}_${opt.size}` === currentValue);
-  const displayValue = isValidOption ? currentValue : `${textStyleOptions[0].role}_${textStyleOptions[0].size}`;
-
-  const selectOptions = textStyleOptions.map(opt => ({
-    label: opt.label,
-    value: `${opt.role}_${opt.size}`
-  }));
+  const activeStyle = textStyleOptions.find((option) => option.role === currentRole && option.size === currentFontSize);
 
   function setTextStyle(value: string) {
-    const [role, sizeStr] = value.split("_");
-    const size = parseInt(sizeStr, 10);
-    const isTitle = role === "title";
-    
+    const option = textStyleOptions.find((item) => item.label === value);
+    if (!option) return;
+
     const nextProps = {
       ...props,
-      fontSize: size,
-      fontWeight: isTitle ? 700 : (Number(props.fontWeight) || 560),
-      lineHeight: isTitle ? (size >= 60 ? 1 : 1.12) : (Number(props.lineHeight) || 1.45),
-      role
+      fontSize: option.size,
+      fontWeight: option.weight,
+      lineHeight: option.lineHeight,
+      role: option.role
     };
     updateBlock(selectedBlockIndex, autoSizeTextFrameProps({ props, type: block.type }, text, { props: nextProps }), text);
   }
@@ -431,44 +428,29 @@ function TextTypeFields({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <Field label="Style">
-        <div className="flex items-center gap-2">
-          <div className="flex-1 relative rounded-lg bg-white/[0.03] transition-colors hover:bg-white/[0.05] focus-within:bg-white/[0.06] focus-within:ring-1 focus-within:ring-white/[0.12]">
-            <select
-              className="w-full cursor-pointer appearance-none bg-transparent pl-3 pr-8 py-1.5 text-[13px] text-neutral-200 outline-none"
-              onChange={(event) => setTextStyle(event.target.value)}
-              value={displayValue}
-            >
-              {selectOptions.map((option) => (
-                <option key={option.value} value={option.value} className="bg-neutral-900 text-neutral-200">
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              aria-hidden="true"
-              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500"
-              size={14}
-            />
-          </div>
-          <button
-            type="button"
-            className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg transition-colors cursor-pointer ${
-              props.listType === "bullet"
-                ? "bg-white/[0.08] text-white"
-                : "bg-white/[0.03] text-neutral-500 hover:bg-white/[0.05] hover:text-neutral-300"
-            }`}
-            onClick={toggleList}
-            title="Toggle Bulleted List"
-          >
-            <List size={14} />
-          </button>
+    <div className="flex flex-col gap-5">
+      <Field label="Text style">
+        <div className="grid gap-1 rounded-xl bg-white/[0.025] p-1">
+          {textStyleOptions.map((option) => {
+            const active = activeStyle?.label === option.label;
+            return (
+              <button
+                className={`group grid grid-cols-[74px_1fr_auto] items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-all ${active ? "bg-white text-black shadow-sm" : "text-neutral-300 hover:bg-white/[0.055] hover:text-white"}`}
+                key={option.label}
+                onClick={() => setTextStyle(option.label)}
+                type="button"
+              >
+                <span className="text-[12px] font-semibold">{option.label}</span>
+                <span className={`truncate text-[10px] ${active ? "text-black/50" : "text-neutral-600 group-hover:text-neutral-400"}`}>{option.description}</span>
+                {active ? <Check size={13} /> : <span className="font-mono text-[9px] tabular-nums text-neutral-600">{option.size}</span>}
+              </button>
+            );
+          })}
         </div>
       </Field>
 
       <Field label="Typography">
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           <FontPicker
             onChange={(value) => {
               const nextProps = { ...props, fontFamily: value === "" ? "" : value };
@@ -476,27 +458,63 @@ function TextTypeFields({
             }}
             value={fontFamily}
           />
-          <div className="grid grid-cols-[1fr_auto] gap-1.5">
-            <NumberInput prefix={<span className="text-[10px] font-semibold text-neutral-500 w-8">Size</span>} min="8" max="180" onChange={(value) => {
+          <div className="grid grid-cols-3 gap-1.5">
+            <NumberInput prefix={<span className="text-[9px] font-semibold text-neutral-500">Size</span>} min="8" max="180" onChange={(value) => {
               const nextProps = { ...props, fontSize: value === "" ? "" : value };
+              updateBlock(selectedBlockIndex, nextProps, text);
+            }} placeholder={block.type === "Title" ? "72" : "24"} step="1" value={props.fontSize ?? ""} />
+            <NumberInput prefix={<span className="text-[9px] font-semibold text-neutral-500">Weight</span>} min="100" max="900" onChange={(value) => {
+              const nextProps = { ...props, fontWeight: value === "" ? "" : value };
               updateBlock(selectedBlockIndex, autoSizeTextFrameProps({ props, type: block.type }, text, { props: nextProps }), text);
-            }} placeholder={block.type === "Title" ? "72" : "24"} step="1" suffix="px" value={props.fontSize ?? ""} />
-            <div className="w-[104px]">
-              <IconSegmentedControl
-                label=""
-                onChange={(value) => {
-                  const nextProps = { ...props, textAlign: value };
-                  updateBlock(selectedBlockIndex, autoSizeTextFrameProps({ props, type: block.type }, text, { props: nextProps }), text);
-                }}
-                options={[
-                  { icon: <AlignLeft size={14} />, label: "Align left", value: "left" },
-                  { icon: <AlignCenter size={14} />, label: "Align center", value: "center" },
-                  { icon: <AlignRight size={14} />, label: "Align right", value: "right" }
-                ]}
-                value={String(props.textAlign ?? "left")}
-              />
-            </div>
+            }} placeholder={block.type === "Title" ? "700" : "400"} step="50" value={props.fontWeight ?? ""} />
+            <NumberInput prefix={<span className="text-[9px] font-semibold text-neutral-500">Line</span>} min="0.8" max="2.5" onChange={(value) => {
+              const nextProps = { ...props, lineHeight: value === "" ? "" : value };
+              updateBlock(selectedBlockIndex, autoSizeTextFrameProps({ props, type: block.type }, text, { props: nextProps }), text);
+            }} placeholder={block.type === "Title" ? "1" : "1.45"} step="0.05" value={props.lineHeight ?? ""} />
           </div>
+        </div>
+      </Field>
+
+      <Field label="Alignment">
+        <div className="grid grid-cols-[1fr_1fr_auto] gap-1.5">
+          <IconSegmentedControl
+            label=""
+            onChange={(value) => {
+              const nextProps = { ...props, textAlign: value };
+              updateBlock(selectedBlockIndex, nextProps, text);
+            }}
+            options={[
+              { icon: <AlignLeft size={14} />, label: "Align left", value: "left" },
+              { icon: <AlignCenter size={14} />, label: "Align center", value: "center" },
+              { icon: <AlignRight size={14} />, label: "Align right", value: "right" }
+            ]}
+            value={String(props.textAlign ?? "left")}
+          />
+          <IconSegmentedControl
+            label=""
+            onChange={(value) => {
+              const nextProps = { ...props, textVerticalAlign: value };
+              updateBlock(selectedBlockIndex, nextProps, text);
+            }}
+            options={[
+              { icon: <AlignVerticalJustifyStart size={14} />, label: "Align top", value: "top" },
+              { icon: <AlignVerticalJustifyCenter size={14} />, label: "Align middle", value: "middle" },
+              { icon: <AlignVerticalJustifyEnd size={14} />, label: "Align bottom", value: "bottom" }
+            ]}
+            value={String(props.textVerticalAlign ?? "top")}
+          />
+          <button
+            type="button"
+            className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg transition-all cursor-pointer ${
+              props.listType === "bullet"
+                ? "bg-white text-black shadow-sm"
+                : "bg-white/[0.03] text-neutral-500 hover:bg-white/[0.07] hover:text-neutral-200"
+            }`}
+            onClick={toggleList}
+            title="Toggle bulleted list"
+          >
+            <List size={14} />
+          </button>
         </div>
       </Field>
     </div>

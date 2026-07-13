@@ -197,6 +197,9 @@ export const motionDocExportStyles = `      :root {
       .slide.is-active .motion-block {
         animation: enter-motion var(--motion-duration, 0.6s) cubic-bezier(0.22, 1, 0.36, 1) var(--motion-delay, 0s) both;
       }
+      .slide.is-active .motion-block.enter-reveal {
+        animation-name: enter-reveal-motion;
+      }
       .slide.is-active .motion-block.enter-none {
         animation: none;
       }
@@ -231,6 +234,13 @@ export const motionDocExportStyles = `      :root {
         transform: translate3d(0, calc(28px * var(--frame-scale, 1)), 0);
       }
       @keyframes enter-motion {
+        to {
+          filter: blur(0);
+          opacity: 1;
+          transform: translate3d(0, 0, 0) scale(1) rotate(0);
+        }
+      }
+      @keyframes enter-reveal-motion {
         to {
           clip-path: inset(0 0 0 0);
           filter: blur(0);
@@ -452,6 +462,7 @@ export const motionDocExportStyles = `      :root {
         font-size: calc(20px * var(--frame-scale, 1));
         color: var(--motion-fg, var(--slide-fg));
       }
+      .block-chart > [class^="block-chart__"] { flex:none; height:var(--chart-height,240px); max-height:100%; }
       .block-chart--sm {
         max-width: 36rem;
       }
@@ -463,6 +474,8 @@ export const motionDocExportStyles = `      :root {
       }
       .block-chart__bars {
         display: flex;
+        flex-direction: column;
+        justify-content: center;
         flex: 1;
         min-height: 0;
         align-items: stretch;
@@ -470,36 +483,34 @@ export const motionDocExportStyles = `      :root {
         margin-top: calc(24px * var(--frame-scale, 1));
       }
       .block-chart__bar-wrap {
-        display: flex;
+        display: grid;
+        grid-template-columns: minmax(44px, auto) 1fr auto;
         min-width: 0;
         flex: 1;
-        flex-direction: column;
         align-items: center;
         gap: calc(10px * var(--frame-scale, 1));
       }
       .block-chart__track {
-        display: flex;
+        display: block;
         width: 100%;
-        flex: 1;
-        min-height: 0;
-        align-items: end;
+        min-height: 2px;
         overflow: hidden;
-        border-radius: 8px;
+        border-radius: 999px;
         background: rgba(255,255,255,0.06);
       }
       .block-chart__bar {
-        width: 100%;
-        border-radius: 8px;
-        background: var(--motion-fg, var(--slide-fg));
+        height: 100%;
+        border-radius: 999px;
+        background: var(--chart-color, var(--motion-fg, var(--slide-fg)));
       }
       .block-chart__label {
         max-width: 100%;
         overflow: hidden;
         color: var(--motion-muted, var(--slide-muted));
-        font-size: calc(10px * var(--frame-scale, 1));
+        font-size: calc(var(--chart-font-size, 14px) * var(--frame-scale, 1));
         letter-spacing: 0.1em;
         text-overflow: ellipsis;
-        text-transform: uppercase;
+        text-align: right;
         white-space: nowrap;
       }
       .block-chart__line {
@@ -518,25 +529,102 @@ export const motionDocExportStyles = `      :root {
       }
       .block-chart__line polyline {
         fill: none;
-        stroke: var(--motion-fg, var(--slide-fg));
+        stroke: var(--chart-color, var(--motion-fg, var(--slide-fg)));
         stroke-linecap: round;
         stroke-linejoin: round;
-        stroke-width: calc(8px * var(--frame-scale, 1));
+        stroke-width: calc(var(--chart-stroke-width, 5) * var(--frame-scale, 1));
+      }
+      .block-chart__step {
+        fill: none;
+        stroke: var(--chart-color, var(--motion-fg, var(--slide-fg)));
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: calc(var(--chart-stroke-width, 5) * var(--frame-scale, 1));
       }
       .block-chart__line circle {
         fill: var(--slide-card);
-        stroke: var(--motion-fg, var(--slide-fg));
+        stroke: var(--chart-color, var(--motion-fg, var(--slide-fg)));
         stroke-width: calc(5px * var(--frame-scale, 1));
       }
       .block-chart__area {
-        fill: color-mix(in srgb, var(--motion-fg, var(--slide-fg)) 28%, transparent);
+        fill: var(--chart-color, var(--motion-fg, var(--slide-fg)));
+        opacity: .2;
       }
+      .block-chart__axis-grid-line { stroke:var(--motion-fg,var(--slide-fg)); stroke-width:1px; opacity:.1; }
+      .block-chart__axis-tick { fill:var(--motion-muted,var(--slide-muted)); font-family:monospace; font-size:calc(var(--chart-font-size) * .62); text-anchor:middle; }
+      .block-chart__axis-tick--y { dominant-baseline:middle; text-anchor:end; }
+      .block-chart__axis-name { fill:var(--motion-muted,var(--slide-muted)); font-size:calc(var(--chart-font-size) * .7); }
+      .block-chart__point-value { fill:var(--motion-fg,var(--slide-fg)); font-family:monospace; font-size:calc(var(--chart-font-size) * .68); font-weight:700; text-anchor:middle; }
+      .block-chart__point-inner { font-size:calc(var(--chart-font-size) * .58); text-anchor:middle; dominant-baseline:middle; }
+      .block-chart__category-value { fill:var(--motion-muted,var(--slide-muted)); font-size:calc(var(--chart-font-size) * .66); text-anchor:middle; }
+      .block-chart__lollipop-line { stroke-width:calc(var(--chart-weight,8) / 3); }
+      .block-chart__bar-category { fill:var(--motion-fg,var(--slide-fg)); font-size:calc(var(--chart-font-size) * .76); text-anchor:end; dominant-baseline:middle; }
+      .block-chart__bar-track-line { stroke:var(--motion-fg,var(--slide-fg)); opacity:.08; }
+      .block-chart__bar-value-line { stroke-linecap:round; }
+      .block-chart__bar-number { fill:var(--motion-fg,var(--slide-fg)); font-family:monospace; font-size:calc(var(--chart-font-size) * .76); font-weight:700; dominant-baseline:middle; }
       .block-chart__line-labels {
         display: grid;
         grid-auto-columns: 1fr;
         grid-auto-flow: column;
         gap: calc(8px * var(--frame-scale, 1));
       }
+      .block-chart__radial { display:flex; flex:1; min-height:0; align-items:center; justify-content:center; gap:32px; margin-top:20px; }
+      .block-chart__gauge { display:flex; flex:1; min-height:0; align-items:center; justify-content:center; gap:20px; }
+      .block-chart__gauge svg { min-width:0; flex:1; height:100%; max-width:420px; max-height:260px; }
+      .block-chart__gauge text { fill:var(--motion-muted,var(--slide-muted)); font-size:11px; text-anchor:middle; }
+      .block-chart__gauge .block-chart__gauge-value { font-size:34px; font-weight:700; }
+      .block-chart__gauge .block-chart__gauge-label { font-size:12px; }
+      .block-chart__gauge-legend { display:grid; min-width:112px; gap:8px; font-size:10px; }
+      .block-chart__gauge-legend div { display:grid; grid-template-columns:8px minmax(0,1fr) auto; align-items:center; gap:8px; }
+      .block-chart__gauge-legend i { width:8px; height:8px; border-radius:999px; }
+      .block-chart__gauge-legend span { overflow:hidden; color:var(--motion-muted,var(--slide-muted)); text-overflow:ellipsis; white-space:nowrap; }
+      .block-chart__radial-graphic { position:relative; height:min(180px, 100%); aspect-ratio:1; border-radius:999px; }
+      .block-chart__radial-legend { display:flex; flex-direction:column; gap:8px; font-size:12px; }
+      .block-chart__radial-legend span { display:flex; align-items:center; gap:8px; }
+      .block-chart__radial-legend i { width:10px; height:10px; border-radius:3px; }
+      .block-chart__tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(2px, calc(var(--chart-weight,8) * .5px), 16px); min-height:0; margin-top:20px; }
+      .block-chart__tiles div { display:flex; align-items:end; justify-content:space-between; border-radius:6px; padding:8px; color:white; }
+      .block-chart__timeline { position:relative; display:flex; align-items:center; flex:1; margin-top:20px; }
+      .block-chart__timeline::before { content:""; position:absolute; left:0; right:0; height:clamp(1px, calc(var(--chart-weight,8) * .33px), 10px); background:rgba(255,255,255,.15); }
+      .block-chart__timeline div { z-index:1; display:flex; flex:1; flex-direction:column; align-items:center; gap:6px; font-size:11px; }
+      .block-chart__timeline i { width:clamp(10px, calc(var(--chart-weight,8) * 1.5px), 48px); height:clamp(10px, calc(var(--chart-weight,8) * 1.5px), 48px); border-radius:999px; box-shadow:0 0 0 clamp(2px, calc(var(--chart-weight,8) * .5px), 12px) var(--slide-card); }
+      .block-chart__waterfall { display:flex; flex:1; min-height:0; margin-top:16px; }
+      .block-chart__waterfall svg { width:100%; height:100%; overflow:visible; }
+      .block-chart__waterfall line { stroke:var(--motion-fg,var(--slide-fg)); stroke-dasharray:4 4; opacity:.28; }
+      .block-chart__waterfall .block-chart__waterfall-baseline { stroke-dasharray:none; opacity:.16; }
+      .block-chart__waterfall .block-chart__axis-grid-line { stroke-dasharray:none; opacity:.1; }
+      .block-chart__waterfall text { fill:var(--motion-fg,var(--slide-fg)); text-anchor:middle; }
+      .block-chart__waterfall-value { font-family:monospace; font-size:var(--chart-font-size); font-weight:700; }
+      .block-chart__waterfall-label { fill:var(--motion-muted,var(--slide-muted)) !important; font-size:calc(var(--chart-font-size) * .78); }
+      .block-chart__radar { display:flex; flex:1; min-height:0; margin-top:16px; }
+      .block-chart__radar svg { width:100%; height:100%; }
+      .block-chart__radar-grid polygon, .block-chart__radar-grid line { fill:none; stroke:var(--motion-fg,var(--slide-fg)); stroke-width:1.5px; opacity:.14; }
+      .block-chart__radar-value { fill:var(--chart-color); fill-opacity:.2; stroke:var(--chart-color); stroke-linejoin:round; stroke-width:var(--chart-weight,8); }
+      .block-chart__radar circle { stroke:var(--motion-bg,var(--slide-card)); stroke-width:2px; }
+      .block-chart__radar text { fill:var(--motion-fg,var(--slide-fg)); font-size:var(--chart-font-size); font-weight:600; text-anchor:middle; dominant-baseline:middle; }
+      .block-chart__columns { display:flex; align-items:end; gap:12px; flex:1; min-height:0; margin-top:20px; }
+      .block-chart__columns div { display:flex; flex:1; height:100%; flex-direction:column; align-items:center; justify-content:end; gap:6px; font-size:11px; }
+      .block-chart__columns i { width:100%; max-width:56px; min-height:5%; border-radius:6px 6px 0 0; }
+      .block-chart__sparkline { display:flex; flex:1; min-height:0; flex-direction:column; justify-content:center; margin-top:16px; padding:16px 20px; border:1px solid var(--slide-border); border-radius:12px; background:rgba(255,255,255,.025); }
+      .block-chart__sparkline-head { display:flex; align-items:end; justify-content:space-between; }
+      .block-chart__sparkline-head small { display:block; color:var(--motion-muted,var(--slide-muted)); font-size:10px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
+      .block-chart__sparkline-head strong { display:block; margin-top:4px; font-family:monospace; font-size:30px; }
+      .block-chart__sparkline-head em { padding:4px 10px; border-radius:999px; font-family:monospace; font-size:12px; font-style:normal; font-weight:700; }
+      .block-chart__sparkline-head .is-positive { color:#34d399; background:rgba(16,185,129,.1); }
+      .block-chart__sparkline-head .is-negative { color:#f87171; background:rgba(239,68,68,.1); }
+      .block-chart__sparkline svg { width:100%; height:96px; margin-top:12px; overflow:visible; }
+      .block-chart__sparkline polyline { fill:none; stroke:var(--chart-color); stroke-width:4px; stroke-linecap:round; stroke-linejoin:round; }
+      .block-chart__sparkline circle { stroke:var(--motion-bg,var(--slide-card)); stroke-width:2px; }
+      .block-chart__sparkline .block-chart__axis-grid-line { stroke:var(--motion-fg,var(--slide-fg)); stroke-width:1px; opacity:.09; }
+      .block-chart__sparkline-axis { fill:var(--motion-muted,var(--slide-muted)); font-family:monospace; font-size:8px; text-anchor:end; dominant-baseline:middle; }
+      .block-chart__sparkline-x-axis { fill:var(--motion-muted,var(--slide-muted)); font-family:monospace; font-size:8px; text-anchor:middle; }
+      .block-chart__sparkline-area { fill:var(--chart-color); opacity:.1; }
+      .block-chart__sparkline-values { display:grid; gap:8px; margin-top:4px; font-size:calc(var(--chart-font-size,14px) * .78); text-align:center; }
+      .block-chart__sparkline-values div { min-width:0; }
+      .block-chart__sparkline-values i { display:block; width:6px; height:6px; margin:0 auto 4px; border-radius:999px; }
+      .block-chart__sparkline-values span, .block-chart__sparkline-values b { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .block-chart__sparkline-values span { color:var(--motion-muted,var(--slide-muted)); }
+      .block-chart__sparkline-values b { margin-top:2px; color:var(--motion-fg,var(--slide-fg)); font-family:monospace; }
       .block-chart__pie {
         display: grid;
         flex: 1;
@@ -601,6 +689,12 @@ export const motionDocExportStyles = `      :root {
         background: var(--motion-bg, rgba(255,255,255,0.06));
         box-shadow: 0 24px 72px rgba(0,0,0,0.24);
       }
+      .motion-block--positioned .block-image {
+        max-width: none;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+      }
       .block-image img {
         display: block;
         width: 100%;
@@ -629,13 +723,36 @@ export const motionDocExportStyles = `      :root {
         backdrop-filter: blur(16px);
       }
       .block-icon svg {
-        width: calc(var(--icon-size, 96px) * var(--frame-scale, 1));
-        height: calc(var(--icon-size, 96px) * var(--frame-scale, 1));
+        width: 100%;
+        height: 100%;
       }
       .block-shape,
       .block-shape svg {
         width: 100%;
         height: 100%;
+      }
+      .block-shape { position: relative; }
+      .shape-line-endpoint { pointer-events: none; position: absolute; top: 50%; color: var(--line-endpoint-color); }
+      .shape-line-endpoint--start { left: 0; }
+      .shape-line-endpoint--end { right: 0; }
+      .shape-line-endpoint--circle { width: calc(10px * var(--line-endpoint-scale, 1)); height: calc(10px * var(--line-endpoint-scale, 1)); border-radius: 999px; background: var(--line-endpoint-color); }
+      .shape-line-endpoint--start.shape-line-endpoint--circle { transform: translate(-50%, -50%); }
+      .shape-line-endpoint--end.shape-line-endpoint--circle { transform: translate(50%, -50%); }
+      .shape-line-endpoint--bar { width: calc(2px * var(--line-endpoint-scale, 1)); height: calc(16px * var(--line-endpoint-scale, 1)); background: var(--line-endpoint-color); }
+      .shape-line-endpoint--start.shape-line-endpoint--bar { transform: translate(-50%, -50%); }
+      .shape-line-endpoint--end.shape-line-endpoint--bar { transform: translate(50%, -50%); }
+      .shape-line-endpoint--arrow { width: 0; height: 0; border-top: calc(6px * var(--line-endpoint-scale, 1)) solid transparent; border-bottom: calc(6px * var(--line-endpoint-scale, 1)) solid transparent; transform: translateY(-50%); }
+      .shape-line-endpoint--start.shape-line-endpoint--arrow { border-right: calc(10px * var(--line-endpoint-scale, 1)) solid var(--line-endpoint-color); }
+      .shape-line-endpoint--end.shape-line-endpoint--arrow { border-left: calc(10px * var(--line-endpoint-scale, 1)) solid var(--line-endpoint-color); }
+      .block-shape__text {
+        position: absolute;
+        inset: 6%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        text-align: center;
+        line-height: 1.15;
       }
       .block-stack {
         display: flex;
@@ -675,7 +792,7 @@ export const motionDocExportStyles = `      :root {
         min-width: 0;
         min-height: 0;
         overflow: hidden;
-        border: var(--table-border-width, 1px) solid var(--table-border, var(--slide-border));
+        border: var(--table-border-width, 1px) var(--table-border-style, solid) var(--table-border, var(--slide-border));
         border-radius: var(--motion-radius, 8px);
         box-shadow: 0 20px 60px rgba(0,0,0,0.18);
       }
@@ -686,9 +803,9 @@ export const motionDocExportStyles = `      :root {
         align-items: var(--table-vertical-align, center);
         justify-content: var(--table-cell-justify, center);
         overflow: hidden;
-        border-bottom: var(--table-border-width, 1px) solid var(--table-border, var(--slide-border));
-        border-right: var(--table-border-width, 1px) solid var(--table-border, var(--slide-border));
-        padding: calc(8px * var(--frame-scale, 1));
+        border-bottom: var(--table-border-width, 1px) var(--table-border-style, solid) var(--table-border, var(--slide-border));
+        border-right: var(--table-border-width, 1px) var(--table-border-style, solid) var(--table-border, var(--slide-border));
+        padding: calc(var(--table-padding-y, 8px) * var(--frame-scale, 1)) calc(var(--table-padding-x, 10px) * var(--frame-scale, 1));
         color: inherit;
         font-size: calc(var(--table-font-size, 16px) * var(--frame-scale, 1));
         line-height: 1.25;

@@ -71,7 +71,7 @@ const templateTagLabels: Record<string, string> = {
 };
 
 const templateToneByTag: Record<string, TemplatePreviewTone> = {
-  Black: { accent: "#ffffff", border: "#3f3f46", foreground: "#ffffff", muted: "#a1a1aa", primary: "#050505", secondary: "#111111", shell: "#020202" },
+  Black: { accent: "#ffffff", border: "#3f3f46", foreground: "#ffffff", muted: "#a1a1aa", primary: "#000000", secondary: "#111111", shell: "#000000" },
   White: { accent: "#111111", border: "#d4d4d8", foreground: "#111111", muted: "#71717a", primary: "#ffffff", secondary: "#f4f4f5", shell: "#fafafa" },
   "Midnight Blue": { accent: "#72a7ff", border: "#1e3a5f", foreground: "#f8fbff", muted: "#9fb7d8", primary: "#07111f", secondary: "#0d1728", shell: "#030812" },
   "Ivory Finance": { accent: "#7a4f24", border: "#d8c6ac", foreground: "#2f2418", muted: "#8b7358", primary: "#fff8ef", secondary: "#efe5d7", shell: "#f4eadc" },

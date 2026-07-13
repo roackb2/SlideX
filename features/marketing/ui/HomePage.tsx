@@ -436,6 +436,7 @@ function InteractiveHero({
 
   return (
     <motion.section
+      initial={false}
       animate={{ backgroundColor: activeSlide === 0 ? "#0b0c0f" : activeSlide === 1 ? "#0e0d0d" : activeSlide === 2 ? "#090d10" : "#100a0d" }}
       transition={{ duration: 0.55 }}
       onPointerMove={updatePointer}
@@ -443,7 +444,7 @@ function InteractiveHero({
         pointerX.set(0);
         pointerY.set(0);
       }}
-      className="relative flex min-h-[620px] items-center overflow-hidden px-5 pb-14 pt-32 text-white sm:min-h-[680px] sm:px-6 lg:min-h-[min(880px,100dvh)] lg:px-8 lg:pb-16 lg:pt-28"
+      className="relative flex min-h-[620px] items-center overflow-hidden bg-[#0b0c0f] px-5 pb-14 pt-32 text-white sm:min-h-[680px] sm:px-6 lg:min-h-[min(880px,100dvh)] lg:px-8 lg:pb-16 lg:pt-28"
     >
       <div className="absolute inset-x-0 top-[22%] h-px bg-white/[0.055]" />
       <div className="absolute inset-x-0 bottom-[20%] h-px bg-white/[0.055]" />

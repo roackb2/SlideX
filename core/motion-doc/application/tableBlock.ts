@@ -18,9 +18,9 @@ export type TableSize = {
 type PropRecord = Record<string, string | number>;
 
 export const TABLE_MIN_COLUMNS = 1;
-export const TABLE_MAX_COLUMNS = 10;
+export const TABLE_MAX_COLUMNS = 50;
 export const TABLE_MIN_ROWS = 1;
-export const TABLE_MAX_ROWS = 10;
+export const TABLE_MAX_ROWS = 50;
 const TABLE_DEFAULT_TRACK = 1;
 const TABLE_MIN_TRACK = 0.28;
 

@@ -36,7 +36,7 @@ export const snippetTemplates = [
   {
     id: "chart",
     label: "Chart",
-    code: `<Chart title="Quarterly traction" labels="Q1,Q2,Q3,Q4" values="42,58,73,91" width="lg" height={144} enter="fadeUp" delay={0.2} radius={16} x={8} y={36} w={70} h={42} />`
+    code: `<Chart chartType="bar" chartColor="#0ea5e9" colors="#ef4444,#f59e0b,#10b981,#3b82f6" fontSize={18} strokeWidth={16} title="Quarterly traction" labels="Q1,Q2,Q3,Q4" values="42,58,73,91" width="full" height={240} enter="fadeUp" delay={0.2} radius={16} x={7} y={24} w={86} h={64} />`
   },
   {
     id: "snip-image",

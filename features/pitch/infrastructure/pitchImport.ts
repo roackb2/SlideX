@@ -1,4 +1,5 @@
 import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
+import { externalizeEmbeddedPitchImages } from "@/features/pitch/infrastructure/pitchLocalAssets";
 
 export type ImportedPitchProject = {
   name: string;
@@ -13,7 +14,8 @@ export async function importPitchProjectFile(file: File): Promise<ImportedPitchP
   }
 
   const fileContent = await file.text();
-  const source = extension === "html" ? extractSourceFromHtml(fileContent) : fileContent;
+  const embeddedSource = extension === "html" ? extractSourceFromHtml(fileContent) : fileContent;
+  const source = await externalizeEmbeddedPitchImages(embeddedSource);
   const document = parseMotionDoc(source);
 
   if (document.scenes.length === 0) {

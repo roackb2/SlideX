@@ -117,6 +117,7 @@ export function ShaderBackgroundSectionContent({
             background={background}
             controls={definition.controls}
             colorLabels={definition.colorLabels}
+            visibleColorCount={definition.visibleColorCount}
             shaderAngle={shaderAngle}
             shaderColor1={shaderColor1}
             shaderColor2={shaderColor2}
@@ -154,10 +155,12 @@ function PaperShaderControls({
   shaderScale,
   shaderSoftness,
   shaderSpeed,
-  updateActiveSlideStyle
+  updateActiveSlideStyle,
+  visibleColorCount
 }: Omit<ShaderBackgroundSectionProps, "shader" | "shaderEngine" | "shaderPreset"> & {
   colorLabels: readonly [string, string, string, string, string, string];
   controls: readonly PaperShaderControl[];
+  visibleColorCount?: number;
 }) {
   const shaderColors = {
     shaderColor1,
@@ -186,7 +189,7 @@ function PaperShaderControls({
           value={background}
         />
 
-        {PAPER_SHADER_COLOR_KEYS.map((key, index) => (
+        {PAPER_SHADER_COLOR_KEYS.slice(0, visibleColorCount ?? PAPER_SHADER_COLOR_KEYS.length).map((key, index) => (
           <ColorRow
             fallback={shaderColorFallback(key, accent, background)}
             key={key}

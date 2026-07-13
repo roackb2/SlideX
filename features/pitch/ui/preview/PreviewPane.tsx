@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import type { CSSProperties } from "react";
+import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
 import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
 import {
   alignXProp,
@@ -14,26 +15,31 @@ import {
 } from "@/features/pitch/application/previewProps";
 import { PreviewBlock, PreviewBlockList } from "@/features/pitch/ui/preview/PreviewBlock";
 import { Scene, Text } from "@/features/pitch/ui/preview/motion-blocks";
+import type { Frame } from "@/features/pitch/application/previewCanvas";
 
 type PreviewPaneProps = {
   activeSlideIndex?: number;
   autoHeight?: boolean;
+  frameOverrides?: ReadonlyMap<number, Frame>;
   hiddenBlockIndices?: number[];
   replayNonce: number;
+  scene?: MotionDocScene;
   source: string;
 };
 
-export function PreviewPane({
+export const PreviewPane = memo(function PreviewPane({
   activeSlideIndex = 0,
   autoHeight = false,
+  frameOverrides,
   hiddenBlockIndices = [],
   replayNonce,
+  scene,
   source
 }: PreviewPaneProps) {
-  const document = useMemo(() => parseMotionDoc(source), [source]);
+  const document = useMemo(() => scene ? null : parseMotionDoc(source), [scene, source]);
   const hiddenBlockIndexSet = useMemo(() => new Set(hiddenBlockIndices), [hiddenBlockIndices]);
-  const activeSlide = document.scenes[activeSlideIndex] ?? document.scenes[0];
-  const hasSlides = document.scenes.length > 0;
+  const activeSlide = scene ?? document?.scenes[activeSlideIndex] ?? document?.scenes[0];
+  const hasSlides = Boolean(scene) || Boolean(document?.scenes.length);
 
   if (!hasSlides) {
     return <PreviewCompileError />;
@@ -93,6 +99,7 @@ export function PreviewPane({
             <div style={{ ...splitContentStyle, order: textOrder }}>
               {contentItems.length > 0 ? (
                 <PreviewBlockList
+                  frameOverrides={frameOverrides}
                   hiddenBlockIndices={hiddenBlockIndexSet}
                   items={contentItems}
                 />
@@ -112,6 +119,7 @@ export function PreviewPane({
           </>
         ) : activeSlide.blocks.length > 0 ? (
           <PreviewBlockList
+            frameOverrides={frameOverrides}
             hiddenBlockIndices={hiddenBlockIndexSet}
             items={blockItems}
           />
@@ -119,7 +127,7 @@ export function PreviewPane({
       </Scene>
     </div>
   );
-}
+});
 
 function PreviewCompileError() {
   return (

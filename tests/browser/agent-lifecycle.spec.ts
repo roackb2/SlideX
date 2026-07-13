@@ -176,7 +176,7 @@ test("isolates conversations when a same-name deck is imported", async ({ page }
   const importedMotionDoc = agent.startRequests[0]?.motionDoc;
   expect(importedMotionDoc).toBeTruthy();
 
-  await page.getByRole("button", { name: "Export", exact: true }).click();
+  await page.getByRole("button", { name: "Export presentation", exact: true }).click();
   const fileDialog = page.getByRole("dialog", { name: "Presentation file" });
   await fileDialog.getByRole("tab", { name: "Import" }).click();
   await fileDialog.locator('input[type="file"]').setInputFiles({

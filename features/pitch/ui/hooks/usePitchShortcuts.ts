@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { canvasToolFromShortcut, type CanvasTool } from "@/features/pitch/application/canvasTools";
 import { arrowDelta, isArrowKey } from "@/features/pitch/application/keyboard";
+import { clipboardImageFile } from "@/features/pitch/infrastructure/pitchClipboard";
 
 type UsePitchShortcutsArgs = {
   activeCanvasTool: CanvasTool;
@@ -18,6 +19,7 @@ type UsePitchShortcutsArgs = {
 
   goToNextSlide: () => void;
   goToPreviousSlide: () => void;
+  groupSelectedBlocks: () => void;
   isCodeEditorOpen: boolean;
   isExportMenuOpen: boolean;
   isMobileInspectorOpen: boolean;
@@ -26,10 +28,12 @@ type UsePitchShortcutsArgs = {
   newProject: () => void;
   nudgeSelectedBlocks: (delta: { x: number; y: number }) => void;
   pasteCopiedBlock: () => void;
+  pasteImageFile: (file: File) => Promise<void>;
   selectedBlockIndex: number | null;
   selectedBlockIndices: number[];
   setActiveCanvasTool: (tool: CanvasTool) => void;
   undoLastChange: () => void;
+  ungroupSelectedBlocks: () => void;
 };
 
 export function usePitchShortcuts({
@@ -47,6 +51,7 @@ export function usePitchShortcuts({
   duplicateSelectedBlock,
   goToNextSlide,
   goToPreviousSlide,
+  groupSelectedBlocks,
   isCodeEditorOpen,
   isExportMenuOpen,
   isMobileInspectorOpen,
@@ -54,10 +59,12 @@ export function usePitchShortcuts({
   isTemplateModalOpen,
   nudgeSelectedBlocks,
   pasteCopiedBlock,
+  pasteImageFile,
   selectedBlockIndex,
   selectedBlockIndices,
   setActiveCanvasTool,
-  undoLastChange
+  undoLastChange,
+  ungroupSelectedBlocks
 }: UsePitchShortcutsArgs) {
   const canvasToolRef = useRef<CanvasTool>(activeCanvasTool);
   const spaceRestoreToolRef = useRef<CanvasTool | null>(null);
@@ -157,6 +164,7 @@ export function usePitchShortcuts({
       }
 
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "c") {
+        event.preventDefault();
         copySelectedBlock();
         return;
       }
@@ -173,15 +181,16 @@ export function usePitchShortcuts({
         return;
       }
 
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z" && !event.shiftKey) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "g") {
         event.preventDefault();
-        undoLastChange();
+        if (event.shiftKey) ungroupSelectedBlocks();
+        else groupSelectedBlocks();
         return;
       }
 
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "v") {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z" && !event.shiftKey) {
         event.preventDefault();
-        pasteCopiedBlock();
+        undoLastChange();
         return;
       }
 
@@ -225,10 +234,26 @@ export function usePitchShortcuts({
     }
 
     window.addEventListener("keydown", handleKeyDown);
+    function handlePaste(event: ClipboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (isModalOrPanelOpen()) return;
+      const image = clipboardImageFile(event);
+      if (image) {
+        event.preventDefault();
+        event.stopPropagation();
+        void pasteImageFile(image);
+        return;
+      }
+      if (shouldIgnoreTypingTarget(target)) return;
+      event.preventDefault();
+      pasteCopiedBlock();
+    }
+    window.addEventListener("paste", handlePaste, true);
     window.addEventListener("keyup", handleKeyUp);
     window.addEventListener("blur", handleWindowBlur);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("paste", handlePaste, true);
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("blur", handleWindowBlur);
     };
@@ -246,6 +271,7 @@ export function usePitchShortcuts({
     duplicateSelectedBlock,
     goToNextSlide,
     goToPreviousSlide,
+    groupSelectedBlocks,
     isCodeEditorOpen,
     isExportMenuOpen,
     isMobileInspectorOpen,
@@ -253,10 +279,12 @@ export function usePitchShortcuts({
     isTemplateModalOpen,
     nudgeSelectedBlocks,
     pasteCopiedBlock,
+    pasteImageFile,
     selectedBlockIndex,
     selectedBlockIndices,
     setActiveCanvasTool,
-    undoLastChange
+    undoLastChange,
+    ungroupSelectedBlocks
   ]);
 }
 

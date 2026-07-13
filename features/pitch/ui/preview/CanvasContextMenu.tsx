@@ -4,22 +4,33 @@ import {
   Clipboard,
   Copy,
   CopyPlus,
+  Group,
   Image,
   Lock,
+  SendToBack,
+  BringToFront,
   Trash2,
+  Ungroup,
   Unlock
 } from "lucide-react";
 import type { ComponentType, MouseEvent } from "react";
+import { createPortal } from "react-dom";
 import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
 
 type CanvasContextMenuProps = {
   canPaste: boolean;
+  canGroup: boolean;
+  canUngroup: boolean;
   onClose: () => void;
   onCopy: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  onGroup: () => void;
+  onMoveToBack: () => void;
+  onMoveToFront: () => void;
   onPaste: () => void;
   onToggleLock: () => void;
+  onUngroup: () => void;
   onUseAsBackground: () => void;
   position: { x: number; y: number };
   selectedBlock: MotionDocBlock | undefined;
@@ -30,12 +41,18 @@ type MenuIcon = ComponentType<{ className?: string; size?: number }>;
 
 export function CanvasContextMenu({
   canPaste,
+  canGroup,
+  canUngroup,
   onClose,
   onCopy,
   onDelete,
   onDuplicate,
+  onGroup,
+  onMoveToBack,
+  onMoveToFront,
   onPaste,
   onToggleLock,
+  onUngroup,
   onUseAsBackground,
   position,
   selectedBlock,
@@ -53,7 +70,7 @@ export function CanvasContextMenu({
     onClose();
   }
 
-  return (
+  const menu = (
     <>
       <style>{`
         @keyframes slidexCanvasContextMenuIn {
@@ -102,6 +119,12 @@ export function CanvasContextMenu({
         <MenuItem disabled={!hasSelection} icon={CopyPlus} label="Duplicate" onClick={() => run(onDuplicate, !hasSelection)} shortcut="Cmd D" />
         <MenuItem danger disabled={!hasSelection} icon={Trash2} label="Delete" onClick={() => run(onDelete, !hasSelection)} shortcut="Del" />
         <MenuSeparator />
+        <MenuItem disabled={!hasSelection} icon={BringToFront} label="Bring to front" onClick={() => run(onMoveToFront, !hasSelection)} />
+        <MenuItem disabled={!hasSelection} icon={SendToBack} label="Send to back" onClick={() => run(onMoveToBack, !hasSelection)} />
+        <MenuSeparator />
+        <MenuItem disabled={!canGroup} icon={Group} label="Group" onClick={() => run(onGroup, !canGroup)} shortcut="Cmd G" />
+        <MenuItem disabled={!canUngroup} icon={Ungroup} label="Ungroup" onClick={() => run(onUngroup, !canUngroup)} shortcut="⇧ Cmd G" />
+        <MenuSeparator />
         <MenuItem
           disabled={!hasSelection}
           icon={selectedBlocksLocked ? Unlock : Lock}
@@ -111,6 +134,7 @@ export function CanvasContextMenu({
       </div>
     </>
   );
+  return typeof document === "undefined" ? null : createPortal(menu, document.body);
 }
 
 function MenuItem({

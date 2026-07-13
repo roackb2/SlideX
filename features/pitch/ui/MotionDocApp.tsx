@@ -19,10 +19,16 @@ import { defaultCanvasTool, type CanvasTool } from "@/features/pitch/application
 import type { AgentSession } from "@/features/pitch/domain/agentRun";
 import { PitchAgentPanel } from "@/features/pitch/ui/agent/PitchAgentPanel";
 import { importPitchProjectFile } from "@/features/pitch/infrastructure/pitchImport";
+import { slideCommentsDeckId } from "@/features/pitch/infrastructure/slideComments";
+import { useMobilePitchViewport } from "@/features/pitch/ui/hooks/useMobilePitchViewport";
+import { useSlideComments } from "@/features/pitch/ui/hooks/useSlideComments";
+import { MobilePitchViewer } from "@/features/pitch/ui/mobile/MobilePitchViewer";
+import { MobilePitchWelcome } from "@/features/pitch/ui/mobile/MobilePitchWelcome";
 
 const isSlideXAgentEnabled = process.env.NEXT_PUBLIC_SLIDEX_AGENT_ENABLED === "true";
 
 export function MotionDocApp() {
+  const isMobileViewport = useMobilePitchViewport();
   const [source, setSource] = useState(defaultMdx);
   const [replayNonce, setReplayNonce] = useState(0);
   const [selectedTemplateId, setSelectedTemplateId] = useState(defaultTemplate.id);
@@ -34,6 +40,7 @@ export function MotionDocApp() {
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [fileModalMode, setFileModalMode] = useState<"export" | "import">("export");
   const [isCanvasGridVisible, setIsCanvasGridVisible] = useState(false);
   const [activeCanvasTool, setActiveCanvasTool] = useState<CanvasTool>(defaultCanvasTool);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
@@ -84,10 +91,10 @@ export function MotionDocApp() {
     selectedBlockIndex,
     selectedBlockIndices,
     selectSingleBlock
-  } = useLayerSelection(activeSlide?.blocks.length ?? 0);
+  } = useLayerSelection(activeSlide?.blocks ?? []);
   const selectionMdx = useMemo(
-    () => getSelectionMdx(activeSlide, selectedBlockIndex, activeSlideIndex),
-    [activeSlide, activeSlideIndex, selectedBlockIndex]
+    () => getSelectionMdx(activeSlide, selectedBlockIndex, activeSlideIndex, selectedBlockIndices),
+    [activeSlide, activeSlideIndex, selectedBlockIndex, selectedBlockIndices]
   );
   const {
     isMounted,
@@ -108,6 +115,12 @@ export function MotionDocApp() {
     setSource,
     undoStackRef
   });
+  const commentsDeckId = useMemo(() => slideCommentsDeckId(projectName), [projectName]);
+  const {
+    addComment: addSlideComment,
+    comments: slideComments,
+    passComment: passSlideComment
+  } = useSlideComments(commentsDeckId);
   const { commitSource, pushUndoSnapshot, undoLastChange } = usePitchUndo({
     clearBlockSelection,
     markProjectDirty,
@@ -168,6 +181,7 @@ export function MotionDocApp() {
     pushUndoSnapshot,
     scenes: sliderDocument.scenes,
     selectBlock,
+    selectBlocks,
     selectedBlockIndex,
     selectedBlockIndices,
     selectSingleBlock,
@@ -248,6 +262,7 @@ export function MotionDocApp() {
     duplicateSelectedBlock: pitchCommands.duplicateSelectedBlock,
     goToNextSlide: pitchCommands.goToNextSlide,
     goToPreviousSlide: pitchCommands.goToPreviousSlide,
+    groupSelectedBlocks: pitchCommands.groupSelectedBlocks,
     isCodeEditorOpen,
     isExportMenuOpen,
     isMobileInspectorOpen,
@@ -256,14 +271,20 @@ export function MotionDocApp() {
     newProject: startNewProject,
     nudgeSelectedBlocks: pitchCommands.nudgeSelectedBlocks,
     pasteCopiedBlock: pitchCommands.pasteCopiedBlock,
+    pasteImageFile: pitchCommands.pasteImageFile,
     selectedBlockIndex,
     selectedBlockIndices,
     setActiveCanvasTool,
-    undoLastChange
+    undoLastChange,
+    ungroupSelectedBlocks: pitchCommands.ungroupSelectedBlocks
   });
 
   if (!isMounted) {
     return <div className="flex h-dvh w-full bg-[#050505]" />;
+  }
+
+  if (isMobileViewport && !hasEnteredPitch) {
+    return <MobilePitchWelcome importPitchFile={importPitchFile} newProject={startNewProject} />;
   }
 
   if (!hasEnteredPitch) {
@@ -272,6 +293,43 @@ export function MotionDocApp() {
         importPitchFile={importPitchFile}
         newProject={startNewProject}
       />
+    );
+  }
+
+  if (isMobileViewport) {
+    return (
+      <>
+        <MobilePitchViewer
+          activeSlideIndex={activeSlideIndex}
+          comments={(slideComments[activeSlideIndex] ?? []).filter((comment) => comment.status === "open")}
+          documentTitle={sliderDocument.title}
+          onAddComment={(comment) => addSlideComment(activeSlideIndex, comment)}
+          onExport={() => {
+            setFileModalMode("export");
+            setIsExportMenuOpen(true);
+          }}
+          onImport={() => {
+            setFileModalMode("import");
+            setIsExportMenuOpen(true);
+          }}
+          onNextSlide={pitchCommands.goToNextSlide}
+          onPreviousSlide={pitchCommands.goToPreviousSlide}
+          onPassComment={(commentId) => passSlideComment(activeSlideIndex, commentId)}
+          replayNonce={replayNonce}
+          scene={activeSlide}
+          sceneCount={sliderDocument.scenes.length}
+          source={canvasSource}
+        />
+        <ExportModal
+          documentTitle={sliderDocument.title}
+          initialMode={fileModalMode}
+          isExporting={isExporting}
+          isOpen={isExportMenuOpen}
+          onClose={() => setIsExportMenuOpen(false)}
+          onExport={handleExportFromModal}
+          onImport={importPitchFile}
+        />
+      </>
     );
   }
 
@@ -297,6 +355,7 @@ export function MotionDocApp() {
       activeSlideLayout={activeSlideLayout}
       activeSlideLayoutPreset={activeSlideLayoutPreset}
       activeSlideMutedColor={activeSlideMutedColor}
+      activeSlideComments={(slideComments[activeSlideIndex] ?? []).filter((comment) => comment.status === "open")}
       activeSlideShader={activeSlideShader}
       activeSlideShaderAngle={activeSlideShaderAngle}
       activeSlideShaderColor1={activeSlideShaderColor1}
@@ -333,6 +392,7 @@ export function MotionDocApp() {
       deleteSelectedBlocks={pitchCommands.deleteSelectedBlocks}
       deleteSlide={pitchCommands.deleteSlide}
       duplicateSelectedBlock={pitchCommands.duplicateSelectedBlock}
+      groupSelectedBlocks={pitchCommands.groupSelectedBlocks}
       draggedBlockIndex={draggedBlockIndex}
       dragOverBlockIndex={dragOverBlockIndex}
       exportMenuRef={exportMenuRef}
@@ -350,12 +410,17 @@ export function MotionDocApp() {
       isTemplateModalOpen={isTemplateModalOpen}
       hasCopiedBlock={pitchCommands.hasCopiedBlock}
       moveBlock={pitchCommands.moveBlock}
+      moveBlockToEdge={pitchCommands.moveBlockToEdge}
+      moveSelectedBlocksToEdge={pitchCommands.moveSelectedBlocksToEdge}
       newProject={startNewProject}
       notice={notice}
+      onAddActiveSlideComment={(comment) => addSlideComment(activeSlideIndex, comment)}
+      onPassActiveSlideComment={(commentId) => passSlideComment(activeSlideIndex, commentId)}
       projectName={projectName}
       pushUndoSnapshot={pushUndoSnapshot}
       pasteCopiedBlock={pitchCommands.pasteCopiedBlock}
       reorderBlock={pitchCommands.reorderBlock}
+      renameBlock={pitchCommands.renameBlock}
       reorderSlide={pitchCommands.reorderSlide}
       replayNonce={replayNonce}
       scenes={sliderDocument.scenes}
@@ -383,6 +448,8 @@ export function MotionDocApp() {
       source={source}
       toggleSelectedBlocksPositionLock={pitchCommands.toggleSelectedBlocksPositionLock}
       toggleAgentPanel={() => setIsAgentPanelOpen((current) => !current)}
+      toggleBlockPositionLock={pitchCommands.toggleBlockPositionLock}
+      ungroupSelectedBlocks={pitchCommands.ungroupSelectedBlocks}
       totalDuration={stats.totalDuration}
       undoLastChange={undoLastChange}
       updateActiveSlideStyle={pitchCommands.updateActiveSlideStyle}
@@ -401,6 +468,7 @@ export function MotionDocApp() {
       onImport={importPitchFile}
       documentTitle={sliderDocument.title}
       isExporting={isExporting}
+      initialMode={fileModalMode}
     />
     </>
   );

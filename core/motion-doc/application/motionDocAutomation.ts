@@ -23,6 +23,7 @@ export const motionDocAddBlockTypes = [
   "ChartArea",
   "ChartPie",
   "ChartDonut",
+  "ChartBubble",
   "Table",
   "Icon"
 ] as const satisfies readonly AddBlockType[];
