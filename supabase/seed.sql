@@ -1,3 +1,0 @@
--- Keep seed data empty for now. Workspace and profile rows are created by
--- auth/workspace triggers so local test users receive the same defaults as
--- hosted users.
