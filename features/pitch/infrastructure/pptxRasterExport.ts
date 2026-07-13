@@ -7,11 +7,13 @@ type MotionDocExportWindow = Window & {
 };
 
 type PptxRasterExportOptions = {
+  captureCharts: boolean;
   captureFilteredImages: boolean;
   captureSlideBackgrounds: boolean;
 };
 
 export type PptxRasterAssets = {
+  chartImagesBySlide: string[][];
   filteredImagesBySlide: string[][];
   slideBackgrounds: string[];
 };
@@ -42,34 +44,23 @@ export async function renderPptxRasterAssets(
     if (slides.length === 0) throw new Error("No slides to export");
 
     const { default: html2canvas } = await import("html2canvas-pro");
+    const chartImagesBySlide: string[][] = [];
     const filteredImagesBySlide: string[][] = [];
     const slideBackgrounds: string[] = [];
 
     for (const slide of slides) {
       slide.classList.add("is-active");
 
+      chartImagesBySlide.push(options.captureCharts
+        ? await captureMotionBlocks(slide, ".block-chart", html2canvas)
+        : []);
+
       if (options.captureFilteredImages) {
-        const filteredBlocks = Array.from(slide.querySelectorAll<HTMLElement>(".motion-block"))
-          .filter((block) => block.querySelector(".block-image .image-filter-canvas"));
-        const filteredImages: string[] = [];
-
-        for (const block of filteredBlocks) {
-          const rect = block.getBoundingClientRect();
-          const canvas = await html2canvas(block, {
-            allowTaint: false,
-            backgroundColor: null,
-            height: Math.max(1, Math.ceil(rect.height)),
-            logging: false,
-            scale: EXPORT_SCALE,
-            useCORS: true,
-            width: Math.max(1, Math.ceil(rect.width)),
-            windowHeight: DESIGN_HEIGHT,
-            windowWidth: DESIGN_WIDTH
-          });
-          filteredImages.push(canvas.toDataURL("image/png"));
-        }
-
-        filteredImagesBySlide.push(filteredImages);
+        filteredImagesBySlide.push(await captureMotionBlocks(
+          slide,
+          ".block-image .image-filter-canvas",
+          html2canvas
+        ));
       } else {
         filteredImagesBySlide.push([]);
       }
@@ -93,10 +84,40 @@ export async function renderPptxRasterAssets(
       slide.classList.remove("is-active");
     }
 
-    return { filteredImagesBySlide, slideBackgrounds };
+    return { chartImagesBySlide, filteredImagesBySlide, slideBackgrounds };
   } finally {
     iframe.remove();
   }
+}
+
+type Html2Canvas = typeof import("html2canvas-pro")["default"];
+
+async function captureMotionBlocks(
+  slide: HTMLElement,
+  contentSelector: string,
+  html2canvas: Html2Canvas
+) {
+  const blocks = Array.from(slide.querySelectorAll<HTMLElement>(".motion-block"))
+    .filter((block) => block.querySelector(contentSelector));
+  const images: string[] = [];
+
+  for (const block of blocks) {
+    const rect = block.getBoundingClientRect();
+    const canvas = await html2canvas(block, {
+      allowTaint: false,
+      backgroundColor: null,
+      height: Math.max(1, Math.ceil(rect.height)),
+      logging: false,
+      scale: EXPORT_SCALE,
+      useCORS: true,
+      width: Math.max(1, Math.ceil(rect.width)),
+      windowHeight: DESIGN_HEIGHT,
+      windowWidth: DESIGN_WIDTH
+    });
+    images.push(canvas.toDataURL("image/png"));
+  }
+
+  return images;
 }
 
 function waitForIframeLoad(iframe: HTMLIFrameElement) {

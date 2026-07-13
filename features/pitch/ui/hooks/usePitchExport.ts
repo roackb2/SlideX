@@ -14,6 +14,7 @@ import { youtubeVideoId } from "@/core/motion-doc/domain/videoSource";
 import { parseExportSlideSelection } from "@/features/pitch/application/exportSlideSelection";
 import {
   addEditableSlides,
+  documentNeedsPptxChartImages,
   documentNeedsPptxFilteredImages,
   documentNeedsPptxVisualFallback
 } from "@/features/pitch/infrastructure/editablePptxExport";
@@ -566,14 +567,16 @@ export function usePitchExport({
       const embeddedMediaSource = await embedRemoteVideos(bundledMediaSource);
       const finalSource = await embedRemoteImages(embeddedMediaSource);
       const document = parseMotionDoc(finalSource);
+      const captureCharts = documentNeedsPptxChartImages(document);
       const captureSlideBackgrounds = documentNeedsPptxVisualFallback(document);
       const captureFilteredImages = documentNeedsPptxFilteredImages(document);
-      const rasterAssets = captureSlideBackgrounds || captureFilteredImages
+      const rasterAssets = captureCharts || captureSlideBackgrounds || captureFilteredImages
         ? await renderPptxRasterAssets(buildMotionDocRasterHtml(finalSource, finalTitle), {
+            captureCharts,
             captureFilteredImages,
             captureSlideBackgrounds
           })
-        : { filteredImagesBySlide: [], slideBackgrounds: [] };
+        : { chartImagesBySlide: [], filteredImagesBySlide: [], slideBackgrounds: [] };
       const pptx = await createPptxPresentation();
 
       pptx.layout = "LAYOUT_WIDE";
@@ -587,7 +590,8 @@ export function usePitchExport({
         pptx,
         document,
         rasterAssets.slideBackgrounds,
-        rasterAssets.filteredImagesBySlide
+        rasterAssets.filteredImagesBySlide,
+        rasterAssets.chartImagesBySlide
       );
 
       setNotice("Building PowerPoint…");
