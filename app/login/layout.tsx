@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "SlideX Login - In progress",
-  description: "SlideX account login is currently in development."
+  title: "Login",
+  description: "Sign in to your SlideX presentation workspace."
 };
 
 export default function LoginLayout({ children }: { children: React.ReactNode }) {

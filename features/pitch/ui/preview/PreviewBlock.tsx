@@ -258,8 +258,6 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
         arrowEndSize={spacingProp(block.props.arrowEndSize)}
         arrowStart={stringProp(block.props.arrowStart)}
         arrowStartSize={spacingProp(block.props.arrowStartSize)}
-        fontSize={sizeNumberProp(block.props.fontSize, 18)}
-        fontWeight={spacingProp(block.props.fontWeight)}
         lineStyle={stringProp(block.props.lineStyle)}
         mask={stringProp(block.props.mask)}
         operation={stringProp(block.props.operation)}
@@ -270,8 +268,6 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
         sides={spacingProp(block.props.sides)}
         stroke={stringProp(block.props.stroke)}
         strokeWidth={spacingProp(block.props.strokeWidth)}
-        text={String(block.props.text ?? "")}
-        textColor={stringProp(block.props.textColor ?? block.props.color)}
       />
     );
   }

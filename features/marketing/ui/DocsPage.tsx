@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Search } from "lucide-react";
+import { appRoutes } from "@/common/lib/appRoutes";
 import { useI18n } from "@/common/lib/I18nProvider";
 
 type DocsLink = {
@@ -147,7 +148,7 @@ export function DocsPage() {
           <section className="mt-16 border-t border-white/[0.09] pt-12 scroll-mt-40" id="powerpoint">
             <h2 className="text-[30px] font-semibold tracking-[-0.045em]">{isZh ? "輸出" : "Export"}</h2>
             <h3 className="mt-7 text-[20px] font-semibold tracking-[-0.03em]">PowerPoint</h3>
-            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/52">{isZh ? "PPTX 可由 PowerPoint、Keynote 與 Google Slides 開啟。文字、圖片與表格會保留為可編輯的原生物件；shader、動態內容與複雜效果則以目前狀態轉成靜態視覺，兼顧相容性與版面一致。" : "PPTX files open in PowerPoint, Keynote, and Google Slides. Text, images, and tables remain editable native objects, while shaders, motion, and complex effects are captured as still visuals for compatibility and layout fidelity."}</p>
+            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/52">{isZh ? "PPTX 可由 PowerPoint、Keynote 與 Google Slides 開啟。文字、圖片、表格與一般形狀會保留為可編輯原生物件；特殊形狀與圖示使用 SVG 向量。常用圖表保留為可編輯 Chart，特殊圖表保留完整靜態視覺；影片則同時提供媒體物件、SVG 播放封面與連結回退，降低跨平台匯入後消失的風險。" : "PPTX files open in PowerPoint, Keynote, and Google Slides. Text, images, tables, and standard shapes remain editable native objects; exact shapes and icons use SVG vectors. Common charts remain editable charts, specialty charts preserve their full static appearance, and videos include media objects plus an SVG playback cover and link fallback for safer cross-platform import."}</p>
           </section>
 
           <section className="mt-12 scroll-mt-40" id="html">
@@ -156,7 +157,7 @@ export function DocsPage() {
           </section>
 
           <div className="mt-16 border-t border-white/[0.09] pt-8">
-            <Link className="inline-flex h-11 items-center gap-2 rounded-md bg-[#f4f4f1] px-4 text-[14px] font-semibold text-[#0b0c0f] transition-colors hover:bg-white active:translate-y-px" href="/workspace/pitch">
+            <Link className="inline-flex h-11 items-center gap-2 rounded-md bg-[#f4f4f1] px-4 text-[14px] font-semibold text-[#0b0c0f] transition-colors hover:bg-white active:translate-y-px" href={appRoutes.workspace}>
               {isZh ? "開啟 Pitch Beta" : "Open Pitch Beta"}
               <ArrowUpRight className="h-4 w-4" />
             </Link>

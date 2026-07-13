@@ -744,16 +744,9 @@ export const motionDocExportStyles = `      :root {
       .shape-line-endpoint--arrow { width: 0; height: 0; border-top: calc(6px * var(--line-endpoint-scale, 1)) solid transparent; border-bottom: calc(6px * var(--line-endpoint-scale, 1)) solid transparent; transform: translateY(-50%); }
       .shape-line-endpoint--start.shape-line-endpoint--arrow { border-right: calc(10px * var(--line-endpoint-scale, 1)) solid var(--line-endpoint-color); }
       .shape-line-endpoint--end.shape-line-endpoint--arrow { border-left: calc(10px * var(--line-endpoint-scale, 1)) solid var(--line-endpoint-color); }
-      .block-shape__text {
-        position: absolute;
-        inset: 6%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        text-align: center;
-        line-height: 1.15;
-      }
+      .shape-line-vector-endpoint { position:absolute; top:50%; overflow:visible; pointer-events:none; }
+      .shape-line-vector-endpoint--start { left:0; transform:translate(-50%,-50%); }
+      .shape-line-vector-endpoint--end { right:0; transform:translate(50%,-50%); }
       .block-stack {
         display: flex;
         width: 100%;

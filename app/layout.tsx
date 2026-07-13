@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { I18nProvider } from "@/common/lib/I18nProvider";
 import { defaultLocale, dictionaries } from "@/common/lib/i18n";
+import { AuthenticatedHomeRedirect } from "@/features/auth";
 import "./globals.css";
 
 const defaultMetadata = dictionaries[defaultLocale].metadata;
-const siteUrl = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://slide-x-psi.vercel.app/");
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
+  : undefined;
 const ogImage = {
   alt: "SlideX motion deck editor preview",
   height: 630,
@@ -62,7 +65,9 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>
       <body className="antialiased">
-        <I18nProvider>{children}</I18nProvider>
+        <I18nProvider>
+          <AuthenticatedHomeRedirect>{children}</AuthenticatedHomeRedirect>
+        </I18nProvider>
       </body>
     </html>
   );

@@ -149,7 +149,8 @@ function createChartBlock(chartType: string): MotionDocBlock {
 }
 
 function createShapeBlock(shape: string): MotionDocBlock {
-  const isLine = shape === "line" || shape === "arrow";
+  const isLine = shape === "line";
+  const isArrow = shape === "arrow";
   const isTriangle = shape === "triangle";
   const isStar = shape === "star";
   return {
@@ -158,17 +159,17 @@ function createShapeBlock(shape: string): MotionDocBlock {
       shape: isTriangle ? "polygon" : shape,
       ...(isTriangle ? { sides: 3 } : {}),
       ...(isStar ? { points: 5 } : {}),
-      fill: isLine ? "transparent" : "rgba(142,165,255,0.72)",
-      stroke: isLine ? "#171717" : "#ffffff",
+      fill: isLine ? "transparent" : "#a8b8ff",
+      stroke: isLine ? "#171717" : "transparent",
       strokeWidth: 2,
       operation: "none",
       mask: "none",
       enter: "none",
       radius: 0,
-      x: isLine ? 16 : 34,
-      y: isLine ? 50 : 30,
-      w: isLine ? 68 : 28,
-      h: isLine ? 2.5 : 28
+      x: isLine ? 16 : isArrow ? 32 : 34,
+      y: isLine ? 50 : isArrow ? 36 : 30,
+      w: isLine ? 68 : isArrow ? 36 : 28,
+      h: isLine ? 2.5 : isArrow ? 20 : 28
     }
   } as MotionDocBlock;
 }

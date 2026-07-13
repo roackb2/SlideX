@@ -10,6 +10,7 @@ type UsePitchShortcutsArgs = {
   closeExportMenu: () => void;
   closeMobileInspector: () => void;
   closeMobileSidebar: () => void;
+  closePresentationPreview: () => void;
   closeTemplateModal: () => void;
   copySelectedBlock: () => void;
   cutSelectedBlocks: () => void;
@@ -24,6 +25,7 @@ type UsePitchShortcutsArgs = {
   isExportMenuOpen: boolean;
   isMobileInspectorOpen: boolean;
   isMobileSidebarOpen: boolean;
+  isPresentationPreviewOpen: boolean;
   isTemplateModalOpen: boolean;
   newProject: () => void;
   nudgeSelectedBlocks: (delta: { x: number; y: number }) => void;
@@ -43,6 +45,7 @@ export function usePitchShortcuts({
   closeExportMenu,
   closeMobileInspector,
   closeMobileSidebar,
+  closePresentationPreview,
   closeTemplateModal,
   copySelectedBlock,
   cutSelectedBlocks,
@@ -56,6 +59,7 @@ export function usePitchShortcuts({
   isExportMenuOpen,
   isMobileInspectorOpen,
   isMobileSidebarOpen,
+  isPresentationPreviewOpen,
   isTemplateModalOpen,
   nudgeSelectedBlocks,
   pasteCopiedBlock,
@@ -75,7 +79,7 @@ export function usePitchShortcuts({
 
   useEffect(() => {
     function isModalOrPanelOpen() {
-      return isCodeEditorOpen || isExportMenuOpen || isTemplateModalOpen || isMobileSidebarOpen || isMobileInspectorOpen;
+      return isCodeEditorOpen || isExportMenuOpen || isTemplateModalOpen || isMobileSidebarOpen || isMobileInspectorOpen || isPresentationPreviewOpen;
     }
 
     function shouldIgnoreTypingTarget(target: HTMLElement | null) {
@@ -123,6 +127,11 @@ export function usePitchShortcuts({
         if (isExportMenuOpen) {
           event.preventDefault();
           closeExportMenu();
+          return;
+        }
+        if (isPresentationPreviewOpen) {
+          event.preventDefault();
+          closePresentationPreview();
           return;
         }
         if (isTemplateModalOpen) {
@@ -263,6 +272,7 @@ export function usePitchShortcuts({
     closeExportMenu,
     closeMobileInspector,
     closeMobileSidebar,
+    closePresentationPreview,
     closeTemplateModal,
     copySelectedBlock,
     cutSelectedBlocks,
@@ -276,6 +286,7 @@ export function usePitchShortcuts({
     isExportMenuOpen,
     isMobileInspectorOpen,
     isMobileSidebarOpen,
+    isPresentationPreviewOpen,
     isTemplateModalOpen,
     nudgeSelectedBlocks,
     pasteCopiedBlock,

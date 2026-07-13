@@ -56,7 +56,7 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
         actualScale={zoomLevel === "fit" ? fitScale : zoomLevel}
         isAgentEnabled={isAgentEnabled}
         isAgentPanelOpen={props.isAgentPanelOpen}
-        onReplay={() => props.setReplayNonce((value) => value + 1)}
+        onPlay={props.openPresentationPreview}
         onToggleInspector={() => {
           props.setIsMobileInspectorOpen((value) => !value);
           props.setIsMobileSidebarOpen(false);

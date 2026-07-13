@@ -36,6 +36,7 @@ const HTML_EXPORT_IMAGE_QUALITY = 0.94;
 const PNG_EXPORT_HEIGHT = 1080;
 const PNG_EXPORT_WIDTH = 1920;
 const PNG_MULTI_DOWNLOAD_DELAY_MS = 180;
+const PPTX_EMBEDDED_VIDEO_MAX_BYTES = 80 * 1024 * 1024;
 
 /**
  * Embed a local image with enough source pixels for fullscreen HTML playback.
@@ -125,8 +126,8 @@ async function remoteImageToDataUrl(url: string) {
 }
 
 async function embedRemoteImages(sourceText: string) {
-  const imageSourcePattern = /\bsrc\s*=\s*["'](https?:\/\/[^"'<>]+)["']/gi;
-  const urls = [...new Set([...sourceText.matchAll(imageSourcePattern)].map((match) => match[1]))];
+  const imageSourcePattern = /<ImageBlock\b[^>]*?\bsrc\s*=\s*(["'])(https?:\/\/[^"'<>]+)\1/gi;
+  const urls = [...new Set([...sourceText.matchAll(imageSourcePattern)].map((match) => match[2]))];
   if (urls.length === 0) return sourceText;
 
   const replacements = new Map<string, string>();
@@ -145,8 +146,82 @@ async function embedRemoteImages(sourceText: string) {
     }
   }
 
-  return sourceText.replace(imageSourcePattern, (attribute, url: string) => (
+  return sourceText.replace(imageSourcePattern, (attribute, _quote: string, url: string) => (
     attribute.replace(url, replacements.get(url) ?? url)
+  ));
+}
+
+async function embedRootRelativeVideos(sourceText: string) {
+  const videoSourcePattern = /<VideoBlock\b[^>]*?\bsrc\s*=\s*(["'])(\/(?!\/)[^"'<>]+)\1/gi;
+  const paths = [...new Set([...sourceText.matchAll(videoSourcePattern)].map((match) => match[2]))];
+  if (paths.length === 0) return sourceText;
+
+  const replacements = new Map<string, string>();
+  for (const path of paths) {
+    const response = await fetch(new URL(path, window.location.origin));
+    if (!response.ok) throw new Error(`Cannot export bundled video ${path}. Reload SlideX and try again.`);
+    const blob = await response.blob();
+    if (!blob.type.startsWith("video/")) throw new Error(`Bundled media ${path} is not a supported video.`);
+    replacements.set(path, await readFileAsDataUrl(blob));
+  }
+
+  return sourceText.replace(videoSourcePattern, (attribute, _quote: string, path: string) => (
+    attribute.replace(path, replacements.get(path) ?? path)
+  ));
+}
+
+async function embedRemoteVideos(sourceText: string) {
+  const videoSourcePattern = /<VideoBlock\b[^>]*?\bsrc\s*=\s*(["'])(https?:\/\/[^"'<>]+)\1/gi;
+  const urls = [...new Set([...sourceText.matchAll(videoSourcePattern)].map((match) => match[2]))];
+  if (urls.length === 0) return sourceText;
+
+  const replacements = new Map<string, string>();
+  for (const url of urls) {
+    if (/(?:youtube\.com|youtu\.be)/i.test(url)) continue;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (!response.ok) continue;
+      const blob = await response.blob();
+      if (!blob.type.startsWith("video/") || blob.size > PPTX_EMBEDDED_VIDEO_MAX_BYTES) continue;
+      replacements.set(url, await readFileAsDataUrl(blob));
+    } catch {
+      // The SVG playback cover keeps the remote URL usable when embedding is blocked.
+    }
+  }
+
+  return sourceText.replace(videoSourcePattern, (attribute, _quote: string, url: string) => {
+    const data = replacements.get(url);
+    if (!data) return attribute;
+    return `${attribute.replace(url, data)} sourceUrl="${escapeMotionDocAttribute(url)}"`;
+  });
+}
+
+function escapeMotionDocAttribute(value: string) {
+  return value.replaceAll("&", "&amp;").replaceAll("\"", "&quot;");
+}
+
+async function embedRootRelativeImages(sourceText: string) {
+  const imageSourcePattern = /<ImageBlock\b[^>]*?\bsrc\s*=\s*(["'])(\/(?!\/)[^"'<>]+)\1/gi;
+  const paths = [...new Set(
+    [...sourceText.matchAll(imageSourcePattern)]
+      .map((match) => match[2])
+      .filter((path): path is string => Boolean(path))
+  )];
+  if (paths.length === 0) return sourceText;
+
+  const replacements = new Map<string, string>();
+
+  for (const path of paths) {
+    try {
+      const browserUrl = new URL(path, window.location.origin).toString();
+      replacements.set(path, await remoteImageToDataUrl(browserUrl));
+    } catch {
+      throw new Error(`Cannot export bundled image ${path}. Reload SlideX and try again.`);
+    }
+  }
+
+  return sourceText.replace(imageSourcePattern, (attribute, _quote: string, path: string) => (
+    attribute.replace(path, replacements.get(path) ?? path)
   ));
 }
 
@@ -380,7 +455,8 @@ export function usePitchExport({
 
     try {
       setNotice("Preparing export…");
-      const finalSource = await embedLocalFiles(canvasSource);
+      const localSource = await embedLocalFiles(canvasSource);
+      const finalSource = await embedRootRelativeImages(localSource);
 
       downloadFile(defaultFilename, finalSource, "text/markdown;charset=utf-8");
       setNotice("MDX exported ✓");
@@ -395,7 +471,8 @@ export function usePitchExport({
 
     try {
       setNotice("Preparing export…");
-      const finalSource = await embedLocalFiles(canvasSource);
+      const localSource = await embedLocalFiles(canvasSource);
+      const finalSource = await embedRootRelativeImages(localSource);
       const html = buildMotionDocHtml(finalSource, finalTitle);
 
       downloadFile(defaultFilename, html, "text/html;charset=utf-8");
@@ -497,7 +574,10 @@ export function usePitchExport({
     try {
       setNotice("Rendering PowerPoint…");
       const localSource = await embedLocalFiles(canvasSource);
-      const finalSource = await embedRemoteImages(localSource);
+      const bundledSource = await embedRootRelativeImages(localSource);
+      const bundledMediaSource = await embedRootRelativeVideos(bundledSource);
+      const embeddedMediaSource = await embedRemoteVideos(bundledMediaSource);
+      const finalSource = await embedRemoteImages(embeddedMediaSource);
       const slideBackgrounds = await renderStaticSlidePngDataUrls(finalSource, finalTitle);
       const pptx = await createPptxPresentation();
       const document = parseMotionDoc(finalSource);

@@ -23,6 +23,10 @@ export type NewPitchProjectOptions = {
 type UsePitchProjectArgs = {
   canvasSource: string;
   documentTitle: string;
+  initialProject?: {
+    name: string;
+    source: string;
+  };
   resetSelection: () => void;
   setActiveSlideIndex: Dispatch<SetStateAction<number>>;
   setNotice: Dispatch<SetStateAction<string>>;
@@ -33,25 +37,22 @@ type UsePitchProjectArgs = {
 
 export function usePitchProject({
   resetSelection,
+  initialProject,
   setActiveSlideIndex,
   setNotice,
   setReplayNonce,
   setSource,
   undoStackRef
 }: UsePitchProjectArgs) {
-  const [projectName, setProjectName] = useState("Untitled");
+  const [projectName, setProjectName] = useState(initialProject?.name ?? "Untitled");
   const [projectId, setProjectId] = useState("");
   const [isProjectDirty, setIsProjectDirty] = useState(false);
   const isProjectDirtyRef = useRef(false);
-  const [hasEnteredPitch, setHasEnteredPitch] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setProjectId(resolveProjectInstanceId(window.sessionStorage));
     setIsMounted(true);
-    if (localStorage.getItem("slidex_has_completed_onboarding") === "true") {
-      setHasEnteredPitch(true);
-    }
   }, []);
 
   const applyProject = useCallback((options: NewPitchProjectOptions) => {
@@ -59,7 +60,6 @@ export function usePitchProject({
     setProjectName(options.name ?? "Untitled");
     isProjectDirtyRef.current = false;
     setIsProjectDirty(false);
-    setHasEnteredPitch(true);
     undoStackRef.current = [];
     setActiveSlideIndex(0);
     resetSelection();
@@ -76,7 +76,6 @@ export function usePitchProject({
 
   const newProject = useCallback((options: NewPitchProjectOptions = {}) => {
     setProjectId(rotateProjectInstanceId(window.sessionStorage));
-    localStorage.setItem("slidex_has_completed_onboarding", "true");
     applyProject(options);
   }, [applyProject]);
 
@@ -102,7 +101,6 @@ export function usePitchProject({
 
   return {
     isMounted,
-    hasEnteredPitch,
     isProjectDirty,
     markProjectDirty,
     newProject,

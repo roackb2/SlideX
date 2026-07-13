@@ -6,12 +6,14 @@ import { ColorControl, Field, NativeSelect, NumberInput, type BlockFieldProps } 
 const shapeOptions = [
   { label: "Rectangle", value: "rectangle" },
   { label: "Circle", value: "circle" },
+  { label: "Triangle", value: "triangle" },
   { label: "Diamond", value: "diamond" },
   { label: "Arrow", value: "arrow" },
   { label: "Polygon", value: "polygon" },
   { label: "Line", value: "line" },
   { label: "Star", value: "star" },
   { label: "Chevron", value: "chevron" },
+  { label: "Corner label", value: "corner" },
   { label: "Hexagon", value: "hexagon" },
   { label: "Parallelogram", value: "parallelogram" }
 ] as const;
@@ -87,13 +89,6 @@ export function ShapeFields({ block, selectedBlockIndex, updateBlock }: BlockFie
         placeholder="rgba(142,165,255,0.72)"
         value={block.props.fill}
       /> : null}
-      <Field label="Text">
-        <input className="h-9 w-full rounded-lg border border-white/[0.08] bg-black/35 px-3 text-sm text-neutral-100 outline-none transition focus:border-[#8ea5ff]/55" onChange={(event) => updateBlock(selectedBlockIndex, { ...block.props, text: event.target.value })} placeholder="Add text" type="text" value={String(block.props.text ?? "")} />
-      </Field>
-      {block.props.text ? <>
-        <ColorControl label="Text color" onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, textColor: value })} placeholder="#ffffff" value={block.props.textColor} />
-        <Field label="Text size"><NumberInput max="96" min="8" onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, fontSize: value })} placeholder="18" step="1" suffix="px" value={block.props.fontSize ?? 18} /></Field>
-      </> : null}
       <ColorControl
         label={currentShape === "line" ? "Line color" : "Stroke"}
         onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, stroke: value })}
@@ -164,12 +159,8 @@ function SidesAdjuster({
 }
 
 function normalizeShape(value: string | number | undefined) {
-  if (value === "arrow" || value === "chevron" || value === "circle" || value === "diamond" || value === "hexagon" || value === "parallelogram" || value === "polygon" || value === "line" || value === "star") {
+  if (value === "arrow" || value === "chevron" || value === "circle" || value === "corner" || value === "diamond" || value === "hexagon" || value === "parallelogram" || value === "polygon" || value === "line" || value === "star" || value === "triangle") {
     return value;
-  }
-
-  if (value === "triangle") {
-    return "polygon" as const;
   }
 
   return "rectangle" as const;

@@ -1,8 +1,11 @@
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
+import { defaultMdx } from "../../core/motion-doc/presets/defaultMdx";
 
 const timestamp = "2026-07-12T00:00:00.000Z";
 const anonymousAccessToken = "test-anonymous-access-token";
 const defaultModelKey = "sk-test-current-tab-only-key";
+const workspaceOwnerId = "test-workspace-user";
+const workspacePresentationId = "test-presentation";
 
 test("keeps one conversational deck across turns, refresh, and chat reset", async ({ page }) => {
   const agent = new DeterministicAgentApi();
@@ -354,8 +357,31 @@ async function openAgentPanel(
     }
   });
   page.on("pageerror", (error) => consoleErrors.push(error.message));
-  await page.addInitScript(() => {
-    localStorage.setItem("slidex_has_completed_onboarding", "true");
+  await page.addInitScript(({ ownerId, presentationId, source, createdAt }) => {
+    localStorage.setItem("slidex_local_auth_session_v1", JSON.stringify({
+      createdAt,
+      provider: "google",
+      user: {
+        displayName: "Agent Test User",
+        email: "agent-test@example.com",
+        id: ownerId
+      }
+    }));
+    localStorage.setItem(`slidex_local_presentations_v1:${ownerId}`, JSON.stringify([{
+      createdAt,
+      id: presentationId,
+      kind: "presentation",
+      lastOpenedAt: createdAt,
+      ownerId,
+      source,
+      title: "Untitled",
+      updatedAt: createdAt
+    }]));
+  }, {
+    createdAt: timestamp,
+    ownerId: workspaceOwnerId,
+    presentationId: workspacePresentationId,
+    source: defaultMdx
   });
   await page.route("**/auth/v1/signup", async (route) => {
     await route.fulfill({
@@ -364,7 +390,7 @@ async function openAgentPanel(
     });
   });
   await page.route("**/api/agent/**", (route) => agent.handle(route));
-  await page.goto("/workspace/pitch/");
+  await page.goto(`/workspace/pitch/?presentation=${workspacePresentationId}`);
   await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
   const panel = page.getByRole("complementary", { name: "SlideX agent" });
   await expect(panel).toBeVisible();

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
+import { appRoutes } from "@/common/lib/appRoutes";
 import { useI18n } from "@/common/lib/I18nProvider";
 
 const easeOut = [0.16, 1, 0.3, 1] as const;
@@ -52,7 +53,7 @@ export default function PitchLandingPage() {
               {copy.title.map((line) => <span className="block" key={line}>{line}</span>)}
             </h1>
             <p className="mt-6 max-w-lg text-[17px] leading-8 text-white/61">{copy.body}</p>
-            <Link className="group mt-8 inline-flex h-12 items-center gap-2 rounded-md bg-[#f4f4f1] px-5 text-[14px] font-semibold text-[#0b0c0f] transition-colors hover:bg-white active:translate-y-px" href="/workspace/pitch">
+            <Link className="group mt-8 inline-flex h-12 items-center gap-2 rounded-md bg-[#f4f4f1] px-5 text-[14px] font-semibold text-[#0b0c0f] transition-colors hover:bg-white active:translate-y-px" href={appRoutes.workspace}>
               {copy.primary}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
@@ -91,7 +92,7 @@ export default function PitchLandingPage() {
       <section className="px-5 py-24 sm:px-7 lg:px-10 lg:py-28">
         <motion.div {...reveal} className="mx-auto flex max-w-[1400px] flex-col items-start justify-between gap-8 lg:flex-row lg:items-end">
           <h2 className="max-w-3xl text-[clamp(2.8rem,5.4vw,5.5rem)] font-semibold leading-[0.98] tracking-[-0.055em]">{copy.finalTitle}</h2>
-          <Link className="group inline-flex h-12 items-center gap-2 rounded-md bg-[#438cff] px-5 text-[14px] font-semibold text-white transition-colors hover:bg-[#5d9cff] active:translate-y-px" href="/workspace/pitch">
+          <Link className="group inline-flex h-12 items-center gap-2 rounded-md bg-[#438cff] px-5 text-[14px] font-semibold text-white transition-colors hover:bg-[#5d9cff] active:translate-y-px" href={appRoutes.workspace}>
             {copy.finalCta}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
