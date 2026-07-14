@@ -43,6 +43,21 @@ export function SiteNav() {
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-[110] border-b border-white/[0.08] bg-[#0b0c0f]/92 backdrop-blur-xl">
+        <a
+          className="flex h-7 items-center justify-center bg-[#c4ee87] px-4 text-center text-[12px] font-semibold text-[#0a1a00] transition-colors hover:bg-[#d2f5a0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#0a1a00]"
+          href="https://tally.so/r/jaYbe4"
+          rel="noreferrer"
+          target="_blank"
+        >
+          <span className="whitespace-nowrap sm:hidden">
+            {isZh ? "SlideX 封閉測試中 — 填寫回饋" : "SlideX closed beta — Share feedback"}
+          </span>
+          <span className="hidden whitespace-nowrap sm:inline">
+            {isZh
+              ? "SlideX 正在封閉測試中，歡迎填寫問卷協助我們改善"
+              : "SlideX is in closed beta — help us improve by sharing your feedback"}
+          </span>
+        </a>
         <div className="mx-auto flex h-[68px] max-w-[1440px] items-center px-5 sm:px-7 lg:px-10">
           <div className="flex shrink-0 items-center gap-3">
             <Link aria-label={isZh ? "SlideX 首頁" : "SlideX home"} className="inline-flex items-center opacity-95 transition-opacity hover:opacity-70" href={localePath("/")}>
@@ -127,7 +142,7 @@ export function SiteNav() {
         {menuOpen ? (
           <motion.div
             animate={{ opacity: 1, y: 0 }}
-            className="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-[#0b0c0f] px-5 pb-[max(28px,env(safe-area-inset-bottom))] pt-28 text-white lg:hidden"
+            className="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-[#0b0c0f] px-5 pb-[max(28px,env(safe-area-inset-bottom))] pt-36 text-white lg:hidden"
             exit={{ opacity: 0, y: -12 }}
             initial={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
