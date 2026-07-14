@@ -82,12 +82,21 @@ test("lists saved conversations and restores one without rolling back the deck",
 
   await panel.getByRole("button", { name: "Conversation history" }).click();
   await expect(panel.getByRole("heading", { name: "Conversations" })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Back to conversation" })).toBeVisible();
   await expect(panel.getByRole("button", { name: /^First conversation/ })).toBeVisible();
-  await expect(panel.getByRole("button", { name: /^Second conversation/ })).toBeDisabled();
+  const currentConversation = panel.getByRole("button", { name: /^Second conversation/ });
+  await expect(currentConversation).toBeEnabled();
+  await expect(currentConversation).toHaveAttribute("aria-current", "page");
+  await expect(currentConversation).toContainText("Current");
 
+  await currentConversation.click();
+  await expect(panel.getByRole("heading", { name: "Conversations" })).toBeHidden();
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+
+  await panel.getByRole("button", { name: "Conversation history" }).click();
   await panel.getByRole("button", { name: /^First conversation/ }).click();
   await expect(page).toHaveURL(/agentSession=session-1/);
-  await panel.getByRole("button", { name: "Conversation history" }).click();
+  await expect(panel.getByRole("heading", { name: "Conversations" })).toBeHidden();
   await expect(panel.getByText("First conversation", { exact: true })).toBeVisible();
   await expect(panel.getByText("Second conversation", { exact: true })).toBeHidden();
 

@@ -1,19 +1,53 @@
 "use client";
 
+import { useState } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-import { MessageSquare, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  ChevronRight,
+  MessageSquare,
+  Plus,
+  RefreshCw,
+  Trash2
+} from "lucide-react";
 import { usePitchAgentContext } from "@/features/pitch/ui/agent/PitchAgentProvider";
 
 dayjs.extend(relativeTime);
 
 export function PitchAgentSessionList({ onClose }: { onClose: () => void }) {
   const { actions, meta, state } = usePitchAgentContext();
+  const [selectingSessionId, setSelectingSessionId] = useState<string>();
+  const [selectionError, setSelectionError] = useState<string>();
 
   const startNewConversation = () => {
     actions.startNewConversation();
     onClose();
+  };
+
+  const selectConversation = async (session: (typeof state.sessions)[number]) => {
+    if (session.id === state.sessionId) {
+      onClose();
+      return;
+    }
+    if (!meta.canSwitchConversation || selectingSessionId) {
+      return;
+    }
+
+    setSelectionError(undefined);
+    setSelectingSessionId(session.id);
+    try {
+      const selected = await actions.selectSession(session);
+      if (selected) {
+        onClose();
+        return;
+      }
+      setSelectionError("Couldn’t open that conversation. Try again.");
+    } finally {
+      setSelectingSessionId(undefined);
+    }
   };
 
   return (
@@ -21,25 +55,47 @@ export function PitchAgentSessionList({ onClose }: { onClose: () => void }) {
       aria-labelledby="slidex-agent-conversations-title"
       className="min-h-0 flex-1 overflow-y-auto p-4"
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-semibold text-white" id="slidex-agent-conversations-title">
-            Conversations
-          </h3>
-          <p className="mt-0.5 text-xs text-neutral-500">
-            Continue work across your presentations.
-          </p>
-        </div>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <button
+          className="flex h-11 items-center gap-2 rounded-md px-2 text-xs font-medium text-neutral-300 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          onClick={onClose}
+          type="button"
+        >
+          <ArrowLeft aria-hidden="true" size={14} />
+          Back to conversation
+        </button>
         <button
           className="flex h-11 shrink-0 items-center gap-2 rounded-md border border-white/[0.12] px-3 text-xs font-medium text-neutral-200 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-          disabled={!meta.canSwitchConversation}
+          disabled={!meta.canSwitchConversation || Boolean(selectingSessionId)}
           onClick={startNewConversation}
           type="button"
         >
-          <RotateCcw aria-hidden="true" size={14} />
+          <Plus aria-hidden="true" size={14} />
           New
         </button>
       </div>
+
+      <div className="mb-4">
+        <h3 className="text-balance text-sm font-semibold text-white" id="slidex-agent-conversations-title">
+          Conversations
+        </h3>
+        <p className="mt-0.5 text-pretty text-xs text-neutral-500">
+          Continue work across your presentations.
+        </p>
+        {!meta.canSwitchConversation && (
+          <p className="mt-2 text-pretty text-xs leading-5 text-amber-200/80" role="status">
+            {meta.isRunning
+              ? "Return to the conversation to stop the active run before switching."
+              : "Conversation actions will be available when the current operation finishes."}
+          </p>
+        )}
+      </div>
+
+      {selectionError && (
+        <p className="mb-4 border border-red-400/25 bg-red-400/[0.06] p-3 text-pretty text-xs leading-5 text-red-200" role="alert">
+          {selectionError}
+        </p>
+      )}
 
       {state.sessionsError && (
         <div className="mb-4 border border-red-400/25 bg-red-400/[0.06] p-3" role="alert">
@@ -79,31 +135,51 @@ export function PitchAgentSessionList({ onClose }: { onClose: () => void }) {
         <ul className="space-y-2">
           {state.sessions.map((session) => {
             const isSelected = session.id === state.sessionId;
+            const isSelecting = session.id === selectingSessionId;
+            const isUnavailable = !isSelected
+              && (!meta.canSwitchConversation || Boolean(selectingSessionId));
             return (
               <li
-                className={`rounded-md border ${isSelected ? "border-white/30 bg-white/[0.08]" : "border-white/[0.1] bg-white/[0.03]"}`}
+                className={`rounded-md border ${isSelected ? "border-white/30 bg-white/[0.1]" : "border-white/[0.12] bg-white/[0.03]"}`}
                 key={session.id}
               >
                 <div className="flex items-stretch">
                   <button
-                    aria-current={isSelected ? "true" : undefined}
-                    className="min-h-20 min-w-0 flex-1 px-3 py-2.5 text-left hover:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/50"
-                    disabled={!meta.canSwitchConversation || isSelected}
-                    onClick={() => void actions.selectSession(session)}
+                    aria-current={isSelected ? "page" : undefined}
+                    className="min-h-20 min-w-0 flex-1 px-3 py-2.5 text-left hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/50"
+                    disabled={isUnavailable}
+                    onClick={() => void selectConversation(session)}
                     type="button"
                   >
-                    <span className="block truncate text-sm font-medium text-white">
-                      {session.title}
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">
+                        {session.title}
+                      </span>
+                      {isSelected && (
+                        <span className="flex shrink-0 items-center gap-1 rounded-full border border-emerald-300/20 bg-emerald-300/[0.08] px-2 py-0.5 text-[11px] font-medium text-emerald-200">
+                          <Check aria-hidden="true" size={11} /> Current
+                        </span>
+                      )}
                     </span>
                     <span className="mt-1 block truncate text-xs text-neutral-400">
                       {session.presentation.title}
                     </span>
-                    <span className="mt-1 block text-xs text-neutral-600">
-                      {dayjs(session.lastActivityAt).fromNow()} · {session.messageCount} {session.messageCount === 1 ? "message" : "messages"}
+                    <span className="mt-1 flex items-center justify-between gap-2 text-xs">
+                      <span className="truncate text-neutral-500">
+                        {dayjs(session.lastActivityAt).fromNow()} · {session.messageCount} {session.messageCount === 1 ? "message" : "messages"}
+                      </span>
+                      {!isSelected && (
+                        <span className="flex shrink-0 items-center gap-0.5 font-medium text-neutral-300">
+                          {isSelecting ? "Opening…" : "Open"}
+                          {!isSelecting && <ChevronRight aria-hidden="true" size={13} />}
+                        </span>
+                      )}
                     </span>
                   </button>
                   <SessionDeleteButton
-                    disabled={!meta.canSwitchConversation || meta.isDeleting}
+                    disabled={!meta.canSwitchConversation
+                      || meta.isDeleting
+                      || Boolean(selectingSessionId)}
                     onDelete={() => actions.deleteConversation(session.id)}
                     title={session.title}
                   />
