@@ -1,5 +1,5 @@
 export const welcomePresentationId = "welcome-to-slidex";
-export const welcomePresentationSeedVersion = 9;
+export const welcomePresentationSeedVersion = 10;
 export const welcomePresentationTitle = "Welcome to SlideX";
 
 export const welcomePresentationSource = `# Welcome to SlideX
@@ -64,7 +64,7 @@ Instead of working with static slides, you can create flexible, web-based presen
   <Text fontSize={15} lineHeight={1.45} x={38.5} y={72} w={22} h={8} color="#666a6d" enter="fadeUp" delay={0.3}>Preview transitions and motion as one composed presentation.</Text>
   <Icon icon="Download" background="#c4ee87" color="#111315" strokeWidth={2.4} radius={10} x={70.5} y={50} w={5.5} h={9} enter="zoomIn" delay={0.3} />
   <Text fontSize={22} fontWeight={700} x={70.5} y={63} w={22} h={6} color="#111315" enter="fadeUp" delay={0.32}>Export</Text>
-  <Text fontSize={15} lineHeight={1.45} x={70.5} y={72} w={22} h={8} color="#666a6d" enter="fadeUp" delay={0.36}>Take the deck to MDX, HTML, PPTX, PDF, or images.</Text>
+  <Text fontSize={15} lineHeight={1.45} x={70.5} y={72} w={22} h={8} color="#666a6d" enter="fadeUp" delay={0.36}>Take the deck to MDX, HTML, PPTX, or images.</Text>
   <Text fontSize={16} fontWeight={600} x={3.6} y={91} w={42} h={3} color="#111315">05 / BUILD · PLAY · EXPORT</Text>
 </Slide>
 

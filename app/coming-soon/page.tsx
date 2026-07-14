@@ -1,5 +1,5 @@
 import { ComingSoonPage } from "@/features/marketing";
 
-export default function LoginPage() {
+export default function ComingSoonRoutePage() {
   return <ComingSoonPage />;
 }

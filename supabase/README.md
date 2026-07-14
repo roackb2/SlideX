@@ -41,11 +41,11 @@ npx supabase db push
 
 - Each workspace starts with a 1 GiB application quota. Only trusted server
   code may raise `storage_quota_bytes`.
-- The bucket accepts supported images, MP4/MOV/WebM video, and PDF files only,
+- The bucket accepts supported images and MP4/MOV/WebM video only,
   with a hard 50 MiB object limit.
 - PNG/JPEG images larger than 1 MiB receive a client-generated WebP preview
   only when that preview saves at least 10%. The original file remains stored
-  for PPTX, PNG/PDF, HTML, and MDX export fidelity.
+  for PPTX, PNG, HTML, and MDX export fidelity.
 - Immutable UUID-based paths use a one-year browser/CDN cache lifetime.
 - Presentation deletion must call
   `deleteSupabasePresentationAssetsForPresentation` before deleting its row;

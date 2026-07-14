@@ -4,7 +4,6 @@ import { useCallback, type Dispatch, type SetStateAction } from "react";
 import { downloadFile } from "@/common/util/browserFile";
 import {
   buildMotionDocHtml,
-  buildMotionDocPdfHtml,
   buildMotionDocPngSvgFromSlideHtml,
   buildMotionDocRasterHtml,
   slugifyFilename
@@ -14,9 +13,7 @@ import { youtubeVideoId } from "@/core/motion-doc/domain/videoSource";
 import { parseExportSlideSelection } from "@/features/pitch/application/exportSlideSelection";
 import {
   addEditableSlides,
-  documentNeedsPptxChartImages,
-  documentNeedsPptxFilteredImages,
-  documentNeedsPptxVisualFallback
+  pptxRasterRequirements
 } from "@/features/pitch/infrastructure/editablePptxExport";
 import { createPptxPresentation } from "@/features/pitch/infrastructure/pptxBrowser";
 import { renderPptxRasterAssets } from "@/features/pitch/infrastructure/pptxRasterExport";
@@ -41,7 +38,9 @@ const HTML_EXPORT_IMAGE_MAX_DIMENSION = 4096;
 const HTML_EXPORT_IMAGE_QUALITY = 0.94;
 const PNG_EXPORT_HEIGHT = 1080;
 const PNG_EXPORT_WIDTH = 1920;
-const PNG_MULTI_DOWNLOAD_DELAY_MS = 180;
+const PNG_SLIDE_HTML_SEPARATOR = "\n<!-- slidex-png-slide-boundary -->\n";
+const PNG_DESKTOP_DOWNLOAD_DELAY_MS = 30;
+const PNG_MOBILE_DOWNLOAD_DELAY_MS = 80;
 const PPTX_EMBEDDED_VIDEO_MAX_BYTES = 80 * 1024 * 1024;
 const STATIC_EXPORT_API_MAX_ATTEMPTS = 120;
 const STATIC_EXPORT_RENDERER_LOAD_TIMEOUT_MS = 30_000;
@@ -138,16 +137,65 @@ async function remoteImageToDataUrl(url: string) {
   return readFileAsDataUrl(blob);
 }
 
+type NavigatorWithDeviceMemory = Navigator & {
+  deviceMemory?: number;
+};
+
+function getExportDeviceProfile() {
+  const navigatorWithMemory = navigator as NavigatorWithDeviceMemory;
+  const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
+  const deviceMemory = navigatorWithMemory.deviceMemory ?? (isMobileViewport ? 4 : 8);
+  const hardwareConcurrency = navigator.hardwareConcurrency || 4;
+  const isLowMemory = deviceMemory <= 4;
+  const isLowConcurrency = hardwareConcurrency <= 4;
+
+  return {
+    mediaConcurrency: isMobileViewport || isLowMemory
+      ? 2
+      : Math.min(4, Math.max(2, Math.floor(hardwareConcurrency / 2))),
+    pngConcurrency: isLowMemory || isLowConcurrency
+      ? 1
+      : isMobileViewport
+        ? 2
+        : Math.min(3, Math.max(2, Math.floor(hardwareConcurrency / 4))),
+    pngDownloadDelayMs: isMobileViewport ? PNG_MOBILE_DOWNLOAD_DELAY_MS : PNG_DESKTOP_DOWNLOAD_DELAY_MS
+  };
+}
+
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>
+) {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  const worker = async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await mapper(items[currentIndex]);
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(Math.max(1, concurrency), items.length) }, () => worker())
+  );
+
+  return results;
+}
+
 async function embedRemoteImages(sourceText: string) {
   const imageSourcePattern = /<ImageBlock\b[^>]*?\bsrc\s*=\s*(["'])(https?:\/\/[^"'<>]+)\1/gi;
   const urls = [...new Set([...sourceText.matchAll(imageSourcePattern)].map((match) => match[2]))];
   if (urls.length === 0) return sourceText;
 
   const replacements = new Map<string, string>();
+  const { mediaConcurrency } = getExportDeviceProfile();
 
-  for (const url of urls) {
+  const dataUrls = await mapWithConcurrency(urls, mediaConcurrency, async (url) => {
     try {
-      replacements.set(url, await remoteImageToDataUrl(url));
+      return await remoteImageToDataUrl(url);
     } catch {
       let hostname = url;
       try {
@@ -157,7 +205,9 @@ async function embedRemoteImages(sourceText: string) {
       }
       throw new Error(`Cannot export image from ${hostname}. Re-upload the image from your device, or use an image host that allows CORS.`);
     }
-  }
+  });
+
+  urls.forEach((url, index) => replacements.set(url, dataUrls[index]));
 
   return sourceText.replace(imageSourcePattern, (attribute, _quote: string, url: string) => (
     attribute.replace(url, replacements.get(url) ?? url)
@@ -170,13 +220,16 @@ async function embedRootRelativeVideos(sourceText: string) {
   if (paths.length === 0) return sourceText;
 
   const replacements = new Map<string, string>();
-  for (const path of paths) {
+  const { mediaConcurrency } = getExportDeviceProfile();
+  const dataUrls = await mapWithConcurrency(paths, mediaConcurrency, async (path) => {
     const response = await fetch(new URL(path, window.location.origin));
     if (!response.ok) throw new Error(`Cannot export bundled video ${path}. Reload SlideX and try again.`);
     const blob = await response.blob();
     if (!blob.type.startsWith("video/")) throw new Error(`Bundled media ${path} is not a supported video.`);
-    replacements.set(path, await readFileAsDataUrl(blob));
-  }
+    return readFileAsDataUrl(blob);
+  });
+
+  paths.forEach((path, index) => replacements.set(path, dataUrls[index]));
 
   return sourceText.replace(videoSourcePattern, (attribute, _quote: string, path: string) => (
     attribute.replace(path, replacements.get(path) ?? path)
@@ -189,18 +242,25 @@ async function embedRemoteVideos(sourceText: string) {
   if (urls.length === 0) return sourceText;
 
   const replacements = new Map<string, string>();
-  for (const url of urls) {
-    if (youtubeVideoId(url) || !canEmbedRemoteVideo(url)) continue;
+  const embeddableUrls = urls.filter((url) => !youtubeVideoId(url) && canEmbedRemoteVideo(url));
+  const { mediaConcurrency } = getExportDeviceProfile();
+  const dataUrls = await mapWithConcurrency(embeddableUrls, mediaConcurrency, async (url) => {
     try {
       const response = await fetch(url, { mode: "cors", credentials: "omit" });
-      if (!response.ok) continue;
+      if (!response.ok) return null;
       const blob = await response.blob();
-      if (!blob.type.startsWith("video/") || blob.size > PPTX_EMBEDDED_VIDEO_MAX_BYTES) continue;
-      replacements.set(url, await readFileAsDataUrl(blob));
+      if (!blob.type.startsWith("video/") || blob.size > PPTX_EMBEDDED_VIDEO_MAX_BYTES) return null;
+      return readFileAsDataUrl(blob);
     } catch {
       // The SVG playback cover keeps the remote URL usable when embedding is blocked.
+      return null;
     }
-  }
+  });
+
+  embeddableUrls.forEach((url, index) => {
+    const dataUrl = dataUrls[index];
+    if (dataUrl) replacements.set(url, dataUrl);
+  });
 
   return sourceText.replace(videoSourcePattern, (attribute, _quote: string, url: string) => {
     const data = replacements.get(url);
@@ -239,15 +299,17 @@ async function embedRootRelativeImages(sourceText: string) {
   if (paths.length === 0) return sourceText;
 
   const replacements = new Map<string, string>();
-
-  for (const path of paths) {
+  const { mediaConcurrency } = getExportDeviceProfile();
+  const dataUrls = await mapWithConcurrency(paths, mediaConcurrency, async (path) => {
     try {
       const browserUrl = new URL(path, window.location.origin).toString();
-      replacements.set(path, await remoteImageToDataUrl(browserUrl));
+      return await remoteImageToDataUrl(browserUrl);
     } catch {
       throw new Error(`Cannot export bundled image ${path}. Reload SlideX and try again.`);
     }
-  }
+  });
+
+  paths.forEach((path, index) => replacements.set(path, dataUrls[index]));
 
   return sourceText.replace(imageSourcePattern, (attribute, _quote: string, path: string) => (
     attribute.replace(path, replacements.get(path) ?? path)
@@ -259,8 +321,10 @@ function downloadBlob(filename: string, blob: Blob) {
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }
 
 function svgToPngBlob(svg: string, width = PNG_EXPORT_WIDTH, height = PNG_EXPORT_HEIGHT): Promise<Blob> {
@@ -286,6 +350,8 @@ function svgToPngBlob(svg: string, width = PNG_EXPORT_WIDTH, height = PNG_EXPORT
         ctx.drawImage(image, 0, 0, width, height);
 
         canvas.toBlob((resultBlob) => {
+          canvas.width = 1;
+          canvas.height = 1;
           if (!resultBlob) {
             reject(new Error("PNG export failed"));
             return;
@@ -343,8 +409,8 @@ async function prepareStaticExportWindow(frameWindow: MotionDocExportWindow) {
   await api.prepareStaticExport();
 }
 
-async function renderStaticSlideHtml(source: string, title: string) {
-  const rasterHtml = buildMotionDocRasterHtml(source, title);
+async function renderStaticSlideHtml(source: string, title: string, slideIndices: readonly number[]) {
+  const rasterHtml = buildMotionDocRasterHtml(source, title, slideIndices);
   const iframe = document.createElement("iframe");
   iframe.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:1024px;height:576px;pointer-events:none;opacity:0;";
   document.body.appendChild(iframe);
@@ -360,18 +426,27 @@ async function renderStaticSlideHtml(source: string, title: string) {
       throw new Error("Export renderer failed to load");
     }
 
-    await prepareStaticExportWindow(frameWindow);
-
-    const slides = Array.from(frameWindow.document.querySelectorAll(".slide"));
+    const slides = Array.from(frameWindow.document.querySelectorAll<HTMLElement>(".slide"));
     if (slides.length === 0) {
       throw new Error("No slides to export");
     }
 
-    return slides.map((slide) => {
+    const selectedSlides = slideIndices.map((slideIndex, selectionIndex) => ({
+      slide: slides[selectionIndex],
+      slideIndex
+    }));
+
+    if (selectedSlides.some(({ slide }) => !slide)) {
+      throw new Error("Invalid slide selection");
+    }
+
+    await prepareStaticExportWindow(frameWindow);
+
+    return selectedSlides.map(({ slide, slideIndex }) => {
       slide.classList.add("is-active");
       const html = slide.outerHTML;
       slide.classList.remove("is-active");
-      return html;
+      return { html, slideIndex };
     });
   } finally {
     iframe.remove();
@@ -385,35 +460,33 @@ export function usePitchExport({
 }: UsePitchExportArgs) {
   /**
    * Embed local blob files into base64 data URLs.
-   * Used only for MDX/HTML exports that need to be self-contained offline files.
-   * PDF export skips this entirely since blob URLs work same-origin.
+   * Self-contained HTML/MDX/PPTX exports embed every local asset. Static PNG
+   * export embeds only selected-slide images after rendering.
    */
-  const embedLocalFiles = async (sourceText: string) => {
+  const embedLocalFiles = async (sourceText: string, imagesOnly = false) => {
     const localFiles = (window as SlideXLocalFilesWindow).__slidexLocalFiles;
     if (!localFiles) return sourceText;
 
     const blobRegex = /src\s*=\s*(["'])(blob:[^"'<>]+)\1/g;
-    const matches = [...sourceText.matchAll(blobRegex)];
-    if (matches.length === 0) return sourceText;
+    const urls = [...new Set([...sourceText.matchAll(blobRegex)].map((match) => match[2]))]
+      .filter((url) => !imagesOnly || localFiles.get(url)?.type.startsWith("image/"));
+    if (urls.length === 0) return sourceText;
 
     const replacements = new Map<string, string>();
+    const { mediaConcurrency } = getExportDeviceProfile();
 
-    await Promise.all(
-      matches.map(async (match) => {
-        const url = match[2];
-        if (replacements.has(url)) return;
-        const file = localFiles.get(url);
-        if (!file) return;
-        try {
-          const dataUrl = file.type.startsWith("image/")
-            ? await imageFileToDataUrl(file)
-            : await readFileAsDataUrl(file);
-          replacements.set(url, dataUrl);
-        } catch (e) {
-          console.warn("Failed to embed local file", url, e);
-        }
-      })
-    );
+    await mapWithConcurrency(urls, mediaConcurrency, async (url) => {
+      const file = localFiles.get(url);
+      if (!file) return;
+      try {
+        const dataUrl = file.type.startsWith("image/")
+          ? await imageFileToDataUrl(file)
+          : await readFileAsDataUrl(file);
+        replacements.set(url, dataUrl);
+      } catch (e) {
+        console.warn("Failed to embed local file", url, e);
+      }
+    });
 
     if (replacements.size === 0) return sourceText;
 
@@ -470,47 +543,6 @@ export function usePitchExport({
     }
   }, [canvasSource, documentTitle, setNotice]);
 
-  const exportPdfFile = useCallback(async (filename: string) => {
-    const finalTitle = (filename || documentTitle || "slidesx-deck").trim();
-
-    try {
-      setNotice("Preparing PDF…");
-      const finalSource = await embedLocalFiles(canvasSource);
-      const html = buildMotionDocPdfHtml(finalSource, finalTitle);
-
-      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-      const blobUrl = URL.createObjectURL(blob);
-      const printWindow = window.open(blobUrl, "_blank");
-
-      if (!printWindow) {
-        URL.revokeObjectURL(blobUrl);
-        setNotice("Please allow popups to export PDF");
-        return;
-      }
-
-      printWindow.onload = () => {
-        window.setTimeout(() => {
-          prepareStaticExportWindow(printWindow as MotionDocExportWindow)
-            .then(() => {
-              printWindow.document.title = finalTitle;
-              printWindow.focus();
-              printWindow.print();
-              URL.revokeObjectURL(blobUrl);
-            })
-            .catch((error) => {
-              URL.revokeObjectURL(blobUrl);
-              printWindow.close();
-              setNotice(error instanceof Error ? error.message : "PDF export failed");
-            });
-        }, 800);
-      };
-
-      setNotice("PDF prepared ✓");
-    } catch (error) {
-      setNotice(error instanceof Error ? error.message : "PDF export failed");
-    }
-  }, [canvasSource, documentTitle, setNotice]);
-
   const exportPngFile = useCallback(async (filename: string, slideSelectionStr?: string) => {
     const finalTitle = (filename || documentTitle || "slidesx-deck").trim();
 
@@ -526,26 +558,42 @@ export function usePitchExport({
       const filenamePrefix = slugifyFilename(finalTitle);
 
       setNotice("Preparing PNG…");
-      const finalSource = await embedLocalFiles(canvasSource);
-      const slideHtmlList = await renderStaticSlideHtml(finalSource, finalTitle);
+      const renderedSlides = await renderStaticSlideHtml(canvasSource, finalTitle, selection.indices);
+      const embeddedSlideHtml = await embedLocalFiles(
+        renderedSlides.map(({ html }) => html).join(PNG_SLIDE_HTML_SEPARATOR),
+        true
+      );
+      const embeddedSlideHtmlList = embeddedSlideHtml.split(PNG_SLIDE_HTML_SEPARATOR);
+      const selectedSlides = renderedSlides.map((slide, index) => ({
+        ...slide,
+        html: embeddedSlideHtmlList[index]
+      }));
+      const { pngConcurrency, pngDownloadDelayMs } = getExportDeviceProfile();
 
-      for (let exportIndex = 0; exportIndex < selection.indices.length; exportIndex += 1) {
-        const slideIndex = selection.indices[exportIndex];
-        const slideNumber = String(slideIndex + 1).padStart(2, "0");
-        const pngFilename = slideHtmlList.length === 1
-          ? `${filenamePrefix}.png`
-          : `${filenamePrefix}-${slideNumber}.png`;
-        const svg = buildMotionDocPngSvgFromSlideHtml(
-          slideHtmlList[slideIndex],
-          slideHtmlList.length === 1 ? finalTitle : `${finalTitle} ${slideNumber}`
-        );
-        const pngBlob = await svgToPngBlob(svg);
+      for (let batchStart = 0; batchStart < selectedSlides.length; batchStart += pngConcurrency) {
+        const batch = selectedSlides.slice(batchStart, batchStart + pngConcurrency);
+        const renderedBatch = await Promise.all(batch.map(async ({ html, slideIndex }, batchIndex) => {
+          const exportIndex = batchStart + batchIndex;
+          const slideNumber = String(slideIndex + 1).padStart(2, "0");
+          const pngFilename = slideCount === 1
+            ? `${filenamePrefix}.png`
+            : `${filenamePrefix}-${slideNumber}.png`;
+          const svg = buildMotionDocPngSvgFromSlideHtml(
+            html,
+            slideCount === 1 ? finalTitle : `${finalTitle} ${slideNumber}`
+          );
+          const pngBlob = await svgToPngBlob(svg);
 
-        setNotice(`Exporting PNG ${exportIndex + 1}/${selection.indices.length}…`);
-        downloadBlob(pngFilename, pngBlob);
+          return { exportIndex, pngBlob, pngFilename };
+        }));
 
-        if (selection.indices.length > 1) {
-          await wait(PNG_MULTI_DOWNLOAD_DELAY_MS);
+        for (const { exportIndex, pngBlob, pngFilename } of renderedBatch) {
+          setNotice(`Exporting PNG ${exportIndex + 1}/${selection.indices.length}…`);
+          downloadBlob(pngFilename, pngBlob);
+
+          if (exportIndex < selection.indices.length - 1) {
+            await wait(pngDownloadDelayMs);
+          }
         }
       }
 
@@ -561,23 +609,23 @@ export function usePitchExport({
 
     try {
       setNotice("Rendering PowerPoint…");
-      const localSource = await embedLocalFiles(canvasSource);
-      const bundledSource = await embedRootRelativeImages(localSource);
-      const bundledMediaSource = await embedRootRelativeVideos(bundledSource);
-      const finalSource = await embedRemoteImages(bundledMediaSource);
+      const [finalSource, pptx] = await Promise.all([
+        (async () => {
+          const localSource = await embedLocalFiles(canvasSource);
+          const bundledSource = await embedRootRelativeImages(localSource);
+          const bundledMediaSource = await embedRootRelativeVideos(bundledSource);
+          return embedRemoteImages(bundledMediaSource);
+        })(),
+        createPptxPresentation()
+      ]);
       const document = parseMotionDoc(finalSource);
-      const captureCharts = documentNeedsPptxChartImages(document);
-      const captureSlideBackgrounds = documentNeedsPptxVisualFallback(document);
-      const captureFilteredImages = documentNeedsPptxFilteredImages(document);
-      const rasterAssets = captureCharts || captureSlideBackgrounds || captureFilteredImages
-        ? await renderPptxRasterAssets(buildMotionDocRasterHtml(finalSource, finalTitle), {
-            captureCharts,
-            captureFilteredImages,
-            captureSlideBackgrounds
-          })
+      const rasterRequirements = pptxRasterRequirements(document);
+      const rasterAssets = rasterRequirements.slideIndices.length > 0
+        ? await renderPptxRasterAssets(
+            buildMotionDocRasterHtml(finalSource, finalTitle, rasterRequirements.slideIndices),
+            rasterRequirements
+          )
         : { chartImagesBySlide: [], filteredImagesBySlide: [], slideBackgrounds: [] };
-      const pptx = await createPptxPresentation();
-
       pptx.layout = "LAYOUT_WIDE";
       pptx.author = "SlideX Pitch";
       pptx.company = "SlideX";
@@ -594,7 +642,7 @@ export function usePitchExport({
       );
 
       setNotice("Building PowerPoint…");
-      await pptx.writeFile({ fileName: pptxFilename, compression: true });
+      await pptx.writeFile({ fileName: pptxFilename, compression: false });
       setNotice("Editable PowerPoint exported ✓");
     } catch (error) {
       const exportError = error instanceof Error ? error : new Error("PowerPoint export failed");
@@ -607,7 +655,6 @@ export function usePitchExport({
     copySource,
     exportHtmlFile,
     exportMdxFile,
-    exportPdfFile,
     exportPngFile,
     exportPptxFile
   };

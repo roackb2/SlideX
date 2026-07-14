@@ -9,7 +9,7 @@ export type Json =
 type WorkspaceRole = "editor" | "owner" | "viewer";
 type PresentationKind = "presentation" | "template";
 type CommentStatus = "open" | "resolved";
-type AssetKind = "file" | "image" | "video";
+type AssetKind = "image" | "video";
 
 export type Database = {
   public: {
@@ -34,7 +34,7 @@ export type Database = {
           byte_size?: number;
           created_at?: string;
           id?: string;
-          kind?: AssetKind;
+          kind: AssetKind;
           mime_type: string;
           original_name: string;
           presentation_id: string;

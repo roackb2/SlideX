@@ -76,80 +76,19 @@ function serializeMotionDocSource(source: string) {
   return JSON.stringify(source).replaceAll("<", "\\u003c");
 }
 
-/**
- * Build a lightweight HTML document optimized for PDF printing.
- * Strips the shader runtime, disables GPU-heavy effects, and renders all slides
- * statically without any JavaScript animation loops.
- */
-export function buildMotionDocPdfHtml(source: string, customTitle?: string) {
+export function buildMotionDocRasterHtml(
+  source: string,
+  customTitle?: string,
+  slideIndices?: readonly number[]
+) {
   const document = parseMotionDoc(source);
   const displayTitle = customTitle || document.title;
-  const slidesHtml = document.scenes
-    .map((scene) => renderSceneHtml(scene))
-    .join("\n");
-
-  return `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${escapeHtml(displayTitle)}</title>
-    <style>${motionDocExportStyles}</style>
-    <style>
-      /* PDF-specific overrides: strip GPU-heavy effects */
-      * { animation: none !important; transition: none !important; }
-      .shader-bg { display: none !important; }
-      .slide::before { display: none !important; }
-      .controls { display: none !important; }
-      .player { display: block; height: auto; padding: 0; }
-      .stage { display: block; height: auto; }
-      .viewport { width: 100%; max-width: none; height: auto; aspect-ratio: auto; border-radius: 0; background: transparent; box-shadow: none; overflow: visible; }
-      .frame { position: relative; width: 100%; height: auto; transform: none; overflow: visible; }
-      .slide {
-        position: relative; display: block !important;
-        width: 1024px; height: 576px;
-        page-break-after: always; page-break-inside: avoid;
-        overflow: hidden;
-      }
-      .motion-block {
-        opacity: 1 !important;
-        transform: translate3d(0,0,0) scale(1) !important;
-        filter: none !important;
-        clip-path: none !important;
-      }
-      .block-card, .block-metric, .block-chart, .block-image, .block-icon, .block-stack, .block-table {
-        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-        box-shadow: none !important;
-        filter: none !important;
-      }
-      @page { size: 1024px 576px; margin: 0; }
-      html, body {
-        width: 1024px; margin: 0; padding: 0;
-        -webkit-print-color-adjust: exact; print-color-adjust: exact;
-        overflow: visible;
-      }
-    </style>
-  </head>
-  <body>
-    <main class="player" data-slide-count="${document.scenes.length}">
-      <div class="stage">
-        <div class="viewport">
-          <div class="frame">
-            ${slidesHtml}
-          </div>
-        </div>
-      </div>
-    </main>
-  </body>
-</html>`;
-}
-
-
-
-export function buildMotionDocRasterHtml(source: string, customTitle?: string) {
-  const document = parseMotionDoc(source);
-  const displayTitle = customTitle || document.title;
-  const slidesHtml = document.scenes
+  const scenes = slideIndices
+    ? slideIndices
+        .map((slideIndex) => document.scenes[slideIndex])
+        .filter((scene): scene is MotionDocScene => Boolean(scene))
+    : document.scenes;
+  const slidesHtml = scenes
     .map((scene) => renderSceneHtml(scene, { active: true }))
     .join("\n");
 
@@ -215,7 +154,7 @@ export function buildMotionDocRasterHtml(source: string, customTitle?: string) {
     </style>
   </head>
   <body>
-    <main class="player" data-export-mode="raster" data-slide-count="${document.scenes.length}">
+    <main class="player" data-export-mode="raster" data-slide-count="${scenes.length}">
       <div class="stage">
         <div class="viewport">
           <div class="frame">

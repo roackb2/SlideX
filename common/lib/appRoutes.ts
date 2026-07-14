@@ -1,6 +1,7 @@
 import { locales } from "@/common/lib/i18n";
 
 export const appRoutes = {
+  comingSoon: "/coming-soon",
   exampleDeck: "/workspace/pitch?demo=1&view=preview",
   liveDemo: "/workspace/pitch?demo=1",
   login: "/login",

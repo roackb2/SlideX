@@ -18,6 +18,7 @@ const SLIDE_WIDTH = 13.333;
 
 type PptxSlide = ReturnType<PptxGenJS["addSlide"]>;
 type PropsBlock = Extract<MotionDocBlock, { props: Record<string, string | number> }>;
+type PreparedBlockAssets = Map<MotionDocBlock, string>;
 type PptxShapeFillProps = PptxGenJS.ShapeFillProps;
 type PptxShapeLineProps = PptxGenJS.ShapeLineProps;
 type PptxShapeName = PptxGenJS.SHAPE_NAME;
@@ -66,6 +67,8 @@ export async function addEditableSlides(
   filteredImagesBySlide: readonly (readonly string[])[] = [],
   chartImagesBySlide: readonly (readonly string[])[] = []
 ) {
+  const preparedBlockAssets = await preparePortableBlockAssets(document);
+
   for (let sceneIndex = 0; sceneIndex < document.scenes.length; sceneIndex += 1) {
     const scene = document.scenes[sceneIndex];
     const slide = pptx.addSlide();
@@ -95,11 +98,11 @@ export async function addEditableSlides(
           throw new Error(`Filtered image ${filteredImageIndex} on slide ${sceneIndex + 1} could not be rendered`);
         }
 
-        await addEditableImage(slide, block, filteredImageData);
+        await addEditableImage(slide, block, filteredImageData ?? preparedBlockAssets.get(block));
       } else if (block.type === "Icon") {
-        await addEditableIcon(slide, block, theme.isLight);
+        await addEditableIcon(slide, block, theme.isLight, preparedBlockAssets.get(block));
       } else if (block.type === "Shape") {
-        await addEditableShape(slide, block);
+        await addEditableShape(slide, block, preparedBlockAssets.get(block));
       } else if (block.type === "Table") {
         addEditableTable(slide, block, theme.foreground);
       } else if (block.type === "Chart") {
@@ -115,16 +118,106 @@ export async function addEditableSlides(
   }
 }
 
-export function documentNeedsPptxVisualFallback(document: ParsedMotionDoc) {
-  return document.scenes.some((scene) => needsVisualFallback(scene.blocks, scene.props));
+async function preparePortableBlockAssets(document: ParsedMotionDoc): Promise<PreparedBlockAssets> {
+  const jobs = document.scenes.flatMap((scene) => {
+    const theme = resolveSlideThemeColors(scene.props);
+
+    return scene.blocks.flatMap((block) => {
+      if (block.type === "ImageBlock" && !imageNeedsPptxFilterRasterization(block)) {
+        const source = stringProp(block.props.src);
+        return source ? [{ block, frame: pptxFrame(blockFrame(block)), source }] : [];
+      }
+
+      if (block.type === "Icon") {
+        const iconName = stringProp(block.props.icon) ?? "Sparkles";
+        const source = lucideIconSvgDataUri(iconName, {
+          color: theme.isLight ? "#000000" : "#ffffff",
+          strokeWidth: numericProp(block.props.strokeWidth, 2)
+        });
+        return source ? [{ block, frame: pptxFrame(blockFrame(block)), source }] : [];
+      }
+
+      if (block.type === "Shape" && shapeNeedsExactSvgExport(block.props)) {
+        const sourceShape = stringProp(block.props.shape) ?? "rectangle";
+        return [{
+          block,
+          frame: pptxFrame(blockFrame(block)),
+          source: shapeVectorSvgDataUri(block.props, `pptx-${sourceShape}`)
+        }];
+      }
+
+      return [];
+    });
+  });
+  const preparedAssets: PreparedBlockAssets = new Map();
+  const conversionCache = new Map<string, Promise<string>>();
+
+  await mapWithConcurrency(jobs, pptxAssetConversionConcurrency(), async ({ block, frame, source }) => {
+    const cacheKey = `${frame.w.toFixed(3)}x${frame.h.toFixed(3)}:${source}`;
+    let conversion = conversionCache.get(cacheKey);
+    if (!conversion) {
+      conversion = portablePptxImageData(source, frame);
+      conversionCache.set(cacheKey, conversion);
+    }
+    preparedAssets.set(block, await conversion);
+  });
+
+  return preparedAssets;
 }
 
-export function documentNeedsPptxFilteredImages(document: ParsedMotionDoc) {
-  return document.scenes.some((scene) => scene.blocks.some(imageNeedsPptxFilterRasterization));
+function pptxAssetConversionConcurrency() {
+  if (typeof navigator === "undefined") return 2;
+  const navigatorWithMemory = navigator as Navigator & { deviceMemory?: number };
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+  const isLowMemory = (navigatorWithMemory.deviceMemory ?? (isMobile ? 4 : 8)) <= 4;
+  if (isMobile || isLowMemory) return 2;
+  return Math.min(4, Math.max(2, Math.floor((navigator.hardwareConcurrency || 4) / 2)));
 }
 
-export function documentNeedsPptxChartImages(document: ParsedMotionDoc) {
-  return document.scenes.some((scene) => scene.blocks.some((block) => block.type === "Chart"));
+async function mapWithConcurrency<T>(
+  items: readonly T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<void>
+) {
+  let nextIndex = 0;
+  const worker = async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      await mapper(items[currentIndex]);
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(Math.max(1, concurrency), items.length) }, () => worker())
+  );
+}
+
+export function pptxRasterRequirements(document: ParsedMotionDoc) {
+  const captureChartsBySlide = document.scenes.map((scene) => (
+    scene.blocks.some((block) => block.type === "Chart")
+  ));
+  const captureFilteredImagesBySlide = document.scenes.map((scene) => (
+    scene.blocks.some(imageNeedsPptxFilterRasterization)
+  ));
+  const captureSlideBackgroundsBySlide = document.scenes.map((scene) => (
+    needsVisualFallback(scene.blocks, scene.props)
+  ));
+  const slideIndices = document.scenes.flatMap((_, slideIndex) => (
+    captureChartsBySlide[slideIndex] ||
+    captureFilteredImagesBySlide[slideIndex] ||
+    captureSlideBackgroundsBySlide[slideIndex]
+      ? [slideIndex]
+      : []
+  ));
+
+  return {
+    captureChartsBySlide,
+    captureFilteredImagesBySlide,
+    captureSlideBackgroundsBySlide,
+    slideCount: document.scenes.length,
+    slideIndices
+  };
 }
 
 function addEditableText(
@@ -167,7 +260,12 @@ async function addEditableImage(slide: PptxSlide, block: PropsBlock, renderedDat
   });
 }
 
-async function addEditableIcon(slide: PptxSlide, block: PropsBlock, isLightBackground: boolean) {
+async function addEditableIcon(
+  slide: PptxSlide,
+  block: PropsBlock,
+  isLightBackground: boolean,
+  preparedData?: string
+) {
   const iconName = stringProp(block.props.icon) ?? "Sparkles";
   const svgData = lucideIconSvgDataUri(
     iconName,
@@ -180,7 +278,7 @@ async function addEditableIcon(slide: PptxSlide, block: PropsBlock, isLightBackg
   if (!svgData) return;
 
   const frame = pptxFrame(blockFrame(block));
-  const data = await portablePptxImageData(svgData, frame);
+  const data = preparedData ?? await portablePptxImageData(svgData, frame);
 
   slide.addImage({
     altText: `${iconName} icon`,
@@ -199,17 +297,17 @@ function addPptxChartImage(slide: PptxSlide, block: PropsBlock, data: string) {
   });
 }
 
-async function addEditableShape(slide: PptxSlide, block: PropsBlock) {
+async function addEditableShape(slide: PptxSlide, block: PropsBlock, preparedData?: string) {
   const props = block.props;
   const sourceShape = stringProp(props.shape) ?? "rectangle";
   const opacity = clamp(numericProp(props.opacity, 1), 0, 1);
   const frame = pptxFrame(blockFrame(block));
 
   if (shapeNeedsExactSvgExport(props)) {
-    const data = await portablePptxImageData(
-      shapeVectorSvgDataUri(props, `pptx-${sourceShape}`),
-      frame
-    );
+    const data = preparedData ?? await portablePptxImageData(
+        shapeVectorSvgDataUri(props, `pptx-${sourceShape}`),
+        frame
+      );
     slide.addImage({
       altText: `${sourceShape} vector shape`,
       data,

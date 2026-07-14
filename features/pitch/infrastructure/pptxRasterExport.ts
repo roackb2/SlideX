@@ -7,9 +7,11 @@ type MotionDocExportWindow = Window & {
 };
 
 type PptxRasterExportOptions = {
-  captureCharts: boolean;
-  captureFilteredImages: boolean;
-  captureSlideBackgrounds: boolean;
+  captureChartsBySlide: readonly boolean[];
+  captureFilteredImagesBySlide: readonly boolean[];
+  captureSlideBackgroundsBySlide: readonly boolean[];
+  slideCount: number;
+  slideIndices: readonly number[];
 };
 
 export type PptxRasterAssets = {
@@ -21,6 +23,7 @@ export type PptxRasterAssets = {
 const DESIGN_HEIGHT = 576;
 const DESIGN_WIDTH = 1024;
 const EXPORT_SCALE = 1920 / DESIGN_WIDTH;
+const PPTX_BACKGROUND_JPEG_QUALITY = 0.9;
 const EXPORT_API_MAX_ATTEMPTS = 120;
 const EXPORT_RENDERER_LOAD_TIMEOUT_MS = 30_000;
 
@@ -28,6 +31,7 @@ export async function renderPptxRasterAssets(
   rasterHtml: string,
   options: PptxRasterExportOptions
 ): Promise<PptxRasterAssets> {
+  const html2canvasPromise = import("html2canvas-pro").then((module) => module.default);
   const iframe = document.createElement("iframe");
   iframe.style.cssText = `position:fixed;left:-9999px;top:-9999px;width:${DESIGN_WIDTH}px;height:${DESIGN_HEIGHT}px;pointer-events:none;opacity:0;`;
   document.body.appendChild(iframe);
@@ -43,29 +47,30 @@ export async function renderPptxRasterAssets(
     const slides = Array.from(frameWindow.document.querySelectorAll<HTMLElement>(".slide"));
     if (slides.length === 0) throw new Error("No slides to export");
 
-    const { default: html2canvas } = await import("html2canvas-pro");
-    const chartImagesBySlide: string[][] = [];
-    const filteredImagesBySlide: string[][] = [];
-    const slideBackgrounds: string[] = [];
+    const html2canvas = await html2canvasPromise;
+    const chartImagesBySlide = Array.from({ length: options.slideCount }, () => [] as string[]);
+    const filteredImagesBySlide = Array.from({ length: options.slideCount }, () => [] as string[]);
+    const slideBackgrounds = Array.from({ length: options.slideCount }, () => "");
 
-    for (const slide of slides) {
+    for (let renderedSlideIndex = 0; renderedSlideIndex < slides.length; renderedSlideIndex += 1) {
+      const slide = slides[renderedSlideIndex];
+      const sourceSlideIndex = options.slideIndices[renderedSlideIndex];
+      if (sourceSlideIndex === undefined) throw new Error("PowerPoint raster slide mapping failed");
       slide.classList.add("is-active");
 
-      chartImagesBySlide.push(options.captureCharts
+      chartImagesBySlide[sourceSlideIndex] = options.captureChartsBySlide[sourceSlideIndex]
         ? await captureMotionBlocks(slide, ".block-chart", html2canvas)
-        : []);
+        : [];
 
-      if (options.captureFilteredImages) {
-        filteredImagesBySlide.push(await captureMotionBlocks(
+      if (options.captureFilteredImagesBySlide[sourceSlideIndex]) {
+        filteredImagesBySlide[sourceSlideIndex] = await captureMotionBlocks(
           slide,
           ".block-image .image-filter-canvas",
           html2canvas
-        ));
-      } else {
-        filteredImagesBySlide.push([]);
+        );
       }
 
-      if (options.captureSlideBackgrounds) {
+      if (options.captureSlideBackgroundsBySlide[sourceSlideIndex]) {
         hidePptxEditableContent(slide);
         const canvas = await html2canvas(slide, {
           allowTaint: false,
@@ -78,7 +83,15 @@ export async function renderPptxRasterAssets(
           windowHeight: DESIGN_HEIGHT,
           windowWidth: DESIGN_WIDTH
         });
-        slideBackgrounds.push(canvas.toDataURL("image/png"));
+        try {
+          slideBackgrounds[sourceSlideIndex] = await canvasToDataUrl(
+            canvas,
+            "image/jpeg",
+            PPTX_BACKGROUND_JPEG_QUALITY
+          );
+        } finally {
+          releaseCanvas(canvas);
+        }
       }
 
       slide.classList.remove("is-active");
@@ -115,9 +128,31 @@ async function captureMotionBlocks(
       windowWidth: DESIGN_WIDTH
     });
     images.push(canvas.toDataURL("image/png"));
+    releaseCanvas(canvas);
   }
 
   return images;
+}
+
+function releaseCanvas(canvas: HTMLCanvasElement) {
+  canvas.width = 1;
+  canvas.height = 1;
+}
+
+function canvasToDataUrl(canvas: HTMLCanvasElement, type: string, quality?: number) {
+  return new Promise<string>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("PowerPoint background compression failed"));
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    }, type, quality);
+  });
 }
 
 function waitForIframeLoad(iframe: HTMLIFrameElement) {
