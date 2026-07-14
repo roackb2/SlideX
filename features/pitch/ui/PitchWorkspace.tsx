@@ -12,7 +12,7 @@ import { WorkspaceScrollbarStyle } from "@/features/pitch/ui/workspace/Workspace
 import { WorkspaceTemplateDialog } from "@/features/pitch/ui/workspace/WorkspaceTemplateDialog";
 import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWorkspaceTypes";
 
-export function PitchWorkspace({ commands, document, selection, view }: PitchWorkspaceProps) {
+export function PitchWorkspace({ agent, commands, document, selection, view }: PitchWorkspaceProps) {
   const sceneCount = document.scenes.length;
   const setActiveCanvasTool = view.setActiveCanvasTool;
   const [zoomLevel, setZoomLevel] = useState<number | "fit">("fit");
@@ -49,6 +49,8 @@ export function PitchWorkspace({ commands, document, selection, view }: PitchWor
         accessMode={view.accessMode}
         actualScale={zoomLevel === "fit" ? fitScale : zoomLevel}
         exportMenuRef={view.exportMenuRef}
+        isAgentEnabled={agent?.isEnabled ?? false}
+        isAgentPanelOpen={agent?.isPanelOpen ?? false}
         isMobileInspectorOpen={view.isMobileInspectorOpen}
         isMobileSidebarOpen={view.isMobileSidebarOpen}
         notice={view.notice}
@@ -62,6 +64,7 @@ export function PitchWorkspace({ commands, document, selection, view }: PitchWor
           view.setIsMobileSidebarOpen((value) => !value);
           view.setIsMobileInspectorOpen(false);
         }}
+        onToggleAgentPanel={agent?.togglePanel}
         onUndo={commands.undoLastChange}
         projectName={`${document.projectName}${document.isProjectDirty ? " - Edited" : ""}`}
         setZoomLevel={setZoomLevel}
@@ -135,6 +138,11 @@ export function PitchWorkspace({ commands, document, selection, view }: PitchWor
         </div>
 
         <WorkspaceInspectorPanel commands={commands} document={document} selection={selection} view={view} />
+        {agent?.panel ? (
+          <div className="absolute inset-y-0 right-0 z-[70] shadow-[-20px_0_50px_rgba(0,0,0,0.45)]">
+            {agent.panel}
+          </div>
+        ) : null}
       </div>
 
       <WorkspaceCodeEditorOverlay commands={commands} document={document} sceneCount={sceneCount} selection={selection} view={view} />

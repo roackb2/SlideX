@@ -1,4 +1,11 @@
-import { useState, useEffect, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction
+} from "react";
 import { defaultMdx } from "@/core/motion-doc/presets/defaultMdx";
 
 export type NewPitchProjectOptions = {
@@ -40,7 +47,7 @@ export function usePitchProject({
     setIsMounted(true);
   }, []);
 
-  function newProject(options: NewPitchProjectOptions = {}) {
+  const applyProject = useCallback((options: NewPitchProjectOptions) => {
     setSource(options.source ?? defaultMdx);
     setProjectName(options.name ?? "Untitled");
     setIsProjectDirty(false);
@@ -49,12 +56,27 @@ export function usePitchProject({
     resetSelection();
     setReplayNonce((value) => value + 1);
     setNotice(options.notice ?? "New project");
-  }
+  }, [
+    resetSelection,
+    setActiveSlideIndex,
+    setNotice,
+    setReplayNonce,
+    setSource,
+    undoStackRef
+  ]);
+
+  const newProject = useCallback((options: NewPitchProjectOptions = {}) => {
+    applyProject(options);
+  }, [applyProject]);
+
+  const markProjectDirty = useCallback(() => {
+    setIsProjectDirty(true);
+  }, []);
 
   return {
     isMounted,
     isProjectDirty,
-    markProjectDirty: () => setIsProjectDirty(true),
+    markProjectDirty,
     newProject,
     projectName
   };

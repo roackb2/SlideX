@@ -72,7 +72,7 @@ export default function PitchLandingPage() {
       <section className="border-y border-white/[0.09] bg-[#0f1013] px-5 py-24 sm:px-7 lg:px-10 lg:py-32">
         <div className="mx-auto grid max-w-[1400px] gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <motion.figure {...reveal} className="overflow-hidden rounded-lg border border-white/[0.09]">
-            <Image alt={copy.visualAlt} className="h-auto w-full" height={941} sizes="(min-width: 1024px) 58vw, 100vw" src="/images/animark-graphite-ribbon.png" width={1672} />
+            <Image alt={copy.visualAlt} className="h-auto w-full" height={675} sizes="(min-width: 1024px) 58vw, 100vw" src="/images/slide-metal.png" width={1200} />
           </motion.figure>
           <motion.div {...reveal} transition={{ delay: 0.08, duration: 0.64, ease: easeOut }}>
             <h2 className="text-[clamp(2.4rem,4.6vw,4.5rem)] font-semibold leading-[1] tracking-[-0.05em]">{copy.featureTitle}</h2>

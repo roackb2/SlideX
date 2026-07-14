@@ -14,6 +14,8 @@ import { usePitchProject, type NewPitchProjectOptions } from "@/features/pitch/u
 import { usePitchShortcuts } from "@/features/pitch/ui/hooks/usePitchShortcuts";
 import { usePitchUndo } from "@/features/pitch/ui/hooks/usePitchUndo";
 import { defaultTemplate } from "@/core/motion-doc/presets/templates";
+import { PitchAgentPanel } from "@/features/pitch/ui/agent/PitchAgentPanel";
+import { PitchAgentProvider } from "@/features/pitch/ui/agent/PitchAgentProvider";
 import { importPitchProjectFile } from "@/features/pitch/infrastructure/pitchImport";
 import { slideCommentsDeckId } from "@/features/pitch/infrastructure/slideComments";
 import { embedPitchLocalImagesForPersistence } from "@/features/pitch/infrastructure/pitchLocalAssets";
@@ -28,6 +30,8 @@ import {
   type GuestSignInIntent
 } from "@/features/pitch/ui/GuestSignInDialog";
 
+const isSlideXAgentEnabled = process.env.NEXT_PUBLIC_SLIDEX_AGENT_ENABLED === "true";
+
 export type MotionDocInitialProject = {
   name: string;
   source: string;
@@ -40,6 +44,7 @@ type MotionDocAppProps = {
   initialResumeIntent?: "export" | "preview";
   onSignInRequested?: (intent: GuestSignInIntent) => void;
   onProjectSourceChange?: (source: string, title: string) => Promise<void> | void;
+  presentationId?: string;
 };
 
 const guestLockedExportFormats = ["html", "mdx"] as const satisfies readonly ExportFormat[];
@@ -49,7 +54,8 @@ export function MotionDocApp({
   initialProject,
   initialResumeIntent,
   onProjectSourceChange,
-  onSignInRequested
+  onSignInRequested,
+  presentationId
 }: MotionDocAppProps = {}) {
   const isMobileViewport = useMobilePitchViewport();
   const [source, setSource] = useState(initialProject?.source ?? defaultMdx);
@@ -58,6 +64,7 @@ export function MotionDocApp({
   const [draggedBlockIndex, setDraggedBlockIndex] = useState<number | null>(null);
   const [dragOverBlockIndex, setDragOverBlockIndex] = useState<number | null>(null);
   const undoStackRef = useRef<string[]>([]);
+  const [isAgentPanelOpen, setIsAgentPanelOpen] = useState(false);
   const {
     activeCanvasTool,
     exportMenuRef,
@@ -169,6 +176,12 @@ export function MotionDocApp({
     documentTitle: sliderDocument.title,
     setNotice
   });
+  const applyAgentMotionDoc = useCallback((motionDoc: string, summary: string) => {
+    commitSource(motionDoc);
+    clearBlockSelection();
+    setReplayNonce((value) => value + 1);
+    setNotice(summary || "Agent changes applied");
+  }, [clearBlockSelection, commitSource, setNotice, setReplayNonce]);
 
   const openExport = useCallback(() => {
     setFileModalMode("export");
@@ -379,9 +392,16 @@ export function MotionDocApp({
     );
   }
 
-  return (
+  const isAgentAvailable = isSlideXAgentEnabled && Boolean(presentationId);
+  const desktopExperience = (
     <>
     <PitchWorkspace
+      agent={{
+        isEnabled: isAgentAvailable,
+        isPanelOpen: isAgentAvailable && isAgentPanelOpen,
+        panel: isAgentAvailable && isAgentPanelOpen ? <PitchAgentPanel /> : undefined,
+        togglePanel: () => setIsAgentPanelOpen((current) => !current)
+      }}
       commands={{
         addBlockToActiveSlide: pitchCommands.addBlockToActiveSlide,
         addSlide: pitchCommands.addSlide,
@@ -532,4 +552,14 @@ export function MotionDocApp({
     />
     </>
   );
+  return isAgentAvailable && presentationId ? (
+    <PitchAgentProvider
+      onApplyMotionDoc={applyAgentMotionDoc}
+      presentationId={presentationId}
+      presentationTitle={projectName}
+      source={source}
+    >
+      {desktopExperience}
+    </PitchAgentProvider>
+  ) : desktopExperience;
 }
