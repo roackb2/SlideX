@@ -3,7 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { appRoutes, isMarketingHomePath } from "@/common/lib/appRoutes";
-import { useLocalAuthSession } from "@/features/auth/ui/useLocalAuthSession";
+import { useAuthSession } from "@/features/auth/ui/useAuthSession";
 
 type AuthenticatedHomeRedirectProps = {
   children: ReactNode;
@@ -12,7 +12,7 @@ type AuthenticatedHomeRedirectProps = {
 export function AuthenticatedHomeRedirect({ children }: AuthenticatedHomeRedirectProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isReady, session } = useLocalAuthSession();
+  const { isReady, session } = useAuthSession();
   const isHomePath = isMarketingHomePath(pathname);
 
   useEffect(() => {

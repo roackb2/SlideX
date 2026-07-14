@@ -38,3 +38,12 @@ test("raster HTML and SVG exports use a fixed 16:9 canvas", () => {
 test("export filenames are portable", () => {
   assert.equal(slugifyFilename("  Q3 / Product: Review  "), "q3-product-review");
 });
+
+test("HTML exports escape arbitrary markup and include a restrictive CSP", () => {
+  const html = buildMotionDocHtml(`<Slide><script>alert(1)</script><Text>Safe</Text></Slide>`);
+
+  assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/);
+  assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  assert.match(html, /Content-Security-Policy/);
+  assert.match(html, /script-src 'nonce-slidex-[0-9a-f-]+'/);
+});

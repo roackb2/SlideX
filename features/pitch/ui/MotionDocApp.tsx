@@ -39,7 +39,7 @@ type MotionDocAppProps = {
   initialProject?: MotionDocInitialProject;
   initialResumeIntent?: "export" | "preview";
   onSignInRequested?: (intent: GuestSignInIntent) => void;
-  onProjectSourceChange?: (source: string, title: string) => void;
+  onProjectSourceChange?: (source: string, title: string) => Promise<void> | void;
 };
 
 const guestLockedExportFormats = ["html", "mdx"] as const satisfies readonly ExportFormat[];

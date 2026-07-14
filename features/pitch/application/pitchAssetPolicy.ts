@@ -26,7 +26,6 @@ export const pitchAssetMimeTypes = {
     "image/gif",
     "image/jpeg",
     "image/png",
-    "image/svg+xml",
     "image/webp"
   ],
   video: ["video/mp4", "video/quicktime", "video/webm"]

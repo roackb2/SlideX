@@ -6,221 +6,170 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-type WorkspaceRole = "editor" | "owner" | "viewer";
-type PresentationKind = "presentation" | "template";
-type CommentStatus = "open" | "resolved";
-type AssetKind = "image" | "video";
-
 export type Database = {
   public: {
     Tables: {
-      presentation_assets: {
+      agent_sessions: {
         Row: {
-          byte_size: number;
           created_at: string;
           id: string;
-          kind: AssetKind;
-          mime_type: string;
-          original_name: string;
+          message_count: number;
           presentation_id: string;
-          preview_byte_size: number;
-          preview_mime_type: string | null;
-          preview_storage_path: string | null;
-          storage_path: string;
-          uploaded_by: string;
-          workspace_id: string;
+          title: string;
+          updated_at: string;
+          user_id: string;
         };
         Insert: {
-          byte_size?: number;
           created_at?: string;
-          id?: string;
-          kind: AssetKind;
-          mime_type: string;
-          original_name: string;
+          id: string;
+          message_count?: number;
           presentation_id: string;
-          preview_byte_size?: number;
-          preview_mime_type?: string | null;
-          preview_storage_path?: string | null;
-          storage_path: string;
-          uploaded_by: string;
-          workspace_id: string;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
         };
-        Update: Record<never, never>;
-        Relationships: [];
+        Update: {
+          message_count?: number;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "agent_sessions_presentation_id_fkey";
+            columns: ["presentation_id"];
+            isOneToOne: false;
+            referencedRelation: "presentations";
+            referencedColumns: ["id"];
+          }
+        ];
       };
-      presentation_user_state: {
+      official_templates: {
         Row: {
-          last_opened_at: string;
-          presentation_id: string;
-          user_id: string;
+          created_at: string;
+          description: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          sort_order: number;
+          thumbnail_url: string | null;
         };
         Insert: {
-          last_opened_at?: string;
-          presentation_id: string;
-          user_id: string;
+          created_at?: string;
+          description?: string;
+          id: string;
+          is_active?: boolean;
+          name: string;
+          sort_order?: number;
+          thumbnail_url?: string | null;
         };
-        Update: { last_opened_at?: string };
+        Update: {
+          description?: string;
+          is_active?: boolean;
+          name?: string;
+          sort_order?: number;
+          thumbnail_url?: string | null;
+        };
         Relationships: [];
       };
       presentations: {
         Row: {
           created_at: string;
+          guest_import_id: string | null;
           id: string;
-          kind: PresentationKind;
-          owner_id: string;
+          last_opened_at: string;
           source: string;
+          source_revision: number;
           template_id: string | null;
           title: string;
           updated_at: string;
-          workspace_id: string;
+          user_id: string;
         };
         Insert: {
           created_at?: string;
+          guest_import_id?: string | null;
           id?: string;
-          kind?: PresentationKind;
-          owner_id: string;
+          last_opened_at?: string;
           source?: string;
+          source_revision?: number;
           template_id?: string | null;
           title: string;
           updated_at?: string;
-          workspace_id: string;
+          user_id?: string;
         };
         Update: {
+          guest_import_id?: string | null;
+          last_opened_at?: string;
           source?: string;
+          source_revision?: number;
           template_id?: string | null;
           title?: string;
         };
-        Relationships: [];
-      };
-      profiles: {
-        Row: {
-          avatar_url: string | null;
-          created_at: string;
-          display_name: string;
-          id: string;
-          updated_at: string;
-        };
-        Insert: {
-          avatar_url?: string | null;
-          created_at?: string;
-          display_name: string;
-          id: string;
-          updated_at?: string;
-        };
-        Update: {
-          avatar_url?: string | null;
-          display_name?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "presentations_template_id_fkey";
+            columns: ["template_id"];
+            isOneToOne: false;
+            referencedRelation: "official_templates";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       slide_comments: {
         Row: {
-          author_id: string;
           body: string;
           created_at: string;
           id: string;
+          is_resolved: boolean;
           presentation_id: string;
-          resolved_at: string | null;
-          resolved_by: string | null;
           slide_index: number;
-          status: CommentStatus;
           updated_at: string;
-          version: number;
+          user_id: string;
         };
         Insert: {
-          author_id: string;
           body: string;
           created_at?: string;
           id?: string;
+          is_resolved?: boolean;
           presentation_id: string;
-          resolved_at?: string | null;
-          resolved_by?: string | null;
           slide_index: number;
-          status?: CommentStatus;
           updated_at?: string;
-          version?: number;
-        };
-        Update: Partial<Database["public"]["Tables"]["slide_comments"]["Insert"]>;
-        Relationships: [];
-      };
-      user_workspace_preferences: {
-        Row: {
-          auto_save_enabled: boolean;
-          onboarding_completed_at: string | null;
-          reduced_motion_enabled: boolean;
-          updated_at: string;
-          user_id: string;
-          workspace_id: string;
-        };
-        Insert: {
-          auto_save_enabled?: boolean;
-          onboarding_completed_at?: string | null;
-          reduced_motion_enabled?: boolean;
-          updated_at?: string;
-          user_id: string;
-          workspace_id: string;
+          user_id?: string;
         };
         Update: {
-          auto_save_enabled?: boolean;
-          onboarding_completed_at?: string | null;
-          reduced_motion_enabled?: boolean;
-          updated_at?: string;
+          body?: string;
+          is_resolved?: boolean;
         };
-        Relationships: [];
-      };
-      workspace_memberships: {
-        Row: {
-          created_at: string;
-          role: WorkspaceRole;
-          user_id: string;
-          workspace_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          role?: WorkspaceRole;
-          user_id: string;
-          workspace_id: string;
-        };
-        Update: { role?: WorkspaceRole };
-        Relationships: [];
-      };
-      workspaces: {
-        Row: {
-          created_at: string;
-          id: string;
-          name: string;
-          owner_id: string;
-          storage_quota_bytes: number;
-          updated_at: string;
-        };
-        Insert: {
-          created_at?: string;
-          id?: string;
-          name: string;
-          owner_id: string;
-          storage_quota_bytes?: number;
-          updated_at?: string;
-        };
-        Update: {
-          name?: string;
-        };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "slide_comments_presentation_id_fkey";
+            columns: ["presentation_id"];
+            isOneToOne: false;
+            referencedRelation: "presentations";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
     Views: Record<never, never>;
     Functions: {
-      workspace_storage_usage: {
-        Args: { target_workspace_id: string };
-        Returns: Array<{ quota_bytes: number; used_bytes: number }>;
+      compare_and_swap_presentation_source: {
+        Args: {
+          expected_source_revision: number;
+          next_source: string;
+          next_title?: string | null;
+          target_presentation_id: string;
+        };
+        Returns: Array<{
+          presentation_id: string;
+          source_revision: number;
+          updated_at: string;
+        }>;
+      };
+      touch_presentation_opened: {
+        Args: { target_presentation_id: string };
+        Returns: string | null;
       };
     };
-    Enums: {
-      asset_kind: AssetKind;
-      comment_status: CommentStatus;
-      presentation_kind: PresentationKind;
-      workspace_role: WorkspaceRole;
-    };
+    Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
   };
 };

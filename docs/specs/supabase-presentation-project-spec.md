@@ -1,619 +1,264 @@
-# SlideX Supabase 與 Presentation Project 規格書
+# SlideX Supabase 簡化規格
 
 | 項目 | 內容 |
 | --- | --- |
-| 文件版本 | 1.0 |
-| 文件狀態 | Implementation Ready |
-| 最後更新 | 2026-07-13 |
-| 適用專案 | Animark / SlideX Pitch |
-| 主要範圍 | Supabase Auth、Workspace、Presentation Project、Comments、Storage |
-| Schema 來源 | `supabase/migrations/20260713000000_initial_slidex_schema.sql` |
+| 文件版本 | 2.0 |
+| 最後更新 | 2026-07-14 |
+| Schema | `supabase/migrations/20260713000000_initial_slidex_schema.sql`（單一 canonical migration） |
 
-## 1. 文件目的
+## 1. 範圍
 
-本規格定義 SlideX 從瀏覽器 `localStorage` 遷移到 Supabase 的資料模型、權限、儲存策略與實作界線，讓使用者可以：
+目前 Supabase 只支援七件事：
 
-1. 使用 Supabase Auth 登入。
-2. 在自己的 Workspace 建立、開啟、重新命名、複製及刪除簡報。
-3. 將 MotionDoc MDX、Comments、圖片與影片儲存在遠端。
-4. 在不同裝置登入後存取同一份 Presentation Project。
-5. 保留 PNG/JPG 原檔的匯出品質，同時使用 WebP 降低線上預覽流量。
+1. 使用者登入。
+2. 建立與儲存簡報。
+3. 顯示官方預設 Template。
+4. 依投影片頁碼留言。
+5. 將留言標記為已解決。
+6. 上傳簡報圖片。
+7. 以 revision-safe CAS 儲存簡報，並記錄 Heddle Agent sessions。
 
-## 2. 名詞定義
+不先建立 Workspace、團隊成員、角色、協作留言串、AI message mirror、完整版本歷史、
+資產 metadata、容量配額或影片儲存。未來有明確產品需求時再加 migration。
 
-### 2.1 Presentation Project
-
-Presentation Project 是 SlideX 的主要工作單位，對應資料表 `public.presentations` 的一筆資料。
-
-一個 Project 包含：
-
-- 基本資訊：標題、擁有者、Workspace、種類與時間戳。
-- `source`：完整 MotionDoc MDX，作為投影片內容的主要真實來源。
-- 使用者狀態：最近開啟時間。
-- Comments：依投影片索引保存的討論。
-- Assets：圖片與影片原檔及預覽檔。
-
-本版本不另外建立 `presentation_projects` table，避免和 `presentations` 重複。
-
-### 2.2 Workspace
-
-Workspace 是 Project 的安全與協作邊界。每份 Project 必須屬於一個 Workspace，所有資料存取皆由 Workspace membership 與 RLS 決定。
-
-### 2.3 Source
-
-`presentations.source` 儲存完整 MotionDoc MDX。它包含場景、文字、形狀、圖表、圖片、影片、動畫與版面參數，不拆成逐頁資料表。
-
-## 3. 目標與非目標
-
-### 3.1 目標
-
-- 以 Supabase PostgreSQL 取代 Presentation 與 Comments 的 browser-only persistence。
-- 以 Supabase Auth 取代目前的 demo OAuth session。
-- 以 private Supabase Storage 取代暫時性的 Blob URL。
-- 使用 Row Level Security 確保跨 Workspace 資料隔離。
-- 保留現有 MotionDoc 格式，不因接資料庫改寫 parser 或 exporter。
-- 保持 PowerPoint、Keynote、Google Slides、PNG、HTML 與 MDX 匯出品質。
-- 提供合理的檔案限制、容量配額、快取與孤兒檔案清理機制。
-
-### 3.2 非目標
-
-- 即時多人游標與 Google Slides 型同步編輯。
-- Presentation revision history 或完整版本回溯。
-- Billing、訂閱方案及付費配額管理。
-- 團隊邀請信與 invitation lifecycle。
-- AI conversation、agent session 或 analytics 資料。
-- 在 PostgreSQL 中拆分、解析或查詢 MotionDoc 每個 Block。
-
-## 4. 目前實作狀態
-
-| 項目 | 狀態 |
-| --- | --- |
-| Supabase JS、SSR helper、CLI | 已安裝 |
-| `.env.local` / `.env.example` | 已建立，仍需填入遠端 Project URL 與 publishable key |
-| Browser / Server typed client | 已建立 |
-| PostgreSQL migration | 已建立，尚未推送遠端 |
-| RLS policies | 已寫入 migration，尚未在遠端驗證 |
-| Private Storage bucket | 已寫入 migration，尚未在遠端建立 |
-| WebP preview pipeline | 已建立 |
-| 原檔匯出保留 | 已接入本機 Blob asset mapping |
-| Supabase asset adapter | 已建立，尚未接入正式 Presentation repository |
-| Supabase Auth UI | 尚未接線，目前仍使用 demo auth |
-| Workspace / Presentation remote repository | 尚未接線，目前仍使用 localStorage |
-| Comments remote repository | 尚未接線，目前仍使用 localStorage |
-
-## 5. 系統架構與責任歸屬
-
-| Layer | 路徑 | 責任 |
-| --- | --- | --- |
-| App composition | `app/` | Route 與 feature 組合，不放 Supabase business logic |
-| Shared Supabase | `common/lib/supabase/` | Browser/server clients、環境變數與 generated database types |
-| Auth domain | `features/auth/domain/` | App-facing Auth user/session types |
-| Auth infrastructure | `features/auth/infrastructure/` | Supabase Auth adapter 與 session subscription |
-| Workspace domain | `features/workspace/domain/` | Workspace 與 Presentation Project domain types |
-| Workspace application | `features/workspace/application/` | 建立、複製、命名與 Project flow rules |
-| Workspace infrastructure | `features/workspace/infrastructure/` | Local/Supabase repositories 與 migration adapter |
-| Pitch application | `features/pitch/application/` | Asset policy、大小限制與純邏輯 |
-| Pitch infrastructure | `features/pitch/infrastructure/` | WebP、Blob、Supabase Storage、PPTX/export adapters |
-| Database | `supabase/migrations/` | Tables、indexes、functions、triggers、RLS 與 Storage policies |
-
-依賴方向必須符合 `eslint-plugin-boundaries`，不得讓 infrastructure 反向依賴 UI。
-
-## 6. 資料關聯
+## 2. 資料模型
 
 ```mermaid
 erDiagram
-  AUTH_USERS ||--|| PROFILES : creates
-  PROFILES ||--o{ WORKSPACES : owns
-  PROFILES ||--o{ WORKSPACE_MEMBERSHIPS : joins
-  WORKSPACES ||--o{ WORKSPACE_MEMBERSHIPS : contains
-  WORKSPACE_MEMBERSHIPS ||--|| USER_WORKSPACE_PREFERENCES : has
-  WORKSPACES ||--o{ PRESENTATIONS : contains
-  PROFILES ||--o{ PRESENTATIONS : owns
-  PRESENTATIONS ||--o{ PRESENTATION_USER_STATE : tracks
-  PROFILES ||--o{ PRESENTATION_USER_STATE : opens
+  AUTH_USERS ||--o{ PRESENTATIONS : owns
+  OFFICIAL_TEMPLATES ||--o{ PRESENTATIONS : starts_from
   PRESENTATIONS ||--o{ SLIDE_COMMENTS : has
-  PROFILES ||--o{ SLIDE_COMMENTS : authors
-  PRESENTATIONS ||--o{ PRESENTATION_ASSETS : has
-  PROFILES ||--o{ PRESENTATION_ASSETS : uploads
+  PRESENTATIONS ||--o{ AGENT_SESSIONS : runs
+  AUTH_USERS ||--o{ SLIDE_COMMENTS : writes
+  AUTH_USERS ||--o{ AGENT_SESSIONS : owns
 ```
 
-## 7. Enum 規格
+### `auth.users`
 
-### 7.1 `workspace_role`
+Supabase Auth 原生資料表。應用程式不複製 email、provider 或 session，也不另外建立
+`profiles`。首次登入歡迎彈窗完成時間保存在使用者自己的
+`user_metadata.workspace_onboarding_completed_at`；這只是 UX 狀態，不作為任何授權依據。
+需要公開個人資料時再新增 profile migration。
 
-| 值 | 說明 |
+### `official_templates`
+
+| 欄位 | 說明 |
 | --- | --- |
-| `owner` | Workspace 擁有者，可管理 Workspace、成員與全部 Project |
-| `editor` | 可建立、修改與刪除一般 Project，可管理 Project assets |
-| `viewer` | 可讀取 Workspace 與 Project，可新增 Comments，不可修改 Project |
+| `id` | 與程式內 template ID 相同的穩定字串 |
+| `name` | 顯示名稱 |
+| `description` | 簡介 |
+| `thumbnail_url` | 預覽圖路徑，可為 `null` |
+| `sort_order` | 顯示順序 |
+| `is_active` | 是否出現在目錄 |
+| `created_at` | 建立時間 |
 
-### 7.2 `presentation_kind`
+Template 的完整 MotionDoc source 保留在 `core/motion-doc/presets/`。資料庫只存目錄
+metadata，避免同一份大型 source 同時存在 TypeScript 與 SQL。
 
-| 值 | 說明 |
+一般 client 只能讀取 active rows；新增與修改只允許 service role 或 migration。
+
+### `presentations`
+
+| 欄位 | 說明 |
 | --- | --- |
-| `presentation` | 一般使用者 Project，可刪除 |
-| `template` | 系統或 Workspace template，不允許由一般 delete policy 刪除 |
+| `id` | UUID primary key |
+| `user_id` | 擁有者，預設 `auth.uid()` |
+| `title` | 1–240 字元 |
+| `source` | 完整 MotionDoc，UTF-8 bytes 不得超過 2 MiB |
+| `source_revision` | 從 0 開始；每次 CAS 儲存成功後原子加 1 |
+| `template_id` | 可選的官方 template ID |
+| `guest_import_id` | 訪客草稿匯入用 UUID；與 `user_id` 組成 unique constraint |
+| `created_at` | 建立時間 |
+| `updated_at` | Trigger 在更新時自動刷新 |
+| `last_opened_at` | 最近開啟時間；只由 `touch_presentation_opened()` 寫入 server time |
 
-### 7.3 `comment_status`
+一份簡報是一筆 row，不拆 pages 或 blocks。建立 template 簡報時，應用程式把
+bundled template source 複製到 `source`，並記錄 `template_id`。
 
-- `open`
-- `resolved`
+目前 Workspace 已有 Recents 排序，因此 `last_opened_at` 是實際需要的欄位。縮圖可由
+`source/template_id` 產生，頁數也可由 MotionDoc 解析，所以暫不增加 `thumbnail_url`、
+`slide_count`、`status`、`metadata jsonb` 或版本歷史欄位。
 
-### 7.4 `asset_kind`
-
-- `image`
-- `video`
-- `file`
-
-## 8. 資料表規格
-
-### 8.1 `profiles`
-
-公開於共同 Workspace 成員之間的基本使用者資料；email 與 OAuth provider 留在 `auth.users`。
-
-| 欄位 | 型別 | 必填 | 規則 |
-| --- | --- | --- | --- |
-| `id` | `uuid` | 是 | PK，FK → `auth.users.id` |
-| `display_name` | `text` | 是 | 1–120 字元 |
-| `avatar_url` | `text` | 否 | OAuth avatar 或使用者圖片 |
-| `created_at` | `timestamptz` | 是 | 自動產生 |
-| `updated_at` | `timestamptz` | 是 | Trigger 自動更新 |
-
-### 8.2 `workspaces`
-
-| 欄位 | 型別 | 必填 | 規則 |
-| --- | --- | --- | --- |
-| `id` | `uuid` | 是 | PK，自動產生 |
-| `owner_id` | `uuid` | 是 | FK → `profiles.id`；client 不可修改 |
-| `name` | `text` | 是 | 1–120 字元 |
-| `storage_quota_bytes` | `bigint` | 是 | 預設 1 GiB；僅 trusted server 可提高 |
-| `created_at` | `timestamptz` | 是 | 自動產生 |
-| `updated_at` | `timestamptz` | 是 | Trigger 自動更新 |
-
-### 8.3 `workspace_memberships`
-
-複合主鍵：`workspace_id + user_id`。
-
-| 欄位 | 型別 | 必填 | 規則 |
-| --- | --- | --- | --- |
-| `workspace_id` | `uuid` | 是 | FK → `workspaces.id` |
-| `user_id` | `uuid` | 是 | FK → `profiles.id` |
-| `role` | `workspace_role` | 是 | 預設 `viewer` |
-| `created_at` | `timestamptz` | 是 | 自動產生 |
-
-### 8.4 `user_workspace_preferences`
-
-複合主鍵與 FK：`workspace_id + user_id`，必須對應既有 membership。
-
-| 欄位 | 型別 | 必填 | 預設 |
-| --- | --- | --- | --- |
-| `workspace_id` | `uuid` | 是 | — |
-| `user_id` | `uuid` | 是 | — |
-| `auto_save_enabled` | `boolean` | 是 | `true` |
-| `reduced_motion_enabled` | `boolean` | 是 | `false` |
-| `onboarding_completed_at` | `timestamptz` | 否 | `null` |
-| `updated_at` | `timestamptz` | 是 | 自動更新 |
-
-### 8.5 `presentations`
-
-Presentation Project 的 aggregate root。
-
-| 欄位 | 型別 | 必填 | 規則 |
-| --- | --- | --- | --- |
-| `id` | `uuid` | 是 | PK |
-| `workspace_id` | `uuid` | 是 | FK → `workspaces.id`；建立後不可由 client 移動 |
-| `owner_id` | `uuid` | 是 | FK → `profiles.id`；建立後不可由 client 修改 |
-| `title` | `text` | 是 | 1–240 字元 |
-| `kind` | `presentation_kind` | 是 | 預設 `presentation` |
-| `source` | `text` | 是 | 完整 MotionDoc MDX |
-| `template_id` | `text` | 否 | 對應內建 template identifier |
-| `created_at` | `timestamptz` | 是 | 自動產生 |
-| `updated_at` | `timestamptz` | 是 | 每次更新自動刷新 |
-
-允許一般 client 更新的欄位只有：
-
-- `title`
-- `source`
-- `template_id`
-
-### 8.6 `presentation_user_state`
-
-將 Recent 狀態與共用 Project 分離，避免某位使用者開啟 Project 時改動所有人的資料。
-
-| 欄位 | 型別 | 必填 | 規則 |
-| --- | --- | --- | --- |
-| `presentation_id` | `uuid` | 是 | FK → `presentations.id` |
-| `user_id` | `uuid` | 是 | FK → `profiles.id` |
-| `last_opened_at` | `timestamptz` | 是 | 預設現在時間 |
-
-主鍵：`presentation_id + user_id`。
-
-### 8.7 `slide_comments`
-
-| 欄位 | 型別 | 必填 | 規則 |
-| --- | --- | --- | --- |
-| `id` | `uuid` | 是 | PK |
-| `presentation_id` | `uuid` | 是 | FK → `presentations.id` |
-| `slide_index` | `integer` | 是 | 0-based，必須 ≥ 0 |
-| `author_id` | `uuid` | 是 | FK → `profiles.id` |
-| `body` | `text` | 是 | 1–5000 字元 |
-| `status` | `comment_status` | 是 | 預設 `open` |
-| `version` | `integer` | 是 | > 0 |
-| `resolved_by` | `uuid` | 否 | resolved 時必填 |
-| `resolved_at` | `timestamptz` | 否 | resolved 時必填 |
-| `created_at` | `timestamptz` | 是 | 自動產生 |
-| `updated_at` | `timestamptz` | 是 | 自動更新 |
-
-`open` Comment 的 `resolved_by/resolved_at` 必須為 `null`；`resolved` Comment 兩者必須有值。
-
-### 8.8 `presentation_assets`
-
-| 欄位 | 型別 | 必填 | 說明 |
-| --- | --- | --- | --- |
-| `id` | `uuid` | 是 | PK，同時作為 immutable file path 的一部分 |
-| `workspace_id` | `uuid` | 是 | FK → `workspaces.id` |
-| `presentation_id` | `uuid` | 是 | FK → `presentations.id`，且必須屬於相同 Workspace |
-| `uploaded_by` | `uuid` | 是 | FK → `profiles.id` |
-| `storage_path` | `text` | 是 | 原始 PNG/JPG/影片路徑，unique |
-| `original_name` | `text` | 是 | 使用者原始檔名 |
-| `mime_type` | `text` | 是 | 原檔 MIME type |
-| `byte_size` | `bigint` | 是 | 原檔 bytes |
-| `preview_storage_path` | `text` | 否 | WebP preview 路徑，unique |
-| `preview_mime_type` | `text` | 否 | 預期為 `image/webp` |
-| `preview_byte_size` | `bigint` | 是 | 無 preview 時為 0 |
-| `kind` | `asset_kind` | 是 | image/video |
-| `created_at` | `timestamptz` | 是 | 自動產生 |
-
-## 9. Presentation Project 功能規格
-
-### 9.1 建立
-
-1. 使用者必須是 Workspace `owner` 或 `editor`。
-2. 建立 `presentations` row，`owner_id = auth.uid()`。
-3. `source` 使用 `defaultMdx` 或選定 template source。
-4. 建立或 upsert `presentation_user_state`，記錄建立者的 `last_opened_at`。
-5. 成功後導向 `/workspace/pitch?presentation=<id>`。
-
-### 9.2 列表
-
-- `Presentations`：列出使用者所在 Workspace 的全部可讀 Project。
-- `Recents`：join `presentation_user_state`，依目前使用者的 `last_opened_at DESC` 排序。
-- Search：初期可在 client 對已取得資料做 case-insensitive title filter。
-- 後續資料量增加時改為 server query，不變更 domain type。
-
-### 9.3 開啟
-
-1. 根據 `presentation_id` 讀取 Project。
-2. RLS 驗證目前使用者為 Workspace member。
-3. upsert `presentation_user_state.last_opened_at`。
-4. 將 `source` 傳入 Pitch editor。
-5. Project 不存在或無權限時返回 Workspace，不顯示資料是否存在。
-
-### 9.4 儲存與 Autosave
-
-- 使用者修改 Project 後，更新 `source` 與必要的 `title`。
-- 建議 debounce：1000ms。
-- 同一時間只允許一個 pending save；新內容合併到下一次 save。
-- UI 顯示 `Saving`、`Saved`、`Save failed` 三種狀態。
-- v1 不提供 realtime co-edit；同時編輯採 last-write-wins。
-- 更新失敗時不得清除本機目前的 editor state。
-
-### 9.5 重新命名
-
-- trim title。
-- 空字串不送出更新。
-- 成功後同步 Workspace card 與 Pitch header。
-
-### 9.6 複製
-
-1. 讀取來源 Project。
-2. 建立新 `presentation` row。
-3. 複製 `source` 與 `template_id`，`kind` 固定為 `presentation`。
-4. `owner_id` 為執行複製的使用者。
-5. v1 不複製 Comments。
-6. Asset 採 copy-on-reference 或實體複製前必須另行決策；不得直接產生失效 URL。
-
-### 9.7 刪除
-
-- `kind = template` 不可由一般 client 刪除。
-- 刪除 Project 前，先透過 Storage API 移除所有 original/preview objects。
-- Storage 成功後刪除 asset metadata 與 presentation row。
-- Comments、user state 與 metadata 透過 FK cascade 清除。
-- 如果 Storage cleanup 失敗，不刪除 Project row，並允許重試。
-
-## 10. Storage 與 WebP 規格
-
-### 10.1 Bucket
-
-- Bucket ID：`presentation-assets`
-- Visibility：private
-- 單一 object 上限：50 MiB
-- Object path：
+Browser 與 Agent 不得直接 UPDATE `source/title`，必須呼叫：
 
 ```text
-<workspace-id>/<presentation-id>/<asset-id>-original-<safe-file-name>
-<workspace-id>/<presentation-id>/<asset-id>-preview-<safe-file-name>.webp
+compare_and_swap_presentation_source(
+  target_presentation_id,
+  expected_source_revision,
+  next_source,
+  next_title = null
+)
 ```
 
-Path 必須 immutable；不得以同一路徑覆寫，`upsert` 固定為 `false`。
+只有 `expected_source_revision` 與資料庫目前版本相同時才更新；成功後回傳新的
+`source_revision`。版本不相同時回傳 PostgreSQL `40001` 與
+`source_revision_conflict`，caller 必須重新讀取最新簡報，不能自動覆寫。
 
-### 10.2 支援格式
+### `agent_sessions`
 
-| Kind | MIME types | 應用層限制 |
-| --- | --- | --- |
-| Image | AVIF、GIF、JPEG、PNG、SVG、WebP | prepared preview ≤ 10 MiB |
-| Video | MP4、QuickTime/MOV、WebM | ≤ 50 MiB |
-
-所有來源檔案 hard limit 為 50 MiB。
-
-### 10.3 WebP preview
-
-PNG/JPEG 不會被永久替換成 WebP。
-
-轉換條件：
-
-1. MIME type 為 JPEG、PNG 或 WebP。
-2. 原檔大於 1 MiB。
-3. 最長邊縮放至最多 2500px。
-4. WebP quality = 0.86。
-5. 轉換結果至少比原檔小 10%。
-
-若任何條件不成立、decode 失敗或節省不足，`preview_storage_path` 為 `null`，直接使用原檔。
-
-使用規則：
-
-- Editor、Workspace thumbnail、線上播放：優先 preview。
-- PPTX、PNG、HTML、MDX 與重新編輯：使用 original。
-- SVG、GIF、AVIF 與 Video 不產生 WebP preview。
-
-### 10.4 Cache
-
-- immutable object `cacheControl = 31536000` 秒。
-- 刪除或替換內容必須產生新 asset UUID，不覆寫舊路徑。
-- Signed URL 預設有效期 3600 秒，可依頁面 session 調整。
-
-### 10.5 Quota
-
-- 每個 Workspace 預設 1 GiB。
-- 使用量 = original bytes + preview bytes。
-- Storage INSERT policy 在寫入前檢查 Workspace quota。
-- 一般 client 不可修改 `storage_quota_bytes`。
-- UI 可透過 `workspace_storage_usage(workspace_id)` 取得 `used_bytes` 與 `quota_bytes`。
-
-### 10.6 清理
-
-- 上傳任一步驟失敗時，刪除本次已上傳的 objects。
-- Metadata insert 失敗時，清除 original 與 preview。
-- Project delete 必須先執行 asset batch cleanup。
-- `removeOrphanedSupabasePresentationAssetObjects` 比對 Storage objects 與 metadata，移除孤兒檔案。
-- 不可直接 `DELETE storage.objects`；所有實體檔案刪除必須走 Storage API。
-
-## 11. 權限與 RLS
-
-### 11.1 權限矩陣
-
-| Resource / Action | Owner | Editor | Viewer | Anonymous |
-| --- | ---: | ---: | ---: | ---: |
-| 讀取 Workspace | ✓ | ✓ | ✓ | — |
-| 修改 Workspace 名稱 | ✓ | — | — | — |
-| 刪除 Workspace | ✓ | — | — | — |
-| 管理成員角色 | ✓ | — | — | — |
-| 讀取 Presentation | ✓ | ✓ | ✓ | — |
-| 建立 Presentation | ✓ | ✓ | — | — |
-| 修改 Presentation | ✓ | ✓ | — | — |
-| 刪除一般 Presentation | ✓ | ✓ | — | — |
-| 讀取 Comments | ✓ | ✓ | ✓ | — |
-| 新增 Comment | ✓ | ✓ | ✓ | — |
-| 修改自己的 Comment | ✓ | ✓ | ✓ | — |
-| Resolve 任意 Comment | ✓ | ✓ | — | — |
-| 上傳／刪除 Assets | ✓ | ✓ | — | — |
-| 讀取 Assets | ✓ | ✓ | ✓ | — |
-
-### 11.2 安全規則
-
-- Browser 只使用 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`。
-- `service_role` 或 Supabase secret key 不得放在 `NEXT_PUBLIC_*` 或 client bundle。
-- 所有 public application tables 必須啟用 RLS。
-- `auth.uid()` 必須與 membership、owner 或 author 欄位交叉驗證。
-- `owner_id`、`workspace_id`、`uploaded_by` 與 asset paths 建立後不可由一般 client 修改。
-- Private helper functions 使用 `SECURITY DEFINER` 並固定 `search_path = ''`。
-
-## 12. Repository Contract
-
-UI 不得直接散落 Supabase queries；應由 feature infrastructure 提供 repository。
-
-```ts
-type PresentationRepository = {
-  create(input: CreatePresentationInput): Promise<WorkspacePresentation>;
-  delete(presentationId: string): Promise<void>;
-  duplicate(presentationId: string, title: string): Promise<WorkspacePresentation>;
-  get(presentationId: string): Promise<WorkspacePresentation | null>;
-  list(workspaceId: string): Promise<WorkspacePresentation[]>;
-  markOpened(presentationId: string): Promise<void>;
-  rename(presentationId: string, title: string): Promise<WorkspacePresentation>;
-  save(presentationId: string, source: string, title?: string): Promise<WorkspacePresentation>;
-};
-```
-
-```ts
-type PresentationAssetRepository = {
-  createOriginalUrl(assetId: string): Promise<string>;
-  createPreviewUrl(assetId: string): Promise<string>;
-  delete(assetId: string): Promise<void>;
-  deleteForPresentation(presentationId: string): Promise<void>;
-  removeOrphans(workspaceId: string, presentationId: string): Promise<number>;
-  upload(input: UploadPresentationAssetInput): Promise<PresentationAsset>;
-};
-```
-
-Repository 必須將 snake_case database rows 映射成 camelCase domain types，UI 不直接消費 database row shape。
-
-## 13. LocalStorage 遷移規格
-
-### 13.1 現有資料來源
-
-| 資料 | Local key |
+| 欄位 | 說明 |
 | --- | --- |
-| Auth session | `slidex_local_auth_session_v1` |
-| Presentations | `slidex_local_presentations_v1:<ownerId>` |
-| Template seed | `slidex_workspace_seed_v1:<ownerId>:<seedId>` |
-| Onboarding | `slidex_workspace_onboarding_v1:<ownerId>` |
-| Slide comments | `slidex_slide_comments_v2:<deckId>` |
+| `id` | Heddle conversation ID，直接作為 text primary key |
+| `user_id` | Session 擁有者，預設 `auth.uid()` |
+| `presentation_id` | 所屬簡報；刪除簡報時 cascade |
+| `title` | Session 顯示名稱，1–240 字元 |
+| `message_count` | 非負整數，預設 0 |
+| `created_at` | 建立時間 |
+| `updated_at` | title 或 message count 更新時間 |
 
-### 13.2 遷移流程
+一份 presentation 可以有多個 Agent sessions。MVP 不把 Heddle message 內容複製到
+Supabase，也不建立共享 session、workspace membership 或 collaboration 權限。
 
-1. 使用者首次完成 Supabase OAuth 後取得 `auth.uid()` 與 default Workspace。
-2. 讀取目前 local presentation records。
-3. 驗證每筆資料符合 `WorkspacePresentation` parser。
-4. 對非 UUID 的 local ID 產生新 UUID，保存 old→new mapping。
-5. 將 `ownerId` 替換為 `auth.uid()`，填入 `workspace_id`。
-6. Insert presentations；相同 local record 不得重複匯入。
-7. 將 `lastOpenedAt` 寫入 `presentation_user_state`。
-8. 將 onboarding completion 寫入 `user_workspace_preferences`。
-9. Comments 依可識別的 Project mapping 匯入；無法識別者保留本機，不自動刪除。
-10. 全部成功後寫入 migration marker。
-11. 至少保留 local backup 一個版本週期，再提供使用者清除選項。
+### `slide_comments`
 
-Migration 必須 idempotent；重整、登入中斷或部分失敗不得產生重複 Project。
+| 欄位 | 說明 |
+| --- | --- |
+| `id` | UUID primary key |
+| `presentation_id` | 所屬簡報，刪簡報時 cascade |
+| `user_id` | 留言者，預設 `auth.uid()` |
+| `slide_index` | 0-based 頁碼，必須大於等於 0 |
+| `body` | 1–5000 字元 |
+| `is_resolved` | `false` 為未解決，`true` 為已解決 |
+| `created_at` | 建立時間 |
+| `updated_at` | 內容或狀態更新時間 |
 
-## 14. Auth Flow
+目前沒有簡報分享功能，因此只有簡報擁有者能讀寫該簡報的留言。
 
-### 14.1 Google OAuth
+## 3. 圖片 Storage
 
-1. Login page 呼叫 Supabase `signInWithOAuth({ provider: "google" })`。
-2. OAuth callback 交換 code for session。
-3. Auth trigger 建立 `profiles`、default `workspaces`、owner membership 與 preferences。
-4. 成功後導向 `/workspace`。
-5. Protected route 必須由 server/client session 共同驗證，不使用可偽造的 local session 作授權。
+- Bucket：`presentation-images`
+- Visibility：private
+- 單檔上限：10 MiB
+- 支援：AVIF、GIF、JPEG、PNG、WebP（不接受 SVG）
+- Path：`<user-id>/<presentation-id>/<uuid>.<trusted-extension>`
 
-### 14.2 Sign out
+Storage RLS 規則：
 
-- 呼叫 Supabase `auth.signOut()`。
-- 清除 client session 與 user-scoped cache。
-- 導向 `/login`。
-- 不刪除 server data。
+- 第一層資料夾必須等於 `auth.uid()`。
+- 上傳時，第二層必須是目前使用者擁有的 `presentation_id`。
+- Path 必須剛好兩層資料夾加一個檔名。
+- 檔名必須是 UUID，副檔名只能是 `avif/gif/jpg/png/webp`。
+- 讀取與刪除時，presentation 必須仍存在且屬於目前使用者。
+- 刪除簡報統一呼叫 `delete-presentation` Edge Function；Function 先刪除 Storage
+  圖片，成功後才刪除 presentation。
 
-## 15. 環境與部署
+不建立 `presentation_assets` table。MotionDoc `source` 直接保存圖片的 Storage path；
+顯示時再產生短效 signed URL。
 
-### 15.1 Client environment
+## 4. RLS 權限
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-```
+| 資源 | Anonymous | Authenticated user | Service role |
+| --- | --- | --- | --- |
+| Active templates | Read | Read | Manage |
+| Own presentations | — | Read / Create；source 走 CAS；刪除走 Edge Function | Manage |
+| Other users' presentations | — | — | Manage |
+| Own presentation comments | — | CRUD / resolve | Manage |
+| Own Agent sessions | — | CRUD | Manage |
+| Presentation images | — | Own folder only | Manage |
 
-### 15.2 Remote schema deployment
+Browser 只能使用 publishable key。資料隔離依賴 JWT 中的 `auth.uid()` 與 RLS，
+不能用 client 傳入的 user ID 當作授權依據。
+
+`presentations` 的 INSERT grant 只允許 `title/source/template_id/guest_import_id`；直接
+UPDATE 只保留 `template_id`，`title/source` 必須走 CAS function。`agent_sessions` INSERT
+只允許 `id/presentation_id/title`，UPDATE 只允許 `title/message_count`。UUID、user ID、
+revision 與時間欄位一律由資料庫產生。
+
+Authenticated client 沒有 `presentations.DELETE` grant。刪除只能呼叫已驗證 JWT 的
+`delete-presentation` Edge Function；Function 先以 caller-scoped client 確認所有權，
+再由 server-only service-role client 依序刪除 Storage 圖片與 presentation row。
+
+## 5. Application flow
+
+### 登入
+
+1. Browser 以 Supabase OAuth PKCE 登入，callback 固定回到 `/auth/callback`。
+2. Callback Route Handler 交換授權碼並把 session 寫入 cookie，再導向安全的 `next` path。
+3. Next 16 根目錄 `proxy.ts` 使用 `getClaims()` 驗證 JWT、刷新 cookie，並阻擋未登入的 `/workspace`；`/workspace/pitch?demo=1` 保持公開。
+4. 所有資料 API 仍需再次呼叫 `getClaims()` 並依 RLS 授權，不能把 Proxy 當成唯一授權層。
+5. 登出使用 `auth.signOut()`，不刪除 server data。
+
+首次進入 `/workspace` 時，UI 會讀取 `/api/account/onboarding`。尚未完成的帳號顯示
+歡迎彈窗；關閉、略過或開始建立後，由 authenticated Route Handler 寫入 Supabase Auth
+user metadata，因此同一帳號換瀏覽器或裝置也不會重複顯示。既有 localStorage 完成紀錄
+會在下一次登入時自動同步到 Auth metadata。
+
+### 訪客 Demo 匯入
+
+1. 未登入時，Demo source 留在 browser `localStorage`，不允許 anonymous insert。
+2. 草稿第一次建立時產生 `importId` UUID；登入成功後 browser 將草稿 POST 到 `/api/presentations/import-demo`。
+3. Route Handler 先驗證登入，再以 strict schema 只接受 `importId/title/source/templateId`，並檢查 title、template 格式與 source 2 MiB 上限。
+4. `user_id/id/created_at/updated_at` 不接受 client 輸入，由資料庫預設值產生。
+5. `(user_id, guest_import_id)` 保證 OAuth callback 或網路重試不會重複建立簡報。
+6. SQL 寫入成功後才清除 browser 草稿；失敗時保留草稿供使用者重試。
+
+### 建立與儲存簡報
+
+1. Insert `presentations`，`user_id` 可省略，資料庫預設為 `auth.uid()`。
+2. Template 建立流程先從程式內 preset 取得 source，再填入 `template_id`。
+3. 讀取時同時保留 `source_revision`；編輯器 debounce 後以 CAS function 儲存。
+4. 同一瀏覽器的 autosave requests 必須序列化，下一次請求使用前一次成功回傳的 revision。
+5. `40001/source_revision_conflict` 顯示重新載入提示，絕不以新請求自動覆寫。
+6. UI 保留 `Saving`、`Saved`、`Save failed` 狀態；失敗不清除 editor state。
+
+### Agent session
+
+1. Agent backend 以使用者 JWT 呼叫 Supabase，不能把 service role key 交給 browser。
+2. 建立 Heddle conversation 後，以 conversation ID insert `agent_sessions.id`。
+3. 每次 Agent 要寫回簡報時，先讀取目前 `source_revision`，再呼叫相同 CAS function。
+4. `message_count` 與 session title 可更新；Heddle message/state 仍由 Agent backend 管理。
+
+### 留言與解決
+
+1. 以 `presentation_id + slide_index` 查詢並依 `created_at` 排序。
+2. 新增留言時 `user_id` 可省略。
+3. Resolve 只更新 `is_resolved = true`；重新開啟則設為 `false`。
+
+### 圖片上傳
+
+1. Client 先驗證 MIME 與 10 MiB 限制，明確拒絕 SVG。
+2. Adapter 從 Supabase session 取得 user ID，並產生 UUID-based immutable path；
+   不使用原始檔名，`upsert = false`。
+3. 上傳成功後將 Storage path 寫入 MotionDoc source。
+4. 需要顯示時建立 signed URL。
+
+### MotionDoc 渲染安全
+
+- MotionDoc 使用受控 parser，不使用 `eval`、MDX compiler 或動態 JavaScript。
+- 只解析 `Slide/Scene/Title/Text/Card/ImageBlock/VideoBlock/Metric/Icon/Shape/Stack/Table`
+  等白名單元件；import、export 與未知 JSX 不會被執行。
+- React preview 以文字節點渲染內容；HTML export 會 escape 文字與 attribute。
+- `src/poster/backgroundImage` 只接受 HTTPS、受控 blob URL、相對路徑，以及本機開發用 HTTP。
+  `javascript:`、`data:`、`file:` 與 traversal path 會被清空。
+- YouTube iframe 使用固定 embed URL、sandbox 與 referrer policy。
+- HTML export 內建 Content Security Policy，每次 export 都產生新的 runtime nonce。
+
+## 6. 部署與驗證
 
 ```bash
-npx supabase login
-npx supabase link --project-ref <project-ref>
-npx supabase db push --dry-run
-npx supabase db push
-```
-
-### 15.3 Type generation
-
-```bash
+npm run supabase:start
+npm run supabase:reset
 npm run supabase:types > common/lib/supabase/database.types.ts
+npm run lint
+npm test
 ```
 
-生成後必須執行 lint 與 build，不可手動讓型別長期偏離 remote schema。
+遠端套用前先執行：
 
-## 16. 錯誤處理
+```bash
+npx supabase migration list
+npx supabase db push --dry-run
+```
 
-| 情況 | 預期行為 |
-| --- | --- |
-| Auth session 過期 | Refresh；失敗後導向 login |
-| Presentation 讀取失敗 | 顯示錯誤並返回 Workspace，不洩漏 row 是否存在 |
-| Autosave 失敗 | 保留 editor state，顯示 Save failed，允許重試 |
-| 上傳格式不支援 | 上傳前拒絕並顯示可理解訊息 |
-| 上傳超過 50 MiB | client validation 與 bucket 同時拒絕 |
-| Workspace quota 不足 | 不建立 metadata，清除已上傳暫存 objects |
-| WebP conversion 失敗 | 使用原檔，不阻擋合法圖片 |
-| Preview URL 過期 | 重新取得 signed URL |
-| Storage delete 失敗 | 不刪 Presentation row，保留重試能力 |
+此專案把尚未部署的 MVP schema 壓成單一 migration。若目標 Supabase project 已經記錄
+舊的 incremental migration 為 applied，不能直接用合併後檔案覆蓋 migration history；
+必須先確認遠端 history，再選擇保留 incremental migrations 或依正式流程修復 history。
 
-## 17. 驗收標準
+驗收至少涵蓋：
 
-### 17.1 Auth
-
-- [ ] Google OAuth 成功後建立 profile 與 default Workspace。
-- [ ] 未登入使用者不可讀取 Workspace route 或 Supabase rows。
-- [ ] Sign out 後無法以舊 client state 讀取 private data。
-
-### 17.2 Presentation Project
-
-- [ ] 使用者可以建立、開啟、儲存、重新命名、複製及刪除 Project。
-- [ ] 重新整理或換裝置後仍能取得同一份 Project。
-- [ ] Recent 順序依目前使用者的 `last_opened_at` 計算。
-- [ ] Template 不可由一般 delete flow 刪除。
-- [ ] Viewer 無法修改 `source`。
-- [ ] Editor 無法修改 `workspace_id` 或 `owner_id`。
-
-### 17.3 Assets
-
-- [ ] >1 MiB PNG/JPG 在節省 ≥10% 時產生 WebP preview。
-- [ ] Original PNG/JPG 仍可用於 PPTX、PNG、HTML 與 MDX export。
-- [ ] Preview 與 original 都計入 Workspace quota。
-- [ ] 不支援的 MIME type 被 client 與 bucket 拒絕。
-- [ ] Project 刪除後 Storage 不留下 billed orphan objects。
-- [ ] Signed URL 過期後可無感更新。
-
-### 17.4 Security
-
-- [ ] 不同 Workspace 成員無法讀取彼此資料與 Storage objects。
-- [ ] Anonymous role 無法讀取 private rows 或 bucket objects。
-- [ ] Browser bundle 不包含 service-role/secret key。
-- [ ] RLS tests 覆蓋 owner、editor、viewer 與 anonymous。
-
-### 17.5 Validation
-
-- [ ] `npm run lint`
-- [ ] `npm run build`
-- [ ] `npm run supabase:reset`
-- [ ] `npx supabase db lint --local --level error`
-- [ ] 產生 database types 後工作樹沒有非預期差異。
-
-## 18. 上線階段
-
-### Phase 1：Remote foundation
-
-- 建立 Supabase Project。
-- 填入環境變數。
-- Link、dry-run、push migration。
-- 產生 database types。
-- 驗證 RLS 與 bucket。
-
-### Phase 2：Auth
-
-- 將 demo Google login 換成 Supabase OAuth。
-- 建立 callback 與 auth refresh proxy。
-- Protected routes 改用 Supabase session。
-
-### Phase 3：Workspace 與 Presentation
-
-- 建立 Supabase repositories。
-- Workspace list 與 Pitch loading 切換到遠端。
-- 加入 autosave 狀態與錯誤重試。
-- 執行 localStorage migration。
-
-### Phase 4：Assets 與 Comments
-
-- 接入 Supabase Storage upload/delete/signed URLs。
-- 接入 WebP preview 與 original export URL。
-- Comments 切換到 remote repository。
-- 加入 orphan cleanup 與 quota UI。
-
-### Phase 5：清理
-
-- 移除 demo auth。
-- 將 local repositories 降級為 migration/backup adapter。
-- 完成跨帳號與跨 Workspace 安全測試。
-
-## 19. 已知限制與待決策
-
-1. v1 simultaneous editing 採 last-write-wins，尚無 conflict version column。
-2. Duplicate Project 是否複製 asset objects 尚未定案；v1 建議先使用 copy-on-reference，但刪除規則需 reference counting。
-3. Workspace invitation flow 尚未建立，membership 暫由 trusted server 或 Dashboard 管理。
-4. Presentation cover 目前由 `template_id` 推導，尚未建立自訂 thumbnail asset 欄位。
-5. Remote migration 尚未執行；正式上線前必須以實際 Supabase Postgres 執行 reset、lint 與 RLS tests。
+- 使用者只能 CRUD 自己的簡報。
+- Anonymous 只能讀 active official templates。
+- Comment 必須指向目前使用者的簡報。
+- Comment resolve 狀態可更新且其他使用者不可讀。
+- 圖片路徑 user ID 不符時上傳失敗。
+- 圖片路徑 presentation ID 不屬於目前使用者時上傳失敗。

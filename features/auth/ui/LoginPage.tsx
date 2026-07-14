@@ -3,12 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { appRoutes } from "@/common/lib/appRoutes";
+import { createSupabaseBrowserClient } from "@/common/lib/supabase/browserClient";
 import { resolveSafeAuthNextPath } from "@/features/auth/application/authRedirect";
 import type { AuthProvider } from "@/features/auth/domain/authSession";
-import { createFakeOAuthSession } from "@/features/auth/infrastructure/localAuthSession";
-import { useLocalAuthSession } from "@/features/auth/ui/useLocalAuthSession";
+import { useAuthSession } from "@/features/auth/ui/useAuthSession";
 
 function GoogleMark() {
   return (
@@ -24,10 +24,13 @@ function GoogleMark() {
 export function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isReady, session } = useLocalAuthSession();
+  const { isReady, session } = useAuthSession();
+  const [isStartingOAuth, setIsStartingOAuth] = useState(false);
+  const [oauthError, setOAuthError] = useState<string | null>(null);
   const requestedNextPath = searchParams.get("next");
   const nextPath = resolveSafeAuthNextPath(requestedNextPath, appRoutes.workspace);
   const isDemoContinuation = nextPath.startsWith(appRoutes.pitch) && nextPath.includes("demo=1");
+  const callbackFailed = searchParams.get("error") === "oauth_callback_failed";
 
   useEffect(() => {
     if (isReady && session) {
@@ -35,9 +38,21 @@ export function LoginPage() {
     }
   }, [isReady, nextPath, router, session]);
 
-  function continueWith(provider: AuthProvider) {
-    createFakeOAuthSession(provider);
-    router.replace(nextPath);
+  async function continueWith(provider: AuthProvider) {
+    setIsStartingOAuth(true);
+    setOAuthError(null);
+
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    callbackUrl.searchParams.set("next", nextPath);
+    const { error } = await createSupabaseBrowserClient().auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: callbackUrl.toString() }
+    });
+
+    if (error) {
+      setOAuthError("Google sign-in could not start. Please try again.");
+      setIsStartingOAuth(false);
+    }
   }
 
   if (!isReady || session) {
@@ -46,30 +61,32 @@ export function LoginPage() {
 
   return (
     <main className="flex min-h-[100dvh] items-center justify-center bg-[#111111] px-5 py-12 text-[#f3f3f0]">
-      <section className="w-full max-w-[430px]">
-        <Link aria-label="SlideX home" className="mx-auto flex w-fit items-center justify-center" href="/en/">
-          <Image alt="SlideX" className="h-auto w-[96px] object-contain" height={72} priority src="/logo.png" width={260} />
+      <section className="w-full max-w-[460px]">
+        <Link aria-label="SlideX home" className="mx-auto flex w-fit items-center justify-center" href="/">
+          <Image alt="SlideX" className="h-auto w-[112px] object-contain" height={72} priority src="/logo.png" width={260} />
         </Link>
 
-        <div className="mt-8 rounded-[12px] border border-white/[0.11] bg-[#1a1a1a] px-6 py-7 shadow-[0_24px_70px_rgba(0,0,0,0.24)] sm:px-8 sm:py-8">
+        <div className="mt-9 rounded-[12px] border border-white/[0.11] bg-[#1a1a1a] px-7 py-8 shadow-[0_24px_70px_rgba(0,0,0,0.24)] sm:px-9 sm:py-10">
           <div className="text-center">
-            <h1 className="text-[22px] font-medium tracking-[-0.025em] text-white/92">{isDemoContinuation ? "Keep your Live Demo" : "Sign in to SlideX"}</h1>
-            <p className="mt-2 text-[13px] leading-5 text-white/38">{isDemoContinuation ? "Your edits will be added to your workspace after sign in." : "Continue to your workspace."}</p>
+            <h1 className="text-[29px] font-medium tracking-[-0.035em] text-white/92">{isDemoContinuation ? "Keep your Live Demo" : "Sign in to SlideX"}</h1>
+            <p className="mt-3 text-[15px] leading-6 text-white/44">{isDemoContinuation ? "Your edits will be added to your workspace after sign in." : "Continue to your presentation workspace."}</p>
           </div>
 
-          <div className="mt-7 space-y-3">
-            <button className="relative flex h-11 w-full items-center justify-center rounded-[7px] bg-[#f1f0eb] px-4 text-[13px] font-medium text-[#171717] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/16" onClick={() => continueWith("google")} type="button">
+          <div className="mt-8 space-y-3">
+            <button className="relative flex h-12 w-full items-center justify-center rounded-[7px] bg-[#f1f0eb] px-4 text-[15px] font-medium text-[#171717] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/16 disabled:cursor-wait disabled:opacity-60" disabled={isStartingOAuth} onClick={() => void continueWith("google")} type="button">
               <span className="absolute left-4"><GoogleMark /></span>
-              Continue with Google
+              {isStartingOAuth ? "Opening Google…" : "Continue with Google"}
             </button>
           </div>
 
-          <p className="mt-6 border-t border-white/[0.07] pt-5 text-center text-[10px] leading-4 text-white/26">
-            Demo sign-in is active until OAuth is connected.
-          </p>
+          {oauthError || callbackFailed ? (
+            <p className="mt-5 text-center text-[13px] leading-5 text-red-300/80">
+              {oauthError ?? "Google sign-in did not complete. Please try again."}
+            </p>
+          ) : null}
         </div>
 
-        <p className="mt-5 text-center text-[10px] leading-4 text-white/24">
+        <p className="mt-6 text-center text-[12px] leading-5 text-white/34">
           By continuing, you agree to the <Link className="text-white/46 hover:text-white" href="/en/terms/">Terms</Link> and <Link className="text-white/46 hover:text-white" href="/en/privacy/">Privacy Policy</Link>.
         </p>
       </section>

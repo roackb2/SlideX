@@ -163,6 +163,8 @@ export function VideoBlock({
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
           className={full || fillFrame ? "h-full w-full" : "aspect-video w-full"}
+          referrerPolicy="strict-origin-when-cross-origin"
+          sandbox="allow-scripts allow-same-origin allow-presentation"
           src={youtubeSrc}
           title="YouTube video"
         />

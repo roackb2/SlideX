@@ -18,8 +18,8 @@ export async function createSupabaseServerClient() {
             cookieStore.set(name, value, options);
           });
         } catch {
-          // Server Components cannot write cookies. A future auth proxy will
-          // own token refresh before protected routes switch from demo auth.
+          // Server Components cannot write cookies. The root proxy owns token
+          // refresh before authenticated routes render.
         }
       }
     }

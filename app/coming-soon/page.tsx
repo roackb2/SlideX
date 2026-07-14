@@ -1,5 +1,6 @@
-import { ComingSoonPage } from "@/features/marketing";
+import { redirect } from "next/navigation";
+import { appRoutes } from "@/common/lib/appRoutes";
 
 export default function ComingSoonRoutePage() {
-  return <ComingSoonPage />;
+  redirect(appRoutes.login);
 }

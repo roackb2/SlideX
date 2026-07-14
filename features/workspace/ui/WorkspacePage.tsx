@@ -19,8 +19,7 @@ import {
   welcomePresentationSource,
   welcomePresentationTitle
 } from "@/core/motion-doc/presets/welcomeToSlideX";
-import { clearLocalAuthSession } from "@/features/auth/infrastructure/localAuthSession";
-import { useLocalAuthSession } from "@/features/auth/ui/useLocalAuthSession";
+import { useAuthSession } from "@/features/auth/ui/useAuthSession";
 import { createUntitledPresentationName } from "@/features/workspace/application/presentationTitle";
 import {
   canDeleteWorkspacePresentation,
@@ -56,7 +55,7 @@ const workspaceViewCopy: Record<WorkspaceView, { description: string; title: str
 
 export function WorkspacePage() {
   const router = useRouter();
-  const { isReady, session } = useLocalAuthSession();
+  const { isReady, session, signOut } = useAuthSession();
   const [activeView, setActiveView] = useState<WorkspaceView>("home");
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [menuPresentationId, setMenuPresentationId] = useState<string | null>(null);
@@ -139,8 +138,8 @@ export function WorkspacePage() {
     setMenuPresentationId(null);
   }
 
-  function signOut() {
-    clearLocalAuthSession();
+  async function handleSignOut() {
+    await signOut();
     router.replace(appRoutes.login);
   }
 
@@ -185,14 +184,14 @@ export function WorkspacePage() {
   return (
     <main className="min-h-[100dvh] bg-[#171717] text-[#f2f2ef]">
       <div aria-hidden={isOnboardingOpen ? true : undefined} inert={isOnboardingOpen ? true : undefined}>
-        <WorkspaceSidebar activeView={activeView} onNavigate={navigateTo} onSignOut={signOut} session={session} />
+        <WorkspaceSidebar activeView={activeView} onNavigate={navigateTo} onSignOut={() => void handleSignOut()} session={session} />
 
         <header className="border-b border-white/[0.07] bg-[#1b1b1b] md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
           <Link aria-label="SlideX workspace home" href={appRoutes.workspace}>
             <Image alt="SlideX" className="h-auto w-[84px] object-contain" height={72} priority src="/logo.png" width={260} />
           </Link>
-          <button aria-label="Sign out" className="flex h-8 w-8 items-center justify-center rounded-[6px] text-white/42 hover:bg-white/[0.06] hover:text-white" onClick={signOut} type="button">
+          <button aria-label="Sign out" className="flex h-8 w-8 items-center justify-center rounded-[6px] text-white/42 hover:bg-white/[0.06] hover:text-white" onClick={() => void handleSignOut()} type="button">
             <LogOut className="h-4 w-4" strokeWidth={1.7} />
           </button>
         </div>
@@ -264,7 +263,7 @@ export function WorkspacePage() {
                 <h2 className="text-[17px] font-medium leading-6 text-white/84">Account</h2>
                 <div className="mt-3 flex items-center justify-between gap-5 rounded-[8px] border border-white/[0.08] bg-[#1d1d1d] px-4 py-3.5">
                   <div className="min-w-0"><p className="truncate text-[14px] font-medium leading-5 text-white/78">{session.user.displayName}</p><p className="mt-1 truncate text-[12px] leading-4 text-white/40">{session.provider} demo · {session.user.email}</p></div>
-                  <button className="shrink-0 rounded-[6px] border border-white/[0.1] px-3 py-2 text-[12px] leading-4 text-white/54 hover:border-white/[0.2] hover:text-white" onClick={signOut} type="button">Sign out</button>
+                  <button className="shrink-0 rounded-[6px] border border-white/[0.1] px-3 py-2 text-[12px] leading-4 text-white/54 hover:border-white/[0.2] hover:text-white" onClick={() => void handleSignOut()} type="button">Sign out</button>
                 </div>
               </div>
               <div>

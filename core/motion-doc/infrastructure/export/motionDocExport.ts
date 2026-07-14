@@ -26,6 +26,7 @@ type RenderSceneHtmlOptions = {
 };
 
 export function buildMotionDocHtml(source: string, customTitle?: string) {
+  const security = exportRuntimeSecurity();
   const document = parseMotionDoc(source);
   const displayTitle = customTitle || document.title;
   const slidesHtml = document.scenes
@@ -36,12 +37,13 @@ export function buildMotionDocHtml(source: string, customTitle?: string) {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="${security.policy}" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${escapeHtml(displayTitle)}</title>
     <style>${motionDocExportStyles}</style>
   </head>
   <body>
-    <script id="slidex-motion-doc-source" type="application/json">${serializeMotionDocSource(source)}</script>
+    <script id="slidex-motion-doc-source" nonce="${security.nonce}" type="application/json">${serializeMotionDocSource(source)}</script>
     <main class="player" data-slide-count="${document.scenes.length}">
       <div class="stage">
         <div class="viewport" aria-live="polite">
@@ -64,7 +66,7 @@ export function buildMotionDocHtml(source: string, customTitle?: string) {
         </div>
       </nav>
     </main>
-    <script>${makeMotionDocExportRuntime()}</script>
+    <script nonce="${security.nonce}">${makeMotionDocExportRuntime()}</script>
   </body>
 </html>`;
 }
@@ -73,11 +75,29 @@ function serializeMotionDocSource(source: string) {
   return JSON.stringify(source).replaceAll("<", "\\u003c");
 }
 
+function exportRuntimeSecurity() {
+  const nonce = `slidex-${globalThis.crypto.randomUUID()}`;
+  const policy = [
+    "default-src 'none'",
+    "connect-src https:",
+    "font-src https: data:",
+    "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
+    "img-src https: blob: data:",
+    "media-src https: blob:",
+    "object-src 'none'",
+    `script-src 'nonce-${nonce}'`,
+    "style-src 'unsafe-inline'"
+  ].join("; ");
+
+  return { nonce, policy };
+}
+
 export function buildMotionDocRasterHtml(
   source: string,
   customTitle?: string,
   slideIndices?: readonly number[]
 ) {
+  const security = exportRuntimeSecurity();
   const document = parseMotionDoc(source);
   const displayTitle = customTitle || document.title;
   const scenes = slideIndices
@@ -93,6 +113,7 @@ export function buildMotionDocRasterHtml(
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="${security.policy}" />
     <meta name="viewport" content="width=1024, initial-scale=1" />
     <title>${escapeHtml(displayTitle)}</title>
     <style>${motionDocExportStyles}</style>
@@ -160,7 +181,7 @@ export function buildMotionDocRasterHtml(
         </div>
       </div>
     </main>
-    <script>${makeMotionDocExportRuntime()}</script>
+    <script nonce="${security.nonce}">${makeMotionDocExportRuntime()}</script>
   </body>
 </html>`;
 }
@@ -422,7 +443,7 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
     if (youtubeSrc) {
       return renderMotionBlock(
         block,
-        `<figure class="block-image block-video"><iframe src="${escapeAttribute(youtubeSrc)}" title="YouTube video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></figure>`
+        `<figure class="block-image block-video"><iframe src="${escapeAttribute(youtubeSrc)}" title="YouTube video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" allowfullscreen></iframe></figure>`
       );
     }
 

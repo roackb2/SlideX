@@ -9,6 +9,7 @@ export type WorkspacePresentation = {
   lastOpenedAt: string;
   ownerId: string;
   source: string;
+  sourceRevision: number;
   templateId?: string;
   title: string;
   updatedAt: string;
@@ -48,6 +49,10 @@ export function parseWorkspacePresentations(value: unknown): WorkspacePresentati
     return [{
       ...item,
       kind: isWorkspacePresentationKind(item.kind) ? item.kind : "presentation",
+      sourceRevision: typeof item.sourceRevision === "number" &&
+        Number.isSafeInteger(item.sourceRevision) && item.sourceRevision >= 0
+        ? item.sourceRevision
+        : 0,
       templateId: typeof item.templateId === "string" ? item.templateId : undefined
     } as WorkspacePresentation];
   });

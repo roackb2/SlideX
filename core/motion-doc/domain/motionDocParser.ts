@@ -3,6 +3,9 @@ import type {
   MotionDocProps,
   ParsedMotionDoc
 } from "@/core/motion-doc/domain/motionDocTypes";
+import { sanitizeMotionDocMediaSource } from "@/core/motion-doc/domain/mediaSource";
+
+const mediaSourcePropNames = new Set(["backgroundImage", "poster", "src"]);
 
 export function parseMotionDoc(source: string): ParsedMotionDoc {
   const title = source.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? "Slider Preview";
@@ -133,7 +136,9 @@ function parseProps(rawProps: string): MotionDocProps {
       : decodeMdxAttribute(quotedValue);
     const numericValue = Number(value);
 
-    props[key] = key !== "text" && Number.isFinite(numericValue) && value.trim() !== "" ? numericValue : value;
+    props[key] = mediaSourcePropNames.has(key)
+      ? sanitizeMotionDocMediaSource(value)
+      : key !== "text" && Number.isFinite(numericValue) && value.trim() !== "" ? numericValue : value;
   }
 
   return props;

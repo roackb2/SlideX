@@ -1,19 +1,10 @@
-import type { WorkspacePresentation } from "@/features/workspace/domain/presentation";
-import {
-  createLocalPresentation,
-  getLocalPresentation,
-  updateLocalPresentation
-} from "@/features/workspace/infrastructure/localPresentationRepository";
-
-const guestDemoDraftStorageKey = "slidex_guest_demo_draft_v2";
-
-function promotionStorageKey(ownerId: string) {
-  return `slidex_guest_demo_promotion_v2:${ownerId}`;
-}
+const guestDemoDraftStorageKey = "slidex_guest_demo_draft_v3";
+const legacyGuestDemoDraftStorageKey = "slidex_guest_demo_draft_v2";
 
 export type GuestDemoDraft = {
   createdAt: string;
   id: string;
+  importId: string;
   source: string;
   templateId: string;
   title: string;
@@ -21,6 +12,20 @@ export type GuestDemoDraft = {
 };
 
 function isGuestDemoDraft(value: unknown): value is GuestDemoDraft {
+  if (typeof value !== "object" || value === null) return false;
+
+  return (
+    "createdAt" in value && typeof value.createdAt === "string" &&
+    "id" in value && typeof value.id === "string" &&
+    "importId" in value && typeof value.importId === "string" &&
+    "source" in value && typeof value.source === "string" &&
+    "templateId" in value && typeof value.templateId === "string" &&
+    "title" in value && typeof value.title === "string" &&
+    "updatedAt" in value && typeof value.updatedAt === "string"
+  );
+}
+
+function isLegacyGuestDemoDraft(value: unknown): value is Omit<GuestDemoDraft, "importId"> {
   if (typeof value !== "object" || value === null) return false;
 
   return (
@@ -36,9 +41,23 @@ function isGuestDemoDraft(value: unknown): value is GuestDemoDraft {
 export function readGuestDemoDraft() {
   try {
     const storedValue = window.localStorage.getItem(guestDemoDraftStorageKey);
-    if (!storedValue) return null;
-    const parsedValue: unknown = JSON.parse(storedValue);
-    return isGuestDemoDraft(parsedValue) ? parsedValue : null;
+    if (storedValue) {
+      const parsedValue: unknown = JSON.parse(storedValue);
+      return isGuestDemoDraft(parsedValue) ? parsedValue : null;
+    }
+
+    const legacyValue = window.localStorage.getItem(legacyGuestDemoDraftStorageKey);
+    if (!legacyValue) return null;
+    const legacyDraft: unknown = JSON.parse(legacyValue);
+    if (!isLegacyGuestDemoDraft(legacyDraft)) return null;
+
+    const migratedDraft = {
+      ...legacyDraft,
+      importId: crypto.randomUUID()
+    } satisfies GuestDemoDraft;
+    window.localStorage.setItem(guestDemoDraftStorageKey, JSON.stringify(migratedDraft));
+    window.localStorage.removeItem(legacyGuestDemoDraftStorageKey);
+    return migratedDraft;
   } catch {
     return null;
   }
@@ -57,6 +76,7 @@ export function ensureGuestDemoDraft({
   const draft = {
     createdAt: timestamp,
     id,
+    importId: crypto.randomUUID(),
     source,
     templateId,
     title,
@@ -84,26 +104,8 @@ export function updateGuestDemoDraft(source: string, title: string) {
   return updatedDraft;
 }
 
-export function promoteGuestDemoDraft(ownerId: string, draft: GuestDemoDraft): WorkspacePresentation {
-  const markerKey = promotionStorageKey(ownerId);
-  const promotedPresentationId = window.localStorage.getItem(markerKey);
-  const promotedPresentation = promotedPresentationId
-    ? getLocalPresentation(ownerId, promotedPresentationId)
-    : null;
-
-  if (promotedPresentation) {
-    return updateLocalPresentation(ownerId, promotedPresentation.id, {
-      source: draft.source,
-      title: draft.title
-    }) ?? promotedPresentation;
-  }
-
-  const presentation = createLocalPresentation({
-    ownerId,
-    source: draft.source,
-    templateId: draft.templateId,
-    title: draft.title
-  });
-  window.localStorage.setItem(markerKey, presentation.id);
-  return presentation;
+export function clearGuestDemoDraft(importId: string) {
+  const draft = readGuestDemoDraft();
+  if (draft?.importId !== importId) return;
+  window.localStorage.removeItem(guestDemoDraftStorageKey);
 }

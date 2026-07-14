@@ -2,5 +2,5 @@ import { launchDeckPresentationSource } from "@/core/motion-doc/presets/launchDe
 
 export const liveDemoPresentationId = "slidex-live-demo-launch-v6";
 export const liveDemoPresentationTitle = "Launch Deck";
-export const liveDemoPresentationTemplateId = liveDemoPresentationId;
+export const liveDemoPresentationTemplateId = "launch-deck";
 export const liveDemoPresentationSource = launchDeckPresentationSource;

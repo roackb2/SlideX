@@ -90,6 +90,7 @@ export function createLocalPresentation({
     lastOpenedAt: timestamp,
     ownerId,
     source,
+    sourceRevision: 0,
     templateId,
     title,
     updatedAt: timestamp
@@ -150,7 +151,15 @@ export function ensureLocalPresentationSeed({ kind, ownerId, seedId, source, tem
       ))
       .map((presentation) => (
         presentation.id === existingSeed.id
-          ? { ...presentation, kind, source, templateId, title, updatedAt: timestamp }
+          ? {
+              ...presentation,
+              kind,
+              source,
+              sourceRevision: presentation.sourceRevision + 1,
+              templateId,
+              title,
+              updatedAt: timestamp
+            }
           : presentation
       ));
     writePresentations(ownerId, nextPresentations);
@@ -165,6 +174,7 @@ export function ensureLocalPresentationSeed({ kind, ownerId, seedId, source, tem
       lastOpenedAt: timestamp,
       ownerId,
       source,
+      sourceRevision: 0,
       templateId,
       title,
       updatedAt: timestamp
@@ -184,7 +194,7 @@ export function updateLocalPresentation(
   ownerId: string,
   presentationId: string,
   updates: Pick<WorkspacePresentation, "source"> & Partial<Pick<WorkspacePresentation, "title">>
-) {
+): WorkspacePresentation | null {
   const timestamp = new Date().toISOString();
   let updatedPresentation: WorkspacePresentation | null = null;
   const presentations = listLocalPresentations(ownerId).map((presentation) => {
@@ -195,6 +205,7 @@ export function updateLocalPresentation(
     updatedPresentation = {
       ...presentation,
       source: updates.source,
+      sourceRevision: presentation.sourceRevision + 1,
       title: updates.title?.trim() || presentation.title,
       updatedAt: timestamp
     };
@@ -238,7 +249,12 @@ export function renameLocalPresentation(ownerId: string, presentationId: string,
   const timestamp = new Date().toISOString();
   const presentations = listLocalPresentations(ownerId).map((presentation) => (
     presentation.id === presentationId
-      ? { ...presentation, title: normalizedTitle, updatedAt: timestamp }
+      ? {
+          ...presentation,
+          sourceRevision: presentation.sourceRevision + 1,
+          title: normalizedTitle,
+          updatedAt: timestamp
+        }
       : presentation
   ));
   writePresentations(ownerId, presentations);
