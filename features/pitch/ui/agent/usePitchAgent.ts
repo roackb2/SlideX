@@ -46,12 +46,18 @@ type MotionDocReconciliation = {
   error?: string;
 };
 
+const MOTION_DOC_APPLY_ERROR =
+  "The agent finished, but SlideX could not apply its deck result automatically.";
+
 export type PitchAgentRuntimeInput = {
   initialSessionId?: string;
   presentationId: string;
   presentationTitle: string;
   source: string;
-  onApplyMotionDoc: (motionDoc: string, summary: string) => void;
+  onApplyMotionDoc: (
+    motionDoc: string,
+    summary: string
+  ) => void | Promise<void>;
   onOpenSession?: (session: AgentSessionSummary) => void;
   onSelectedSessionChange?: (sessionId?: string) => void;
 };
@@ -179,7 +185,6 @@ export function usePitchAgent(
     }
     if (event.kind === "result") {
       const result = event.result;
-      setMessages(toPitchMessages(result.session));
       const reconciliation = await reconcileMotionDoc({
         assistantMessage: result.assistantMessage,
         baseSourceRevision: result.baseSourceRevision,
@@ -187,6 +192,10 @@ export function usePitchAgent(
         motionDoc: result.motionDoc,
         onApply: inputRef.current.onApplyMotionDoc
       });
+      if (!mountedRef.current) {
+        return;
+      }
+      setMessages(toPitchMessages(result.session));
       setPendingMotionDoc(reconciliation.pending);
       setError(reconciliation.error);
       setErrorCode(undefined);
@@ -719,15 +728,22 @@ export function usePitchAgent(
     resetRuntimeState
   ]);
 
-  const applyPendingMotionDoc = useCallback(() => {
+  const applyPendingMotionDoc = useCallback(async () => {
     if (!pendingMotionDoc) {
       return;
     }
-    inputRef.current.onApplyMotionDoc(
-      pendingMotionDoc.motionDoc,
-      pendingMotionDoc.assistantMessage
-    );
-    setPendingMotionDoc(undefined);
+    try {
+      await inputRef.current.onApplyMotionDoc(
+        pendingMotionDoc.motionDoc,
+        pendingMotionDoc.assistantMessage
+      );
+      setPendingMotionDoc(undefined);
+      setError(undefined);
+      setStatus("idle");
+    } catch {
+      setError(MOTION_DOC_APPLY_ERROR);
+      setStatus("error");
+    }
   }, [pendingMotionDoc]);
 
   const clearCredentialError = useCallback(() => {
@@ -817,7 +833,10 @@ async function reconcileMotionDoc(input: {
   baseSourceRevision?: string;
   currentSource: string;
   motionDoc: string;
-  onApply: (motionDoc: string, summary: string) => void;
+  onApply: (
+    motionDoc: string,
+    summary: string
+  ) => void | Promise<void>;
 }): Promise<MotionDocReconciliation> {
   if (input.motionDoc === input.currentSource) {
     return {};
@@ -836,12 +855,12 @@ async function reconcileMotionDoc(input: {
     if (currentRevision !== input.baseSourceRevision) {
       return { pending };
     }
-    input.onApply(input.motionDoc, input.assistantMessage);
+    await input.onApply(input.motionDoc, input.assistantMessage);
     return {};
   } catch {
     return {
       pending,
-      error: "The agent finished, but SlideX could not apply its deck result automatically."
+      error: MOTION_DOC_APPLY_ERROR
     };
   }
 }
