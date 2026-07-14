@@ -1,4 +1,5 @@
 import { defaultShaderPaletteForBackground } from "@/core/motion-doc/application/shaders/shaderDefaults";
+import type { MotionDocPropInput } from "@/core/motion-doc/domain/motionDocTypes";
 
 export type SlideThemeTone = "dark" | "light";
 export type ShaderEngine = "three";
@@ -22,8 +23,6 @@ export type SlideThemeColors = {
   tone: SlideThemeTone;
 };
 
-type SlideThemeProps = Record<string, string | number | undefined>;
-
 type ResolveSlideThemeOptions = {
   accentFallback?: string;
   backgroundFallback?: string;
@@ -37,7 +36,7 @@ const LIGHT_MUTED = "#475569";
 const SHADER_COLOR_LIGHTNESS_WEIGHTS = [0.5, 0.35, 0.15];
 
 export function resolveSlideThemeColors(
-  props: SlideThemeProps,
+  props: MotionDocPropInput,
   options: ResolveSlideThemeOptions = {}
 ): SlideThemeColors {
   const theme = stringProp(props.theme) ?? options.themeFallback ?? "dark";

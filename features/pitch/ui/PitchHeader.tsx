@@ -7,6 +7,7 @@ import { Bot, Check, ChevronDown, Download, Layers, PanelRight, Play, Undo2 } fr
 import { appRoutes } from "@/common/lib/appRoutes";
 
 export function PitchHeader({
+  accessMode,
   exportMenuRef,
   isMobileInspectorOpen,
   isMobileSidebarOpen,
@@ -18,15 +19,15 @@ export function PitchHeader({
   setZoomLevel,
   actualScale,
 
+  onExport,
   onPlay,
   onUndo,
   onToggleInspector,
   onToggleSidebar,
-  onToggleAgentPanel,
-  setIsExportMenuOpen
+  onToggleAgentPanel
 }: {
+  accessMode: "authenticated" | "guest";
   exportMenuRef: RefObject<HTMLDivElement | null>;
-  isExportMenuOpen: boolean;
   isMobileInspectorOpen: boolean;
   isMobileSidebarOpen: boolean;
   isAgentEnabled: boolean;
@@ -37,12 +38,12 @@ export function PitchHeader({
   setZoomLevel: (z: number | "fit") => void;
   actualScale: number;
 
+  onExport: () => void;
   onPlay: () => void;
   onUndo: () => void;
   onToggleInspector: () => void;
   onToggleSidebar: () => void;
-  onToggleAgentPanel: () => void;
-  setIsExportMenuOpen: (updater: (current: boolean) => boolean) => void;
+  onToggleAgentPanel?: () => void;
 }) {
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const zoomOptions = ["fit", 0.5, 0.75, 1, 1.25, 1.5, 2] as const;
@@ -65,12 +66,12 @@ export function PitchHeader({
         <Link
           aria-label="SlideX workspace home"
           className="flex items-center whitespace-nowrap text-sm font-semibold tracking-tight text-white transition-opacity hover:opacity-85 active:opacity-70"
-          href={appRoutes.workspace}
+          href={accessMode === "guest" ? "/" : appRoutes.workspace}
         >
           <img src="/logo.png" alt="SlideX" className="h-auto w-[68px] rounded object-contain sm:w-[84px]" />
         </Link>
-        <span className="hidden whitespace-nowrap rounded-md border border-white/[0.12] px-1.5 py-0.5 text-[10px] font-semibold text-neutral-500 sm:inline-flex">
-          Pitch Beta
+        <span className={`hidden whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[10px] font-semibold sm:inline-flex ${accessMode === "guest" ? "border-[#c4ee87]/28 bg-[#c4ee87]/[0.07] text-[#c4ee87]" : "border-white/[0.12] text-neutral-500"}`}>
+          {accessMode === "guest" ? "Live Demo" : "Pitch Beta"}
         </span>
         <div className="hidden h-3.5 w-[1px] bg-white/[0.08] sm:block mx-1" />
         <span className="hidden max-w-[180px] truncate whitespace-nowrap rounded-xl bg-neutral-900/40 px-3 py-1 text-sm font-semibold tracking-wide text-neutral-300 sm:block border border-white/[0.04] shadow-inner">
@@ -160,7 +161,7 @@ export function PitchHeader({
           <button
             aria-label="Export presentation"
             className="flex h-8 items-center justify-center gap-1.5 rounded-xl bg-white px-3 text-sm font-bold text-black shadow-md shadow-white/[0.01] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02] hover:bg-neutral-100 active:scale-[0.96] sm:h-8.5 sm:px-4"
-            onClick={() => setIsExportMenuOpen((current) => !current)}
+            onClick={onExport}
             type="button"
           >
             <Download size={14} className="text-black" />

@@ -1,8 +1,5 @@
 import type { ReactNode } from "react";
 import {
-  BarChart3,
-  ChartLine,
-  CircleDot,
   Image as ImageIcon,
   Shapes,
   Sparkles,
@@ -14,7 +11,7 @@ import type { AddBlockType } from "@/core/motion-doc/application/motionDocBlockF
 
 export type { AddBlockType };
 
-export type PitchToolGroupId = "chart" | "icon" | "media" | "shape" | "table" | "text";
+export type PitchToolGroupId = "icon" | "media" | "shape" | "table" | "text";
 
 export type PitchBlockTool = {
   description?: string;
@@ -41,13 +38,6 @@ export const mediaTools = [
   { icon: <Video size={16} />, label: "Video", type: "Video" }
 ] satisfies PitchBlockTool[];
 
-export const chartTools = [
-  { description: "Compare categories", icon: <BarChart3 size={16} />, label: "Comparison", type: "ChartBar" },
-  { description: "Show change over time", icon: <ChartLine size={16} />, label: "Trend", type: "ChartLine" },
-  { description: "Show parts of a whole", icon: <CircleDot size={16} />, label: "Composition", type: "ChartDonut" },
-  { description: "Show correlation", icon: <CircleDot size={16} />, label: "Relationship", type: "ChartBubble" }
-] satisfies PitchBlockTool[];
-
 export const tableTools = [
   { description: "Editable grid with row and column controls", icon: <Table2 size={16} />, label: "Table", type: "Table" }
 ] satisfies PitchBlockTool[];
@@ -67,7 +57,6 @@ export const toolGroups: PitchToolGroup[] = [
   { icon: <Type size={17} />, id: "text", label: "Text", tools: textPresetTools },
   { icon: <ImageIcon size={17} />, id: "media", label: "Media", tools: mediaTools },
   { icon: <Shapes size={17} />, id: "shape", label: "Shape", modal: true, tools: shapeTools },
-  { icon: <BarChart3 size={17} />, id: "chart", label: "Chart", modal: true, tools: chartTools },
   { icon: <Table2 size={17} />, id: "table", label: "Table", tools: tableTools },
   { icon: <Sparkles size={17} />, id: "icon", label: "Icon", tools: [iconTool] }
 ];
@@ -75,7 +64,6 @@ export const toolGroups: PitchToolGroup[] = [
 export const blockTools: PitchBlockTool[] = [
   ...textPresetTools,
   ...mediaTools,
-  ...chartTools,
   ...shapeTools,
   ...tableTools,
   iconTool

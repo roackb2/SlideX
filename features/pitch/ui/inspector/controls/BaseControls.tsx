@@ -3,16 +3,16 @@
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
-import type { BlockUpdateOptions } from "@/features/pitch/ui/pitchCommandTypes";
+import type {
+  MotionDocBlockWithProps,
+  MotionDocPropValue
+} from "@/core/motion-doc/domain/motionDocTypes";
+import type { BlockUpdateOptions } from "@/features/pitch/application/pitchCommandTypes";
 
-export type PropValue = string | number;
-export type PropRecord = Record<string, PropValue>;
-export type BlockWithProps = Extract<MotionDocBlock, { props: PropRecord }>;
 export type ControlOption<T extends string = string> = { label: string; value: T };
 export type IconControlOption<T extends string = string> = ControlOption<T> & { icon: ReactNode };
 
-export type BlockFieldProps<TBlock extends BlockWithProps = BlockWithProps> = {
+export type BlockFieldProps<TBlock extends MotionDocBlockWithProps = MotionDocBlockWithProps> = {
   block: TBlock;
   selectedBlockIndex: number;
   updateBlock: (blockIndex: number, newProps: TBlock["props"], newText?: string, options?: BlockUpdateOptions) => void;
@@ -148,7 +148,7 @@ export function TextInput({
   label: string;
   onChange: (value: string) => void;
   placeholder: string;
-  value: PropValue;
+  value: MotionDocPropValue;
 }) {
   return (
     <Field label={label}>
@@ -174,7 +174,7 @@ export function TextAreaField({
   onChange: (value: string) => void;
   placeholder: string;
   rows: number;
-  value: PropValue;
+  value: MotionDocPropValue;
 }) {
   return (
     <Field label={label}>
@@ -206,7 +206,7 @@ export function NumberInput({
   prefix?: React.ReactNode;
   step: string;
   suffix?: string;
-  value: PropValue;
+  value: MotionDocPropValue;
 }) {
   const [draftValue, setDraftValue] = useState(String(value ?? ""));
   const [isFocused, setIsFocused] = useState(false);

@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/features/pitch/application/previewCanvas";
 import { PreviewPane } from "@/features/pitch/ui/preview/PreviewPane";
-import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 
 type SlideThumbnailPreviewProps = {
   activeSlideIndex: number;
+  eager?: boolean;
   replayNonce: number;
   scene?: MotionDocScene;
   source: string;
@@ -14,12 +15,37 @@ type SlideThumbnailPreviewProps = {
 
 export function SlideThumbnailPreview({
   activeSlideIndex,
+  eager = false,
   replayNonce,
   scene,
   source
 }: SlideThumbnailPreviewProps) {
   const frameRef = useRef<HTMLDivElement | null>(null);
+  const [shouldRender, setShouldRender] = useState(eager);
   const [scale, setScale] = useState(0.2);
+
+  useEffect(() => {
+    if (eager) {
+      setShouldRender(true);
+      return;
+    }
+
+    const frame = frameRef.current;
+    if (!frame || shouldRender) return;
+
+    if (!("IntersectionObserver" in window)) {
+      setShouldRender(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting) return;
+      setShouldRender(true);
+      observer.disconnect();
+    }, { rootMargin: "240px 0px" });
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, [eager, shouldRender]);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -52,12 +78,16 @@ export function SlideThumbnailPreview({
           width: CANVAS_WIDTH
         }}
       >
-        <PreviewPane
-          activeSlideIndex={activeSlideIndex}
-          replayNonce={replayNonce}
-          scene={scene}
-          source={source}
-        />
+        {shouldRender ? (
+          <PreviewPane
+            activeSlideIndex={activeSlideIndex}
+            imageFetchPriority="low"
+            imageLoading="lazy"
+            replayNonce={replayNonce}
+            scene={scene}
+            source={source}
+          />
+        ) : null}
       </div>
     </div>
   );

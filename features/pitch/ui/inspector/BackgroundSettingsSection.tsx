@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Palette, Sparkles } from "lucide-react";
-import type { PropRecord } from "@/features/pitch/application/themeColors";
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 import { AccordionSection } from "@/features/pitch/ui/inspector/controls/AccordionSection";
 import { IconSegmentedControl } from "@/features/pitch/ui/inspector/InspectorControls";
 import { SlideThemeSectionContent } from "@/features/pitch/ui/inspector/slide/SlideThemeSection";
@@ -29,8 +29,8 @@ type BackgroundSettingsSectionProps = {
   shaderSpeed: number;
   textColor: string;
   theme: string;
-  updateActiveSlideStyle: (updates: PropRecord) => void;
-  updateAllSlidesStyle: (updates: PropRecord) => void;
+  updateActiveSlideStyle: (updates: MotionDocProps) => void;
+  updateAllSlidesStyle: (updates: MotionDocProps) => void;
 };
 
 export function BackgroundSettingsSection({

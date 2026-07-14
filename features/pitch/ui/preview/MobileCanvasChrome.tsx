@@ -2,7 +2,6 @@
 
 import { useState, type ReactNode } from "react";
 import {
-  BarChart3,
   ChevronLeft,
   ChevronRight,
   Image as ImageIcon,
@@ -92,7 +91,6 @@ export function MobileCanvasDock({
             <MobileInsertButton icon={<Presentation size={18} />} label="New slide" onClick={insertSlide} />
             <MobileInsertButton icon={<Video size={18} />} label="Video" onClick={() => addBlock("Video")} />
             <MobileInsertButton icon={<Shapes size={18} />} label="Shape" onClick={() => openGroup("shape")} />
-            <MobileInsertButton icon={<BarChart3 size={18} />} label="Chart" onClick={() => openGroup("chart")} />
             <MobileInsertButton icon={<Table2 size={18} />} label="Table" onClick={() => addBlock("Table")} />
             <MobileInsertButton icon={<Sparkles size={18} />} label="Icon" onClick={() => openGroup("icon")} />
             <MobileInsertButton icon={<LayoutGrid size={18} />} label="Media" onClick={() => openGroup("media")} />

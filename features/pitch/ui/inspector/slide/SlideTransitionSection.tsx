@@ -4,8 +4,8 @@ import {
   slideTransitionPresets,
   type SlideTransition
 } from "@/features/pitch/application/motionPresets";
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 import { applySlideTransitionProps, normalizeSlideMotion } from "@/features/pitch/application/motionModel";
-import type { PropRecord } from "@/features/pitch/application/themeColors";
 import { Field, NumberInput } from "@/features/pitch/ui/inspector/InspectorControls";
 import { AccordionSection } from "@/features/pitch/ui/inspector/controls/AccordionSection";
 import { MotionThumbnailGrid } from "@/features/pitch/ui/inspector/controls/MotionThumbnailGrid";
@@ -14,7 +14,7 @@ type SlideTransitionSectionProps = {
   duration: number;
   slideTransition: string | number | undefined;
   transitionDuration: string | number | undefined;
-  updateActiveSlideStyle: (updates: PropRecord) => void;
+  updateActiveSlideStyle: (updates: MotionDocProps) => void;
 };
 
 export function SlideTransitionSection({

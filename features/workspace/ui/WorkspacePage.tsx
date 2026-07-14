@@ -8,6 +8,12 @@ import { FilePlus2, LogOut, Plus, Search } from "lucide-react";
 import { appRoutes } from "@/common/lib/appRoutes";
 import { defaultMdx } from "@/core/motion-doc/presets/defaultMdx";
 import {
+  launchDeckPresentationId,
+  launchDeckPresentationSeedVersion,
+  launchDeckPresentationSource,
+  launchDeckPresentationTitle
+} from "@/core/motion-doc/presets/launchDeck";
+import {
   welcomePresentationId,
   welcomePresentationSeedVersion,
   welcomePresentationSource,
@@ -69,7 +75,7 @@ export function WorkspacePage() {
       router.replace(appRoutes.login);
       return;
     }
-    setPresentations(ensureLocalPresentationSeed({
+    ensureLocalPresentationSeed({
       kind: "template",
       ownerId: session.user.id,
       seedId: welcomePresentationId,
@@ -77,6 +83,15 @@ export function WorkspacePage() {
       templateId: welcomePresentationId,
       title: welcomePresentationTitle,
       version: welcomePresentationSeedVersion
+    });
+    setPresentations(ensureLocalPresentationSeed({
+      kind: "template",
+      ownerId: session.user.id,
+      seedId: launchDeckPresentationId,
+      source: launchDeckPresentationSource,
+      templateId: launchDeckPresentationId,
+      title: launchDeckPresentationTitle,
+      version: launchDeckPresentationSeedVersion
     }));
   }, [isReady, router, session]);
 

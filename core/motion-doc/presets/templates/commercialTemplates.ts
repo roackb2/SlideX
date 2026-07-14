@@ -45,7 +45,15 @@ export const commercialTemplates: MotionTemplate[] = [
 
 <Slide duration={5} theme="dark" background="#0d0d0d" accent="#f5f5f5">
   <Text enter="slideLeft" fontSize={58} fontWeight={700} h={16} w={86} x={7} y={12}>Revenue momentum</Text>
-  <Chart title="Qualified pipeline index" labels="Q1,Q2,Q3,Q4" values="38,52,71,94" width="full" height={210} enter="fadeUp" delay={0.25} radius={32} h={56} w={86} x={7} y={34} />
+  <Text enter="fadeUp" delay={0.15} fontSize={24} fontWeight={600} h={8} w={86} x={7} y={33}>Qualified pipeline index</Text>
+  <Text enter="fadeUp" delay={0.2} fontSize={58} fontWeight={800} h={14} w={20} x={7} y={45}>38</Text>
+  <Text enter="fadeUp" delay={0.25} fontSize={18} fontWeight={600} h={8} w={20} x={7} y={63}>Q1</Text>
+  <Text enter="fadeUp" delay={0.25} fontSize={58} fontWeight={800} h={14} w={20} x={29} y={45}>52</Text>
+  <Text enter="fadeUp" delay={0.3} fontSize={18} fontWeight={600} h={8} w={20} x={29} y={63}>Q2</Text>
+  <Text enter="fadeUp" delay={0.3} fontSize={58} fontWeight={800} h={14} w={20} x={51} y={45}>71</Text>
+  <Text enter="fadeUp" delay={0.35} fontSize={18} fontWeight={600} h={8} w={20} x={51} y={63}>Q3</Text>
+  <Text enter="fadeUp" delay={0.35} fontSize={58} fontWeight={800} h={14} w={20} x={73} y={45}>94</Text>
+  <Text enter="fadeUp" delay={0.4} fontSize={18} fontWeight={600} h={8} w={20} x={73} y={63}>Q4</Text>
 </Slide>
 
 <Slide duration={5} theme="dark" background="#030303" accent="#ffffff">
@@ -62,7 +70,7 @@ export const commercialTemplates: MotionTemplate[] = [
 
   <Icon icon="Layers" enter="zoomIn" delay={0.2} size={48} strokeWidth={1.5} x={36.5} y={34} w={6} h={10} />
   <Text enter="fadeUp" delay={0.25} fontSize={26} fontWeight={700} x={36.5} y={48} w={27} h={10}>Build the proof stack</Text>
-  <Text enter="fadeUp" delay={0.3} fontSize={18} lineHeight={1.6} x={36.5} y={60} w={27} h={22}>Combine metrics, charts, buyer evidence, operating plan, and risk controls.</Text>
+  <Text enter="fadeUp" delay={0.3} fontSize={18} lineHeight={1.6} x={36.5} y={60} w={27} h={22}>Combine metrics, buyer evidence, operating plans, and risk controls.</Text>
 
   <Icon icon="Download" enter="zoomIn" delay={0.25} size={48} strokeWidth={1.5} x={66} y={34} w={6} h={10} />
   <Text enter="fadeUp" delay={0.3} fontSize={26} fontWeight={700} x={66} y={48} w={27} h={10}>Make it portable</Text>
@@ -135,7 +143,15 @@ export const commercialTemplates: MotionTemplate[] = [
 
 <Slide duration={5} theme="light" background="#f4f4f4" accent="#111111">
   <Text enter="slideLeft" fontSize={58} fontWeight={700} h={16} w={86} x={7} y={12}>Where momentum is building</Text>
-  <Chart title="Opportunity growth by segment" labels="SMB,Mid,Enterprise,Strategic" values="28,46,73,88" width="full" height={210} enter="fadeUp" delay={0.25} radius={32} h={56} w={86} x={7} y={34} />
+  <Text enter="fadeUp" delay={0.15} fontSize={24} fontWeight={600} h={8} w={86} x={7} y={33}>Opportunity growth by segment</Text>
+  <Text enter="fadeUp" delay={0.2} fontSize={58} fontWeight={800} h={14} w={20} x={7} y={45}>28</Text>
+  <Text enter="fadeUp" delay={0.25} fontSize={18} fontWeight={600} h={8} w={20} x={7} y={63}>SMB</Text>
+  <Text enter="fadeUp" delay={0.25} fontSize={58} fontWeight={800} h={14} w={20} x={29} y={45}>46</Text>
+  <Text enter="fadeUp" delay={0.3} fontSize={18} fontWeight={600} h={8} w={20} x={29} y={63}>Mid</Text>
+  <Text enter="fadeUp" delay={0.3} fontSize={58} fontWeight={800} h={14} w={20} x={51} y={45}>73</Text>
+  <Text enter="fadeUp" delay={0.35} fontSize={18} fontWeight={600} h={8} w={20} x={51} y={63}>Enterprise</Text>
+  <Text enter="fadeUp" delay={0.35} fontSize={58} fontWeight={800} h={14} w={20} x={73} y={45}>88</Text>
+  <Text enter="fadeUp" delay={0.4} fontSize={18} fontWeight={600} h={8} w={20} x={73} y={63}>Strategic</Text>
 </Slide>
 
 <Slide duration={5} theme="light" background="#ffffff" accent="#111111">
@@ -152,7 +168,7 @@ export const commercialTemplates: MotionTemplate[] = [
 
   <Icon icon="BarChart3" enter="zoomIn" delay={0.2} size={48} strokeWidth={1.5} x={36.5} y={34} w={6} h={10} />
   <Text enter="fadeUp" delay={0.25} fontSize={26} fontWeight={700} x={36.5} y={48} w={27} h={10}>Evidence layer</Text>
-  <Text enter="fadeUp" delay={0.3} fontSize={18} lineHeight={1.6} x={36.5} y={60} w={27} h={22}>Metrics and charts create a business argument without forcing the audience to decode raw detail.</Text>
+  <Text enter="fadeUp" delay={0.3} fontSize={18} lineHeight={1.6} x={36.5} y={60} w={27} h={22}>Metrics and evidence create a business argument without forcing the audience to decode raw detail.</Text>
 
   <Icon icon="Code2" enter="zoomIn" delay={0.25} size={48} strokeWidth={1.5} x={66} y={34} w={6} h={10} />
   <Text enter="fadeUp" delay={0.3} fontSize={26} fontWeight={700} x={66} y={48} w={27} h={10}>Editable source</Text>

@@ -1,5 +1,6 @@
 import { generateSlideString } from "@/core/motion-doc/application/motionDocSerialize";
-import { parseMotionDoc, type MotionDocBlock, type MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocBlock, MotionDocProps, MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 
 type PositionProps = {
   h: number;
@@ -50,7 +51,6 @@ export function defaultBlockFrame(block: MotionDocBlock): PositionProps {
   if (block.type === "Text") return { x: 8, y: 38, w: 52, h: 16 };
   if (block.type === "Card") return { x: 8, y: 38, w: 40, h: 32 };
   if (block.type === "Metric") return { x: 8, y: 38, w: 32, h: 36 };
-  if (block.type === "Chart") return { x: 8, y: 36, w: 70, h: 42 };
   if (block.type === "Icon") return { x: 42, y: 28, w: 16, h: 28 };
   if (block.type === "Shape") return { x: 34, y: 30, w: 28, h: 28 };
   if (block.type === "Stack") return { x: 10, y: 64, w: 80, h: 20 };
@@ -62,7 +62,7 @@ export function defaultBlockFrame(block: MotionDocBlock): PositionProps {
 function layoutBlock(
   block: MotionDocBlock,
   originalIndex: number,
-  blocksWithProps: Extract<MotionDocBlock, { props: Record<string, string | number> }>[],
+  blocksWithProps: Extract<MotionDocBlock, { props: MotionDocProps }>[],
   hasCenteredCopy: boolean
 ): PositionProps {
   const defaults = defaultBlockFrame(block);
@@ -112,10 +112,6 @@ function singleBlockFrame(block: MotionDocBlock, defaults: PositionProps): Posit
     return { x: 10, y: 20, w: 80, h: 54 };
   }
 
-  if (block.type === "Chart") {
-    return { x: 10, y: 36, w: 76, h: 42 };
-  }
-
   if (block.type === "Metric") {
     return { x: 10, y: 40, w: 34, h: 36 };
   }
@@ -131,7 +127,7 @@ function defaultFontSize(block: MotionDocBlock) {
 }
 
 function defaultRadius(block: MotionDocBlock) {
-  if (block.type === "Card" || block.type === "Chart" || block.type === "Icon" || block.type === "ImageBlock" || block.type === "Metric" || block.type === "Shape" || block.type === "Stack" || block.type === "VideoBlock") {
+  if (block.type === "Card" || block.type === "Icon" || block.type === "ImageBlock" || block.type === "Metric" || block.type === "Shape" || block.type === "Stack" || block.type === "VideoBlock") {
     return 16;
   }
 

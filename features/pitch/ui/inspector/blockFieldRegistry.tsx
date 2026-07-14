@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { CardFields } from "@/features/pitch/ui/inspector/CardFields";
-import { ChartFields } from "@/features/pitch/ui/inspector/ChartFields";
 import { IconFields } from "@/features/pitch/ui/inspector/IconFields";
 import { ImageFields } from "@/features/pitch/ui/inspector/ImageFields";
 import { MetricFields } from "@/features/pitch/ui/inspector/MetricFields";
@@ -11,8 +10,10 @@ import { StackFields } from "@/features/pitch/ui/inspector/StackFields";
 import { TableFields } from "@/features/pitch/ui/inspector/TableFields";
 import { VideoFields } from "@/features/pitch/ui/inspector/VideoFields";
 import type { BlockFieldProps } from "@/features/pitch/ui/inspector/InspectorControls";
+import type { MotionDocBlockType } from "@/core/motion-doc/domain/motionDocTypes";
 
 type BlockFieldRegistryContext = BlockFieldProps & {
+  importImageUrlForBlock: (blockIndex: number, source: string) => void;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
   uploadVideoForBlock: (blockIndex: number, file: File | undefined) => void;
 };
@@ -22,21 +23,23 @@ type BlockFieldRegistryEntry = {
   title: string;
 };
 
-const blockFieldRegistry: Record<string, BlockFieldRegistryEntry> = {
+const blockFieldRegistry: Partial<Record<MotionDocBlockType, BlockFieldRegistryEntry>> = {
   Card: {
     render: (context) => <CardFields {...context} />,
     title: "Card properties"
-  },
-  Chart: {
-    render: (context) => <ChartFields {...context} />,
-    title: "Chart properties"
   },
   Icon: {
     render: (context) => <IconFields {...context} />,
     title: "Icon properties"
   },
   ImageBlock: {
-    render: (context) => <ImageFields {...context} uploadImageForBlock={context.uploadImageForBlock} />,
+    render: (context) => (
+      <ImageFields
+        {...context}
+        importImageUrlForBlock={context.importImageUrlForBlock}
+        uploadImageForBlock={context.uploadImageForBlock}
+      />
+    ),
     title: "Image properties"
   },
   Metric: {
@@ -61,6 +64,6 @@ const blockFieldRegistry: Record<string, BlockFieldRegistryEntry> = {
   }
 };
 
-export function getBlockFieldRegistryEntry(type: string) {
+export function getBlockFieldRegistryEntry(type: MotionDocBlockType) {
   return blockFieldRegistry[type] ?? null;
 }

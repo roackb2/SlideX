@@ -1,7 +1,9 @@
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
+
 const canvasWidth = 1920;
 const canvasHeight = 1080;
 
-export function iconFrameForSize(props: Record<string, string | number>, value: number) {
+export function iconFrameForSize(props: MotionDocProps, value: number) {
   const size = Math.min(Math.max(Number.isFinite(value) ? value : 112, 40), 640);
   const w = size / canvasWidth * 100;
   const h = size / canvasHeight * 100;

@@ -1,7 +1,8 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocFrame } from "@/core/motion-doc/domain/frame";
+import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocTypes";
 import {
   blockWidthProp,
   booleanProp,
@@ -17,8 +18,8 @@ import {
   spacingProp,
   stringProp
 } from "@/features/pitch/application/previewProps";
-import { blockFrame, type Frame } from "@/features/pitch/application/previewCanvas";
-import { Card, Chart, IconBlock, ImageBlock, Metric, ShapeBlock, StackBlock, Text, Title, VideoBlock } from "@/features/pitch/ui/preview/motion-blocks";
+import { blockFrame } from "@/features/pitch/application/previewCanvas";
+import { Card, IconBlock, ImageBlock, Metric, ShapeBlock, StackBlock, Text, Title, VideoBlock } from "@/features/pitch/ui/preview/motion-blocks";
 import { TableBlock } from "@/features/pitch/ui/preview/motion/TableBlock";
 
 export type PreviewBlockItem = {
@@ -27,14 +28,18 @@ export type PreviewBlockItem = {
 };
 
 type PreviewBlockListProps = {
-  frameOverrides?: ReadonlyMap<number, Frame>;
+  frameOverrides?: ReadonlyMap<number, MotionDocFrame>;
   hiddenBlockIndices: Set<number>;
+  imageFetchPriority?: "auto" | "high" | "low";
+  imageLoading?: "eager" | "lazy";
   items: PreviewBlockItem[];
 };
 
 export function PreviewBlockList({
   frameOverrides,
   hiddenBlockIndices,
+  imageFetchPriority,
+  imageLoading,
   items
 }: PreviewBlockListProps) {
   const visibleItems = items.filter(({ originalIndex }) => !hiddenBlockIndices.has(originalIndex));
@@ -45,7 +50,7 @@ export function PreviewBlockList({
     <>
       {flowBlocks.map(({ block, originalIndex }) => (
         <div key={`${block.type}-${originalIndex}`}>
-          <PreviewBlock block={block} />
+          <PreviewBlock block={block} imageFetchPriority={imageFetchPriority} imageLoading={imageLoading} />
         </div>
       ))}
       {positionedBlocks.map(({ block, originalIndex }) => (
@@ -54,14 +59,24 @@ export function PreviewBlockList({
           key={`${block.type}-positioned-${originalIndex}`}
           style={positionedBlockStyle(block, originalIndex, frameOverrides?.get(originalIndex))}
         >
-          <PreviewBlock block={block} fillFrame />
+          <PreviewBlock block={block} fillFrame imageFetchPriority={imageFetchPriority} imageLoading={imageLoading} />
         </div>
       ))}
     </>
   );
 }
 
-export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlock; fillFrame?: boolean }) {
+export function PreviewBlock({
+  block,
+  fillFrame = false,
+  imageFetchPriority = "auto",
+  imageLoading = "eager"
+}: {
+  block: MotionDocBlock;
+  fillFrame?: boolean;
+  imageFetchPriority?: "auto" | "high" | "low";
+  imageLoading?: "eager" | "lazy";
+}) {
   if (block.type === "heading") {
     return (
       <h2 className="text-sm font-semibold tracking-widest text-neutral-400">
@@ -149,8 +164,10 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
         filterPreset={stringProp(block.props.filterPreset)}
         filterSize={numberProp(block.props.filterSize)}
         filterSpeed={numberProp(block.props.filterSpeed)}
+        fetchPriority={imageFetchPriority}
         fit={fitProp(block.props.fit)}
         full={booleanProp(block.props.full)}
+        loading={imageLoading}
         radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
         scaleX={numberProp(block.props.scaleX)}
         scaleY={numberProp(block.props.scaleY)}
@@ -194,36 +211,6 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
         radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
         value={String(block.props.value ?? "0")}
         width={blockWidthProp(block.props.width, "sm")}
-      />
-    );
-  }
-
-  if (block.type === "Chart") {
-    return (
-      <Chart
-        background={stringProp(block.props.background ?? block.props.backgroundColor ?? block.props.bg)}
-        chartColor={stringProp(block.props.chartColor)}
-        chartType={stringProp(block.props.chartType ?? block.props.type)}
-        color={stringProp(block.props.color ?? block.props.textColor)}
-        colors={stringProp(block.props.colors)}
-        delay={numberProp(block.props.delay)}
-        duration={numberProp(block.props.duration)}
-        enter={enterProp(block.props.enter)}
-        fillFrame={fillFrame}
-        fontSize={sizeNumberProp(block.props.fontSize, 18)}
-        height={sizeNumberProp(block.props.height, 240)}
-        labels={stringProp(block.props.labels)}
-        mutedColor={stringProp(block.props.mutedColor)}
-        radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
-        strokeWidth={sizeNumberProp(block.props.strokeWidth, 16)}
-        sizes={stringProp(block.props.sizes)}
-        title={String(block.props.title ?? "Chart")}
-        valueFormat={stringProp(block.props.valueFormat)}
-        values={stringProp(block.props.values)}
-        xAxisStep={sizeNumberProp(block.props.xAxisStep, undefined)}
-        xValues={stringProp(block.props.xValues)}
-        width={blockWidthProp(block.props.width, "lg")}
-        yAxisStep={sizeNumberProp(block.props.yAxisStep, undefined)}
       />
     );
   }
@@ -300,7 +287,7 @@ export function PreviewBlock({ block, fillFrame = false }: { block: MotionDocBlo
   return null;
 }
 
-function positionedBlockStyle(block: MotionDocBlock, index: number, frameOverride?: Frame): CSSProperties {
+function positionedBlockStyle(block: MotionDocBlock, index: number, frameOverride?: MotionDocFrame): CSSProperties {
   const frame = frameOverride ?? blockFrame(block);
   const h = "props" in block ? block.props.h : undefined;
 

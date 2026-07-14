@@ -31,7 +31,7 @@ export type BlankDocumentSourceConfig = {
   accent: string;
   background: string;
   bodyPlaceholder: string;
-  bodyFrame?: Frame;
+  bodyFrame?: MotionDocFrame;
   bodyFontSize?: number;
   mutedColor: string;
   lineHeight?: number;
@@ -39,7 +39,7 @@ export type BlankDocumentSourceConfig = {
   textColor: string;
   theme: "dark" | "light";
   titleFontSize?: number;
-  titleFrame?: Frame;
+  titleFrame?: MotionDocFrame;
   titlePlaceholder: string;
   titleWeight?: number;
 };
@@ -48,15 +48,8 @@ type DocumentThemeConfig = Omit<DocumentTheme, "preview" | "source"> & BlankDocu
   preview?: Partial<DocumentThemePreview>;
 };
 
-type Frame = {
-  h: number;
-  w: number;
-  x: number;
-  y: number;
-};
-
-const centerTitleFrame = { h: 15, w: 64, x: 18, y: 30 } satisfies Frame;
-const centerBodyFrame = { h: 16, w: 54, x: 23, y: 52 } satisfies Frame;
+const centerTitleFrame = { h: 15, w: 64, x: 18, y: 30 } satisfies MotionDocFrame;
+const centerBodyFrame = { h: 16, w: 54, x: 23, y: 52 } satisfies MotionDocFrame;
 
 export const documentThemes = [
   createDocumentTheme({
@@ -262,3 +255,4 @@ export function createBlankDocumentSource(config: BlankDocumentSourceConfig) {
 <Slide duration={5} theme="${config.theme}" background="${config.background}" accent="${config.accent}" textColor="${config.textColor}" mutedColor="${config.mutedColor}" alignX="${config.textAlign}" alignY="center" textAlign="${config.textAlign}">
 </Slide>`;
 }
+import type { MotionDocFrame } from "@/core/motion-doc/domain/frame";

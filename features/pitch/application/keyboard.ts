@@ -1,7 +1,4 @@
-export type PositionDelta = {
-  x: number;
-  y: number;
-};
+import type { PositionDelta } from "@/features/pitch/application/pitchGeometry";
 
 export function isArrowKey(key: string) {
   return key === "ArrowLeft" || key === "ArrowRight" || key === "ArrowUp" || key === "ArrowDown";

@@ -18,12 +18,12 @@ import { MotionFields } from "@/features/pitch/ui/inspector/MotionFields";
 import { SlideSettings } from "@/features/pitch/ui/inspector/SlideSettings";
 import { SlideLayoutSelector } from "@/features/pitch/ui/inspector/SlideLayoutSelector";
 import { autoSizeTextFrameProps } from "@/features/pitch/application/textFrameSizing";
-import { Field, IconSegmentedControl, NumberInput, type PropRecord } from "@/features/pitch/ui/inspector/InspectorControls";
+import { Field, IconSegmentedControl, NumberInput } from "@/features/pitch/ui/inspector/InspectorControls";
 import { getBlockFieldRegistryEntry } from "@/features/pitch/ui/inspector/blockFieldRegistry";
 import { FontPicker } from "@/features/pitch/ui/preview/controls/FontPicker";
 import { useDynamicFont } from "@/features/pitch/ui/hooks/useDynamicFont";
-import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
-import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
+import type { MotionDocProps, MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
+import type { BlockUpdater } from "@/features/pitch/application/pitchCommandTypes";
 
 function Section({
   title,
@@ -73,10 +73,7 @@ function Section({
 export function PitchInspector({
   activeSlide,
   activeSlideAccent,
-  activeSlideAlignX,
-  activeSlideAlignY,
   activeSlideBackground,
-  activeSlideLayout,
   activeSlideLayoutPreset,
   activeSlideMutedColor,
   activeSlideShader,
@@ -97,6 +94,7 @@ export function PitchInspector({
   activeSlideTextColor,
   activeSlideTheme,
   applyLayoutToActiveSlide,
+  importImageUrlForBlock,
   isGridVisible,
   onOpenMdxEditor,
   pushUndoSnapshot,
@@ -111,10 +109,7 @@ export function PitchInspector({
 }: {
   activeSlide: MotionDocScene | undefined;
   activeSlideAccent: string;
-  activeSlideAlignX: string;
-  activeSlideAlignY: string;
   activeSlideBackground: string;
-  activeSlideLayout: string;
   activeSlideLayoutPreset: string;
   activeSlideMutedColor: string;
   activeSlideShader: string;
@@ -135,14 +130,15 @@ export function PitchInspector({
   activeSlideTextColor: string;
   activeSlideTheme: string;
   applyLayoutToActiveSlide: (layoutSource: string, layoutId: string) => void;
+  importImageUrlForBlock: (blockIndex: number, source: string) => void;
   isGridVisible: boolean;
   onOpenMdxEditor: () => void;
   pushUndoSnapshot: () => void;
   selectedBlockIndex: number | null;
   selectedBlockIndices?: number[];
   setIsGridVisible: (value: boolean) => void;
-  updateAllSlidesStyle: (updates: PropRecord) => void;
-  updateActiveSlideStyle: (updates: PropRecord) => void;
+  updateAllSlidesStyle: (updates: MotionDocProps) => void;
+  updateActiveSlideStyle: (updates: MotionDocProps) => void;
   updateBlock: BlockUpdater;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
   uploadVideoForBlock: (blockIndex: number, file: File | undefined) => void;
@@ -181,12 +177,9 @@ export function PitchInspector({
               />
               <SlideSettings
                 accent={activeSlideAccent}
-                alignX={activeSlideAlignX}
-                alignY={activeSlideAlignY}
                 background={activeSlideBackground}
                 duration={activeSlide?.duration ?? 5}
                 isGridVisible={isGridVisible}
-                layout={activeSlideLayout}
                 mutedColor={activeSlideMutedColor}
                 setIsGridVisible={setIsGridVisible}
                 shader={activeSlideShader}
@@ -215,6 +208,7 @@ export function PitchInspector({
           ) : (
             <ElementSettings
               activeSlide={activeSlide}
+              importImageUrlForBlock={importImageUrlForBlock}
               pushUndoSnapshot={pushUndoSnapshot}
               selectedBlockIndex={selectedBlockIndex as number}
               updateBlock={updateBlock}
@@ -230,6 +224,7 @@ export function PitchInspector({
 
 function ElementSettings({
   activeSlide,
+  importImageUrlForBlock,
   pushUndoSnapshot,
   selectedBlockIndex,
   updateBlock,
@@ -237,6 +232,7 @@ function ElementSettings({
   uploadVideoForBlock
 }: {
   activeSlide: MotionDocScene | undefined;
+  importImageUrlForBlock: (blockIndex: number, source: string) => void;
   pushUndoSnapshot: () => void;
   selectedBlockIndex: number;
   updateBlock: BlockUpdater;
@@ -256,7 +252,7 @@ function ElementSettings({
   const inheritedTextColor =
     stringValue(activeSlide?.props.textColor ?? activeSlide?.props.foreground ?? activeSlide?.props.color) ??
     (slideTheme === "light" || slideTheme === "paper" ? "#111827" : "#ffffff");
-	  const inheritedBackgroundColor = block.type === "Card" || block.type === "Metric" || block.type === "Chart" || block.type === "Stack"
+	  const inheritedBackgroundColor = block.type === "Card" || block.type === "Metric" || block.type === "Stack"
 	    ? defaultCardBackground(slideTheme, slideBackground)
 	    : "transparent";
 	  const blockFieldEntry = getBlockFieldRegistryEntry(block.type);
@@ -310,6 +306,7 @@ function ElementSettings({
 	            <div className="flex flex-col gap-4">
 	              {blockFieldEntry.render({
 	                block,
+	                importImageUrlForBlock,
 	                selectedBlockIndex,
 	                updateBlock,
 	                uploadImageForBlock,
@@ -378,7 +375,7 @@ function TextTypeFields({
   selectedBlockIndex,
   updateBlock
 }: {
-  block: { type: string; props?: Record<string, string | number>; text?: string };
+  block: { type: string; props?: MotionDocProps; text?: string };
   selectedBlockIndex: number;
   updateBlock: BlockUpdater;
 }) {

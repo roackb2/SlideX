@@ -24,7 +24,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "Target", title: "Focus the motion", text: "Prioritize the segments where budget, urgency, and executive sponsorship are already visible." },
       { icon: "MessageSquare", title: "Tighten the proof", text: "Give account teams a sharper narrative for risk, value, timing, and implementation confidence." }
     ],
-    chart: { title: "Pipeline quality index", labels: "Create,Qualify,Prove,Commit", values: "42,58,73,86" },
+    indicators: { title: "Pipeline quality index", labels: "Create,Qualify,Prove,Commit", values: "42,58,73,86" },
     evidence: [
       { icon: "BadgeCheck", title: "Buyer pattern", text: "Shortlisted opportunities are asking for financial evidence earlier in the process." },
       { icon: "Clock", title: "Decision friction", text: "Late-cycle delays are concentrated in security, enablement, and executive alignment." }
@@ -75,7 +75,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "TrendingUp", title: "Momentum is compounding", text: "The strongest growth is coming from fewer, larger accounts with clearer expansion paths." },
       { icon: "Database", title: "Operating data is cleaner", text: "Reporting now connects pipeline, retention, product activation, and cash priorities." }
     ],
-    chart: { title: "Quarterly operating index", labels: "Q1,Q2,Q3,Q4", values: "34,51,66,82" },
+    indicators: { title: "Quarterly operating index", labels: "Q1,Q2,Q3,Q4", values: "34,51,66,82" },
     evidence: [
       { icon: "UserCheck", title: "Enterprise signal", text: "Expansion discussions increasingly include finance, security, and operating leaders." },
       { icon: "ShieldCheck", title: "Execution confidence", text: "The team has narrowed the roadmap to fewer initiatives with clearer economic value." }
@@ -126,7 +126,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "Rocket", title: "The window is open", text: "Customer urgency is visible, but the message needs to be sharper than the feature list." },
       { icon: "Palette", title: "Position around outcomes", text: "The launch should frame a new operating advantage, not just a product release." }
     ],
-    chart: { title: "Launch readiness by motion", labels: "Product,Sales,Success,Support", values: "88,76,82,69" },
+    indicators: { title: "Launch readiness by motion", labels: "Product,Sales,Success,Support", values: "88,76,82,69" },
     evidence: [
       { icon: "MessageSquare", title: "Customer pull", text: "Beta users describe the feature as a workflow unlock rather than a cosmetic improvement." },
       { icon: "Award", title: "Differentiation", text: "The strongest proof comes from speed, confidence, and fewer handoffs." }
@@ -177,7 +177,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "UserCheck", title: "Outcome story is visible", text: "The account is moving from tool usage to measurable operating behavior." },
       { icon: "LineChart", title: "Expansion path is specific", text: "The next opportunity is tied to adjacent teams with similar workflow pressure." }
     ],
-    chart: { title: "Adoption by team", labels: "Ops,Sales,CS,Finance", values: "84,72,61,48" },
+    indicators: { title: "Adoption by team", labels: "Ops,Sales,CS,Finance", values: "84,72,61,48" },
     evidence: [
       { icon: "BadgeCheck", title: "Proof of value", text: "Users report faster review cycles, less manual coordination, and clearer handoffs." },
       { icon: "MessageSquare", title: "Sponsor narrative", text: "Leadership wants a cleaner rollout story before expanding into new teams." }
@@ -228,7 +228,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "ChartNoAxesCombined", title: "Growth quality matters", text: "The operating model now needs to balance acquisition, retention, and cash discipline." },
       { icon: "SlidersHorizontal", title: "The system is tunable", text: "Each function has a clear lever tied to one growth or efficiency outcome." }
     ],
-    chart: { title: "Operating health index", labels: "Growth,Retention,Product,Cash", values: "76,83,69,72" },
+    indicators: { title: "Operating health index", labels: "Growth,Retention,Product,Cash", values: "76,83,69,72" },
     evidence: [
       { icon: "Database", title: "Product usage", text: "Activation is strongest when onboarding is tied to a named operating workflow." },
       { icon: "BriefcaseBusiness", title: "Commercial focus", text: "Best-fit segments are showing faster conversion and better renewal quality." }
@@ -279,7 +279,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "Globe", title: "The market is selective", text: "Entry should start where urgency, access, and differentiation overlap." },
       { icon: "MapPin", title: "Sequencing reduces risk", text: "A narrower first market creates learning before committing broad resources." }
     ],
-    chart: { title: "Segment attractiveness", labels: "Demand,Access,Margin,Fit", values: "82,66,74,79" },
+    indicators: { title: "Segment attractiveness", labels: "Demand,Access,Margin,Fit", values: "82,66,74,79" },
     evidence: [
       { icon: "Search", title: "Demand signal", text: "Early interviews show a clear pain cluster in compliance-heavy operators." },
       { icon: "PieChart", title: "Competitive space", text: "Incumbents are strong on scale but weaker on implementation speed." }
@@ -330,7 +330,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "Heart", title: "The fit is natural", text: "Both brands serve the same operating moment from different angles." },
       { icon: "Megaphone", title: "The story is bigger together", text: "A shared campaign can make the category problem more visible and urgent." }
     ],
-    chart: { title: "Campaign contribution mix", labels: "Owned,Partner,Events,PR", values: "52,71,44,38" },
+    indicators: { title: "Campaign contribution mix", labels: "Owned,Partner,Events,PR", values: "52,71,44,38" },
     evidence: [
       { icon: "Users", title: "Audience signal", text: "Engagement data points to a common buyer with shared budget pressure." },
       { icon: "Star", title: "Creative territory", text: "The strongest concept positions both brands as a practical operating advantage." }
@@ -381,7 +381,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "Sparkles", title: "Transformation starts with workflow", text: "The highest-value use cases are anchored in repeated decisions and information handoffs." },
       { icon: "ShieldCheck", title: "Governance is an accelerant", text: "Clear controls make teams more confident to adopt, test, and scale." }
     ],
-    chart: { title: "Opportunity score", labels: "Impact,Feasibility,Risk,Adoption", values: "86,72,58,69" },
+    indicators: { title: "Opportunity score", labels: "Impact,Feasibility,Risk,Adoption", values: "86,72,58,69" },
     evidence: [
       { icon: "Database", title: "Data foundation", text: "The first pilots can use bounded datasets and human review without broad platform change." },
       { icon: "Users", title: "Team readiness", text: "Operators want guided assistance where it reduces review burden and improves consistency." }
@@ -432,7 +432,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       { icon: "Users", title: "Talent is our constraint", text: "Capital is available, but shipping velocity depends on filling the remaining critical nodes." },
       { icon: "TrendingUp", title: "Internal mobility works", text: "We are seeing faster ramp times from internal transfers than external senior hires." }
     ],
-    chart: { title: "Headcount by function", labels: "Eng,Sales,Product,G&A", values: "142,88,45,31" },
+    indicators: { title: "Headcount by function", labels: "Eng,Sales,Product,G&A", values: "142,88,45,31" },
     evidence: [
       { icon: "MessageSquare", title: "Engagement scores", text: "Teams report high clarity on goals, but friction in cross-functional execution." },
       { icon: "Award", title: "Manager quality", text: "Retention correlates heavily with manager tenure and training completion." }
@@ -446,7 +446,7 @@ export const premiumBusinessTemplates: MotionTemplate[] = [
       src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=85&w=2400",
       alt: "Team collaboration"
     },
-    proofText: "Use this slide for org charts, engagement survey data, or recruiting pipeline reviews.",
+    proofText: "Use this slide for org structures, engagement survey data, or recruiting pipeline reviews.",
     economics: [
       { label: "Cost per hire", value: "-12%", caption: "Efficiency gained from internal recruiting motion." },
       { label: "Ramp time", value: "45d", caption: "Faster productivity from standardized onboarding." }

@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { appRoutes } from "@/common/lib/appRoutes";
+import { resolveSafeAuthNextPath } from "@/features/auth/application/authRedirect";
 import type { AuthProvider } from "@/features/auth/domain/authSession";
 import { createFakeOAuthSession } from "@/features/auth/infrastructure/localAuthSession";
 import { useLocalAuthSession } from "@/features/auth/ui/useLocalAuthSession";
@@ -22,17 +23,21 @@ function GoogleMark() {
 
 export function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isReady, session } = useLocalAuthSession();
+  const requestedNextPath = searchParams.get("next");
+  const nextPath = resolveSafeAuthNextPath(requestedNextPath, appRoutes.workspace);
+  const isDemoContinuation = nextPath.startsWith(appRoutes.pitch) && nextPath.includes("demo=1");
 
   useEffect(() => {
     if (isReady && session) {
-      router.replace(appRoutes.workspace);
+      router.replace(nextPath);
     }
-  }, [isReady, router, session]);
+  }, [isReady, nextPath, router, session]);
 
   function continueWith(provider: AuthProvider) {
     createFakeOAuthSession(provider);
-    router.replace(appRoutes.workspace);
+    router.replace(nextPath);
   }
 
   if (!isReady || session) {
@@ -48,8 +53,8 @@ export function LoginPage() {
 
         <div className="mt-8 rounded-[12px] border border-white/[0.11] bg-[#1a1a1a] px-6 py-7 shadow-[0_24px_70px_rgba(0,0,0,0.24)] sm:px-8 sm:py-8">
           <div className="text-center">
-            <h1 className="text-[22px] font-medium tracking-[-0.025em] text-white/92">Sign in to SlideX</h1>
-            <p className="mt-2 text-[13px] text-white/38">Continue to your workspace.</p>
+            <h1 className="text-[22px] font-medium tracking-[-0.025em] text-white/92">{isDemoContinuation ? "Keep your Live Demo" : "Sign in to SlideX"}</h1>
+            <p className="mt-2 text-[13px] leading-5 text-white/38">{isDemoContinuation ? "Your edits will be added to your workspace after sign in." : "Continue to your workspace."}</p>
           </div>
 
           <div className="mt-7 space-y-3">

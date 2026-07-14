@@ -4,9 +4,9 @@ import {
   type PitchAssetKind
 } from "@/features/pitch/application/pitchAssetPolicy";
 
-const imageOptimizationThresholdBytes = 1024 * 1024;
-const maximumImageDimension = 2500;
-const webpQuality = 0.86;
+const imageOptimizationThresholdBytes = 512 * 1024;
+const maximumImageDimension = 2304;
+const webpQuality = 0.82;
 const optimizableImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export type PreparedPitchAsset = {
@@ -68,7 +68,7 @@ async function optimizePitchImageFile(file: File) {
     context.drawImage(bitmap, 0, 0, width, height);
     const optimizedBlob = await canvasToBlob(canvas, "image/webp", webpQuality);
 
-    if (!optimizedBlob || optimizedBlob.size >= file.size * 0.9) {
+    if (!optimizedBlob || optimizedBlob.size >= file.size * 0.88) {
       return file;
     }
 

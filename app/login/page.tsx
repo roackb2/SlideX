@@ -1,5 +1,5 @@
-import { LoginPage as LoginFeaturePage } from "@/features/auth";
+import { ComingSoonPage } from "@/features/marketing";
 
 export default function LoginPage() {
-  return <LoginFeaturePage />;
+  return <ComingSoonPage />;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import { SlideThumbnailPreview } from "@/features/pitch/ui/preview/SlideThumbnailPreview";
 
 type PresentationThumbnailRailProps = {
@@ -54,6 +54,7 @@ export function PresentationThumbnailRail({
               }`}>
                 <SlideThumbnailPreview
                   activeSlideIndex={sceneIndex}
+                  eager={isActive}
                   replayNonce={0}
                   scene={scene}
                   source={source}

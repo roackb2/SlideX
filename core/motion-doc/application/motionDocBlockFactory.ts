@@ -1,7 +1,5 @@
-import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocTypes";
 import { createTableCells, serializeTableCells } from "@/core/motion-doc/application/tableBlock";
-import { chartDefaultProps } from "@/core/motion-doc/application/chartBlock";
-import { normalizeChartType } from "@/core/motion-doc/domain/chartCatalog";
 
 export type AddBlockType =
   | "Title"
@@ -16,13 +14,6 @@ export type AddBlockType =
   | "Image"
   | "Video"
   | "Metric"
-  | "Chart"
-  | "ChartBar"
-  | "ChartLine"
-  | "ChartArea"
-  | "ChartPie"
-  | "ChartDonut"
-  | "ChartBubble"
   | "Icon"
   | "Table"
   | "ShapeRectangle"
@@ -77,19 +68,6 @@ export function createMotionDocBlock(type: AddBlockType): MotionDocBlock {
       return { type: "Card", props: { icon: "Sparkles", layout: "vertical", title: "Feature", text: "Feature description", width: "md", enter: "none", radius: 16, x: 8, y: 38, w: 40, h: 32 } } as MotionDocBlock;
     case "Metric":
       return { type: "Metric", props: { label: "Pipeline", value: "$2.4M", caption: "Qualified revenue influenced this quarter.", width: "sm", enter: "none", radius: 16, x: 8, y: 38, w: 32, h: 36 } } as MotionDocBlock;
-    case "Chart":
-    case "ChartBar":
-      return createChartBlock("bar");
-    case "ChartLine":
-      return createChartBlock("line");
-    case "ChartArea":
-      return createChartBlock("area");
-    case "ChartPie":
-      return createChartBlock("pie");
-    case "ChartDonut":
-      return createChartBlock("donut");
-    case "ChartBubble":
-      return createChartBlock("bubble");
     case "Image":
       return { type: "ImageBlock", props: { src: "", alt: "", fit: "cover", scaleX: 1, scaleY: 1, enter: "none", radius: 16, x: 10, y: 20, w: 80, h: 54 } } as MotionDocBlock;
     case "Video":
@@ -127,24 +105,6 @@ function createTextPresetBlock(fontSize: number, text: string): MotionDocBlock {
       h: fontSize >= 60 ? 24 : fontSize >= 36 ? 18 : 9
     },
     text
-  } as MotionDocBlock;
-}
-
-function createChartBlock(chartType: string): MotionDocBlock {
-  const normalizedType = normalizeChartType(chartType);
-  return {
-    type: "Chart",
-    props: {
-      ...chartDefaultProps(normalizedType),
-      title: normalizedType === "bar" ? "Quarterly traction" : "Audience signal",
-      width: "full",
-      enter: "none",
-      radius: 16,
-      x: 7,
-      y: 24,
-      w: 86,
-      h: 64
-    }
   } as MotionDocBlock;
 }
 

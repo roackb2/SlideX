@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useState,
   type Dispatch,
   type MutableRefObject,
@@ -40,6 +41,11 @@ export function usePitchProject({
 }: UsePitchProjectArgs) {
   const [projectName, setProjectName] = useState(initialProject?.name ?? "Untitled");
   const [isProjectDirty, setIsProjectDirty] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const applyProject = useCallback((options: NewPitchProjectOptions) => {
     setSource(options.source ?? defaultMdx);
@@ -68,6 +74,7 @@ export function usePitchProject({
   }, []);
 
   return {
+    isMounted,
     isProjectDirty,
     markProjectDirty,
     newProject,

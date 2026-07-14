@@ -1,4 +1,4 @@
-export const pitchAssetKinds = ["file", "image", "video"] as const;
+export const pitchAssetKinds = ["image", "video"] as const;
 
 export type PitchAssetKind = (typeof pitchAssetKinds)[number];
 
@@ -15,14 +15,12 @@ export type PitchAssetValidation =
 const mebibyte = 1024 * 1024;
 
 export const pitchAssetLimits = {
-  file: 20 * mebibyte,
   image: 10 * mebibyte,
   source: 50 * mebibyte,
   video: 50 * mebibyte
 } as const;
 
 export const pitchAssetMimeTypes = {
-  file: ["application/pdf"],
   image: [
     "image/avif",
     "image/gif",
@@ -85,8 +83,7 @@ export function validatePreparedPitchAsset(asset: PitchAssetDescriptor): PitchAs
 
 function labelForKind(kind: PitchAssetKind) {
   if (kind === "image") return "Images";
-  if (kind === "video") return "Videos";
-  return "Files";
+  return "Videos";
 }
 
 function formatMebibytes(bytes: number) {

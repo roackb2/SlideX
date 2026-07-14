@@ -1,14 +1,15 @@
 import { numberValue } from "@/core/motion-doc/domain/frame";
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/features/pitch/application/previewCanvas";
 
 type TextFrameSizingBlock = {
-  props: Record<string, string | number>;
+  props: MotionDocProps;
   type: string;
 };
 
 type AutoSizeTextFrameOptions = {
   mode?: "fit" | "grow";
-  props?: Record<string, string | number>;
+  props?: MotionDocProps;
 };
 
 const MIN_TEXT_FRAME_WIDTH = 12;
@@ -73,7 +74,7 @@ function estimatedLineWidth(line: string, fontSize: number) {
   }, 0);
 }
 
-function selectionPaddingForFont(fontSize: number, props: Record<string, string | number>) {
+function selectionPaddingForFont(fontSize: number, props: MotionDocProps) {
   const surfacePaddingPx = hasTextSurface(props) ? fontSize * 0.4 : 0;
 
   return {
@@ -82,7 +83,7 @@ function selectionPaddingForFont(fontSize: number, props: Record<string, string 
   };
 }
 
-function hasTextSurface(props: Record<string, string | number>) {
+function hasTextSurface(props: MotionDocProps) {
   return Boolean(stringProp(props.background ?? props.backgroundColor ?? props.bg));
 }
 

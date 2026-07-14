@@ -69,14 +69,6 @@ export function metricWidthClass(value: string) {
   return "w-full max-w-sm";
 }
 
-export function chartWidthClass(value: string) {
-  if (value === "sm") return "w-full max-w-xl";
-  if (value === "md") return "w-full max-w-2xl";
-  if (value === "full") return "w-full max-w-none";
-
-  return "w-full max-w-3xl";
-}
-
 export function alignXToFlex(value: "left" | "center" | "right" | "stretch") {
   if (value === "center") return "center";
   if (value === "right") return "flex-end";

@@ -18,6 +18,7 @@ import {
   getPaperImageFilterPresetParams,
   resolvePaperImageFilterControls,
   type PaperImageFilterControlValues,
+  type PaperImageFilterDefinition,
   type PaperImageFilterId,
   type PaperImageFilterRuntimeParams
 } from "@/core/motion-doc/application/shaders/paperImageFilterCatalog";
@@ -80,9 +81,42 @@ export function PaperImageFilterLayer({
   src
 }: PaperImageFilterLayerProps) {
   const definition = getPaperImageFilterDefinition(filter);
+
+  if (!definition || !src) {
+    return null;
+  }
+
+  return (
+    <LoadedPaperImageFilterLayer
+      definition={definition}
+      filterAngle={filterAngle}
+      filterContrast={filterContrast}
+      filterDetail={filterDetail}
+      filterDistortion={filterDistortion}
+      filterPreset={filterPreset}
+      filterSize={filterSize}
+      filterSpeed={filterSpeed}
+      fit={fit}
+      src={src}
+    />
+  );
+}
+
+function LoadedPaperImageFilterLayer({
+  definition,
+  filterAngle,
+  filterContrast,
+  filterDetail,
+  filterDistortion,
+  filterPreset,
+  filterSize,
+  filterSpeed,
+  fit,
+  src
+}: Omit<PaperImageFilterLayerProps, "filter"> & { definition: PaperImageFilterDefinition }) {
   const image = useCachedShaderImage(src);
 
-  if (!definition || !src || !image) {
+  if (!image) {
     return null;
   }
 

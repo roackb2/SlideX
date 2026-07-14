@@ -1,7 +1,8 @@
 "use client";
 
 import { Palette } from "lucide-react";
-import { solidFillUpdates, type PropRecord } from "@/features/pitch/application/themeColors";
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
+import { solidFillUpdates } from "@/features/pitch/application/themeColors";
 import { SolidFillControl } from "@/features/pitch/ui/inspector/InspectorControls";
 import { AccordionSection } from "@/features/pitch/ui/inspector/controls/AccordionSection";
 
@@ -11,8 +12,8 @@ type SlideThemeSectionProps = {
   mutedColor: string;
   textColor: string;
   theme: string;
-  updateActiveSlideStyle: (updates: PropRecord) => void;
-  updateAllSlidesStyle: (updates: PropRecord) => void;
+  updateActiveSlideStyle: (updates: MotionDocProps) => void;
+  updateAllSlidesStyle: (updates: MotionDocProps) => void;
 };
 
 export function SlideThemeSection(props: SlideThemeSectionProps) {

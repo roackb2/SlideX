@@ -12,7 +12,7 @@ export type BusinessTemplateConfig = {
   accent: string;
   background: string;
   category: string;
-  chart: {
+  indicators: {
     labels: string;
     title: string;
     values: string;

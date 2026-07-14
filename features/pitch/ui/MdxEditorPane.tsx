@@ -20,8 +20,7 @@ export function MdxEditorPane({
   onSelectionSourceChange,
   sceneCount,
   selectionLabel,
-  copySource,
-  insertSnippet
+  copySource
 }: {
   source: string;
   onSourceChange: (value: string) => void;
@@ -30,7 +29,6 @@ export function MdxEditorPane({
   sceneCount: number;
   selectionLabel: string;
   copySource: () => Promise<void>;
-  insertSnippet: (code: string) => void;
 }) {
   const [editorScope, setEditorScope] = useState<"selection" | "deck">("selection");
   const [localSource, setLocalSource] = useState("");
@@ -94,30 +92,6 @@ export function MdxEditorPane({
       column: pos - line.from + 1
     });
   }, []);
-
-  const handleInsertSnippet = useCallback(
-    (code: string) => {
-      if (editorScope === "selection") {
-        const updated = `${localSource.trimEnd()}\n\n${code}`;
-        setLocalSource(updated);
-        onSelectionSourceChange(updated);
-      } else {
-        insertSnippet(code);
-      }
-
-      // Also insert at cursor if we have a view reference (deck mode)
-      if (editorScope === "deck" && editorViewRef.current) {
-        const view = editorViewRef.current;
-        const pos = view.state.selection.main.head;
-        const insert = `\n\n${code}`;
-        view.dispatch({
-          changes: { from: pos, insert },
-          selection: { anchor: pos + insert.length }
-        });
-      }
-    },
-    [editorScope, insertSnippet]
-  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-[#0A0A0A] font-sans antialiased">

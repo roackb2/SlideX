@@ -1,4 +1,4 @@
-export { Chart, Card, Metric } from "@/features/pitch/ui/preview/motion/DataBlocks";
+export { Card, Metric } from "@/features/pitch/ui/preview/motion/DataBlocks";
 export { IconBlock, ShapeBlock, StackBlock } from "@/features/pitch/ui/preview/motion/GraphicBlocks";
 export { ImageBlock, VideoBlock } from "@/features/pitch/ui/preview/motion/ImageBlock";
 export { MotionBlock } from "@/features/pitch/ui/preview/motion/MotionBlock";

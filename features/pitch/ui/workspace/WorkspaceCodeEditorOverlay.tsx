@@ -4,39 +4,15 @@ import { Code2, X } from "lucide-react";
 import { MdxEditorPane } from "@/features/pitch/ui/MdxEditorPane";
 import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWorkspaceTypes";
 
-type WorkspaceCodeEditorOverlayProps = Pick<
-  PitchWorkspaceProps,
-  | "commitMdxSource"
-  | "copySource"
-  | "insertSnippet"
-  | "isCodeEditorOpen"
-  | "pushUndoSnapshot"
-  | "selectionMdx"
-  | "setIsCodeEditorOpen"
-  | "source"
-  | "updateSelectionMdx"
-> & {
+type WorkspaceCodeEditorOverlayProps = Pick<PitchWorkspaceProps, "commands" | "document" | "selection" | "view"> & {
   sceneCount: number;
 };
 
-export function WorkspaceCodeEditorOverlay({
-  commitMdxSource,
-  copySource,
-  insertSnippet,
-  isCodeEditorOpen,
-  pushUndoSnapshot,
-  sceneCount,
-  selectionMdx,
-  setIsCodeEditorOpen,
-  source,
-  updateSelectionMdx
-}: WorkspaceCodeEditorOverlayProps) {
-  if (!isCodeEditorOpen) {
-    return null;
-  }
+export function WorkspaceCodeEditorOverlay({ commands, document, sceneCount, selection, view }: WorkspaceCodeEditorOverlayProps) {
+  if (!view.isCodeEditorOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm transition-all" onMouseDown={() => setIsCodeEditorOpen(false)}>
+    <div className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm transition-all" onMouseDown={() => view.setIsCodeEditorOpen(false)}>
       <div
         className="absolute inset-y-4 right-4 flex w-full flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0b0814]/90 shadow-[-20px_0_80px_rgba(0,0,0,0.6)] backdrop-blur-2xl md:max-w-[700px]"
         onMouseDown={(event) => event.stopPropagation()}
@@ -49,24 +25,23 @@ export function WorkspaceCodeEditorOverlay({
           <button
             aria-label="Close MDX editor"
             className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition-all hover:bg-white/10 hover:text-white"
-            onClick={() => setIsCodeEditorOpen(false)}
+            onClick={() => view.setIsCodeEditorOpen(false)}
             type="button"
           >
             <X size={14} />
           </button>
         </div>
         <MdxEditorPane
-          copySource={copySource}
-          insertSnippet={insertSnippet}
-          onSelectionSourceChange={updateSelectionMdx}
+          copySource={commands.copySource}
+          onSelectionSourceChange={commands.updateSelectionMdx}
           onSourceChange={(value) => {
-            pushUndoSnapshot();
-            commitMdxSource(value);
+            commands.pushUndoSnapshot();
+            commands.commitMdxSource(value);
           }}
           sceneCount={sceneCount}
-          selectionLabel={selectionMdx.label}
-          selectionSource={selectionMdx.source}
-          source={source}
+          selectionLabel={selection.selectionMdx.label}
+          selectionSource={selection.selectionMdx.source}
+          source={document.source}
         />
       </div>
     </div>

@@ -1120,7 +1120,9 @@ export function makeMotionDocExportRuntime() {
             const state = shaderStates.get(canvas);
             if (state) requestShaderFrame(state);
           });
-          await waitForFrames(6);
+          if (canvases.length > 0) {
+            await waitForFrames(2);
+          }
           canvases.forEach(freezeCanvas);
           shaderStates.forEach((_, canvas) => stopShader(canvas));
           document.body.dataset.motionExportPrepared = 'true';

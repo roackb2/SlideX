@@ -4,15 +4,9 @@ import { Group, Layers, Plus, Trash2 } from "lucide-react";
 import type { MouseEvent } from "react";
 import { useState } from "react";
 import { LayerRow } from "@/features/pitch/ui/LayerRow";
-import type { MotionDocBlock, MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocBlock, MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import { SlideThumbnailPreview } from "@/features/pitch/ui/preview/SlideThumbnailPreview";
-
-export type SlideRow = {
-  duration: number;
-  index: number;
-  layers: number;
-  title: string;
-};
+import type { SlideRow } from "@/features/pitch/application/slideRows";
 
 export function LayerSidebar({
   activeSlideIndex,
@@ -200,6 +194,7 @@ export function LayerSidebar({
                       <div className={`relative aspect-video w-full overflow-hidden rounded-lg border shadow-sm transition-colors ${isActive ? "border-white/20 bg-black/60" : "border-white/5 bg-black/40 hover:border-white/10"}`}>
                         <SlideThumbnailPreview
                           activeSlideIndex={slide.index}
+                          eager={isActive}
                           replayNonce={replayNonce}
                           scene={currentSlide}
                           source={source}

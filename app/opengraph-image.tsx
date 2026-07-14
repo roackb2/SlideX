@@ -11,7 +11,7 @@ export const contentType = "image/png";
 export default async function OpenGraphImage() {
   const tracks = [
     { label: "Title", left: "0%", width: "70%", color: "#a9c0ff", opacity: 0.8 },
-    { label: "Chart", left: "20%", width: "80%", color: "#8ea5ff", opacity: 1 },
+    { label: "Table", left: "20%", width: "80%", color: "#8ea5ff", opacity: 1 },
     { label: "Export", left: "60%", width: "40%", color: "#dfe6ff", opacity: 0.6 }
   ] as const;
 
@@ -304,9 +304,9 @@ export default async function OpenGraphImage() {
                     <span style={{ color: "#8b949e" }}>{">Welcome</Text>"}</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", paddingLeft: 12, gap: 1, marginTop: 4 }}>
-                    <span style={{ color: "#8b949e" }}>{"<Chart"}</span>
-                    <span style={{ color: "#a5d6ff", paddingLeft: 12 }}>{'type="bar"'}</span>
-                    <span style={{ color: "#a5d6ff", paddingLeft: 12 }}>{"animate"}</span>
+                    <span style={{ color: "#8b949e" }}>{"<Table"}</span>
+                    <span style={{ color: "#a5d6ff", paddingLeft: 12 }}>{"rows={3}"}</span>
+                    <span style={{ color: "#a5d6ff", paddingLeft: 12 }}>{"columns={4}"}</span>
                     <span style={{ color: "#8b949e" }}>{"/>"}</span>
                   </div>
                   <div style={{ display: "flex" }}>
@@ -335,7 +335,7 @@ export default async function OpenGraphImage() {
                     <div style={{ display: "flex", fontSize: 11, color: "#7f8795", marginTop: 2 }}>
                       Quarterly active users
                     </div>
-                    {/* Mini bar chart */}
+                    {/* Mini metric bars */}
                     <div
                       style={{
                         display: "flex",

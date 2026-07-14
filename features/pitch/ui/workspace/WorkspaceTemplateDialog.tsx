@@ -3,31 +3,20 @@
 import { TemplateModal } from "@/features/pitch/ui/TemplateModal";
 import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWorkspaceTypes";
 
-type WorkspaceTemplateDialogProps = Pick<
-  PitchWorkspaceProps,
-  "addSlide" | "applyTemplate" | "isTemplateModalOpen" | "selectedTemplateId" | "setIsTemplateModalOpen"
->;
+type WorkspaceTemplateDialogProps = Pick<PitchWorkspaceProps, "commands" | "document" | "view">;
 
-export function WorkspaceTemplateDialog({
-  addSlide,
-  applyTemplate,
-  isTemplateModalOpen,
-  selectedTemplateId,
-  setIsTemplateModalOpen
-}: WorkspaceTemplateDialogProps) {
-  if (!isTemplateModalOpen) {
-    return null;
-  }
+export function WorkspaceTemplateDialog({ commands, document, view }: WorkspaceTemplateDialogProps) {
+  if (!view.isTemplateModalOpen) return null;
 
   return (
     <TemplateModal
       onAddBlankSlide={() => {
-        addSlide();
-        setIsTemplateModalOpen(false);
+        commands.addSlide();
+        view.setIsTemplateModalOpen(false);
       }}
-      onApplyTemplate={applyTemplate}
-      onClose={() => setIsTemplateModalOpen(false)}
-      selectedTemplateId={selectedTemplateId}
+      onApplyTemplate={commands.applyTemplate}
+      onClose={() => view.setIsTemplateModalOpen(false)}
+      selectedTemplateId={document.selectedTemplateId}
     />
   );
 }

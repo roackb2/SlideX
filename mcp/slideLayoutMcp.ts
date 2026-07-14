@@ -1,9 +1,10 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 
-import { replaceSlideContent } from "@/core/motion-doc/application/motionDocSerialize";
 import { summarizeMotionDoc } from "@/core/motion-doc/application/motionDocAutomation";
-import { parseMotionDoc, type MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import { replaceMotionDocSlideSource } from "@/core/motion-doc/application/motionDocSourceEditor";
+import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import { slideLayouts } from "@/core/motion-doc/presets/templates/slideLayouts";
 
 type SlideLayout = (typeof slideLayouts)[number];
@@ -199,7 +200,7 @@ function registerSlideLayoutTools(server: McpServer) {
         const slideSource = createSlideSourceFromLayout(layout, referenceSlide, options, {
           preserveReferenceDuration: true
         });
-        const nextSource = replaceSlideContent(source, slideIndex, slideSource);
+        const nextSource = replaceMotionDocSlideSource(source, slideIndex, slideSource);
 
         return {
           layout: formatSlideLayout(layout, false),

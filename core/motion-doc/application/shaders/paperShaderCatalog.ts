@@ -1,4 +1,4 @@
-export type ShaderPropRecord = Record<string, string | number>;
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 
 export const PAPER_SHADER_COLOR_KEYS = [
   "shaderColor1",
@@ -38,7 +38,7 @@ export type PaperShaderRuntimeParams = Record<string, number | string | readonly
 export type PaperShaderPreset = {
   name: string;
   params: PaperShaderRuntimeParams;
-  props: ShaderPropRecord;
+  props: MotionDocProps;
 };
 
 export type PaperShaderDefinition = {
@@ -722,7 +722,7 @@ export function getPaperShaderPresetParams(id: string | undefined, presetName: s
   return getPaperShaderPreset(id, presetName)?.params ?? {};
 }
 
-export function paperShaderPresetUpdates(id: string, presetName?: string): ShaderPropRecord {
+export function paperShaderPresetUpdates(id: string, presetName?: string): MotionDocProps {
   const definition = getPaperShaderDefinition(id);
 
   if (!definition) {
@@ -740,13 +740,13 @@ export function paperShaderPresetUpdates(id: string, presetName?: string): Shade
   };
 }
 
-function defaultControlProps(definition: PaperShaderDefinition): ShaderPropRecord {
+function defaultControlProps(definition: PaperShaderDefinition): MotionDocProps {
   return Object.fromEntries(
     PAPER_SHADER_CONTROL_KEYS.map((key) => [
       key,
       definition.controls.find((control) => control.key === key)?.defaultValue ?? ""
     ])
-  ) as ShaderPropRecord;
+  ) as MotionDocProps;
 }
 
 export function paperShaderRuntimePresetTable() {
@@ -761,13 +761,13 @@ export function paperShaderRuntimePresetTable() {
 function makePreset(
   name: string,
   colors: readonly string[],
-  controls: ShaderPropRecord,
+  controls: MotionDocProps,
   params: PaperShaderRuntimeParams
 ): PaperShaderPreset;
 function makePreset(
   name: string,
   colors: readonly string[],
-  controls: ShaderPropRecord,
+  controls: MotionDocProps,
   params: PaperShaderRuntimeParams
 ) {
   return {
@@ -786,10 +786,10 @@ function makePreset(
   };
 }
 
-function sixColorProps(colors: readonly string[]): ShaderPropRecord {
+function sixColorProps(colors: readonly string[]): MotionDocProps {
   const fallback = colors[colors.length - 1] ?? "#ffffff";
 
   return Object.fromEntries(
     PAPER_SHADER_COLOR_KEYS.map((key, index) => [key, colors[index] ?? fallback])
-  ) as ShaderPropRecord;
+  ) as MotionDocProps;
 }

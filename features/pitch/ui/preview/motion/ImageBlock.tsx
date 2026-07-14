@@ -22,7 +22,9 @@ export function ImageBlock({
   filterSize,
   filterSpeed,
   fit = "cover",
+  fetchPriority = "auto",
   full = false,
+  loading = "eager",
   scaleX = 1,
   scaleY = 1,
   src,
@@ -30,7 +32,9 @@ export function ImageBlock({
 }: AnimationProps & {
   alt: string;
   fit?: string;
+  fetchPriority?: "auto" | "high" | "low";
   full?: boolean;
+  loading?: "eager" | "lazy";
   scaleX?: number;
   scaleY?: number;
   src: string;
@@ -73,6 +77,9 @@ export function ImageBlock({
             <img
               alt={alt}
               className="absolute inset-0 h-full w-full"
+              decoding="async"
+              fetchPriority={fetchPriority}
+              loading={loading}
               src={src}
               style={{ objectFit }}
             />

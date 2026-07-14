@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 import { ColorControl, Field, NativeSelect, NumberInput, type BlockFieldProps } from "@/features/pitch/ui/inspector/InspectorControls";
 
 const shapeOptions = [
@@ -53,7 +54,7 @@ export function ShapeFields({ block, selectedBlockIndex, updateBlock }: BlockFie
       <Field label="Shape">
         <NativeSelect
           onChange={(value) => {
-            const nextProps: Record<string, string | number> = { ...block.props, shape: value };
+            const nextProps: MotionDocProps = { ...block.props, shape: value };
             if (value === "polygon" && !block.props.sides) {
               nextProps.sides = 3;
             }

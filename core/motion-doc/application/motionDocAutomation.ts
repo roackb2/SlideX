@@ -4,28 +4,42 @@ import {
   type AddBlockType
 } from "@/core/motion-doc/application/motionDocBlockFactory";
 import {
-  generateSlideString,
-  replaceSlideContent
+  generateSlideString
 } from "@/core/motion-doc/application/motionDocSerialize";
 import {
-  parseMotionDoc,
-  type MotionDocBlock,
-  type MotionDocScene,
-  type ParsedMotionDoc
-} from "@/core/motion-doc/domain/motionDocParser";
+  deleteMotionDocSlideSource,
+  reorderMotionDocSlideSource,
+  replaceMotionDocSlideSource
+} from "@/core/motion-doc/application/motionDocSourceEditor";
+import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
+import type {
+  MotionDocBlock,
+  MotionDocProps,
+  MotionDocScene,
+  ParsedMotionDoc
+} from "@/core/motion-doc/domain/motionDocTypes";
 
 export const motionDocAddBlockTypes = [
+  "Title",
   "Text",
+  "Text96",
+  "Text60",
+  "Text48",
+  "Text36",
+  "Text32",
+  "Text24",
+  "Card",
   "Image",
   "Video",
-  "ChartBar",
-  "ChartLine",
-  "ChartArea",
-  "ChartPie",
-  "ChartDonut",
-  "ChartBubble",
+  "Metric",
+  "Icon",
   "Table",
-  "Icon"
+  "ShapeRectangle",
+  "ShapeCircle",
+  "ShapeTriangle",
+  "ShapeLine",
+  "ShapeArrow",
+  "ShapeStar"
 ] as const satisfies readonly AddBlockType[];
 
 export type MotionDocSupportedAddBlockType = (typeof motionDocAddBlockTypes)[number];
@@ -64,6 +78,7 @@ export type MotionDocDeckInput = {
 };
 
 export type MotionDocAddBlockOptions = {
+  afterBlockIndex?: number;
   position?: {
     h?: number;
     w?: number;
@@ -75,12 +90,18 @@ export type MotionDocAddBlockOptions = {
 };
 
 const supportedComponentTags = new Set([
-  "Chart",
+  "Card",
+  "Group",
   "Icon",
   "ImageBlock",
+  "Metric",
+  "Scene",
+  "Shape",
   "Slide",
+  "Stack",
   "Table",
   "Text",
+  "Title",
   "VideoBlock"
 ]);
 
@@ -147,7 +168,7 @@ export function replaceMotionDocSlide(
   assertSlideIndex(source, slideIndex);
   assertSingleSlideSource(slideSource);
 
-  return withSummary(replaceSlideContent(source, slideIndex, slideSource.trim()));
+  return withSummary(replaceMotionDocSlideSource(source, slideIndex, slideSource.trim()));
 }
 
 export function updateMotionDocSlideProps(
@@ -164,7 +185,7 @@ export function updateMotionDocSlideProps(
     }
   };
 
-  return withSummary(replaceSlideContent(source, slideIndex, generateSlideString(nextSlide)));
+  return withSummary(replaceMotionDocSlideSource(source, slideIndex, generateSlideString(nextSlide)));
 }
 
 export function addMotionDocBlock(
@@ -179,30 +200,115 @@ export function addMotionDocBlock(
 
   const slide = getSlideOrThrow(source, slideIndex);
   const block = applyBlockOptions(createMotionDocBlock(type), options);
+  const blocks = [...slide.blocks];
+  const insertIndex = resolveBlockInsertIndex(blocks.length, options.afterBlockIndex);
+
+  blocks.splice(insertIndex, 0, block);
   const nextSlide = {
     ...slide,
-    blocks: [...slide.blocks, block]
+    blocks
   };
 
-  return withSummary(replaceSlideContent(source, slideIndex, generateSlideString(nextSlide)));
+  return {
+    ...withSummary(replaceMotionDocSlideSource(source, slideIndex, generateSlideString(nextSlide))),
+    blockIndex: insertIndex
+  };
+}
+
+export function updateMotionDocBlock(
+  source: string,
+  slideIndex: number,
+  blockIndex: number,
+  updates: {
+    props?: Record<string, unknown>;
+    text?: string;
+  }
+) {
+  const slide = getSlideOrThrow(source, slideIndex);
+  const block = getBlockOrThrow(slide, slideIndex, blockIndex);
+  const nextBlock = "props" in block
+    ? {
+        ...block,
+        props: {
+          ...block.props,
+          ...coerceMotionProps(updates.props ?? {})
+        }
+      }
+    : { ...block };
+
+  if (updates.text !== undefined && "text" in nextBlock) {
+    nextBlock.text = safeMdxText(updates.text);
+  }
+
+  return replaceBlockInSlide(source, slideIndex, slide, blockIndex, nextBlock);
+}
+
+export function deleteMotionDocBlock(
+  source: string,
+  slideIndex: number,
+  blockIndex: number
+) {
+  const slide = getSlideOrThrow(source, slideIndex);
+
+  getBlockOrThrow(slide, slideIndex, blockIndex);
+
+  const blocks = [...slide.blocks];
+  blocks.splice(blockIndex, 1);
+
+  return withSummary(
+    replaceMotionDocSlideSource(source, slideIndex, generateSlideString({ ...slide, blocks }))
+  );
+}
+
+export function duplicateMotionDocBlock(
+  source: string,
+  slideIndex: number,
+  blockIndex: number,
+  offset = 2
+) {
+  const slide = getSlideOrThrow(source, slideIndex);
+  const block = getBlockOrThrow(slide, slideIndex, blockIndex);
+  const duplicate = cloneAutomationBlock(block, offset);
+  const blocks = [...slide.blocks];
+  const nextBlockIndex = blockIndex + 1;
+
+  blocks.splice(nextBlockIndex, 0, duplicate);
+
+  return {
+    ...withSummary(
+      replaceMotionDocSlideSource(source, slideIndex, generateSlideString({ ...slide, blocks }))
+    ),
+    blockIndex: nextBlockIndex
+  };
+}
+
+export function reorderMotionDocBlock(
+  source: string,
+  slideIndex: number,
+  fromIndex: number,
+  toIndex: number
+) {
+  const slide = getSlideOrThrow(source, slideIndex);
+
+  getBlockOrThrow(slide, slideIndex, fromIndex);
+  getBlockOrThrow(slide, slideIndex, toIndex);
+
+  if (fromIndex === toIndex) {
+    return withSummary(source);
+  }
+
+  const blocks = [...slide.blocks];
+  const [movedBlock] = blocks.splice(fromIndex, 1);
+  blocks.splice(toIndex, 0, movedBlock);
+
+  return withSummary(
+    replaceMotionDocSlideSource(source, slideIndex, generateSlideString({ ...slide, blocks }))
+  );
 }
 
 export function deleteMotionDocSlide(source: string, slideIndex: number) {
   assertSlideIndex(source, slideIndex);
-
-  const pattern = /<(Slide|Scene)\b[^>]*>[\s\S]*?<\/\1>/g;
-  let currentIndex = 0;
-  const nextSource = source.replace(pattern, (match) => {
-    if (currentIndex === slideIndex) {
-      currentIndex += 1;
-      return "";
-    }
-
-    currentIndex += 1;
-    return match;
-  });
-
-  return withSummary(nextSource.replace(/\n{3,}/g, "\n\n").trim());
+  return withSummary(deleteMotionDocSlideSource(source, slideIndex));
 }
 
 export function reorderMotionDocSlide(
@@ -224,21 +330,7 @@ export function reorderMotionDocSlide(
     return withSummary(source);
   }
 
-  const pattern = /<(Slide|Scene)\b[^>]*>[\s\S]*?<\/\1>/g;
-  const matches = [...source.matchAll(pattern)];
-  const slideSources = matches.map((match) => match[0]);
-  const [movedSlide] = slideSources.splice(fromIndex, 1);
-
-  slideSources.splice(toIndex, 0, movedSlide);
-
-  let currentIndex = 0;
-  const nextSource = source.replace(pattern, () => {
-    const replacement = slideSources[currentIndex];
-    currentIndex += 1;
-    return replacement;
-  });
-
-  return withSummary(nextSource);
+  return withSummary(reorderMotionDocSlideSource(source, fromIndex, toIndex));
 }
 
 function withSummary(source: string) {
@@ -246,6 +338,70 @@ function withSummary(source: string) {
     source,
     summary: summarizeMotionDoc(source)
   };
+}
+
+function replaceBlockInSlide(
+  source: string,
+  slideIndex: number,
+  slide: MotionDocScene,
+  blockIndex: number,
+  block: MotionDocBlock
+) {
+  const blocks = [...slide.blocks];
+  blocks[blockIndex] = block;
+
+  return withSummary(
+    replaceMotionDocSlideSource(source, slideIndex, generateSlideString({ ...slide, blocks }))
+  );
+}
+
+function getBlockOrThrow(
+  slide: MotionDocScene,
+  slideIndex: number,
+  blockIndex: number
+) {
+  const block = slide.blocks[blockIndex];
+
+  if (!block) {
+    throw new Error(
+      `blockIndex ${blockIndex} is outside the block range for slide ${slideIndex}.`
+    );
+  }
+
+  return block;
+}
+
+function resolveBlockInsertIndex(blockCount: number, afterBlockIndex: number | undefined) {
+  if (afterBlockIndex === undefined) return blockCount;
+
+  if (!Number.isInteger(afterBlockIndex) || afterBlockIndex < 0 || afterBlockIndex >= blockCount) {
+    throw new Error(`afterBlockIndex ${afterBlockIndex} is outside the block range.`);
+  }
+
+  return afterBlockIndex + 1;
+}
+
+function cloneAutomationBlock(block: MotionDocBlock, offset: number): MotionDocBlock {
+  if (!("props" in block)) {
+    return { ...block };
+  }
+
+  const props = { ...block.props };
+
+  for (const key of ["x", "y"] as const) {
+    const value = props[key];
+    if (typeof value === "number") {
+      props[key] = Math.min(100, Math.max(0, value + offset));
+    }
+  }
+
+  delete props.groupId;
+  delete props.groupName;
+
+  return {
+    ...block,
+    props
+  } as MotionDocBlock;
 }
 
 function createCoverScene(
@@ -527,7 +683,7 @@ function assertSingleSlideSource(slideSource: string) {
 }
 
 function coerceMotionProps(props: Record<string, unknown>) {
-  const nextProps: Record<string, string | number> = {};
+  const nextProps: MotionDocProps = {};
 
   for (const [key, value] of Object.entries(props)) {
     if (!/^[A-Za-z][A-Za-z0-9]*$/.test(key)) continue;

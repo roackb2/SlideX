@@ -1,27 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PreviewCanvas } from "@/features/pitch/ui/PreviewCanvas";
 import { PitchHeader } from "@/features/pitch/ui/PitchHeader";
+import { PreviewCanvas } from "@/features/pitch/ui/PreviewCanvas";
+import { useMobileEdgePanels } from "@/features/pitch/ui/hooks/useMobileEdgePanels";
+import { DesktopSlideNoteFab } from "@/features/pitch/ui/notes/DesktopSlideNoteFab";
 import { WorkspaceCodeEditorOverlay } from "@/features/pitch/ui/workspace/WorkspaceCodeEditorOverlay";
 import { WorkspaceInspectorPanel } from "@/features/pitch/ui/workspace/WorkspaceInspectorPanel";
 import { WorkspaceLayerSidebar } from "@/features/pitch/ui/workspace/WorkspaceLayerSidebar";
 import { WorkspaceScrollbarStyle } from "@/features/pitch/ui/workspace/WorkspaceScrollbarStyle";
 import { WorkspaceTemplateDialog } from "@/features/pitch/ui/workspace/WorkspaceTemplateDialog";
 import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWorkspaceTypes";
-import { useMobileEdgePanels } from "@/features/pitch/ui/hooks/useMobileEdgePanels";
-import { DesktopSlideNoteFab } from "@/features/pitch/ui/notes/DesktopSlideNoteFab";
 
-export function PitchWorkspace(props: PitchWorkspaceProps) {
-  const sceneCount = props.scenes.length;
-  const setActiveCanvasTool = props.setActiveCanvasTool;
+export function PitchWorkspace({ agent, commands, document, selection, view }: PitchWorkspaceProps) {
+  const sceneCount = document.scenes.length;
+  const setActiveCanvasTool = view.setActiveCanvasTool;
   const [zoomLevel, setZoomLevel] = useState<number | "fit">("fit");
   const [fitScale, setFitScale] = useState(1);
+
   useMobileEdgePanels({
-    isLeftPanelOpen: props.isMobileSidebarOpen,
-    isRightPanelOpen: props.isMobileInspectorOpen,
-    setIsLeftPanelOpen: props.setIsMobileSidebarOpen,
-    setIsRightPanelOpen: props.setIsMobileInspectorOpen
+    isLeftPanelOpen: view.isMobileSidebarOpen,
+    isRightPanelOpen: view.isMobileInspectorOpen,
+    setIsLeftPanelOpen: view.setIsMobileSidebarOpen,
+    setIsRightPanelOpen: view.setIsMobileInspectorOpen
   });
 
   useEffect(() => {
@@ -37,110 +38,115 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
   }, [setActiveCanvasTool]);
 
   function selectSlide(index: number) {
-    props.setActiveSlideIndex(index);
-    props.selectSingleBlock(null);
-    props.setReplayNonce((value) => value + 1);
+    commands.setActiveSlideIndex(index);
+    selection.selectSingleBlock(null);
+    view.setReplayNonce((value) => value + 1);
   }
 
   return (
     <main className="flex h-[100dvh] flex-col overflow-hidden bg-[#000000] font-sans text-neutral-300">
       <PitchHeader
-        exportMenuRef={props.exportMenuRef}
-        isExportMenuOpen={props.isExportMenuOpen}
-        isMobileInspectorOpen={props.isMobileInspectorOpen}
-        isMobileSidebarOpen={props.isMobileSidebarOpen}
-        notice={props.notice}
-        zoomLevel={zoomLevel}
-        setZoomLevel={setZoomLevel}
+        accessMode={view.accessMode}
         actualScale={zoomLevel === "fit" ? fitScale : zoomLevel}
-        isAgentEnabled={props.isAgentEnabled}
-        isAgentPanelOpen={props.isAgentPanelOpen}
-        onPlay={props.openPresentationPreview}
+        exportMenuRef={view.exportMenuRef}
+        isAgentEnabled={agent?.isEnabled ?? false}
+        isAgentPanelOpen={agent?.isPanelOpen ?? false}
+        isMobileInspectorOpen={view.isMobileInspectorOpen}
+        isMobileSidebarOpen={view.isMobileSidebarOpen}
+        notice={view.notice}
+        onExport={commands.openExport}
+        onPlay={commands.openPresentationPreview}
         onToggleInspector={() => {
-          props.setIsMobileInspectorOpen((value) => !value);
-          props.setIsMobileSidebarOpen(false);
+          view.setIsMobileInspectorOpen((value) => !value);
+          view.setIsMobileSidebarOpen(false);
         }}
         onToggleSidebar={() => {
-          props.setIsMobileSidebarOpen((value) => !value);
-          props.setIsMobileInspectorOpen(false);
+          view.setIsMobileSidebarOpen((value) => !value);
+          view.setIsMobileInspectorOpen(false);
         }}
-        onToggleAgentPanel={props.toggleAgentPanel}
-        onUndo={props.undoLastChange}
-        projectName={`${props.projectName}${props.isProjectDirty ? " - Edited" : ""}`}
-        setIsExportMenuOpen={props.setIsExportMenuOpen}
+        onToggleAgentPanel={agent?.togglePanel}
+        onUndo={commands.undoLastChange}
+        projectName={`${document.projectName}${document.isProjectDirty ? " - Edited" : ""}`}
+        setZoomLevel={setZoomLevel}
+        zoomLevel={zoomLevel}
       />
 
       <div className="relative flex flex-1 animate-[bubble-appear_0.3s_ease-out] overflow-hidden bg-[#000000]" id="workspace-v4">
-        <WorkspaceLayerSidebar {...props} onSelectSlide={selectSlide} />
+        <WorkspaceLayerSidebar
+          commands={commands}
+          document={document}
+          onSelectSlide={selectSlide}
+          selection={selection}
+          view={view}
+        />
 
         <div className="relative flex min-w-0 flex-1">
           <PreviewCanvas
-            activeCanvasTool={props.activeCanvasTool}
-          zoomLevel={zoomLevel}
-          onFitScaleChange={setFitScale}
-          onSetZoomLevel={setZoomLevel}
-          activeSlide={props.activeSlide}
-          activeSlideIndex={props.activeSlideIndex}
-          canPasteBlock={props.hasCopiedBlock}
-          isGridVisible={props.isCanvasGridVisible}
-          onAddBlock={props.addBlockToActiveSlide}
-
-          onBeginBlockTransform={props.beginBlockTransform}
-          onClearSelection={props.clearBlockSelection}
-          onCopySelectedBlock={props.copySelectedBlock}
-          onDeleteSelectedBlocks={props.deleteSelectedBlocks}
-          onDuplicateSelectedBlock={props.duplicateSelectedBlock}
-          onGroupSelectedBlocks={props.groupSelectedBlocks}
-          onMoveSelectedBlocksToEdge={props.moveSelectedBlocksToEdge}
-          onOpenMobileInspector={() => {
-            props.setIsMobileInspectorOpen(true);
-            props.setIsMobileSidebarOpen(false);
-          }}
-          onOpenMobileLayers={() => {
-            props.setIsMobileSidebarOpen(true);
-            props.setIsMobileInspectorOpen(false);
-          }}
-          onNextSlide={props.goToNextSlide}
-          onPasteCopiedBlock={props.pasteCopiedBlock}
-          onPreviousSlide={props.goToPreviousSlide}
-          onInsertSlideNearActive={props.insertSlideNearActive}
-          onSelectBlock={props.selectBlock}
-          onSelectBlocks={props.selectBlocks}
-          onSelectSlide={selectSlide}
-          onToggleSelectedBlocksPositionLock={props.toggleSelectedBlocksPositionLock}
-          onUngroupSelectedBlocks={props.ungroupSelectedBlocks}
-          onUndo={props.undoLastChange}
-          onUpdateBlock={props.updateBlock}
-          onUpdateBlockFrames={props.updatePositionedBlockFrames}
-          onUseSelectedImageAsBackground={props.useSelectedImageAsBackground}
-          replayNonce={props.replayNonce}
-          sceneCount={sceneCount}
-          selectedBlockIndex={props.selectedBlockIndex}
-          selectedBlockIndices={props.selectedBlockIndices}
-          selectedBlocksLocked={props.selectedBlocksLocked}
-          scenes={props.scenes}
-          slideRows={props.slideRows}
-          source={props.canvasSource}
-            onCanvasToolChange={setActiveCanvasTool}
+            activeCanvasTool={view.activeCanvasTool}
+            activeSlide={document.activeSlide}
+            activeSlideIndex={document.activeSlideIndex}
+            canPasteBlock={selection.hasCopiedBlock}
+            isGridVisible={view.isCanvasGridVisible}
+            onAddBlock={commands.addBlockToActiveSlide}
+            onBeginBlockTransform={commands.beginBlockTransform}
+            onCanvasToolChange={view.setActiveCanvasTool}
+            onClearSelection={selection.clearBlockSelection}
+            onCopySelectedBlock={commands.copySelectedBlock}
+            onDeleteSelectedBlocks={commands.deleteSelectedBlocks}
+            onDuplicateSelectedBlock={commands.duplicateSelectedBlock}
+            onFitScaleChange={setFitScale}
+            onGroupSelectedBlocks={commands.groupSelectedBlocks}
+            onInsertSlideNearActive={commands.insertSlideNearActive}
+            onMoveSelectedBlocksToEdge={commands.moveSelectedBlocksToEdge}
+            onNextSlide={commands.goToNextSlide}
+            onOpenMobileInspector={() => {
+              view.setIsMobileInspectorOpen(true);
+              view.setIsMobileSidebarOpen(false);
+            }}
+            onOpenMobileLayers={() => {
+              view.setIsMobileSidebarOpen(true);
+              view.setIsMobileInspectorOpen(false);
+            }}
+            onPasteCopiedBlock={commands.pasteCopiedBlock}
+            onPreviousSlide={commands.goToPreviousSlide}
+            onSelectBlock={selection.selectBlock}
+            onSelectBlocks={selection.selectBlocks}
+            onSelectSlide={selectSlide}
+            onSetZoomLevel={setZoomLevel}
+            onToggleSelectedBlocksPositionLock={commands.toggleSelectedBlocksPositionLock}
+            onUndo={commands.undoLastChange}
+            onUngroupSelectedBlocks={commands.ungroupSelectedBlocks}
+            onUpdateBlock={commands.updateBlock}
+            onUpdateBlockFrames={commands.updatePositionedBlockFrames}
+            onUseSelectedImageAsBackground={commands.useSelectedImageAsBackground}
+            replayNonce={view.replayNonce}
+            sceneCount={sceneCount}
+            scenes={document.scenes}
+            selectedBlockIndex={selection.selectedBlockIndex}
+            selectedBlockIndices={selection.selectedBlockIndices}
+            selectedBlocksLocked={selection.selectedBlocksLocked}
+            slideRows={document.slideRows}
+            source={document.canvasSource}
+            zoomLevel={zoomLevel}
           />
           <DesktopSlideNoteFab
-            comments={props.activeSlideComments}
-            onAddComment={props.onAddActiveSlideComment}
-            onPassComment={props.onPassActiveSlideComment}
-            slideNumber={props.activeSlideIndex + 1}
+            comments={document.activeSlideComments}
+            onAddComment={commands.onAddActiveSlideComment}
+            onPassComment={commands.onPassActiveSlideComment}
+            slideNumber={document.activeSlideIndex + 1}
           />
         </div>
 
-        <WorkspaceInspectorPanel {...props} />
-        {props.agentPanel ? (
+        <WorkspaceInspectorPanel commands={commands} document={document} selection={selection} view={view} />
+        {agent?.panel ? (
           <div className="absolute inset-y-0 right-0 z-[70] shadow-[-20px_0_50px_rgba(0,0,0,0.45)]">
-            {props.agentPanel}
+            {agent.panel}
           </div>
         ) : null}
       </div>
 
-      <WorkspaceCodeEditorOverlay {...props} sceneCount={sceneCount} />
-      <WorkspaceTemplateDialog {...props} />
+      <WorkspaceCodeEditorOverlay commands={commands} document={document} sceneCount={sceneCount} selection={selection} view={view} />
+      <WorkspaceTemplateDialog commands={commands} document={document} view={view} />
       <WorkspaceScrollbarStyle />
     </main>
   );

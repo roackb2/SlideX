@@ -1,14 +1,12 @@
 "use client";
 
 import { Eye, EyeOff, Maximize, Minimize, Minus, Plus, RefreshCcw, Shrink, StretchHorizontal, Volume2, VolumeX } from "lucide-react";
-import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocProps, MotionDocVisualBlock } from "@/core/motion-doc/domain/motionDocTypes";
 import { iconFrameForSize } from "@/core/motion-doc/domain/iconSizing";
-import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
-
-type VisualBlock = Extract<MotionDocBlock, { props: Record<string, string | number> }>;
+import type { BlockUpdater } from "@/features/pitch/application/pitchCommandTypes";
 
 type VisualFrameEditorProps = {
-  block: VisualBlock;
+  block: MotionDocVisualBlock;
   blockIndex: number;
   onSelectBlock: (index: number) => void;
   onUpdateBlock: BlockUpdater;
@@ -29,7 +27,7 @@ export function VisualFrameEditor({ block, blockIndex, onSelectBlock, onUpdateBl
 
   if (!isIcon && !isImage && !isVideo) return null;
 
-  function update(updates: Record<string, string | number>) {
+  function update(updates: MotionDocProps) {
     onUpdateBlock(blockIndex, { ...block.props, ...updates }, undefined, { skipReplay: true });
   }
 
@@ -49,7 +47,7 @@ export function VisualFrameEditor({ block, blockIndex, onSelectBlock, onUpdateBl
   );
 }
 
-function IconQuickControls({ block, onUpdate }: { block: VisualBlock; onUpdate: (updates: Record<string, string | number>) => void }) {
+function IconQuickControls({ block, onUpdate }: { block: MotionDocVisualBlock; onUpdate: (updates: MotionDocProps) => void }) {
   const size = numberProp(block.props.size, 112);
   const strokeWidth = numberProp(block.props.strokeWidth, 2);
   const color = String(block.props.color ?? "#ffffff");
@@ -74,7 +72,7 @@ function IconQuickControls({ block, onUpdate }: { block: VisualBlock; onUpdate: 
   );
 }
 
-function MediaQuickControls({ block, isVideo, onUpdate }: { block: VisualBlock; isVideo: boolean; onUpdate: (updates: Record<string, string | number>) => void }) {
+function MediaQuickControls({ block, isVideo, onUpdate }: { block: MotionDocVisualBlock; isVideo: boolean; onUpdate: (updates: MotionDocProps) => void }) {
   const fit = normalizeFit(block.props.fit);
   const isMuted = normalizeBoolean(block.props.muted, true);
   const showsControls = normalizeBoolean(block.props.controls, true);

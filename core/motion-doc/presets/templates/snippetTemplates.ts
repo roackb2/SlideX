@@ -34,11 +34,6 @@ export const snippetTemplates = [
 <Text fontSize={16} lineHeight={1.4} x={8} y={74} w={32} h={14}>Qualified revenue influenced this quarter.</Text>`
   },
   {
-    id: "chart",
-    label: "Chart",
-    code: `<Chart chartType="bar" chartColor="#0ea5e9" colors="#ef4444,#f59e0b,#10b981,#3b82f6" fontSize={18} strokeWidth={16} title="Quarterly traction" labels="Q1,Q2,Q3,Q4" values="42,58,73,91" width="full" height={240} enter="fadeUp" delay={0.2} radius={16} x={7} y={24} w={86} h={64} />`
-  },
-  {
     id: "snip-image",
     label: "Cover Image",
     code: `<ImageBlock fit="cover" src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=85&w=2400" alt="Retro Setup" enter="fadeIn" delay={0.2} radius={16} x={10} y={20} w={80} h={54} />`
