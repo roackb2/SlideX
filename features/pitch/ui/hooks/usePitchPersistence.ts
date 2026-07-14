@@ -5,7 +5,10 @@ import { embedPitchLocalImagesForPersistence } from "@/features/pitch/infrastruc
 
 type UsePitchPersistenceOptions = {
   enabled: boolean;
-  onProjectSourceChange?: (source: string, title: string) => void;
+  onProjectSourceChange?: (
+    source: string,
+    title: string
+  ) => void | Promise<void>;
   projectName: string;
   setNotice: (notice: string) => void;
   source: string;
@@ -26,7 +29,9 @@ export function usePitchPersistence({
       void (async () => {
         try {
           const persistedSource = await embedPitchLocalImagesForPersistence(source);
-          if (!isCancelled) onProjectSourceChange(persistedSource, projectName);
+          if (!isCancelled) {
+            await onProjectSourceChange(persistedSource, projectName);
+          }
         } catch {
           if (!isCancelled) setNotice("This browser could not save the presentation");
         }

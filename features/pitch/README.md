@@ -41,7 +41,10 @@ This file remains authoritative for the editor-local boundary.
   sheet, or FAB-triggered surface without changing lifecycle behavior.
 - `ui/agent/PitchAgentPanel.tsx` renders the current surface and delegates
   MotionDoc application back to the editor's existing undo-aware `commitSource`
-  path.
+  path. An automatically accepted result is persisted through the workspace
+  source callback before its terminal assistant message is rendered; therefore
+  a visible completed turn is safe to reload immediately. Persistence failures
+  keep the result pending instead of presenting an unsaved deck as complete.
 
 Execution, event replay, run-consumer policy, and cancellation semantics belong
 to Heddle. Product

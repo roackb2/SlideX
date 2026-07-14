@@ -46,7 +46,10 @@ type MotionDocAppProps = {
   initialResumeIntent?: "export" | "preview";
   onOpenAgentSession?: (presentationId: string, sessionId: string) => void;
   onSignInRequested?: (intent: GuestSignInIntent) => void;
-  onProjectSourceChange?: (source: string, title: string) => void;
+  onProjectSourceChange?: (
+    source: string,
+    title: string
+  ) => void | Promise<void>;
   onSelectedAgentSessionChange?: (sessionId?: string) => void;
   presentationId?: string;
 };
@@ -183,12 +186,26 @@ export function MotionDocApp({
     documentTitle: sliderDocument.title,
     setNotice
   });
-  const applyAgentMotionDoc = useCallback((motionDoc: string, summary: string) => {
+  const applyAgentMotionDoc = useCallback(async (
+    motionDoc: string,
+    summary: string
+  ) => {
+    if (onProjectSourceChange) {
+      const persistedSource = await embedPitchLocalImagesForPersistence(motionDoc);
+      await onProjectSourceChange(persistedSource, projectName);
+    }
     commitSource(motionDoc);
     clearBlockSelection();
     setReplayNonce((value) => value + 1);
     setNotice(summary || "Agent changes applied");
-  }, [clearBlockSelection, commitSource, setNotice, setReplayNonce]);
+  }, [
+    clearBlockSelection,
+    commitSource,
+    onProjectSourceChange,
+    projectName,
+    setNotice,
+    setReplayNonce
+  ]);
 
   const openAgentSession = useCallback((session: AgentSessionSummary) => {
     onProjectSourceChange?.(source, projectName);
