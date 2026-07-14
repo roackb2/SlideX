@@ -32,7 +32,7 @@ type PitchAgentContextValue = {
     setLlmApiKey: Dispatch<SetStateAction<string>>;
     loadMoreSessions: () => Promise<unknown>;
     retrySessions: () => Promise<unknown>;
-    selectSession: (session: AgentSessionSummary) => Promise<void> | void;
+    selectSession: (session: AgentSessionSummary) => Promise<boolean>;
   };
   meta: PitchAgentRuntime["meta"] & {
     hasMoreSessions: boolean;
@@ -91,9 +91,13 @@ function PitchAgentRuntimeProvider({
       if (selected) {
         runtimeInput.onSelectedSessionChange?.(session.id);
       }
-      return;
+      return selected;
     }
-    runtimeInput.onOpenSession?.(session);
+    if (!runtimeInput.onOpenSession) {
+      return false;
+    }
+    runtimeInput.onOpenSession(session);
+    return true;
   };
 
   return (
