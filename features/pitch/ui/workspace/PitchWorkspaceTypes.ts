@@ -10,6 +10,7 @@ import type { AddBlockType } from "@/features/pitch/ui/pitchOptions";
 export type SelectionMdx = { label: string; source: string };
 
 export type PitchWorkspaceProps = {
+  accessMode: "authenticated" | "guest";
   activeSlide: MotionDocScene | undefined;
   activeSlideAccent: string;
   activeSlideAlignX: string;
@@ -74,6 +75,7 @@ export type PitchWorkspaceProps = {
   moveSelectedBlocksToEdge: (edge: "back" | "front") => void;
   newProject: () => void;
   notice: string;
+  openExport: () => void;
   openPresentationPreview: () => void;
   onAddActiveSlideComment: (comment: string) => void;
   onPassActiveSlideComment: (commentId: string) => void;

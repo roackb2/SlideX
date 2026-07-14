@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { RequireAuthSession } from "@/features/auth";
 
 export const metadata: Metadata = {
   title: "Workspace",
@@ -7,5 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
-  return <RequireAuthSession>{children}</RequireAuthSession>;
+  return children;
 }

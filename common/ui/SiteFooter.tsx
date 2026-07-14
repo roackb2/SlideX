@@ -5,15 +5,15 @@ import Link from "next/link";
 import { useI18n } from "@/common/lib/I18nProvider";
 
 const productLinks = [
-  { href: "/download", label: "Download" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/docs", label: "Docx" },
-  { href: "/blog", label: "Blog" }
+  { href: "/download", en: "Download", zh: "下載" },
+  { href: "/pricing", en: "Pricing", zh: "價格" },
+  { href: "/docs", en: "Docs", zh: "文件" },
+  { href: "/blog", en: "Blog", zh: "部落格" }
 ];
 
 const legalLinks = [
-  { href: "/terms", label: "Terms of Use" },
-  { href: "/privacy", label: "Privacy Policy" }
+  { href: "/terms", en: "Terms of Use", zh: "使用條款" },
+  { href: "/privacy", en: "Privacy Policy", zh: "隱私權政策" }
 ];
 
 export function SiteFooter() {
@@ -29,27 +29,27 @@ export function SiteFooter() {
               <Image alt="SlideX" className="h-auto w-[96px] object-contain" height={72} src="/logo.png" width={260} />
             </Link>
             <p className="mt-5 max-w-xs text-[14px] leading-6 text-white/48">
-              {isZh ? "Pitch 是一個專注於清楚敘事的簡報工作區。" : "Pitch is a focused workspace for clear presentation stories."}
+              {isZh ? "在瀏覽器完成簡報，準備好後匯出 PowerPoint。" : "Create presentations in the browser and export to PowerPoint when they are ready."}
             </p>
           </div>
 
           <div>
-            <p className="text-[12px] font-semibold text-white/85">Product</p>
-            <nav aria-label="Product links" className="mt-4 grid gap-3 text-[14px]">
+            <p className="text-[12px] font-semibold text-white/85">{isZh ? "產品" : "Product"}</p>
+            <nav aria-label={isZh ? "產品連結" : "Product links"} className="mt-4 grid gap-3 text-[14px]">
               {productLinks.map((link) => (
                 <Link className="w-fit text-white/49 transition-colors hover:text-white focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-3 focus-visible:outline-white" href={localePath(link.href)} key={link.href}>
-                  {link.label}
+                  {isZh ? link.zh : link.en}
                 </Link>
               ))}
             </nav>
           </div>
 
           <div>
-            <p className="text-[12px] font-semibold text-white/85">Legal</p>
-            <nav aria-label="Legal links" className="mt-4 grid gap-3 text-[14px]">
+            <p className="text-[12px] font-semibold text-white/85">{isZh ? "法律資訊" : "Legal"}</p>
+            <nav aria-label={isZh ? "法律資訊連結" : "Legal links"} className="mt-4 grid gap-3 text-[14px]">
               {legalLinks.map((link) => (
                 <Link className="w-fit text-white/49 transition-colors hover:text-white focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-3 focus-visible:outline-white" href={localePath(link.href)} key={link.href}>
-                  {link.label}
+                  {isZh ? link.zh : link.en}
                 </Link>
               ))}
             </nav>
@@ -58,7 +58,7 @@ export function SiteFooter() {
 
         <div className="mt-14 flex flex-col gap-3 border-t border-white/[0.09] pt-5 text-[12px] text-white/38 sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 SlideX. {isZh ? "保留所有權利。" : "All rights reserved."}</p>
-          <p>{isZh ? "用單色與動態，讓簡報保持清楚。" : "Keep presentation stories clear with color and motion."}</p>
+          <p>{isZh ? "選擇模板、直接編輯、匯出 PowerPoint。" : "Choose a deck, edit it, and export to PowerPoint."}</p>
         </div>
       </div>
     </footer>

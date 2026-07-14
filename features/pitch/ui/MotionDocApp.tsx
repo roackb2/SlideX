@@ -17,10 +17,15 @@ import { defaultTemplate } from "@/core/motion-doc/presets/templates";
 import { defaultCanvasTool, type CanvasTool } from "@/features/pitch/application/canvasTools";
 import { importPitchProjectFile } from "@/features/pitch/infrastructure/pitchImport";
 import { slideCommentsDeckId } from "@/features/pitch/infrastructure/slideComments";
+import { embedPitchLocalImagesForPersistence } from "@/features/pitch/infrastructure/pitchLocalAssets";
 import { useMobilePitchViewport } from "@/features/pitch/ui/hooks/useMobilePitchViewport";
 import { useSlideComments } from "@/features/pitch/ui/hooks/useSlideComments";
 import { MobilePitchViewer } from "@/features/pitch/ui/mobile/MobilePitchViewer";
 import { PresentationPreviewModal } from "@/features/pitch/ui/PresentationPreviewModal";
+import {
+  GuestSignInDialog,
+  type GuestSignInIntent
+} from "@/features/pitch/ui/GuestSignInDialog";
 
 export type MotionDocInitialProject = {
   name: string;
@@ -29,11 +34,22 @@ export type MotionDocInitialProject = {
 };
 
 type MotionDocAppProps = {
+  accessMode?: "authenticated" | "guest";
   initialProject?: MotionDocInitialProject;
+  initialResumeIntent?: "export" | "preview";
+  onSignInRequested?: (intent: GuestSignInIntent) => void;
   onProjectSourceChange?: (source: string, title: string) => void;
 };
 
-export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDocAppProps = {}) {
+const guestLockedExportFormats = ["html", "mdx"] as const satisfies readonly ExportFormat[];
+
+export function MotionDocApp({
+  accessMode = "authenticated",
+  initialProject,
+  initialResumeIntent,
+  onProjectSourceChange,
+  onSignInRequested
+}: MotionDocAppProps = {}) {
   const isMobileViewport = useMobilePitchViewport();
   const [source, setSource] = useState(initialProject?.source ?? defaultMdx);
   const [replayNonce, setReplayNonce] = useState(0);
@@ -44,8 +60,8 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
   const [dragOverBlockIndex, setDragOverBlockIndex] = useState<number | null>(null);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
-  const [isPresentationPreviewOpen, setIsPresentationPreviewOpen] = useState(false);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(initialResumeIntent === "export");
+  const [isPresentationPreviewOpen, setIsPresentationPreviewOpen] = useState(initialResumeIntent === "preview");
   const [isExporting, setIsExporting] = useState(false);
   const [fileModalMode, setFileModalMode] = useState<"export" | "import">("export");
   const [isCanvasGridVisible, setIsCanvasGridVisible] = useState(false);
@@ -54,6 +70,7 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
   const undoStackRef = useRef<string[]>([]);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isMobileInspectorOpen, setIsMobileInspectorOpen] = useState(false);
+  const [guestSignInIntent, setGuestSignInIntent] = useState<GuestSignInIntent | null>(null);
 
   const {
     activeSlide,
@@ -140,6 +157,16 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
     setNotice
   });
 
+  const openExport = useCallback(() => {
+    setFileModalMode("export");
+    setIsExportMenuOpen(true);
+  }, []);
+
+  const requestRestrictedExportSignIn = useCallback(() => {
+    setIsExportMenuOpen(false);
+    setGuestSignInIntent("export");
+  }, []);
+
   const handleExportFromModal = useCallback(async (format: ExportFormat, filename: string) => {
     setIsExporting(true);
     try {
@@ -195,11 +222,37 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
 
   useEffect(() => {
     if (!onProjectSourceChange || !initialProject) return;
+    let isCancelled = false;
     const saveTimer = window.setTimeout(() => {
-      onProjectSourceChange(source, projectName);
+      void (async () => {
+        try {
+          const persistedSource = accessMode === "guest"
+            ? await embedPitchLocalImagesForPersistence(source)
+            : source;
+          if (!isCancelled) onProjectSourceChange(persistedSource, projectName);
+        } catch {
+          if (!isCancelled) setNotice("This browser could not save the demo draft");
+        }
+      })();
     }, 450);
-    return () => window.clearTimeout(saveTimer);
-  }, [initialProject, onProjectSourceChange, projectName, source]);
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(saveTimer);
+    };
+  }, [accessMode, initialProject, onProjectSourceChange, projectName, source]);
+
+  const continueGuestSignIn = useCallback(async (intent: GuestSignInIntent) => {
+    try {
+      if (onProjectSourceChange) {
+        const persistedSource = await embedPitchLocalImagesForPersistence(source);
+        await onProjectSourceChange(persistedSource, projectName);
+      }
+      onSignInRequested?.(intent);
+    } catch {
+      setGuestSignInIntent(null);
+      setNotice("This browser could not save the demo draft. Free some storage and try again.");
+    }
+  }, [onProjectSourceChange, onSignInRequested, projectName, source]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -293,10 +346,7 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
           comments={(slideComments[activeSlideIndex] ?? []).filter((comment) => comment.status === "open")}
           documentTitle={sliderDocument.title}
           onAddComment={(comment) => addSlideComment(activeSlideIndex, comment)}
-          onExport={() => {
-            setFileModalMode("export");
-            setIsExportMenuOpen(true);
-          }}
+          onExport={openExport}
           onImport={() => {
             setFileModalMode("import");
             setIsExportMenuOpen(true);
@@ -314,9 +364,16 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
           initialMode={fileModalMode}
           isExporting={isExporting}
           isOpen={isExportMenuOpen}
+          lockedFormats={accessMode === "guest" ? guestLockedExportFormats : undefined}
           onClose={() => setIsExportMenuOpen(false)}
           onExport={handleExportFromModal}
           onImport={importPitchFile}
+          onLockedFormat={requestRestrictedExportSignIn}
+        />
+        <GuestSignInDialog
+          intent={guestSignInIntent}
+          onClose={() => setGuestSignInIntent(null)}
+          onContinue={(intent) => void continueGuestSignIn(intent)}
         />
       </>
     );
@@ -325,6 +382,7 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
   return (
     <>
     <PitchWorkspace
+      accessMode={accessMode}
       activeSlide={activeSlide}
       activeSlideAccent={activeSlideAccent}
       activeSlideAlignX={activeSlideAlignX}
@@ -392,6 +450,7 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
       moveSelectedBlocksToEdge={pitchCommands.moveSelectedBlocksToEdge}
       newProject={startNewProject}
       notice={notice}
+      openExport={openExport}
       openPresentationPreview={() => setIsPresentationPreviewOpen(true)}
       onAddActiveSlideComment={(comment) => addSlideComment(activeSlideIndex, comment)}
       onPassActiveSlideComment={(commentId) => passSlideComment(activeSlideIndex, commentId)}
@@ -446,8 +505,7 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
       onClose={() => setIsPresentationPreviewOpen(false)}
       onExport={() => {
         setIsPresentationPreviewOpen(false);
-        setFileModalMode("export");
-        setIsExportMenuOpen(true);
+        openExport();
       }}
       scenes={sliderDocument.scenes}
       source={canvasSource}
@@ -460,6 +518,13 @@ export function MotionDocApp({ initialProject, onProjectSourceChange }: MotionDo
       documentTitle={sliderDocument.title}
       isExporting={isExporting}
       initialMode={fileModalMode}
+      lockedFormats={accessMode === "guest" ? guestLockedExportFormats : undefined}
+      onLockedFormat={requestRestrictedExportSignIn}
+    />
+    <GuestSignInDialog
+      intent={guestSignInIntent}
+      onClose={() => setGuestSignInIntent(null)}
+      onContinue={(intent) => void continueGuestSignIn(intent)}
     />
     </>
   );

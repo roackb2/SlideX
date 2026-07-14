@@ -15,10 +15,10 @@ const languages = [
 ];
 
 const navItems = [
-  { href: "/download", label: "Download" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/docs", label: "Docx" },
-  { href: "/blog", label: "Blog" }
+  { href: "/download", en: "Download", zh: "下載" },
+  { href: "/pricing", en: "Pricing", zh: "價格" },
+  { href: "/docs", en: "Docs", zh: "文件" },
+  { href: "/blog", en: "Blog", zh: "部落格" }
 ];
 
 export function SiteNav() {
@@ -43,21 +43,6 @@ export function SiteNav() {
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-[110] border-b border-white/[0.08] bg-[#0b0c0f]/92 backdrop-blur-xl">
-        <a
-          className="flex h-7 items-center justify-center bg-[#c4ee87] px-4 text-center text-[12px] font-semibold text-[#0a1a00] transition-colors hover:bg-[#d2f5a0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#0a1a00]"
-          href="https://tally.so/r/jaYbe4"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <span className="whitespace-nowrap sm:hidden">
-            {isZh ? "SlideX 封閉測試中 — 填寫回饋" : "SlideX closed beta — Share feedback"}
-          </span>
-          <span className="hidden whitespace-nowrap sm:inline">
-            {isZh
-              ? "SlideX 正在封閉測試中，歡迎填寫問卷協助我們改善"
-              : "SlideX is in closed beta — help us improve by sharing your feedback"}
-          </span>
-        </a>
         <div className="mx-auto flex h-[68px] max-w-[1440px] items-center px-5 sm:px-7 lg:px-10">
           <div className="flex shrink-0 items-center gap-3">
             <Link aria-label={isZh ? "SlideX 首頁" : "SlideX home"} className="inline-flex items-center opacity-95 transition-opacity hover:opacity-70" href={localePath("/")}>
@@ -73,7 +58,7 @@ export function SiteNav() {
                 href={localePath(item.href)}
                 key={item.href}
               >
-                {item.label}
+                {isZh ? item.zh : item.en}
               </Link>
             ))}
           </nav>
@@ -82,8 +67,8 @@ export function SiteNav() {
             <Link className="inline-flex h-10 items-center whitespace-nowrap px-3 text-[15px] font-medium tracking-[-0.02em] text-white/58 transition-colors hover:text-white" href={localePath("/login")}>
               {isZh ? "登入" : "Log in"}
             </Link>
-            <Link className="group inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-md bg-[#f4f4f1] px-4 text-[14px] font-semibold text-[#0b0c0f] transition-colors hover:bg-white active:translate-y-px" href={appRoutes.workspace}>
-              {isZh ? "開始使用" : "Start using"}
+            <Link className="group inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-md bg-[#f4f4f1] px-4 text-[14px] font-semibold text-[#0b0c0f] transition-colors hover:bg-white active:translate-y-px" href={appRoutes.liveDemo}>
+              {isZh ? "立即試用 Live Demo" : "Try Live Demo"}
               <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </Link>
             <div className="relative ml-1">
@@ -142,7 +127,7 @@ export function SiteNav() {
         {menuOpen ? (
           <motion.div
             animate={{ opacity: 1, y: 0 }}
-            className="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-[#0b0c0f] px-5 pb-[max(28px,env(safe-area-inset-bottom))] pt-36 text-white lg:hidden"
+            className="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-[#0b0c0f] px-5 pb-[max(28px,env(safe-area-inset-bottom))] pt-28 text-white lg:hidden"
             exit={{ opacity: 0, y: -12 }}
             initial={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
@@ -150,7 +135,7 @@ export function SiteNav() {
             <nav aria-label={isZh ? "手機導覽" : "Mobile navigation"} className="border-y border-white/[0.1]">
               {navItems.map((item) => (
                 <Link className="flex min-h-16 items-center border-b border-white/[0.08] text-[24px] font-semibold tracking-[-0.04em] last:border-b-0" href={localePath(item.href)} key={item.href}>
-                  {item.label}
+                  {isZh ? item.zh : item.en}
                 </Link>
               ))}
             </nav>
@@ -158,8 +143,8 @@ export function SiteNav() {
               <Link className="inline-flex h-11 items-center justify-center rounded-md border border-white/[0.14] text-[14px] font-semibold text-white" href={localePath("/login")}>
                 {isZh ? "登入" : "Log in"}
               </Link>
-              <Link className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#f4f4f1] text-[14px] font-semibold text-[#0b0c0f]" href={appRoutes.workspace}>
-                {isZh ? "開始使用" : "Start using"}
+              <Link className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#f4f4f1] text-[14px] font-semibold text-[#0b0c0f]" href={appRoutes.liveDemo}>
+                {isZh ? "立即試用 Live Demo" : "Try Live Demo"}
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
             </div>

@@ -1,10 +1,17 @@
 import { locales } from "@/common/lib/i18n";
 
 export const appRoutes = {
+  exampleDeck: "/workspace/pitch?demo=1&view=preview",
+  liveDemo: "/workspace/pitch?demo=1",
   login: "/login",
   pitch: "/workspace/pitch",
   workspace: "/workspace"
 } as const;
+
+export function loginPath(nextPath?: string) {
+  if (!nextPath) return appRoutes.login;
+  return `${appRoutes.login}?next=${encodeURIComponent(nextPath)}`;
+}
 
 const marketingHomePaths = new Set<string>([
   "/",

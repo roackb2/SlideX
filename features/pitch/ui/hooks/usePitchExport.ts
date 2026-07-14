@@ -564,8 +564,7 @@ export function usePitchExport({
       const localSource = await embedLocalFiles(canvasSource);
       const bundledSource = await embedRootRelativeImages(localSource);
       const bundledMediaSource = await embedRootRelativeVideos(bundledSource);
-      const embeddedMediaSource = await embedRemoteVideos(bundledMediaSource);
-      const finalSource = await embedRemoteImages(embeddedMediaSource);
+      const finalSource = await embedRemoteImages(bundledMediaSource);
       const document = parseMotionDoc(finalSource);
       const captureCharts = documentNeedsPptxChartImages(document);
       const captureSlideBackgrounds = documentNeedsPptxVisualFallback(document);

@@ -40,6 +40,25 @@ export async function externalizeEmbeddedPitchImages(source: string) {
   return source.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[^"\s]+/g, (value) => replacements.get(value) ?? value);
 }
 
+export async function embedPitchLocalImagesForPersistence(source: string) {
+  const imageSourcePattern = /<ImageBlock\b[^>]*?\bsrc\s*=\s*(["'])(blob:[^"'<>]+)\1/gi;
+  const urls = [...new Set([...source.matchAll(imageSourcePattern)].map((match) => match[2]))];
+  if (urls.length === 0) return source;
+
+  const files = localFileStore();
+  const replacements = new Map<string, string>();
+
+  await Promise.all(urls.map(async (url) => {
+    const file = files.get(url);
+    if (!file || !file.type.startsWith("image/")) return;
+    replacements.set(url, await fileToDataUrl(file));
+  }));
+
+  return source.replace(imageSourcePattern, (attribute, _quote: string, url: string) => (
+    attribute.replace(url, replacements.get(url) ?? url)
+  ));
+}
+
 function localFileStore() {
   const localWindow = window as SlideXLocalFilesWindow;
   localWindow.__slidexLocalFiles ??= new Map<string, File>();
@@ -48,4 +67,13 @@ function localFileStore() {
 
 function mediaTypeFromDataUrl(value: string) {
   return value.match(/^data:([^;,]+)/)?.[1] ?? "image/png";
+}
+
+function fileToDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }

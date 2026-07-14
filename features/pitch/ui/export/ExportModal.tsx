@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Download, FileCode2, Globe2, Presentation, Upload, X } from "lucide-react";
+import { Check, Download, FileCode2, Globe2, Lock, Presentation, Upload, X } from "lucide-react";
 
 export type ExportFormat = "html" | "mdx" | "pptx";
 
@@ -13,6 +13,8 @@ type ExportModalProps = {
   documentTitle: string;
   isExporting: boolean;
   initialMode?: "export" | "import";
+  lockedFormats?: readonly ExportFormat[];
+  onLockedFormat?: (format: ExportFormat) => void;
 };
 
 type ExportOption = {
@@ -59,7 +61,9 @@ export function ExportModal({
   onImport,
   documentTitle,
   isExporting,
-  initialMode = "export"
+  initialMode = "export",
+  lockedFormats = [],
+  onLockedFormat
 }: ExportModalProps) {
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("pptx");
   const [mode, setMode] = useState<"export" | "import">("export");
@@ -71,6 +75,10 @@ export function ExportModal({
 
   const handleExport = useCallback(async () => {
     if (isExporting) return;
+    if (lockedFormats.includes(selectedFormat)) {
+      onLockedFormat?.(selectedFormat);
+      return;
+    }
     const finalFilename = filename.trim() || documentTitle || "slidesx-deck";
     setErrorMessage("");
 
@@ -79,7 +87,7 @@ export function ExportModal({
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Export failed");
     }
-  }, [documentTitle, filename, isExporting, onExport, selectedFormat]);
+  }, [documentTitle, filename, isExporting, lockedFormats, onExport, onLockedFormat, selectedFormat]);
 
   const handleImport = useCallback(async (file: File) => {
     setErrorMessage("");
@@ -188,29 +196,43 @@ export function ExportModal({
           <div className="overflow-hidden rounded-lg border border-white/[0.08]">
             {formatOptions.map((option) => {
               const Icon = option.icon;
-              const isActive = selectedFormat === option.id;
+              const isLocked = lockedFormats.includes(option.id);
+              const isActive = !isLocked && selectedFormat === option.id;
 
               return (
                 <button
+                  aria-label={isLocked ? `${option.label}. Sign in required` : option.label}
                   aria-pressed={isActive}
                   className={`flex w-full items-center gap-3 border-b border-white/[0.07] px-4 py-3.5 text-left transition-colors last:border-b-0 ${
-                    isActive ? "bg-[#9ad7ff]/10" : "bg-white/[0.015] hover:bg-white/[0.04]"
+                    isActive ? "bg-[#9ad7ff]/10" : isLocked ? "bg-white/[0.01] hover:bg-white/[0.035]" : "bg-white/[0.015] hover:bg-white/[0.04]"
                   }`}
                   key={option.id}
-                  onClick={() => setSelectedFormat(option.id)}
+                  onClick={() => {
+                    if (isLocked) {
+                      onLockedFormat?.(option.id);
+                      return;
+                    }
+                    setSelectedFormat(option.id);
+                  }}
                   type="button"
                 >
-                  <Icon className={isActive ? "text-[#9ad7ff]" : "text-neutral-500"} size={18} />
+                  <Icon className={isActive ? "text-[#9ad7ff]" : isLocked ? "text-neutral-600" : "text-neutral-500"} size={18} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline gap-2">
-                      <span className={`text-[14px] font-semibold ${isActive ? "text-white" : "text-neutral-300"}`}>{option.label}</span>
+                      <span className={`text-[14px] font-semibold ${isActive ? "text-white" : isLocked ? "text-neutral-500" : "text-neutral-300"}`}>{option.label}</span>
                       <span className="font-mono text-[10px] text-neutral-600">{option.ext}</span>
                     </span>
-                    <span className="mt-1 block text-[11px] leading-4 text-neutral-500">{option.description}</span>
+                    <span className="mt-1 block text-[11px] leading-4 text-neutral-500">
+                      {isLocked ? "Sign in required. " : ""}{option.description}
+                    </span>
                   </span>
-                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${isActive ? "border-[#9ad7ff] bg-[#9ad7ff] text-[#08131a]" : "border-white/[0.12] text-transparent"}`}>
-                    <Check size={12} strokeWidth={3} />
-                  </span>
+                  {isLocked ? (
+                    <Lock aria-hidden="true" className="shrink-0 text-neutral-500" size={15} />
+                  ) : (
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${isActive ? "border-[#9ad7ff] bg-[#9ad7ff] text-[#08131a]" : "border-white/[0.12] text-transparent"}`}>
+                      <Check size={12} strokeWidth={3} />
+                    </span>
+                  )}
                 </button>
               );
             })}

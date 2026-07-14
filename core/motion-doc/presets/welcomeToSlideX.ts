@@ -1,5 +1,5 @@
 export const welcomePresentationId = "welcome-to-slidex";
-export const welcomePresentationSeedVersion = 7;
+export const welcomePresentationSeedVersion = 9;
 export const welcomePresentationTitle = "Welcome to SlideX";
 
 export const welcomePresentationSource = `# Welcome to SlideX

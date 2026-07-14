@@ -45,14 +45,15 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
   return (
     <main className="flex h-[100dvh] flex-col overflow-hidden bg-[#000000] font-sans text-neutral-300">
       <PitchHeader
+        accessMode={props.accessMode}
         exportMenuRef={props.exportMenuRef}
-        isExportMenuOpen={props.isExportMenuOpen}
         isMobileInspectorOpen={props.isMobileInspectorOpen}
         isMobileSidebarOpen={props.isMobileSidebarOpen}
         notice={props.notice}
         zoomLevel={zoomLevel}
         setZoomLevel={setZoomLevel}
         actualScale={zoomLevel === "fit" ? fitScale : zoomLevel}
+        onExport={props.openExport}
         onPlay={props.openPresentationPreview}
         onToggleInspector={() => {
           props.setIsMobileInspectorOpen((value) => !value);
@@ -64,7 +65,6 @@ export function PitchWorkspace(props: PitchWorkspaceProps) {
         }}
         onUndo={props.undoLastChange}
         projectName={`${props.projectName}${props.isProjectDirty ? " - Edited" : ""}`}
-        setIsExportMenuOpen={props.setIsExportMenuOpen}
       />
 
       <div className="relative flex flex-1 animate-[bubble-appear_0.3s_ease-out] overflow-hidden bg-[#000000]" id="workspace-v4">

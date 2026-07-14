@@ -10,7 +10,7 @@ import {
   useSpring,
   useTransform
 } from "framer-motion";
-import { ArrowRight, ChevronDown, Sparkles } from "lucide-react";
+import { ArrowRight, ChevronDown, Presentation } from "lucide-react";
 import { appRoutes } from "@/common/lib/appRoutes";
 import { useI18n } from "@/common/lib/I18nProvider";
 import { SlideXFeatureVisual } from "@/common/ui/SlideXFeatureVisual";
@@ -57,76 +57,104 @@ const heroSlides: {
 ];
 
 export function HomePage() {
-  const { locale, localePath } = useI18n();
+  const { locale } = useI18n();
   const reduceMotion = useReducedMotion();
   const isZh = locale === "zh-TW";
 
   const copy = {
-    heroTitle: isZh ? ["讓每一頁", "都有記憶點。"] : ["Make every slide", "worth remembering."],
-    heroBody: isZh ? "從精確畫布到動態畫面，在同一個工作區完成。" : "From precise canvas to expressive slides, in one workspace.",
-    primaryCta: isZh ? "開始製作" : "Start creating",
-    secondaryCta: isZh ? "查看工作區" : "Explore workspace",
+    heroTitle: isZh ? ["不用複雜流程，", "也能完成專業簡報。"] : ["Create presentations without", "the complicated workflow."],
+    heroBody: isZh
+      ? "從完整示範簡報開始，直接在瀏覽器修改內容，準備好後再匯出 PowerPoint。"
+      : "Start with a complete demo deck, edit it directly in the browser, and export it as PowerPoint when you are ready.",
+    primaryCta: isZh ? "立即試用 Live Demo" : "Try Live Demo",
+    secondaryCta: isZh ? "查看範例簡報" : "View Example Deck",
+    heroNote: isZh ? "不需註冊即可開始試用。" : "No sign-up required to try.",
+    workflowSteps: isZh
+      ? [
+          { detail: "開啟一份版面與視覺都已完成的示範簡報。", title: "選擇完整簡報" },
+          { detail: "直接在 Pitch 修改文字、圖片與版面。", title: "在瀏覽器編輯" },
+          { detail: "直接下載 PPTX；HTML 與 MDX 登入後即可使用。", title: "匯出 PowerPoint" }
+        ]
+      : [
+          { detail: "Open a complete demo deck and start with a finished layout.", title: "Choose a deck" },
+          { detail: "Change text, images, and layout directly in Pitch.", title: "Edit in your browser" },
+          { detail: "Download a PPTX directly. Sign in to unlock HTML and MDX.", title: "Export to PowerPoint" }
+        ],
     featureSections: isZh
       ? [
           {
-            eyebrow: "精確畫布",
-            title: "讓內容留在你放置的位置。",
-            body: "在同一個工作區管理投影片、圖層與畫布。從文字到資料元件，每個元素都能精確排列，播放與輸出時維持一致。",
-            link: "進入 Pitch 工作區",
+            eyebrow: "現成模板",
+            title: "從完整設計開始，不必從空白頁開始。",
+            body: "開啟 Live Demo，直接替換文字與圖片，同時保留完整的版面結構與視覺節奏。",
+            link: "試用 Live Demo",
             visual: "canvas" as const
           },
           {
-            eyebrow: "單色與動態",
-            title: "先決定氣氛，再調整細節。",
-            body: "使用單色 Fill 保持畫面安靜，或切換 Shader 加入動態材質。色彩、速度與強度都能在同一個面板完成。",
-            link: "查看 Pitch 功能",
-            visual: "shader" as const
+            eyebrow: "瀏覽器編輯",
+            title: "直接修改、預覽，再匯出 PowerPoint。",
+            body: "文字、圖片與版面都在同一個編輯器完成。準備好後，匯出可在 PowerPoint 開啟的 PPTX。",
+            link: "查看示範簡報",
+            visual: "export" as const
           }
         ]
       : [
           {
-            eyebrow: "Precise canvas",
-            title: "Keep every element exactly where it belongs.",
-            body: "Manage slides, layers, and the canvas in one workspace. Position text and data blocks precisely, then preserve the same composition in playback and export.",
-            link: "Open the Pitch workspace",
+            eyebrow: "Ready-made decks",
+            title: "Start with a complete design, not a blank slide.",
+            body: "Open the Live Demo, then replace text and images while keeping its polished layout and visual rhythm.",
+            link: "Try Live Demo",
             visual: "canvas" as const
           },
           {
-            eyebrow: "Solid or dynamic",
-            title: "Set the atmosphere before tuning the details.",
-            body: "Use a solid Fill for a quiet canvas, or switch to a Shader for motion and material. Adjust color, speed, and intensity from the same panel.",
-            link: "Explore Pitch features",
-            visual: "shader" as const
+            eyebrow: "Browser editing",
+            title: "Edit, preview, then export to PowerPoint.",
+            body: "Update text, images, and layout in one editor. When the deck is ready, export a PPTX that opens in PowerPoint.",
+            link: "View the example deck",
+            visual: "export" as const
           }
         ],
-    materialsTitle: isZh ? "每個故事，都能有自己的材質。" : "Give every story its own material.",
-    materialsBody: isZh ? "切換 shader、色彩與動態，不必重新設計整張投影片。" : "Switch shaders, color, and motion without rebuilding the slide.",
+    exportTitle: isZh ? "準備好後，直接匯出 PowerPoint。" : "Export to PowerPoint when the deck is ready.",
+    exportBody: isZh ? "保持簡報的文字、圖片與版面，下載可在 PowerPoint 開啟的 PPTX。" : "Keep the deck's text, images, and layout in a PPTX you can open in PowerPoint.",
     faqTitle: isZh ? "常見問題，直接回答。" : "Questions, answered.",
     faqBody: isZh ? "關於 Pitch 的核心操作與工作方式。" : "The essentials about working in Pitch.",
     faqItems: isZh
       ? [
-          ["SlideX 是什麼？", "SlideX 以 Pitch 為核心，讓你在精確畫布上建立、播放與輸出簡報。"],
-          ["Pitch 有什麼不同？", "Pitch 把圖層、資料元件、動效與畫面材質整合到同一個編輯環境。"],
-          ["可以切換靜態與動態背景嗎？", "可以。靜態模式使用單色 Fill，動態模式可選擇 shader 材質與對應設定。"],
-          ["靜態背景如何調整？", "選擇一個單色 Fill 後，可以套用到單張投影片或整份 deck，文字對比會自動維持清楚。"],
-          ["可以自訂 shader 嗎？", "可以。動態模式中可調整 shader 的色彩、強度、速度、尺度與細節。"],
-          ["SlideX 適合哪些團隊？", "適合需要把複雜想法說清楚的產品團隊、創辦人、顧問與業務團隊。"]
+          ["需要註冊才能試用嗎？", "不需要。你可以直接開啟 Live Demo，修改文字與圖片，並預覽整份簡報。"],
+          ["重新整理後修改會消失嗎？", "不會。訪客的示範內容會自動保存在目前瀏覽器的 localStorage。"],
+          ["可以從模板開始嗎？", "可以。登入後會看到 Welcome Deck 與 Launch Deck 兩個內建模板。"],
+          ["可以在瀏覽器播放簡報嗎？", "可以。你可以隨時開啟預覽並播放投影片。"],
+          ["可以匯出 PowerPoint 嗎？", "可以。Live Demo 可直接輸出 PPTX；HTML、MDX 等其他格式需登入後才可使用。"]
         ]
       : [
-          ["What is SlideX?", "SlideX is centered on Pitch, where you build, play, and export presentations on a precise canvas."],
-          ["What makes Pitch different?", "Pitch brings layers, data blocks, motion, and visual materials into one editing environment."],
-          ["Can I switch between static and dynamic backgrounds?", "Yes. Static mode uses a solid Fill. Dynamic mode lets you choose a shader material and its settings."],
-          ["How does a static background work?", "Choose one solid Fill for a slide or the whole deck. Text contrast stays readable automatically."],
-          ["Can I customize the shaders?", "Yes. In dynamic mode, adjust shader color, intensity, speed, scale, and detail to match the story."],
-          ["Who is SlideX for?", "SlideX is built for product teams, founders, consultants, and sales teams that need to explain complex ideas clearly."]
+          ["Do I need an account to try it?", "No. Open the Live Demo to edit text and images, preview the deck, and play the presentation."],
+          ["Will my changes survive a refresh?", "Yes. Guest demo changes are saved automatically in this browser's localStorage."],
+          ["Can I start from a template?", "Yes. Signed-in workspaces include the Welcome Deck and Launch Deck templates."],
+          ["Can I preview and play the deck in the browser?", "Yes. Open the presentation preview at any time and play through every slide."],
+          ["Can I export to PowerPoint?", "Yes. The Live Demo exports PPTX directly. Sign in to unlock HTML, MDX, and other formats."]
         ],
-    ctaTitle: isZh ? "下一個想法，從這裡成形。" : "Shape the next idea here.",
-    ctaBody: isZh ? "從第一張投影片開始。" : "Start with the first slide.",
-    pitchCta: isZh ? "開啟 Pitch" : "Open Pitch",
-    pitchCtaBody: isZh ? "從第一張投影片開始，把畫面留給故事。" : "Start with the first slide and leave room for the story.",
-    downloadCta: isZh ? "Mac 版正在製作中" : "Pitch for Mac is in progress",
-    downloadCtaBody: isZh ? "網頁工作區現在可用。" : "The web workspace is ready today.",
-    downloadLink: isZh ? "查看下載資訊" : "View download status"
+    ctaTitle: isZh ? "現在就用一份完整簡報開始。" : "Start with a complete deck now.",
+    ctaBody: isZh ? "不需註冊即可試用編輯器。" : "Try the editor without creating an account.",
+    pitchCta: isZh ? "立即試用 Live Demo" : "Try Live Demo",
+    pitchCtaBody: isZh ? "直接修改示範簡報，內容會保存在這個瀏覽器。" : "Edit the demo deck directly. Changes stay saved in this browser.",
+    exampleCta: isZh ? "查看範例簡報" : "View Example Deck",
+    exampleCtaBody: isZh ? "先播放完整示範，再決定要修改哪些內容。" : "Play the complete demo first, then decide what you want to change.",
+    powerPointVisual: isZh
+      ? {
+          body: "在 PowerPoint、Keynote 或 Google Slides 開啟 PPTX。",
+          cta: "立即試用 Live Demo",
+          eyebrow: "PowerPoint 匯出",
+          fileLabel: "PowerPoint 簡報",
+          slideLabel: "準備上場。",
+          title: "離開瀏覽器後，仍可繼續編輯。"
+        }
+      : {
+          body: "Open the PPTX in PowerPoint, Keynote, or Google Slides.",
+          cta: "Try Live Demo",
+          eyebrow: "PowerPoint export",
+          fileLabel: "PowerPoint presentation",
+          slideLabel: "Ready for the room.",
+          title: "Keep working after the browser."
+        }
   };
 
   const reveal = (delay = 0) =>
@@ -147,17 +175,19 @@ export function HomePage() {
         primaryCta={copy.primaryCta}
         reduceMotion={Boolean(reduceMotion)}
         secondaryCta={copy.secondaryCta}
+        supportingNote={copy.heroNote}
         title={copy.heroTitle}
       />
 
+      <WorkflowSteps items={copy.workflowSteps} reveal={reveal} />
+
       <FeatureStorySections items={copy.featureSections} reveal={reveal} />
 
-      <ShaderShowcase
-        body={copy.materialsBody}
-        isZh={isZh}
-        reduceMotion={Boolean(reduceMotion)}
+      <PowerPointSection
+        body={copy.exportBody}
         reveal={reveal}
-        title={copy.materialsTitle}
+        title={copy.exportTitle}
+        visualCopy={copy.powerPointVisual}
       />
 
       <FaqSection
@@ -180,22 +210,22 @@ export function HomePage() {
           <motion.div {...reveal(0.06)} className="mt-14 grid overflow-hidden rounded-lg border border-[#111315]/14 bg-[#111315] text-white lg:grid-cols-[1.08fr_0.92fr]">
             <div className="p-7 sm:p-9">
               <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#c4ee87] text-[#0a1a00]">
-                <Sparkles className="h-5 w-5" />
+                <Presentation className="h-5 w-5" />
               </span>
               <p className="mt-6 max-w-xl text-[clamp(25px,3.4vw,42px)] font-semibold leading-[0.98]">{copy.pitchCta}</p>
               <p className="mt-3 max-w-md text-[15px] leading-6 text-white/48">{copy.pitchCtaBody}</p>
-              <Link href={appRoutes.workspace} className="group mt-8 inline-flex h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-[#111315] transition-colors hover:bg-[#f2eee8]">
-                {isZh ? "開啟工作區" : "Open workspace"}
+              <Link href={appRoutes.liveDemo} className="group mt-8 inline-flex h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-[#111315] transition-colors hover:bg-[#f2eee8] active:translate-y-px">
+                {copy.primaryCta}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
             <div className="flex flex-col justify-between border-t border-white/12 p-7 sm:p-9 lg:border-l lg:border-t-0">
               <div>
-                <p className="text-[14px] font-semibold text-[#c4ee87]">{copy.downloadCta}</p>
-                <p className="mt-3 max-w-sm text-[15px] leading-6 text-white/48">{copy.downloadCtaBody}</p>
+                <p className="text-[14px] font-semibold text-[#c4ee87]">{copy.exampleCta}</p>
+                <p className="mt-3 max-w-sm text-[15px] leading-6 text-white/48">{copy.exampleCtaBody}</p>
               </div>
-              <Link href={localePath("/download")} className="group mt-9 inline-flex h-11 w-fit items-center gap-2 text-sm font-semibold text-white transition-colors hover:text-[#c4ee87]">
-                {copy.downloadLink}
+              <Link href={appRoutes.exampleDeck} className="group mt-9 inline-flex h-11 w-fit items-center gap-2 text-sm font-semibold text-white transition-colors hover:text-[#c4ee87]">
+                {copy.secondaryCta}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
@@ -211,8 +241,34 @@ type FeatureStoryItem = {
   eyebrow: string;
   link: string;
   title: string;
-  visual: "canvas" | "shader";
+  visual: "canvas" | "export" | "shader";
 };
+
+function WorkflowSteps({
+  items,
+  reveal
+}: {
+  items: { detail: string; title: string }[];
+  reveal: (delay?: number) => Record<string, unknown>;
+}) {
+  return (
+    <section className="bg-[#f7f7f4] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+      <motion.div {...reveal()} className="mx-auto max-w-7xl border-t border-[#111315]/14">
+        <div className="grid md:grid-cols-[1.08fr_0.92fr_1.08fr]">
+          {items.map((step, index) => (
+            <article
+              className={`py-8 md:min-h-44 md:px-8 md:py-9 ${index > 0 ? "border-t border-[#111315]/14 md:border-l md:border-t-0" : "md:pl-0"}`}
+              key={step.title}
+            >
+              <p className="text-[clamp(24px,2.5vw,34px)] font-semibold leading-tight tracking-[-0.035em]">{step.title}</p>
+              <p className="mt-3 max-w-sm text-[14px] leading-6 text-[#111315]/54">{step.detail}</p>
+            </article>
+          ))}
+        </div>
+      </motion.div>
+    </section>
+  );
+}
 
 function FeatureStorySections({
   items,
@@ -240,7 +296,7 @@ function FeatureStorySections({
               <p className="mt-6 max-w-lg text-[17px] leading-8 text-[#111315]/58">{item.body}</p>
               <Link
                 className="group mt-8 inline-flex items-center gap-2 text-[14px] font-semibold text-[#111315] transition-opacity hover:opacity-58 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#111315]"
-                href={index === 0 ? appRoutes.workspace : "#workspace"}
+                href={index === 0 ? appRoutes.liveDemo : appRoutes.exampleDeck}
               >
                 {item.link}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -343,6 +399,7 @@ function InteractiveHero({
   primaryCta,
   reduceMotion,
   secondaryCta,
+  supportingNote,
   title
 }: {
   body: string;
@@ -350,6 +407,7 @@ function InteractiveHero({
   primaryCta: string;
   reduceMotion: boolean;
   secondaryCta: string;
+  supportingNote: string;
   title: string[];
 }) {
   const [activeSlide, setActiveSlide] = useState(0);
@@ -379,7 +437,7 @@ function InteractiveHero({
         pointerX.set(0);
         pointerY.set(0);
       }}
-      className="relative flex min-h-[620px] items-center overflow-hidden bg-[#0b0c0f] px-5 pb-14 pt-32 text-white sm:min-h-[680px] sm:px-6 lg:min-h-[min(880px,100dvh)] lg:px-8 lg:pb-16 lg:pt-28"
+      className="relative flex min-h-[100dvh] items-center overflow-hidden bg-[#0b0c0f] px-5 pb-12 pt-24 text-white sm:px-6 lg:px-8 lg:pb-10 lg:pt-20"
     >
       <div className="absolute inset-x-0 top-[22%] h-px bg-white/[0.055]" />
       <div className="absolute inset-x-0 bottom-[20%] h-px bg-white/[0.055]" />
@@ -414,10 +472,10 @@ function InteractiveHero({
         transition={{ duration: 0.82, ease: easeOut }}
         className="relative z-20 mx-auto w-full max-w-7xl text-center"
       >
-        <h1 className="mx-auto max-w-[900px] text-[42px] font-semibold leading-[0.98] tracking-[-0.035em] [text-wrap:balance] sm:text-[54px] lg:text-[clamp(48px,7vw,92px)] lg:tracking-normal">
-          {title.map((line) => (
-            <span key={line} className="block">
-              {line}
+        <h1 className="mx-auto max-w-[1120px] text-[42px] font-semibold leading-[0.98] tracking-[-0.035em] [text-wrap:balance] sm:text-[54px] lg:text-[clamp(50px,5vw,68px)] lg:leading-[1.01] lg:tracking-[-0.035em]">
+          {title.map((line, index) => (
+            <span key={line} className="block lg:whitespace-nowrap">
+              {line}{index < title.length - 1 ? " " : null}
             </span>
           ))}
         </h1>
@@ -425,20 +483,21 @@ function InteractiveHero({
 
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
-            href={appRoutes.workspace}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#c4ee87] px-7 text-[15px] font-semibold text-[#0a1a00] transition-colors hover:bg-[#d7f5aa] sm:w-auto"
+            href={appRoutes.liveDemo}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#c4ee87] px-7 text-[15px] font-semibold text-[#0a1a00] transition-colors hover:bg-[#d7f5aa] active:translate-y-px sm:w-auto"
           >
             {primaryCta}
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
-            href={appRoutes.workspace}
-            className="hidden h-12 w-full items-center justify-center gap-2 rounded-md border border-white/16 bg-white/[0.045] px-6 text-[14px] font-semibold text-white/72 transition-colors hover:border-white/30 hover:text-white sm:w-auto lg:inline-flex"
+            href={appRoutes.exampleDeck}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-white/16 bg-white/[0.045] px-6 text-[14px] font-semibold text-white/72 transition-colors hover:border-white/30 hover:text-white active:translate-y-px sm:w-auto"
           >
             {secondaryCta}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
+        <p className="mt-4 text-[13px] text-white/46">{supportingNote}</p>
       </motion.div>
     </motion.section>
   );
@@ -496,218 +555,65 @@ function SlideArtwork({
   );
 }
 
-type MaterialKey = "mesh" | "metal" | "water" | "paper";
-
-const materials: {
-  accent: string;
-  background: string;
-  foreground: string;
-  key: MaterialKey;
-  label: string;
-  palette: string[];
-}[] = [
-  {
-    accent: "#d8ff76",
-    background: "radial-gradient(circle at 18% 22%, #ff7398 0 17%, transparent 42%), radial-gradient(circle at 68% 38%, #7b5cff 0 21%, transparent 49%), radial-gradient(circle at 76% 76%, #68dbe5 0 18%, transparent 45%), #d8ff76",
-    foreground: "#111315",
-    key: "mesh",
-    label: "Mesh",
-    palette: ["#d8ff76", "#ff7398", "#7b5cff", "#68dbe5"]
-  },
-  {
-    accent: "#ff6f8f",
-    background: "conic-gradient(from 225deg at 58% 52%, #f7f6f0, #17191c 17%, #8fcfff 31%, #f7f6f0 47%, #ff6f8f 63%, #17191c 79%, #f7f6f0)",
-    foreground: "#111315",
-    key: "metal",
-    label: "Liquid Metal",
-    palette: ["#f7f6f0", "#17191c", "#8fcfff", "#ff6f8f"]
-  },
-  {
-    accent: "#8fcfff",
-    background: "linear-gradient(138deg, #071b25 0%, #0e5367 25%, #8fcfff 46%, #e8f6f7 58%, #187890 73%, #071b25 100%)",
-    foreground: "#f8fbfc",
-    key: "water",
-    label: "Water",
-    palette: ["#071b25", "#187890", "#8fcfff", "#e8f6f7"]
-  },
-  {
-    accent: "#f1eee8",
-    background: "repeating-linear-gradient(8deg, rgba(17,19,21,0.04) 0 1px, transparent 1px 7px), linear-gradient(120deg, #f4f0e7, #ddd4c7)",
-    foreground: "#111315",
-    key: "paper",
-    label: "Paper",
-    palette: ["#f4f0e7", "#ddd4c7", "#111315", "#b94861"]
-  }
-];
-
-function ShaderShowcase({
+function PowerPointSection({
   body,
-  isZh,
-  reduceMotion,
   reveal,
-  title
+  title,
+  visualCopy
 }: {
   body: string;
-  isZh: boolean;
-  reduceMotion: boolean;
   reveal: (delay?: number) => Record<string, unknown>;
   title: string;
+  visualCopy: {
+    body: string;
+    cta: string;
+    eyebrow: string;
+    fileLabel: string;
+    slideLabel: string;
+    title: string;
+  };
 }) {
-  const [activeKey, setActiveKey] = useState<MaterialKey>("metal");
-  const activeMaterial = materials.find((material) => material.key === activeKey) ?? materials[0];
-
   return (
     <section id="workspace" className="overflow-hidden bg-[#0a0b0d] px-4 py-24 text-white sm:px-6 lg:px-8 lg:py-36">
       <div className="mx-auto max-w-7xl">
-        <motion.div {...reveal()} className="grid gap-7 lg:grid-cols-[0.76fr_1fr] lg:items-end">
+        <motion.div {...reveal()}>
           <h2 className="max-w-3xl text-[clamp(40px,5.8vw,72px)] font-semibold leading-[1.02] tracking-normal [text-wrap:balance]">
             {title}
           </h2>
-          <p className="max-w-xl text-lg leading-8 text-white/54 lg:justify-self-end">{body}</p>
+          <p className="mt-6 max-w-xl text-lg leading-8 text-white/54">{body}</p>
         </motion.div>
 
-        <motion.div {...reveal(0.06)} className="mt-14 grid overflow-hidden rounded-lg border border-white/12 bg-[#111315] lg:grid-cols-[0.24fr_0.76fr]">
-          <div className="border-b border-white/10 p-3 lg:border-b-0 lg:border-r lg:p-5">
-            <div className="grid grid-cols-2 gap-1.5 lg:grid-cols-1" role="tablist" aria-label={isZh ? "Shader 材質" : "Shader materials"}>
-              {materials.map((material) => (
-                <button
-                  key={material.key}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeKey === material.key}
-                  onClick={() => setActiveKey(material.key)}
-                  className={`group flex min-h-16 items-center gap-3 rounded-md border px-3 text-left transition-colors lg:min-h-20 lg:px-4 ${
-                    activeKey === material.key
-                      ? "border-white/18 bg-white/[0.075] text-white"
-                      : "border-transparent text-white/46 hover:bg-white/[0.04] hover:text-white/78"
-                  }`}
-                >
-                  <span className="h-9 w-9 shrink-0 rounded-md border border-white/14 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.12)]" style={{ background: material.background }} />
-                  <span>
-                    <span className="block text-[13px] font-semibold sm:text-sm">{material.label}</span>
-                    <span className="mt-1 hidden text-[11px] text-white/30 lg:block">
-                      {material.key === "mesh" ? "Color field" : material.key === "metal" ? "Reflective" : material.key === "water" ? "Fluid motion" : "Organic grain"}
-                    </span>
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-5 hidden border-t border-white/10 pt-5 lg:block">
-              <p className="text-[11px] text-white/30">{isZh ? "目前色彩" : "Current palette"}</p>
-              <div className="mt-3 flex gap-2">
-                {activeMaterial.palette.map((color) => (
-                  <span key={color} className="h-7 w-7 rounded-full border border-white/16" style={{ backgroundColor: color }} />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid min-h-[440px] grid-rows-[auto_1fr] sm:min-h-[560px]">
-            <div className="flex h-14 items-center border-b border-white/10 px-4 sm:px-5">
-              <span className="flex h-2 w-2 rounded-full" style={{ backgroundColor: activeMaterial.accent }} />
-              <span className="ml-2 text-xs font-medium text-white/58">Shader Studio</span>
-              <span className="ml-auto text-[11px] text-white/28">Live preview</span>
-            </div>
-
-            <div className="grid min-h-0 lg:grid-cols-[0.76fr_0.24fr]">
-              <div className="relative flex min-h-[340px] items-center justify-center overflow-hidden p-5 sm:p-9 [background-image:radial-gradient(rgba(255,255,255,0.15)_1px,transparent_1px)] [background-size:16px_16px]">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeMaterial.key}
-                    initial={reduceMotion ? false : { opacity: 0, scale: 0.975, y: 8 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={reduceMotion ? undefined : { opacity: 0, scale: 0.985 }}
-                    transition={{ duration: 0.34, ease: easeOut }}
-                    className="relative aspect-video w-full max-w-[760px] overflow-hidden rounded-md shadow-[0_30px_80px_rgba(0,0,0,0.46)]"
-                    style={{ background: activeMaterial.background, color: activeMaterial.foreground }}
-                  >
-                    <MaterialSlide material={activeMaterial.key} />
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              <div className="hidden border-l border-white/10 p-5 lg:block">
-                <p className="text-xs font-semibold text-white/68">{activeMaterial.label}</p>
-                <div className="mt-7 space-y-6">
-                  {[
-                    [isZh ? "強度" : "Intensity", 78],
-                    [isZh ? "速度" : "Speed", activeMaterial.key === "paper" ? 12 : 46],
-                    [isZh ? "尺度" : "Scale", 64],
-                    [isZh ? "細節" : "Detail", 86]
-                  ].map(([label, value]) => (
-                    <div key={String(label)}>
-                      <div className="mb-2 flex justify-between text-[11px] text-white/32">
-                        <span>{label}</span>
-                        <span>{value}</span>
-                      </div>
-                      <div className="h-1 bg-white/10">
-                        <motion.div
-                          key={`${activeMaterial.key}-${label}`}
-                          initial={reduceMotion ? false : { width: 0 }}
-                          animate={{ width: `${value}%` }}
-                          transition={{ duration: 0.45, ease: easeOut }}
-                          className="h-full"
-                          style={{ backgroundColor: activeMaterial.accent }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+        <motion.div {...reveal(0.06)} className="mt-14 grid overflow-hidden rounded-lg border border-white/12 bg-[#111315] lg:grid-cols-[0.72fr_0.28fr]">
+          <div className="relative min-h-[420px] overflow-hidden border-b border-white/10 p-6 sm:min-h-[520px] sm:p-10 lg:border-b-0 lg:border-r">
+            <div className="absolute inset-0 [background-image:radial-gradient(rgba(255,255,255,0.11)_1px,transparent_1px)] [background-size:18px_18px]" />
+            <div className="relative mx-auto flex h-full max-w-[760px] items-center justify-center">
+              <div className="relative aspect-video w-full overflow-hidden rounded-md bg-[#f3f1ec] text-[#111315] shadow-[0_34px_90px_rgba(0,0,0,0.46)]">
+                <div className="absolute inset-y-0 left-0 w-[36%] bg-[#c4ee87]" />
+                <p className="absolute left-[5%] top-[9%] text-[clamp(11px,1.5vw,19px)] font-semibold">SlideX</p>
+                <p className="absolute bottom-[12%] left-[5%] max-w-[28%] text-[clamp(18px,3.3vw,46px)] font-semibold leading-[0.94] tracking-[-0.055em]">{visualCopy.slideLabel}</p>
+                <div className="absolute right-[7%] top-[13%] flex h-[74%] w-[48%] items-center justify-center rounded-md border border-[#111315]/12 bg-white">
+                  <div className="text-center">
+                    <Presentation className="mx-auto h-12 w-12 text-[#d24625] sm:h-16 sm:w-16" strokeWidth={1.5} />
+                    <p className="mt-4 text-[clamp(12px,1.6vw,20px)] font-semibold">{visualCopy.fileLabel}</p>
+                    <p className="mt-2 text-[clamp(8px,0.9vw,12px)] text-[#111315]/46">.pptx</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+          <div className="flex flex-col justify-between p-6 sm:p-8">
+            <div>
+              <p className="text-[13px] font-semibold text-[#c4ee87]">{visualCopy.eyebrow}</p>
+              <p className="mt-5 text-[26px] font-semibold leading-[1.08] tracking-[-0.035em]">{visualCopy.title}</p>
+              <p className="mt-4 text-[14px] leading-6 text-white/48">{visualCopy.body}</p>
+            </div>
+            <Link className="group mt-10 inline-flex h-11 w-fit items-center gap-2 text-[14px] font-semibold text-white hover:text-[#c4ee87]" href={appRoutes.liveDemo}>
+              {visualCopy.cta}
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
         </motion.div>
       </div>
     </section>
-  );
-}
-
-function MaterialSlide({ material }: { material: MaterialKey }) {
-  if (material === "mesh") {
-    return (
-      <>
-        <div className="absolute left-[7%] top-[10%] text-[clamp(14px,2.2vw,30px)] font-semibold">Signal in color.</div>
-        <div className="absolute bottom-[11%] left-[8%] h-[2px] w-[22%] bg-[#111315]/55" />
-        <div className="absolute bottom-[10%] right-[8%] grid w-[42%] grid-cols-3 gap-[4%]">
-          {[68, 100, 82].map((height) => <span key={height} className="self-end bg-[#111315]/72" style={{ height: `${height / 2.2}px` }} />)}
-        </div>
-      </>
-    );
-  }
-
-  if (material === "metal") {
-    return (
-      <>
-        <div className="absolute left-[7%] top-[10%] max-w-[44%] text-[clamp(14px,2.2vw,30px)] font-semibold">A sharper first impression.</div>
-        <div className="absolute bottom-[10%] left-[7%] text-[clamp(7px,0.9vw,12px)] font-medium text-[#111315]/56">LIQUID METAL / 02</div>
-        <div className="absolute bottom-[10%] right-[8%] h-[44%] w-[36%] rotate-[-9deg] rounded-[18%] border border-black/20 bg-black/10 shadow-[0_18px_34px_rgba(22,25,28,0.24)] backdrop-blur-[3px]" />
-      </>
-    );
-  }
-
-  if (material === "water") {
-    return (
-      <>
-        <div className="absolute inset-x-0 top-[28%] h-px bg-white/38" />
-        <div className="absolute inset-x-0 top-[34%] h-px bg-white/18" />
-        <div className="absolute left-[7%] top-[9%] text-[clamp(14px,2.2vw,30px)] font-semibold">Move with the current.</div>
-        <div className="absolute bottom-[11%] right-[8%] flex items-end gap-2">
-          {[22, 38, 29, 52].map((height) => <span key={height} className="w-2 bg-white/66" style={{ height }} />)}
-        </div>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <div className="absolute inset-y-[8%] left-[6%] w-[34%] bg-[#111315] p-[5%] text-[#f4f0e7]">
-        <div className="text-[clamp(11px,1.8vw,24px)] font-semibold leading-tight">Quiet ideas, clearly framed.</div>
-        <div className="mt-[16%] h-[2px] w-[58%] bg-[#f4f0e7]/42" />
-      </div>
-      <div className="absolute bottom-[12%] right-[8%] h-[48%] w-[43%] border-[3px] border-[#111315]">
-        <div className="absolute bottom-[12%] right-[12%] h-[48%] w-[34%] rounded-full bg-[#b94861]" />
-      </div>
-    </>
   );
 }
