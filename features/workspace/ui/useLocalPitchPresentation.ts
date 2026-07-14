@@ -29,6 +29,7 @@ export function useLocalPitchPresentation() {
   const presentationId = searchParams.get("presentation");
   const isDemoEntry = searchParams.get("demo") === "1";
   const accessMode: PitchAccessMode = isDemoEntry && !session ? "guest" : "authenticated";
+  const agentSessionId = searchParams.get("agentSession") ?? undefined;
 
   useEffect(() => {
     if (!isAuthReady) return;
@@ -90,10 +91,35 @@ export function useLocalPitchPresentation() {
     updateLocalPresentation(session.user.id, presentationId, { source, title });
   }, [isDemoEntry, presentationId, session]);
 
+  const openAgentSession = useCallback((
+    targetPresentationId: string,
+    targetSessionId: string
+  ) => {
+    const query = new URLSearchParams({
+      presentation: targetPresentationId,
+      agentSession: targetSessionId
+    });
+    router.push(`${appRoutes.pitch}?${query.toString()}`);
+  }, [router]);
+
+  const selectAgentSession = useCallback((targetSessionId?: string) => {
+    if (!presentationId) {
+      return;
+    }
+    const query = new URLSearchParams({ presentation: presentationId });
+    if (targetSessionId) {
+      query.set("agentSession", targetSessionId);
+    }
+    router.replace(`${appRoutes.pitch}?${query.toString()}`);
+  }, [presentationId, router]);
+
   return {
     accessMode,
+    agentSessionId,
     isReady,
+    openAgentSession,
     presentation,
-    save
+    save,
+    selectAgentSession
   };
 }

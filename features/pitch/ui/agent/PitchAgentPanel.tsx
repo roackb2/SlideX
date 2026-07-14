@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-import { AlertTriangle, Bot, Check, RotateCcw, Send, Settings2, Square, Trash2, Wrench, X } from "lucide-react";
+import { AlertTriangle, Bot, Check, History, RotateCcw, Send, Settings2, Square, Trash2, Wrench, X } from "lucide-react";
 import { usePitchAgentContext } from "@/features/pitch/ui/agent/PitchAgentProvider";
+import { PitchAgentSessionList } from "@/features/pitch/ui/agent/PitchAgentSessionList";
 
 export function PitchAgentPanel() {
   const [keyError, setKeyError] = useState<string>();
   const [showSettings, setShowSettings] = useState(false);
+  const [showSessions, setShowSessions] = useState(false);
   const keyInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { actions, meta, state } = usePitchAgentContext();
@@ -85,15 +87,32 @@ export function PitchAgentPanel() {
             </p>
           </div>
         </div>
-        <button
-          aria-label="Agent settings"
-          aria-pressed={showSettings}
-          className="flex size-11 items-center justify-center rounded-md text-neutral-400 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-          onClick={() => setShowSettings((current) => !current)}
-          type="button"
-        >
-          <Settings2 aria-hidden="true" size={16} />
-        </button>
+        <div className="flex items-center">
+          <button
+            aria-label="Conversation history"
+            aria-pressed={showSessions}
+            className="flex size-11 items-center justify-center rounded-md text-neutral-400 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+            onClick={() => {
+              setShowSettings(false);
+              setShowSessions((current) => !current);
+            }}
+            type="button"
+          >
+            <History aria-hidden="true" size={16} />
+          </button>
+          <button
+            aria-label="Agent settings"
+            aria-pressed={showSettings}
+            className="flex size-11 items-center justify-center rounded-md text-neutral-400 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+            onClick={() => {
+              setShowSessions(false);
+              setShowSettings((current) => !current);
+            }}
+            type="button"
+          >
+            <Settings2 aria-hidden="true" size={16} />
+          </button>
+        </div>
       </div>
 
       {showSettings && (
@@ -239,6 +258,10 @@ export function PitchAgentPanel() {
         </div>
       )}
 
+      {showSessions ? (
+        <PitchAgentSessionList onClose={() => setShowSessions(false)} />
+      ) : (
+      <>
       <div
         aria-label="Agent conversation and activity"
         className="min-h-0 flex-1 overflow-y-auto p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/30"
@@ -378,6 +401,8 @@ export function PitchAgentPanel() {
           )}
         </div>
       </form>
+      </>
+      )}
     </aside>
   );
 }
