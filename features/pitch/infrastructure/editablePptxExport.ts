@@ -8,7 +8,7 @@ import {
   tableColumnTrackValuesFromProps,
   tableSizeFromProps
 } from "@/core/motion-doc/application/tableBlock";
-import type { MotionDocBlock, ParsedMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocBlock, MotionDocProps, ParsedMotionDoc } from "@/core/motion-doc/domain/motionDocTypes";
 import { blockFrame } from "@/features/pitch/application/previewCanvas";
 import { portablePptxImageData } from "@/features/pitch/infrastructure/pptxImageExport";
 import { addPptxVideo } from "@/features/pitch/infrastructure/pptxVideoExport";
@@ -17,8 +17,13 @@ const SLIDE_HEIGHT = 7.5;
 const SLIDE_WIDTH = 13.333;
 
 type PptxSlide = ReturnType<PptxGenJS["addSlide"]>;
-type PropsBlock = Extract<MotionDocBlock, { props: Record<string, string | number> }>;
+type PropsBlock = Extract<MotionDocBlock, { props: MotionDocProps }>;
 type PreparedBlockAssets = Map<MotionDocBlock, string>;
+type PortableBlockAssetJob = {
+  block: MotionDocBlock;
+  frame: ReturnType<typeof pptxFrame>;
+  source: string;
+};
 type PptxShapeFillProps = PptxGenJS.ShapeFillProps;
 type PptxShapeLineProps = PptxGenJS.ShapeLineProps;
 type PptxShapeName = PptxGenJS.SHAPE_NAME;
@@ -64,8 +69,7 @@ export async function addEditableSlides(
   pptx: PptxGenJS,
   document: ParsedMotionDoc,
   renderedBackgrounds: readonly string[],
-  filteredImagesBySlide: readonly (readonly string[])[] = [],
-  chartImagesBySlide: readonly (readonly string[])[] = []
+  filteredImagesBySlide: readonly (readonly string[])[] = []
 ) {
   const preparedBlockAssets = await preparePortableBlockAssets(document);
 
@@ -83,8 +87,6 @@ export async function addEditableSlides(
     }
 
     let filteredImageIndex = 0;
-    let chartImageIndex = 0;
-
     for (const block of scene.blocks) {
       if (block.type === "Title" || block.type === "Text" || block.type === "heading") {
         addEditableText(slide, block, theme.foreground, theme.muted);
@@ -105,12 +107,6 @@ export async function addEditableSlides(
         await addEditableShape(slide, block, preparedBlockAssets.get(block));
       } else if (block.type === "Table") {
         addEditableTable(slide, block, theme.foreground);
-      } else if (block.type === "Chart") {
-        const chartImageData = chartImagesBySlide[sceneIndex]?.[chartImageIndex++];
-        if (!chartImageData) {
-          throw new Error(`Chart ${chartImageIndex} on slide ${sceneIndex + 1} could not be rendered`);
-        }
-        addPptxChartImage(slide, block, chartImageData);
       } else if (block.type === "VideoBlock") {
         await addPptxVideo(slide, block.props, pptxFrame(blockFrame(block)));
       }
@@ -122,7 +118,7 @@ async function preparePortableBlockAssets(document: ParsedMotionDoc): Promise<Pr
   const jobs = document.scenes.flatMap((scene) => {
     const theme = resolveSlideThemeColors(scene.props);
 
-    return scene.blocks.flatMap((block) => {
+    return scene.blocks.flatMap((block): PortableBlockAssetJob[] => {
       if (block.type === "ImageBlock" && !imageNeedsPptxFilterRasterization(block)) {
         const source = stringProp(block.props.src);
         return source ? [{ block, frame: pptxFrame(blockFrame(block)), source }] : [];
@@ -194,9 +190,6 @@ async function mapWithConcurrency<T>(
 }
 
 export function pptxRasterRequirements(document: ParsedMotionDoc) {
-  const captureChartsBySlide = document.scenes.map((scene) => (
-    scene.blocks.some((block) => block.type === "Chart")
-  ));
   const captureFilteredImagesBySlide = document.scenes.map((scene) => (
     scene.blocks.some(imageNeedsPptxFilterRasterization)
   ));
@@ -204,7 +197,6 @@ export function pptxRasterRequirements(document: ParsedMotionDoc) {
     needsVisualFallback(scene.blocks, scene.props)
   ));
   const slideIndices = document.scenes.flatMap((_, slideIndex) => (
-    captureChartsBySlide[slideIndex] ||
     captureFilteredImagesBySlide[slideIndex] ||
     captureSlideBackgroundsBySlide[slideIndex]
       ? [slideIndex]
@@ -212,7 +204,6 @@ export function pptxRasterRequirements(document: ParsedMotionDoc) {
   ));
 
   return {
-    captureChartsBySlide,
     captureFilteredImagesBySlide,
     captureSlideBackgroundsBySlide,
     slideCount: document.scenes.length,
@@ -284,15 +275,6 @@ async function addEditableIcon(
     altText: `${iconName} icon`,
     data,
     ...frame,
-    transparency: 0
-  });
-}
-
-function addPptxChartImage(slide: PptxSlide, block: PropsBlock, data: string) {
-  slide.addImage({
-    altText: stringProp(block.props.title) ?? "Chart",
-    data,
-    ...pptxFrame(blockFrame(block)),
     transparency: 0
   });
 }
@@ -375,7 +357,7 @@ function addEditableTable(
   );
 }
 
-function needsVisualFallback(blocks: readonly MotionDocBlock[], props: Record<string, string | number>) {
+function needsVisualFallback(blocks: readonly MotionDocBlock[], props: MotionDocProps) {
   const background = stringProp(props.background);
   return Boolean(
     props.shader ||
@@ -392,11 +374,10 @@ function imageNeedsPptxFilterRasterization(block: MotionDocBlock) {
 }
 
 function isNativePptxBlock(block: MotionDocBlock) {
-  if (block.type === "Chart") return true;
   return NATIVE_PPTX_BLOCK_TYPES.has(block.type);
 }
 
-function shapeNameForPptx(shape: string, props: Record<string, string | number>): PptxShapeName {
+function shapeNameForPptx(shape: string, props: MotionDocProps): PptxShapeName {
   if (shape === "circle") return "ellipse";
   if (shape === "triangle") return "triangle";
   if (shape === "diamond") return "diamond";
@@ -426,7 +407,7 @@ function shapeFillOptions(
 }
 
 function shapeLineOptions(
-  props: Record<string, string | number>,
+  props: MotionDocProps,
   opacity: number,
   colorOverride?: string
 ): PptxShapeLineProps {

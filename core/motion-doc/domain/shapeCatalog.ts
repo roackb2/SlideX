@@ -1,3 +1,5 @@
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
+
 export const shapeCategories = ["essential", "lines", "labels", "process"] as const;
 
 export type ShapeCategory = (typeof shapeCategories)[number];
@@ -6,7 +8,7 @@ export type ShapePreset = {
   category: ShapeCategory;
   id: string;
   label: string;
-  props: Record<string, string | number>;
+  props: MotionDocProps;
 };
 
 export const shapeCategoryLabels: Record<ShapeCategory, string> = {

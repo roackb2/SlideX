@@ -1,5 +1,5 @@
 export const welcomePresentationId = "welcome-to-slidex";
-export const welcomePresentationSeedVersion = 10;
+export const welcomePresentationSeedVersion = 11;
 export const welcomePresentationTitle = "Welcome to SlideX";
 
 export const welcomePresentationSource = `# Welcome to SlideX
@@ -43,7 +43,7 @@ Instead of working with static slides, you can create flexible, web-based presen
   <Text fontSize={16} lineHeight={1.45} x={6.5} y={71} w={22} h={10} enter="fadeUp" color="#a3a5a7" delay={0.24}>Typography, alignment, and exact frames stay editable.</Text>
   <Icon icon="BarChart3" background="#9ad7ff" color="#111315" strokeWidth={2.4} radius={12} x={38.5} y={48} w={6} h={10} enter="zoomIn" delay={0.24} />
   <Text fontSize={23} fontWeight={700} x={38.5} y={62} w={23} h={6} enter="fadeUp" color="#f7f7f4" delay={0.26}>Data blocks</Text>
-  <Text fontSize={16} lineHeight={1.45} x={38.5} y={71} w={22} h={10} enter="fadeUp" color="#a3a5a7" delay={0.3}>Charts and tables live inside the same visual system.</Text>
+  <Text fontSize={16} lineHeight={1.45} x={38.5} y={71} w={22} h={10} enter="fadeUp" color="#a3a5a7" delay={0.3}>Tables and structured data live inside the same visual system.</Text>
   <Icon icon="Image" background="#ff8aa1" color="#111315" strokeWidth={2.4} radius={12} x={70.5} y={48} w={6} h={10} enter="zoomIn" delay={0.3} />
   <Text fontSize={23} fontWeight={700} x={70.5} y={62} w={23} h={6} enter="fadeUp" color="#f7f7f4" delay={0.32}>Media layers</Text>
   <Text fontSize={16} lineHeight={1.45} x={70.5} y={71} w={22} h={10} enter="fadeUp" color="#a3a5a7" delay={0.36}>Images, video, shapes, and icons share one canvas.</Text>

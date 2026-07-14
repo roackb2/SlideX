@@ -1,19 +1,10 @@
-import type { MotionDocBlock, MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocBlock, MotionDocProps, MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
+import {
+  replaceMotionDocSlideOpeningTag
+} from "@/core/motion-doc/application/motionDocSourceEditor";
 
-export function replaceSlideOpeningTag(source: string, slideIndex: number, props: Record<string, string | number>) {
-  const pattern = /<Slide\b[^>]*>/g;
-  let currentIndex = 0;
-
-  for (const match of source.matchAll(pattern)) {
-    if (currentIndex === slideIndex && match.index !== undefined) {
-      const nextTag = formatSlideTag(props);
-      return `${source.slice(0, match.index)}${nextTag}${source.slice(match.index + match[0].length)}`;
-    }
-
-    currentIndex += 1;
-  }
-
-  return source;
+export function replaceSlideOpeningTag(source: string, slideIndex: number, props: MotionDocProps) {
+  return replaceMotionDocSlideOpeningTag(source, slideIndex, formatSlideTag(props));
 }
 
 export function cloneBlock(block: MotionDocBlock): MotionDocBlock {
@@ -25,20 +16,6 @@ export function cloneBlock(block: MotionDocBlock): MotionDocBlock {
   }
 
   return { ...block };
-}
-
-export function replaceSlideContent(source: string, slideIndex: number, newSlideString: string) {
-  const pattern = /<(Slide|Scene)\b[^>]*>([\s\S]*?)<\/\1>/g;
-  let currentIndex = 0;
-
-  for (const match of source.matchAll(pattern)) {
-    if (currentIndex === slideIndex && match.index !== undefined) {
-      return `${source.slice(0, match.index)}${newSlideString}${source.slice(match.index + match[0].length)}`;
-    }
-    currentIndex += 1;
-  }
-
-  return source;
 }
 
 export function generateSlideString(slide: MotionDocScene) {
@@ -65,7 +42,7 @@ export function generateSlideString(slide: MotionDocScene) {
 }
 
 export function generateGroupString(blocks: MotionDocBlock[], groupId: string) {
-  const namedBlock = blocks.find((block): block is Extract<MotionDocBlock, { props: Record<string, string | number> }> => (
+  const namedBlock = blocks.find((block): block is Extract<MotionDocBlock, { props: MotionDocProps }> => (
     "props" in block && typeof block.props.groupName === "string"
   ));
   const groupName = namedBlock?.props.groupName;
@@ -82,7 +59,7 @@ function groupIdOf(block: MotionDocBlock) {
   return "props" in block && typeof block.props.groupId === "string" && block.props.groupId.trim() ? block.props.groupId : "";
 }
 
-function withoutGroupProps(props: Record<string, string | number> | undefined) {
+function withoutGroupProps(props: MotionDocProps | undefined) {
   if (!props) return props;
   const { groupId, groupName, ...rest } = props;
   void groupId;
@@ -94,7 +71,7 @@ export function generateBlockString(block: MotionDocBlock) {
   return generateBlockStringWithProps(block, "props" in block ? block.props : undefined);
 }
 
-function generateBlockStringWithProps(block: MotionDocBlock, overrideProps: Record<string, string | number> | undefined) {
+function generateBlockStringWithProps(block: MotionDocBlock, overrideProps: MotionDocProps | undefined) {
   if (block.type === "Title" || block.type === "Text") {
     const propsStr = formatTextProps(overrideProps ?? block.props);
     return `<${block.type}${propsStr ? " " + propsStr : ""}>${escapeMdxText(block.text)}</${block.type}>`;
@@ -164,7 +141,7 @@ export function getSlideTitle(blocks: MotionDocBlock[], fallbackIndex: number) {
   return `Slide ${fallbackIndex + 1}`;
 }
 
-function formatProps(props: Record<string, string | number>) {
+function formatProps(props: MotionDocProps) {
   const entries = Object.entries(props).filter(
     ([key, value]) =>
       !key.startsWith("_") &&
@@ -198,11 +175,11 @@ function escapeMdxText(value: string) {
     .replaceAll("}", "&#125;");
 }
 
-function formatTextProps(props: Record<string, string | number>) {
+function formatTextProps(props: MotionDocProps) {
   return formatProps(withoutTextFrameOnlyProps(props));
 }
 
-function withoutTextFrameOnlyProps(props: Record<string, string | number>) {
+function withoutTextFrameOnlyProps(props: MotionDocProps) {
   const { borderRadius, radius, ...rest } = props;
   void borderRadius;
   void radius;
@@ -210,7 +187,7 @@ function withoutTextFrameOnlyProps(props: Record<string, string | number>) {
   return rest;
 }
 
-function formatSlideTag(props: Record<string, string | number>) {
+function formatSlideTag(props: MotionDocProps) {
   const duration = typeof props.duration === "number" ? props.duration : 5;
   const rest = formatProps(props);
   return `<Slide duration={${duration}}${rest ? ` ${rest}` : ""}>`;
@@ -219,8 +196,6 @@ function formatSlideTag(props: Record<string, string | number>) {
 const removedGroupPropKeys = new Set([
   "cardFlow",
   "cardGap",
-  "chartFlow",
-  "chartGap",
   "flow",
   "groupFlow",
   "metricFlow",

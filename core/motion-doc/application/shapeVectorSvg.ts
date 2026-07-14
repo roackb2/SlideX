@@ -1,6 +1,7 @@
 import { escapeSvgAttribute, svgDataUri } from "@/core/motion-doc/application/svgDataUri";
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 
-type ShapeProps = Record<string, string | number>;
+type ShapeProps = MotionDocProps;
 
 export function shapeVectorSvgDataUri(props: ShapeProps, id = "shape") {
   return svgDataUri(renderShapeVectorSvg(props, id));

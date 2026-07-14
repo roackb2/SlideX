@@ -1,18 +1,15 @@
 "use client";
 
-import type { PropRecord } from "@/features/pitch/application/themeColors";
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 import { BackgroundSettingsSection } from "@/features/pitch/ui/inspector/BackgroundSettingsSection";
 import { SlideLayoutSection } from "@/features/pitch/ui/inspector/slide/SlideLayoutSection";
 import { SlideTransitionSection } from "@/features/pitch/ui/inspector/slide/SlideTransitionSection";
 
 type SlideSettingsProps = {
   accent: string;
-  alignX: string;
-  alignY: string;
   background: string;
   duration: number;
   isGridVisible: boolean;
-  layout: string;
   mutedColor: string;
   setIsGridVisible: (value: boolean) => void;
   shader: string;
@@ -34,18 +31,15 @@ type SlideSettingsProps = {
   theme: string;
   slideTransition?: string | number;
   transitionDuration?: string | number;
-  updateActiveSlideStyle: (updates: PropRecord) => void;
-  updateAllSlidesStyle: (updates: PropRecord) => void;
+  updateActiveSlideStyle: (updates: MotionDocProps) => void;
+  updateAllSlidesStyle: (updates: MotionDocProps) => void;
 };
 
 export function SlideSettings({
   accent,
-  alignX,
-  alignY,
   background,
   duration,
   isGridVisible,
-  layout,
   mutedColor,
   setIsGridVisible,
   shader,
@@ -98,12 +92,8 @@ export function SlideSettings({
       />
 
       <SlideLayoutSection
-        alignX={alignX}
-        alignY={alignY}
         isGridVisible={isGridVisible}
-        layout={layout}
         setIsGridVisible={setIsGridVisible}
-        updateActiveSlideStyle={updateActiveSlideStyle}
       />
 
       <SlideTransitionSection

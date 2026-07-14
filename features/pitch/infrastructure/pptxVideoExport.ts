@@ -1,13 +1,14 @@
 import type PptxGenJS from "pptxgenjs";
 import { escapeSvgAttribute, svgDataUri } from "@/core/motion-doc/application/svgDataUri";
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 import { portablePptxImageData } from "@/features/pitch/infrastructure/pptxImageExport";
+import type { PptxFrame } from "@/features/pitch/infrastructure/pptxTypes";
 
 type PptxSlide = ReturnType<PptxGenJS["addSlide"]>;
-type PptxFrame = { h: number; w: number; x: number; y: number };
 
 export async function addPptxVideo(
   slide: PptxSlide,
-  props: Record<string, string | number>,
+  props: MotionDocProps,
   frame: PptxFrame
 ) {
   const src = stringProp(props.src);

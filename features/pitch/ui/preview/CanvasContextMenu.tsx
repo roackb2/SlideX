@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import type { ComponentType, MouseEvent } from "react";
 import { createPortal } from "react-dom";
-import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocTypes";
 
 type CanvasContextMenuProps = {
   canPaste: boolean;

@@ -1,31 +1,28 @@
-const PPTX_PORTABLE_IMAGE_TYPES = new Set(["image/jpeg"]);
-const PPTX_IMAGE_JPEG_QUALITY = 0.9;
-const PPTX_PNG_OPTIMIZATION_MIN_BYTES = 256 * 1024;
-const PPTX_PNG_REPLACEMENT_RATIO = 0.95;
-const PPTX_RASTER_PIXELS_PER_INCH = 144;
-const PPTX_RASTER_MAX_DIMENSION = 4096;
+import type { PptxSize } from "@/features/pitch/infrastructure/pptxTypes";
 
-export type PptxImageFrame = {
-  h: number;
-  w: number;
-};
+const PPTX_IMAGE_JPEG_QUALITY = 0.82;
+const PPTX_PASSTHROUGH_MAX_BYTES = 384 * 1024;
+const PPTX_PNG_REPLACEMENT_RATIO = 0.9;
+const PPTX_RASTER_PIXELS_PER_INCH = 120;
+const PPTX_RASTER_MAX_DIMENSION = 4096;
 
 /**
  * Google Slides does not reliably import WebP, AVIF, GIF, or SVG images stored
  * inside a PPTX. Convert those formats and oversized PNGs at the actual display
  * size, preserving transparent PNGs and using JPEG for opaque raster content.
  */
-export async function portablePptxImageData(source: string, frame: PptxImageFrame) {
+export async function portablePptxImageData(source: string, frame: PptxSize) {
   const mimeType = dataImageMimeType(source);
-  if (!mimeType || PPTX_PORTABLE_IMAGE_TYPES.has(mimeType)) return source;
+  if (!mimeType) return source;
 
   const image = await loadImage(source);
   const width = rasterDimension(frame.w);
   const height = rasterDimension(frame.h);
+  const sourceByteSize = dataUrlByteSize(source);
 
   if (
-    mimeType === "image/png" &&
-    dataUrlByteSize(source) < PPTX_PNG_OPTIMIZATION_MIN_BYTES &&
+    (mimeType === "image/jpeg" || mimeType === "image/png") &&
+    sourceByteSize <= PPTX_PASSTHROUGH_MAX_BYTES &&
     image.naturalWidth <= width * 1.25 &&
     image.naturalHeight <= height * 1.25
   ) {
@@ -53,7 +50,7 @@ export async function portablePptxImageData(source: string, frame: PptxImageFram
 
     if (
       mimeType === "image/png" &&
-      optimizedBlob.size >= dataUrlByteSize(source) * PPTX_PNG_REPLACEMENT_RATIO
+      optimizedBlob.size >= sourceByteSize * PPTX_PNG_REPLACEMENT_RATIO
     ) {
       return source;
     }

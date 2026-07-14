@@ -1,11 +1,10 @@
 import type { TableSelection } from "@/core/motion-doc/application/tableBlock";
-
-type PropRecord = Record<string, string | number>;
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 
 const tableSelectionKindProp = "_tableSelectionKind";
 const tableSelectionIndexProp = "_tableSelectionIndex";
 
-export function tableEditorSelectionFromProps(props: PropRecord): TableSelection | null {
+export function tableEditorSelectionFromProps(props: MotionDocProps): TableSelection | null {
   const kind = props[tableSelectionKindProp];
   const index = numberFromProp(props[tableSelectionIndexProp]);
 
@@ -16,7 +15,7 @@ export function tableEditorSelectionFromProps(props: PropRecord): TableSelection
   return { index, kind };
 }
 
-export function tableEditorSelectionProps(props: PropRecord, selection: TableSelection | null): PropRecord {
+export function tableEditorSelectionProps(props: MotionDocProps, selection: TableSelection | null): MotionDocProps {
   const nextProps = clearTableEditorSelectionProps(props);
 
   if (!selection) {
@@ -28,7 +27,7 @@ export function tableEditorSelectionProps(props: PropRecord, selection: TableSel
   return nextProps;
 }
 
-export function clearTableEditorSelectionProps(props: PropRecord): PropRecord {
+export function clearTableEditorSelectionProps(props: MotionDocProps): MotionDocProps {
   const nextProps = { ...props };
   delete nextProps[tableSelectionKindProp];
   delete nextProps[tableSelectionIndexProp];

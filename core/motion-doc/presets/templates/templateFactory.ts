@@ -102,7 +102,7 @@ ${slide(theme, deepBackground, config.accent, [
 
 ${slide(theme, mutedBackground, config.accent, [
   text("Momentum & Evidence", { enter: "slideLeft", fontSize: 58, fontWeight: 700, h: 16, w: 86, x: 7, y: 12 }),
-  chart(config.chart, { h: 56, w: 86, x: 7, y: 34, height: 210 })
+  indicators(config.indicators)
 ])}
 
 ${slide(theme, deepBackground, config.accent, [
@@ -167,7 +167,7 @@ ${blocks.map((block) => `  ${block}`).join("\n")}
 </Slide>`;
 }
 
-function text(value: string, frame: Partial<Frame> & { fontWeight?: number; textAlign?: string; lineHeight?: number } = {}) {
+function text(value: string, frame: Partial<TemplateFrameProps> & { fontWeight?: number; textAlign?: string; lineHeight?: number } = {}) {
   const next = { fontSize: 24, h: 16, w: 52, x: 8, y: 38, ...frame };
   const fontAttr = frame.fontWeight ? ` fontWeight={${frame.fontWeight}}` : "";
   const lineAttr = frame.lineHeight ? ` lineHeight={${frame.lineHeight}}` : "";
@@ -175,14 +175,14 @@ function text(value: string, frame: Partial<Frame> & { fontWeight?: number; text
   return `<Text enter="${frame.enter ?? "fadeUp"}" delay={${frame.delay ?? 0.2}} fontSize={${next.fontSize}}${fontAttr}${lineAttr}${alignAttr} x={${next.x}} y={${next.y}} w={${next.w}} h={${next.h}}>${escapeText(value)}</Text>`;
 }
 
-function icon(name: string, frame: Partial<Frame> & { size?: number, strokeWidth?: number } = {}) {
+function icon(name: string, frame: Partial<TemplateFrameProps> & { size?: number, strokeWidth?: number } = {}) {
   const next = { h: 8, w: 5, x: 8, y: 38, ...frame };
   const sizeAttr = ` size={${frame.size ?? 48}}`;
   const strokeAttr = ` strokeWidth={${frame.strokeWidth ?? 1.5}}`;
   return `<Icon icon="${attr(name)}" enter="zoomIn" delay={${frame.delay ?? 0.15}} radius={0}${sizeAttr}${strokeAttr} x={${next.x}} y={${next.y}} w={${next.w}} h={${next.h}} />`;
 }
 
-function card(item: { icon?: string; layout?: string; text: string; title: string }, frame: Partial<Frame> = {}) {
+function card(item: { icon?: string; layout?: string; text: string; title: string }, frame: Partial<TemplateFrameProps> = {}) {
   const isVertical = item.layout !== "horizontal";
   const delay = frame.delay ?? 0.2;
   const x = frame.x ?? 7;
@@ -205,7 +205,7 @@ function card(item: { icon?: string; layout?: string; text: string; title: strin
   }
 }
 
-function metric(item: { caption: string; label: string; value: string }, frame: Partial<Frame> = {}) {
+function metric(item: { caption: string; label: string; value: string }, frame: Partial<TemplateFrameProps> = {}) {
   const x = frame.x ?? 7;
   const y = frame.y ?? 36;
   const w = frame.w ?? 27;
@@ -218,18 +218,29 @@ function metric(item: { caption: string; label: string; value: string }, frame: 
   ].join("\n  ");
 }
 
-function chart(item: { labels: string; title: string; values: string }, frame: Partial<Frame> & { height?: number } = {}) {
-  const next = { h: 56, w: 86, x: 7, y: 34, ...frame };
-  const hVal = frame.height ?? 210;
-  return `<Chart title="${attr(item.title)}" labels="${attr(item.labels)}" values="${attr(item.values)}" width="full" height={${hVal}} enter="fadeUp" delay={0.25} radius={32} x={${next.x}} y={${next.y}} w={${next.w}} h={${next.h}} />`;
+function indicators(item: { labels: string; title: string; values: string }) {
+  const labels = item.labels.split(",").map((value) => value.trim()).filter(Boolean);
+  const values = item.values.split(",").map((value) => value.trim()).filter(Boolean);
+  const items = values.slice(0, 4).map((value, index) => {
+    const x = 7 + index * 22;
+    return [
+      text(value, { fontSize: 58, fontWeight: 800, x, y: 45, w: 20, h: 14, delay: 0.2 + index * 0.05 }),
+      text(labels[index] ?? `Signal ${index + 1}`, { fontSize: 18, fontWeight: 600, x, y: 63, w: 20, h: 8, delay: 0.25 + index * 0.05 })
+    ].join("\n  ");
+  });
+
+  return [
+    text(item.title, { fontSize: 24, fontWeight: 600, x: 7, y: 33, w: 86, h: 8, delay: 0.15 }),
+    ...items
+  ].join("\n  ");
 }
 
-function image(item: { alt: string; src: string }, frame: Partial<Frame> = {}) {
+function image(item: { alt: string; src: string }, frame: Partial<TemplateFrameProps> = {}) {
   const next = { h: 64, w: 46, x: 7, y: 18, ...frame };
   return `<ImageBlock fit="cover" src="${attr(item.src)}" alt="${attr(item.alt)}" enter="fadeIn" delay={0.15} radius={32} x={${next.x}} y={${next.y}} w={${next.w}} h={${next.h}} />`;
 }
 
-type Frame = {
+type TemplateFrameProps = {
   enter?: "fadeUp" | "zoomIn" | "slideLeft" | "fadeIn";
   delay?: number;
   fontSize?: number;

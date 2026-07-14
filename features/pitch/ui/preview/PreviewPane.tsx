@@ -2,7 +2,8 @@
 
 import { memo, useMemo } from "react";
 import type { CSSProperties } from "react";
-import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocFrame } from "@/core/motion-doc/domain/frame";
+import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
 import {
   alignXProp,
@@ -15,13 +16,14 @@ import {
 } from "@/features/pitch/application/previewProps";
 import { PreviewBlock, PreviewBlockList } from "@/features/pitch/ui/preview/PreviewBlock";
 import { Scene, Text } from "@/features/pitch/ui/preview/motion-blocks";
-import type { Frame } from "@/features/pitch/application/previewCanvas";
 
 type PreviewPaneProps = {
   activeSlideIndex?: number;
   autoHeight?: boolean;
-  frameOverrides?: ReadonlyMap<number, Frame>;
+  frameOverrides?: ReadonlyMap<number, MotionDocFrame>;
   hiddenBlockIndices?: number[];
+  imageFetchPriority?: "auto" | "high" | "low";
+  imageLoading?: "eager" | "lazy";
   replayNonce: number;
   scene?: MotionDocScene;
   source: string;
@@ -32,6 +34,8 @@ export const PreviewPane = memo(function PreviewPane({
   autoHeight = false,
   frameOverrides,
   hiddenBlockIndices = [],
+  imageFetchPriority = "high",
+  imageLoading = "eager",
   replayNonce,
   scene,
   source
@@ -101,6 +105,8 @@ export const PreviewPane = memo(function PreviewPane({
                 <PreviewBlockList
                   frameOverrides={frameOverrides}
                   hiddenBlockIndices={hiddenBlockIndexSet}
+                  imageFetchPriority={imageFetchPriority}
+                  imageLoading={imageLoading}
                   items={contentItems}
                 />
               ) : (
@@ -112,7 +118,11 @@ export const PreviewPane = memo(function PreviewPane({
                 .filter(({ originalIndex }) => !hiddenBlockIndexSet.has(originalIndex))
                 .map(({ block, originalIndex }) => (
                   <div key={`${block.type}-image-${originalIndex}`} style={{ width: "100%" }}>
-                    <PreviewBlock block={block} />
+                    <PreviewBlock
+                      block={block}
+                      imageFetchPriority={imageFetchPriority}
+                      imageLoading={imageLoading}
+                    />
                   </div>
                 ))}
             </div>
@@ -121,6 +131,8 @@ export const PreviewPane = memo(function PreviewPane({
           <PreviewBlockList
             frameOverrides={frameOverrides}
             hiddenBlockIndices={hiddenBlockIndexSet}
+            imageFetchPriority={imageFetchPriority}
+            imageLoading={imageLoading}
             items={blockItems}
           />
         ) : null}

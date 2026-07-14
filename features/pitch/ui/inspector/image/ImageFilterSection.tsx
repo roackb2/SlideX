@@ -1,5 +1,6 @@
 "use client";
 
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 import {
   emptyImageFilterUpdates,
   getPaperImageFilterDefinition,
@@ -7,19 +8,18 @@ import {
   paperImageFilterDefinitions,
   paperImageFilterPresetUpdates,
   resolvePaperImageFilterControlValue,
-  type ImageFilterPropRecord,
   type PaperImageFilterControl,
   type PaperImageFilterId
 } from "@/core/motion-doc/application/shaders/paperImageFilterCatalog";
 import { Field, NativeSelect } from "@/features/pitch/ui/inspector/InspectorControls";
 import { ShaderRangeControl } from "@/features/pitch/ui/inspector/shader/ShaderRangeControl";
-import type { BlockUpdateOptions } from "@/features/pitch/ui/pitchCommandTypes";
+import type { BlockUpdateOptions } from "@/features/pitch/application/pitchCommandTypes";
 
 type ImageFilterSelectValue = PaperImageFilterId | "none";
 
 type ImageFilterSectionProps = {
-  onChange: (updates: ImageFilterPropRecord, options?: BlockUpdateOptions) => void;
-  props: Record<string, string | number>;
+  onChange: (updates: MotionDocProps, options?: BlockUpdateOptions) => void;
+  props: MotionDocProps;
 };
 
 export function ImageFilterSection({ onChange, props }: ImageFilterSectionProps) {

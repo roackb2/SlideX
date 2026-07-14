@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type MouseEvent, type PointerEvent, type WheelEvent } from "react";
-import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import { useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent, type PointerEvent } from "react";
+import type { MotionDocFrame } from "@/core/motion-doc/domain/frame";
+import type { MotionDocProps, MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import type { CanvasTool } from "@/features/pitch/application/canvasTools";
-import { canvasZoomStepCountFromWheel, nextCanvasZoomScale } from "@/features/pitch/application/canvasZoom";
+import type { BlockFramePatch } from "@/features/pitch/application/pitchGeometry";
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -14,45 +15,22 @@ import {
   marqueeRect,
   selectedMovableBlockIndices,
   type CanvasInteraction,
-  type Frame,
   type ResizeHandle
 } from "@/features/pitch/application/previewCanvas";
 import { isPositionLocked, type AddBlockOptions, type InsertSlidePlacement } from "@/features/pitch/application/motionDocCommands";
-import type { SlideRow } from "@/features/pitch/ui/LayerSidebar";
-import { CanvasBlockDock, CanvasSlideAddControls, CanvasSlideNav, type CanvasZoomDirection } from "@/features/pitch/ui/preview/CanvasChrome";
+import type { SlideRow } from "@/features/pitch/application/slideRows";
+import { CanvasBlockDock, CanvasSlideAddControls, CanvasSlideNav } from "@/features/pitch/ui/preview/CanvasChrome";
 import { MobileEdgePanelHandles } from "@/features/pitch/ui/preview/MobileCanvasChrome";
 import { CanvasContextMenu } from "@/features/pitch/ui/preview/CanvasContextMenu";
 import { CanvasSelectionLayer } from "@/features/pitch/ui/preview/CanvasSelectionLayer";
 import { PreviewPane } from "@/features/pitch/ui/preview/PreviewPane";
+import { useCanvasContextMenu } from "@/features/pitch/ui/preview/interaction/useCanvasContextMenu";
 import { useCanvasInteractionEngine } from "@/features/pitch/ui/preview/interaction/useCanvasInteractionEngine";
-import { useCanvasPinchZoom } from "@/features/pitch/ui/preview/interaction/useCanvasPinchZoom";
+import { useCanvasPanZoom } from "@/features/pitch/ui/preview/interaction/useCanvasPanZoom";
 import { useTransientFramePreview } from "@/features/pitch/ui/preview/interaction/useTransientFramePreview";
-import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
+import { useCanvasViewportMetrics } from "@/features/pitch/ui/preview/interaction/useCanvasViewportMetrics";
+import type { BlockUpdater } from "@/features/pitch/application/pitchCommandTypes";
 import type { AddBlockType } from "@/features/pitch/ui/pitchOptions";
-
-type FramePatch = { h?: number; w?: number; x?: number; y?: number };
-type CanvasContextMenuState = {
-  blockIndex: number | null;
-  position: { x: number; y: number };
-};
-type CanvasPanState = {
-  offsetX: number;
-  offsetY: number;
-  pointerId: number;
-  startX: number;
-  startY: number;
-};
-type CanvasPanCandidate = {
-  offsetX: number;
-  offsetY: number;
-  pointerId: number;
-  startX: number;
-  startY: number;
-};
-type CanvasZoomPoint = {
-  clientX: number;
-  clientY: number;
-};
 
 type PreviewCanvasProps = {
   activeCanvasTool: CanvasTool;
@@ -86,7 +64,7 @@ type PreviewCanvasProps = {
   onUngroupSelectedBlocks: () => void;
   onUndo: () => void;
   onUpdateBlock: BlockUpdater;
-  onUpdateBlockFrames: (updates: Array<{ blockIndex: number; frame: FramePatch }>) => void;
+  onUpdateBlockFrames: (updates: BlockFramePatch[]) => void;
   onUseSelectedImageAsBackground: () => void;
   replayNonce: number;
   sceneCount: number;
@@ -145,28 +123,47 @@ export function PreviewCanvas({
   const activeSlideFrameRef = useRef<HTMLDivElement | null>(null);
   const activeCanvasToolRef = useRef<CanvasTool>(activeCanvasTool);
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
-  const panStateRef = useRef<CanvasPanState | null>(null);
-  const touchPanCandidateRef = useRef<CanvasPanCandidate | null>(null);
   const canvasInteraction = useCanvasInteractionEngine();
   const transientFramePreview = useTransientFramePreview({
     blocks: activeSlide?.blocks ?? emptyBlocks,
     onCommit: onUpdateBlockFrames
   });
   const { syncSelection } = canvasInteraction;
-  const [canvasScale, setCanvasScale] = useState(1);
-  const actualScale = zoomLevel === "fit" ? canvasScale : zoomLevel;
-  const [contextMenu, setContextMenu] = useState<CanvasContextMenuState | null>(null);
   const [canvasViewportOffset, setCanvasViewportOffset] = useState({ x: 0, y: 0 });
-  const [canvasViewportWidth, setCanvasViewportWidth] = useState(0);
-  const [fitCanvasWidth, setFitCanvasWidth] = useState(799);
-  const [isPanningCanvas, setIsPanningCanvas] = useState(false);
   const [isMouseOverCanvas, setIsMouseOverCanvas] = useState(false);
-  const [zoomDirection, setZoomDirection] = useState<CanvasZoomDirection>("in");
+  const { closeContextMenu, contextMenu, openContextMenu } = useCanvasContextMenu();
+  const { actualScale, canvasFrameStyle, canvasStripSidePadding, workspaceGridStyle } = useCanvasViewportMetrics({
+    activeSlideIndex,
+    canvasRef,
+    canvasViewportOffset,
+    onFitScaleChange,
+    sceneCount,
+    scrollAreaRef,
+    zoomLevel
+  });
+  const canvasPanZoom = useCanvasPanZoom({
+    activeCanvasTool,
+    actualScale,
+    canvasViewportOffset,
+    clearCanvasInteraction: canvasInteraction.clearInteraction,
+    closeContextMenu,
+    onSetZoomLevel,
+    resetFramePreview: transientFramePreview.reset,
+    scrollAreaRef,
+    setCanvasViewportOffset
+  });
+  const {
+    endCanvasPan,
+    fitCanvasToViewport,
+    handleCanvasToolPointerDown,
+    handleCanvasToolWheel,
+    isPanActive,
+    isPanningCanvas,
+    setZoomDirection,
+    updateCanvasPan,
+    zoomDirection
+  } = canvasPanZoom;
   const gridColor = gridLineColor(activeSlide);
-  const canvasFrameWidth = zoomLevel === "fit" ? fitCanvasWidth : CANVAS_WIDTH * zoomLevel;
-  const canvasStripMinimumPadding = canvasViewportWidth < mobileCanvasBreakpoint ? 12 : 48;
-  const canvasStripSidePadding = Math.max(canvasStripMinimumPadding, Math.round((canvasViewportWidth - canvasFrameWidth) / 2));
-  const workspaceGridStyle = workspaceGridStyleForScale(actualScale, canvasViewportOffset);
   const viewportCursorClass = activeCanvasTool === "hand"
     ? isPanningCanvas ? "cursor-grabbing" : "cursor-grab"
     : activeCanvasTool === "zoom" ? zoomDirection === "out" ? "cursor-zoom-out" : "cursor-zoom-in" : "";
@@ -174,98 +171,13 @@ export function PreviewCanvas({
     () => hiddenEditablePreviewBlockIndices(activeSlide?.blocks ?? [], selectedBlockIndex, selectedBlockIndices),
     [activeSlide?.blocks, selectedBlockIndex, selectedBlockIndices]
   );
-  const canvasPinchZoom = useCanvasPinchZoom({
-    actualScale,
-    getScrollArea: () => scrollAreaRef.current,
-    onPinchStart: () => {
-      panStateRef.current = null;
-      touchPanCandidateRef.current = null;
-      setIsPanningCanvas(false);
-      setContextMenu(null);
-      canvasInteraction.clearInteraction();
-      transientFramePreview.reset();
-    },
-    onSetZoomLevel
-  });
-
+  const mountedSlideRows = useMemo(
+    () => slideRows.filter((slide) => Math.abs(slide.index - activeSlideIndex) <= 1),
+    [activeSlideIndex, slideRows]
+  );
   useEffect(() => {
     activeCanvasToolRef.current = activeCanvasTool;
   }, [activeCanvasTool]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-
-    if (!canvas) {
-      return;
-    }
-
-    const updateScale = () => {
-      const rect = canvas.getBoundingClientRect();
-      const scale = rect.width > 0 ? rect.width / CANVAS_WIDTH : 1;
-      setCanvasScale(scale);
-      onFitScaleChange?.(scale);
-    };
-
-    updateScale();
-
-    const observer = new ResizeObserver(updateScale);
-    observer.observe(canvas);
-
-    return () => observer.disconnect();
-  }, [activeSlideIndex, onFitScaleChange, sceneCount]);
-
-  useEffect(() => {
-    const scrollArea = scrollAreaRef.current;
-
-    if (!scrollArea) {
-      return;
-    }
-
-    const updateFitWidth = () => {
-      const rect = scrollArea.getBoundingClientRect();
-      const isMobileViewport = rect.width < mobileCanvasBreakpoint;
-      const horizontalInset = isMobileViewport ? 24 : 96;
-      const minimumWidth = isMobileViewport ? 240 : 280;
-      const maximumWidth = isMobileViewport ? CANVAS_WIDTH : 799;
-      setCanvasViewportWidth(rect.width);
-      setFitCanvasWidth(Math.max(minimumWidth, Math.min(maximumWidth, rect.width - horizontalInset)));
-    };
-
-    updateFitWidth();
-
-    const observer = new ResizeObserver(updateFitWidth);
-    observer.observe(scrollArea);
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!contextMenu) {
-      return;
-    }
-
-    function closeContextMenu() {
-      setContextMenu(null);
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        closeContextMenu();
-      }
-    }
-
-    window.addEventListener("pointerdown", closeContextMenu);
-    window.addEventListener("resize", closeContextMenu);
-    window.addEventListener("scroll", closeContextMenu, true);
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("pointerdown", closeContextMenu);
-      window.removeEventListener("resize", closeContextMenu);
-      window.removeEventListener("scroll", closeContextMenu, true);
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [contextMenu]);
 
   useEffect(() => {
     syncSelection({
@@ -300,19 +212,19 @@ export function PreviewCanvas({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [activeCanvasTool]);
+  }, [activeCanvasTool, setZoomDirection]);
 
   useEffect(() => {
     const activeSlideFrame = activeSlideFrameRef.current;
 
-    if (!activeSlideFrame || panStateRef.current || activeCanvasToolRef.current === "hand") {
+    if (!activeSlideFrame || isPanActive() || activeCanvasToolRef.current === "hand") {
       return;
     }
 
     window.requestAnimationFrame(() => {
       scrollSlideFrameIntoView(activeSlideFrame, scrollAreaRef.current);
     });
-  }, [activeSlideIndex, sceneCount]);
+  }, [activeSlideIndex, isPanActive, sceneCount]);
 
   function getCanvasPosition(event: { clientX: number; clientY: number }) {
     return canvasPointFromRect(event, canvasRef.current?.getBoundingClientRect());
@@ -343,7 +255,7 @@ export function PreviewCanvas({
 
     event.preventDefault();
     try {
-      const tool = JSON.parse(payload) as { props?: Record<string, string | number>; type?: AddBlockType };
+      const tool = JSON.parse(payload) as { props?: MotionDocProps; type?: AddBlockType };
       if (tool.type) {
         onAddBlock(tool.type, { position: getCanvasPosition(event), props: tool.props });
       }
@@ -352,7 +264,7 @@ export function PreviewCanvas({
     }
   }
 
-  function startMove(event: PointerEvent<HTMLDivElement>, blockIndex: number, frame: Frame) {
+  function startMove(event: PointerEvent<HTMLDivElement>, blockIndex: number, frame: MotionDocFrame) {
     if (activeCanvasTool !== "select") {
       return;
     }
@@ -407,7 +319,7 @@ export function PreviewCanvas({
     event: PointerEvent<HTMLSpanElement>,
     blockIndex: number,
     handle: ResizeHandle,
-    frame: Frame,
+    frame: MotionDocFrame,
     blockIndices: readonly number[] = [blockIndex]
   ) {
     if (activeCanvasTool !== "select") {
@@ -543,10 +455,7 @@ export function PreviewCanvas({
       onSelectBlock(blockIndex);
     }
 
-    setContextMenu({
-      blockIndex,
-      position: clampedMenuPosition(event)
-    });
+    openContextMenu(event, blockIndex);
   }
 
   function handleSlideFramePointerDown(event: PointerEvent<HTMLDivElement>, slideIndex: number) {
@@ -568,7 +477,7 @@ export function PreviewCanvas({
     }
 
     scrollSlideFrameIntoView(event.currentTarget, scrollAreaRef.current);
-    setContextMenu(null);
+    closeContextMenu();
     canvasInteraction.clearInteraction();
     onSelectSlide(slideIndex);
   }
@@ -600,7 +509,7 @@ export function PreviewCanvas({
     const slideFrameIndex = slideIndexFromTarget(target);
 
     if (slideFrameIndex !== null && slideFrameIndex !== activeSlideIndex) {
-      setContextMenu(null);
+      closeContextMenu();
       canvasInteraction.clearInteraction();
       onSelectSlide(slideFrameIndex);
       return;
@@ -618,168 +527,6 @@ export function PreviewCanvas({
     }
 
     openLayerContextMenu(event, selectedBlockIndex ?? selectedBlockIndices[selectedBlockIndices.length - 1] ?? null);
-  }
-
-  function handleCanvasToolPointerDown(event: PointerEvent<HTMLDivElement>) {
-    if (canvasPinchZoom.handlePointerDown(event)) {
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-
-    const target = event.target as HTMLElement | null;
-
-    if (target?.closest("button, [data-canvas-context-menu]")) {
-      return;
-    }
-
-    if (
-      event.pointerType === "touch"
-      && activeCanvasTool === "select"
-      && !isMobileEdgeGestureStart(event.clientX)
-      && isDirectPanSurface(target)
-    ) {
-      touchPanCandidateRef.current = {
-        offsetX: canvasViewportOffset.x,
-        offsetY: canvasViewportOffset.y,
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY
-      };
-      return;
-    }
-
-    if (activeCanvasTool === "hand") {
-      startCanvasPan(event);
-      return;
-    }
-
-    if (activeCanvasTool === "zoom" && (event.button === 0 || event.button === 2)) {
-      event.preventDefault();
-      event.stopPropagation();
-      const direction = event.button === 2 || event.altKey ? "out" : "in";
-      setZoomDirection(direction);
-      zoomCanvasAtPoint(event, direction);
-    }
-  }
-
-  function handleCanvasToolWheel(event: WheelEvent<HTMLDivElement>) {
-    if (activeCanvasTool !== "zoom" || event.deltaY === 0) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    const direction = event.deltaY > 0 ? "out" : "in";
-    const stepCount = canvasZoomStepCountFromWheel(event.deltaY);
-    setZoomDirection(direction);
-    zoomCanvasAtPoint(event, direction, stepCount);
-  }
-
-  function startCanvasPan(event: PointerEvent<HTMLDivElement>) {
-    if (event.button !== 0) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    panStateRef.current = {
-      offsetX: canvasViewportOffset.x,
-      offsetY: canvasViewportOffset.y,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY
-    };
-    setContextMenu(null);
-    setIsPanningCanvas(true);
-    canvasInteraction.clearInteraction();
-  }
-
-  function updateCanvasPan(event: PointerEvent<HTMLDivElement>) {
-    if (canvasPinchZoom.handlePointerMove(event)) {
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-
-    const panCandidate = touchPanCandidateRef.current;
-
-    if (!panStateRef.current && panCandidate?.pointerId === event.pointerId) {
-      const distance = Math.hypot(event.clientX - panCandidate.startX, event.clientY - panCandidate.startY);
-
-      if (distance >= directPanActivationDistance) {
-        event.currentTarget.setPointerCapture(event.pointerId);
-        panStateRef.current = { ...panCandidate };
-        setContextMenu(null);
-        setIsPanningCanvas(true);
-        canvasInteraction.clearInteraction();
-        transientFramePreview.reset();
-      }
-    }
-
-    const panState = panStateRef.current;
-
-    if (!panState || panState.pointerId !== event.pointerId) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    setCanvasViewportOffset(clampCanvasViewportOffset({
-      x: panState.offsetX + event.clientX - panState.startX,
-      y: panState.offsetY + event.clientY - panState.startY
-    }));
-  }
-
-  function endCanvasPan(event: PointerEvent<HTMLDivElement>) {
-    if (canvasPinchZoom.handlePointerEnd(event)) {
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-
-    const panState = panStateRef.current;
-    touchPanCandidateRef.current = null;
-
-    if (!panState || panState.pointerId !== event.pointerId) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    event.currentTarget.releasePointerCapture(event.pointerId);
-    panStateRef.current = null;
-    setIsPanningCanvas(false);
-  }
-
-  function zoomCanvasAtPoint(point: CanvasZoomPoint, direction: "in" | "out", stepCount = 1) {
-    const scrollArea = scrollAreaRef.current;
-    const nextScale = nextCanvasZoomScale(actualScale, direction, stepCount);
-
-    if (!scrollArea || nextScale === actualScale) {
-      onSetZoomLevel(nextScale);
-      return;
-    }
-
-    const viewportRect = scrollArea.getBoundingClientRect();
-    const pointerX = point.clientX - viewportRect.left;
-    const pointerY = point.clientY - viewportRect.top;
-    const contentX = scrollArea.scrollLeft + pointerX;
-    const contentY = scrollArea.scrollTop + pointerY;
-    const zoomRatio = nextScale / Math.max(actualScale, 0.01);
-
-    onSetZoomLevel(nextScale);
-
-    window.requestAnimationFrame(() => {
-      scrollArea.scrollLeft = contentX * zoomRatio - pointerX;
-      scrollArea.scrollTop = contentY * zoomRatio - pointerY;
-    });
-  }
-
-  function fitCanvasToViewport() {
-    setCanvasViewportOffset({ x: 0, y: 0 });
-    onSetZoomLevel("fit");
   }
 
   return (
@@ -820,7 +567,7 @@ export function PreviewCanvas({
             transform: `translate3d(${canvasViewportOffset.x}px, ${canvasViewportOffset.y}px, 0)`
           }}
         >
-          {slideRows.map((slide) => {
+          {mountedSlideRows.map((slide) => {
             const isActiveSlideFrame = slide.index === activeSlideIndex;
             const slideScene = scenes[slide.index];
 
@@ -852,7 +599,7 @@ export function PreviewCanvas({
                     onMouseEnter={isActiveSlideFrame ? () => setIsMouseOverCanvas(true) : undefined}
                     onMouseLeave={isActiveSlideFrame ? () => setIsMouseOverCanvas(false) : undefined}
                     ref={isActiveSlideFrame ? canvasRef : undefined}
-                    style={canvasFrameStyle(zoomLevel, fitCanvasWidth)}
+                    style={canvasFrameStyle}
                   >
                     <div
                       className="absolute left-0 top-0 overflow-hidden"
@@ -867,6 +614,8 @@ export function PreviewCanvas({
                         activeSlideIndex={slide.index}
                         hiddenBlockIndices={isActiveSlideFrame ? hiddenPreviewBlockIndices : emptyBlockIndices}
                         frameOverrides={isActiveSlideFrame ? transientFramePreview.frameOverrides : undefined}
+                        imageFetchPriority={isActiveSlideFrame ? "high" : "low"}
+                        imageLoading={isActiveSlideFrame ? "eager" : "lazy"}
                         replayNonce={replayNonce}
                         scene={slideScene}
                         source={source}
@@ -918,7 +667,7 @@ export function PreviewCanvas({
                           const block = activeSlide?.blocks[index];
                           return Boolean(block && "props" in block && block.props.groupId);
                         })}
-                        onClose={() => setContextMenu(null)}
+                        onClose={closeContextMenu}
                         onCopy={onCopySelectedBlock}
                         onDelete={onDeleteSelectedBlocks}
                         onDuplicate={onDuplicateSelectedBlock}
@@ -958,36 +707,6 @@ export function PreviewCanvas({
 
 const emptyBlockIndices: number[] = [];
 const emptyBlocks: MotionDocScene["blocks"] = [];
-const canvasViewportOffsetLimit = 100000;
-const workspaceGridBaseSize = 24;
-const workspaceGridBaseDotSize = 1.5;
-const directPanActivationDistance = 7;
-const mobileCanvasBreakpoint = 640;
-
-function isDirectPanSurface(target: HTMLElement | null) {
-  return !target?.closest("[data-frame-control], button, input, textarea, select, [contenteditable='true']");
-}
-
-function isMobileEdgeGestureStart(clientX: number) {
-  return clientX <= mobileEdgeGestureWidth || clientX >= window.innerWidth - mobileEdgeGestureWidth;
-}
-
-const mobileEdgeGestureWidth = 28;
-
-function canvasFrameStyle(zoomLevel: number | "fit", fitCanvasWidth: number): CSSProperties {
-  if (zoomLevel === "fit") {
-    return {
-      aspectRatio: `${CANVAS_WIDTH} / ${CANVAS_HEIGHT}`,
-      width: fitCanvasWidth
-    };
-  }
-
-  return {
-    height: CANVAS_HEIGHT * zoomLevel,
-    width: CANVAS_WIDTH * zoomLevel
-  };
-}
-
 function slideIndexFromTarget(target: HTMLElement) {
   const slideFrame = target.closest("[data-slide-frame-index]");
 
@@ -1021,33 +740,4 @@ function scrollSlideFrameIntoView(slideFrame: HTMLElement, scrollArea: HTMLEleme
     left: scrollArea.scrollLeft + slideCenterX - viewportCenterX,
     top: scrollArea.scrollTop + slideCenterY - viewportCenterY
   });
-}
-
-function clampCanvasViewportOffset(offset: { x: number; y: number }) {
-  return {
-    x: Math.max(-canvasViewportOffsetLimit, Math.min(canvasViewportOffsetLimit, offset.x)),
-    y: Math.max(-canvasViewportOffsetLimit, Math.min(canvasViewportOffsetLimit, offset.y))
-  };
-}
-
-function workspaceGridStyleForScale(scale: number, offset: { x: number; y: number }) {
-  const gridSize = Math.max(3, Math.min(640, workspaceGridBaseSize * scale));
-  const dotSize = Math.max(0.6, Math.min(6, workspaceGridBaseDotSize * scale));
-
-  return {
-    backgroundImage: `radial-gradient(circle, #ffffff30 ${dotSize}px, transparent ${dotSize}px)`,
-    backgroundPosition: `${offset.x}px ${offset.y}px`,
-    backgroundSize: `${gridSize}px ${gridSize}px`
-  };
-}
-
-function clampedMenuPosition(event: MouseEvent<HTMLDivElement>) {
-  const menuWidth = 224;
-  const menuHeight = 388;
-  const margin = 12;
-
-  return {
-    x: Math.max(margin, Math.min(event.clientX, window.innerWidth - menuWidth - margin)),
-    y: Math.max(margin, Math.min(event.clientY, window.innerHeight - menuHeight - margin))
-  };
 }

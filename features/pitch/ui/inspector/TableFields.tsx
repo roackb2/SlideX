@@ -26,12 +26,9 @@ import {
   NumberInput,
   type BlockFieldProps
 } from "@/features/pitch/ui/inspector/InspectorControls";
-import { hexColorValue } from "@/features/pitch/application/colorPalettes";
 import { tableEditorSelectionFromProps } from "@/features/pitch/application/tableEditorSelection";
 import { colorSwatchStyle } from "@/features/pitch/ui/inspector/color/colorSwatchStyle";
-import { defaultColorPresets } from "@/features/pitch/ui/inspector/color/palettes";
-import { useCustomSwatches } from "@/features/pitch/ui/inspector/color/useCustomSwatches";
-import { uniqueColors } from "@/features/pitch/application/colorPalettes";
+import { CompactColorPanel } from "@/features/pitch/ui/inspector/color/CompactColorPanel";
 
 // ─── Main Component ──────────────────────────────────────────────────
 
@@ -408,11 +405,8 @@ function PaletteSwatch({
   const [popoverStyle, setPopoverStyle] = useState<CSSProperties>({});
   const swatchRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const { customSwatches } = useCustomSwatches();
   const resolvedColor = color || placeholder;
   const swatchBg = colorSwatchStyle(resolvedColor);
-  const pickerValue = hexColorValue(color) ?? hexColorValue(placeholder) ?? "#ffffff";
-  const presets = uniqueColors([...customSwatches, ...defaultColorPresets]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -485,56 +479,7 @@ function PaletteSwatch({
             </button>
           </div>
 
-          {/* Input */}
-          <div className="flex items-center gap-2 mb-2.5">
-            <span className="h-7 w-7 shrink-0 rounded-md border border-white/15 shadow-inner" style={swatchBg} />
-            <input
-              className="w-full rounded border border-neutral-800 bg-black px-2 py-1 font-mono text-xs text-neutral-200 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-500"
-              onChange={(e) => onChange(e.target.value)}
-              placeholder={placeholder}
-              type="text"
-              value={color}
-            />
-          </div>
-
-          {/* Picker */}
-          <div className="flex items-center gap-2 mb-2.5">
-            <input
-              aria-label={`${label} picker`}
-              className="h-7 flex-1 cursor-pointer rounded border border-neutral-800 bg-transparent p-0"
-              onChange={(e) => onChange(e.target.value)}
-              type="color"
-              value={pickerValue}
-            />
-            <span className="font-mono text-[11px] text-neutral-500">{pickerValue.toUpperCase()}</span>
-          </div>
-
-          {/* Presets */}
-          <div className="grid grid-cols-8 gap-1">
-            <button
-              aria-label="Use transparent"
-              className={`relative flex h-5 items-center justify-center overflow-hidden rounded border transition-transform hover:scale-110 ${
-                color === "transparent" ? "border-white" : "border-neutral-700 bg-neutral-900"
-              }`}
-              onClick={() => onChange("transparent")}
-              type="button"
-            >
-              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiM0NCIvPjxyZWN0IHg9IjQiIHk9IjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiM0NCIvPjwvc3ZnPg==')] opacity-50" />
-              <div className="absolute inset-0 m-auto h-[2px] w-[140%] -rotate-45 bg-red-500/80" />
-            </button>
-            {presets.map((preset) => (
-              <button
-                aria-label={`Use ${preset}`}
-                className={`h-5 rounded border transition-transform hover:scale-110 ${
-                  color.toLowerCase() === preset.toLowerCase() ? "border-white" : "border-neutral-700"
-                }`}
-                key={preset}
-                onClick={() => onChange(preset)}
-                style={{ background: preset }}
-                type="button"
-              />
-            ))}
-          </div>
+          <CompactColorPanel label={label} onChange={onChange} placeholder={placeholder} value={color} />
         </div>,
         document.body
       ) : null}

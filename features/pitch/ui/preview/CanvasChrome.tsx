@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Hand, MousePointer2, Plus, X, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Hand, MousePointer2, Plus, ZoomIn, ZoomOut } from "lucide-react";
 import { canvasToolOptions, type CanvasTool } from "@/features/pitch/application/canvasTools";
 import type { AddBlockOptions, InsertSlidePlacement } from "@/features/pitch/application/motionDocCommands";
 import { IconPicker } from "@/features/pitch/ui/IconPicker";
-import type { SlideRow } from "@/features/pitch/ui/LayerSidebar";
+import type { SlideRow } from "@/features/pitch/application/slideRows";
 import { TableToolbox } from "@/features/pitch/ui/preview/TableToolbox";
-import { ChartLibraryModal } from "@/features/pitch/ui/preview/ChartLibraryModal";
 import { ShapeLibraryModal } from "@/features/pitch/ui/preview/ShapeLibraryModal";
 import { MobileCanvasDock } from "@/features/pitch/ui/preview/MobileCanvasChrome";
 import { toolGroups, type AddBlockType, type PitchBlockTool, type PitchToolGroup } from "@/features/pitch/ui/pitchOptions";
@@ -103,12 +102,8 @@ export function CanvasBlockDock({
           onAddTool={addTool}
         />
       ) : null}
-      {activeGroup?.modal ? (
-        activeGroup.id === "chart"
-          ? <ChartLibraryModal onAddTool={addTool} onClose={() => setOpenGroupId(null)} />
-          : activeGroup.id === "shape"
-            ? <ShapeLibraryModal onAddTool={addTool} onClose={() => setOpenGroupId(null)} />
-          : <ToolModal group={activeGroup} onAddTool={addTool} onClose={() => setOpenGroupId(null)} />
+      {activeGroup?.id === "shape" ? (
+        <ShapeLibraryModal onAddTool={addTool} onClose={() => setOpenGroupId(null)} />
       ) : null}
       {isCanvasToolMenuOpen ? (
         <CanvasToolMenu
@@ -359,50 +354,6 @@ function IconToolbox({
           event.dataTransfer.setData("application/x-slidex-tool", JSON.stringify({ props: { icon: iconName }, type: "Icon" }));
         }}
       />
-    </div>
-  );
-}
-
-function ToolModal({
-  group,
-  onAddTool,
-  onClose
-}: {
-  group: PitchToolGroup;
-  onAddTool: (type: AddBlockType, options?: AddBlockOptions) => void;
-  onClose: () => void;
-}) {
-  return (
-    <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
-      <div className="w-[min(92vw,520px)] overflow-hidden rounded-xl border border-white/[0.08] bg-[#090b12]/95 shadow-[0_28px_90px_rgba(0,0,0,0.74)]">
-        <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
-          <div className="flex items-center gap-2 text-neutral-200">
-            {group.icon}
-            <span className="text-xs font-bold tracking-[0.18em]">{group.label}</span>
-          </div>
-          <button aria-label="Close shape tools" className="rounded-lg p-1.5 text-neutral-500 transition hover:bg-white/[0.06] hover:text-white" onClick={onClose} type="button">
-            <X size={14} />
-          </button>
-        </div>
-        <div className="grid gap-2 p-4 sm:grid-cols-2">
-          {group.tools.map((tool) => (
-            <button
-              className="group flex min-h-16 items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.025] p-3 text-left transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-[#8ea5ff]/35 hover:bg-[#8ea5ff]/10 active:scale-[0.98]"
-              key={tool.type}
-              onClick={() => onAddTool(tool.type)}
-              type="button"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-black/25 text-neutral-300 transition-colors group-hover:text-white">
-                {tool.icon}
-              </span>
-              <span className="min-w-0">
-                <span className="block text-[12px] font-semibold text-neutral-200">{tool.label}</span>
-                {tool.description ? <span className="mt-1 block truncate text-[10px] text-neutral-500">{tool.description}</span> : null}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

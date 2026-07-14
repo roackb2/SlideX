@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Download, Maximize2, Minimize2, RotateCcw, X } from "lucide-react";
-import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/features/pitch/application/previewCanvas";
 import { PresentationThumbnailRail } from "@/features/pitch/ui/PresentationThumbnailRail";
 import { PreviewPane } from "@/features/pitch/ui/preview/PreviewPane";

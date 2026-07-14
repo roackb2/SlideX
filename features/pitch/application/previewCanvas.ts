@@ -7,8 +7,14 @@ import {
   percentFrameValue,
   type MotionDocFrame
 } from "@/core/motion-doc/domain/frame";
-import type { MotionDocBlock, MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import type {
+  MotionDocBlockWithProps,
+  MotionDocScene,
+  MotionDocTableBlock,
+  MotionDocTextBlock
+} from "@/core/motion-doc/domain/motionDocTypes";
 import { MOTION_DOC_CANVAS_HEIGHT, MOTION_DOC_CANVAS_WIDTH } from "@/core/motion-doc/domain/viewport";
+import type { ResolvedBlockFrameUpdate } from "@/features/pitch/application/pitchGeometry";
 
 export const CANVAS_WIDTH = MOTION_DOC_CANVAS_WIDTH;
 export const CANVAS_HEIGHT = MOTION_DOC_CANVAS_HEIGHT;
@@ -18,15 +24,13 @@ const MIN_FRAME_HEIGHT = 2;
 const GUIDE_THRESHOLD = 0.7;
 
 export type ResizeHandle = "n" | "e" | "s" | "w" | "nw" | "ne" | "sw" | "se";
-export type Frame = MotionDocFrame;
-export type FrameUpdate = { blockIndex: number; frame: Frame };
 export type CanvasPoint = { x: number; y: number };
 export type CanvasInteraction = {
   blockIndex: number;
   handle?: ResizeHandle;
   mode: "move" | "resize";
-  startFrame: Frame;
-  startFrames: Array<{ blockIndex: number; frame: Frame }>;
+  startFrame: MotionDocFrame;
+  startFrames: ResolvedBlockFrameUpdate[];
   startPointer: CanvasPoint;
 };
 export type MarqueeSelection = {
@@ -49,9 +53,7 @@ export type SelectionSpacingGuide = {
   status: "even" | "overlap" | "tight" | "uneven";
 };
 
-export type MovableBlock = Extract<MotionDocBlock, { props: Record<string, string | number> }>;
-export type EditableTextBlock = Extract<MotionDocBlock, { props: Record<string, string | number>; text: string }>;
-export type EditableTableBlock = { props: Record<string, string | number>; type: "Table" };
+export type MovableBlock = MotionDocBlockWithProps;
 
 export const resizeHandles = ["nw", "n", "ne", "e", "se", "s", "sw", "w"] as const satisfies ReadonlyArray<ResizeHandle>;
 
@@ -111,15 +113,15 @@ export function isMovableBlock(block: MotionDocScene["blocks"][number]): block i
   );
 }
 
-export function isEditableTextBlock(block: MotionDocScene["blocks"][number]): block is EditableTextBlock {
+export function isEditableTextBlock(block: MotionDocScene["blocks"][number]): block is MotionDocTextBlock {
   return (block.type === "Title" || block.type === "Text") && "props" in block && "text" in block;
 }
 
-export function isEditableTableBlock(block: MotionDocScene["blocks"][number]): block is EditableTableBlock {
+export function isEditableTableBlock(block: MotionDocScene["blocks"][number]): block is MotionDocTableBlock {
   return block.type === "Table" && "props" in block;
 }
 
-export function blockFrame(block: MotionDocScene["blocks"][number] | undefined): Frame {
+export function blockFrame(block: MotionDocScene["blocks"][number] | undefined): MotionDocFrame {
   if (!block || !("props" in block)) {
     return { h: 18, w: 42, x: 8, y: 12 };
   }
@@ -132,7 +134,7 @@ export function blockFrame(block: MotionDocScene["blocks"][number] | undefined):
   };
 }
 
-export function interactionFrameUpdates(interaction: CanvasInteraction, pointer: CanvasPoint): FrameUpdate[] {
+export function interactionFrameUpdates(interaction: CanvasInteraction, pointer: CanvasPoint): ResolvedBlockFrameUpdate[] {
   const dx = pointer.x - interaction.startPointer.x;
   const dy = pointer.y - interaction.startPointer.y;
 
@@ -163,10 +165,10 @@ export function interactionFrameUpdates(interaction: CanvasInteraction, pointer:
 }
 
 export function resizeSelectionFrames(
-  selectionFrame: Frame,
-  resizedSelectionFrame: Frame,
-  frames: readonly FrameUpdate[]
-): FrameUpdate[] {
+  selectionFrame: MotionDocFrame,
+  resizedSelectionFrame: MotionDocFrame,
+  frames: readonly ResolvedBlockFrameUpdate[]
+): ResolvedBlockFrameUpdate[] {
   const scaleX = selectionFrame.w === 0 ? 1 : resizedSelectionFrame.w / selectionFrame.w;
   const scaleY = selectionFrame.h === 0 ? 1 : resizedSelectionFrame.h / selectionFrame.h;
 
@@ -181,7 +183,7 @@ export function resizeSelectionFrames(
   }));
 }
 
-export function resizeFrame(frame: Frame, dx: number, dy: number, handle: ResizeHandle): Frame {
+export function resizeFrame(frame: MotionDocFrame, dx: number, dy: number, handle: ResizeHandle): MotionDocFrame {
   let nextX = frame.x;
   let nextY = frame.y;
   let nextW = frame.w;
@@ -217,7 +219,7 @@ export function resizeFrame(frame: Frame, dx: number, dy: number, handle: Resize
   };
 }
 
-export function marqueeRect(selection: MarqueeSelection): Frame {
+export function marqueeRect(selection: MarqueeSelection): MotionDocFrame {
   const x = Math.min(selection.start.x, selection.current.x);
   const y = Math.min(selection.start.y, selection.current.y);
   const right = Math.max(selection.start.x, selection.current.x);
@@ -231,7 +233,7 @@ export function marqueeRect(selection: MarqueeSelection): Frame {
   };
 }
 
-export function selectedMovableBlockIndices(blocks: MotionDocScene["blocks"], rect: Frame) {
+export function selectedMovableBlockIndices(blocks: MotionDocScene["blocks"], rect: MotionDocFrame) {
   return blocks
     .map((block, blockIndex) => ({ block, blockIndex }))
     .filter(({ block }) => isMovableBlock(block))
@@ -239,7 +241,7 @@ export function selectedMovableBlockIndices(blocks: MotionDocScene["blocks"], re
     .map(({ blockIndex }) => blockIndex);
 }
 
-export function selectionSpacingGuides(frames: readonly Frame[]): SelectionSpacingGuide[] {
+export function selectionSpacingGuides(frames: readonly MotionDocFrame[]): SelectionSpacingGuide[] {
   if (frames.length < 2) return [];
 
   const xCenters = frames.map((frame) => frame.x + frame.w / 2);
@@ -286,7 +288,7 @@ export function selectionSpacingGuides(frames: readonly Frame[]): SelectionSpaci
   }));
 }
 
-export function findAlignmentGuides(blocks: MotionDocScene["blocks"], updates: readonly FrameUpdate[]) {
+export function findAlignmentGuides(blocks: MotionDocScene["blocks"], updates: readonly ResolvedBlockFrameUpdate[]) {
   const targets = getAlignmentTargets(blocks, updates);
   const guides: AlignmentGuide[] = [];
 
@@ -318,7 +320,7 @@ export function stringValue(value: string | number | undefined, fallback: string
   return typeof value === "string" && value.trim() ? value : fallback;
 }
 
-function intersectsRect(frame: Frame, rect: Frame) {
+function intersectsRect(frame: MotionDocFrame, rect: MotionDocFrame) {
   const frameRight = frame.x + frame.w;
   const frameBottom = frame.y + frame.h;
   const rectRight = rect.x + rect.w;
@@ -327,7 +329,7 @@ function intersectsRect(frame: Frame, rect: Frame) {
   return frame.x < rectRight && frameRight > rect.x && frame.y < rectBottom && frameBottom > rect.y;
 }
 
-function getAlignmentTargets(blocks: MotionDocScene["blocks"], movingFrames: readonly FrameUpdate[]) {
+function getAlignmentTargets(blocks: MotionDocScene["blocks"], movingFrames: readonly ResolvedBlockFrameUpdate[]) {
   const movingIndices = new Set(movingFrames.map(({ blockIndex }) => blockIndex));
   const verticalTargets = [0, 50, 100];
   const horizontalTargets = [0, 50, 100];

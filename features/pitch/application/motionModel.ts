@@ -1,13 +1,10 @@
-import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocBlock, MotionDocPropInput, MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 import {
   normalizeEnterAnimation,
   normalizeSlideTransition,
   type EnterAnimation,
   type SlideTransition
 } from "@/features/pitch/application/motionPresets";
-
-export type MotionPropInput = Record<string, string | number | undefined>;
-export type MotionPropRecord = Record<string, string | number>;
 
 export type ElementMotionConfig = {
   delay?: number;
@@ -20,7 +17,7 @@ export type SlideMotionConfig = {
   slideTransition: SlideTransition;
 };
 
-export function normalizeElementMotion(props: MotionPropInput): ElementMotionConfig {
+export function normalizeElementMotion(props: MotionDocPropInput): ElementMotionConfig {
   const enter = normalizeEnterAnimation(props.enter);
 
   if (enter === "none") {
@@ -34,9 +31,9 @@ export function normalizeElementMotion(props: MotionPropInput): ElementMotionCon
   };
 }
 
-export function normalizeElementMotionProps(props: MotionPropRecord): MotionPropRecord {
+export function normalizeElementMotionProps(props: MotionDocProps): MotionDocProps {
   const motion = normalizeElementMotion(props);
-  const nextProps: MotionPropRecord = {
+  const nextProps: MotionDocProps = {
     ...props,
     enter: motion.enter
   };
@@ -53,14 +50,14 @@ export function normalizeElementMotionProps(props: MotionPropRecord): MotionProp
   return nextProps;
 }
 
-export function hasElementMotion(props: MotionPropInput) {
+export function hasElementMotion(props: MotionDocPropInput) {
   return normalizeElementMotion(props).enter !== "none";
 }
 
 export function applyElementAnimationProps(
-  props: MotionPropRecord,
+  props: MotionDocProps,
   enter: EnterAnimation
-): MotionPropRecord {
+): MotionDocProps {
   return normalizeElementMotionProps({
     ...props,
     enter
@@ -78,7 +75,7 @@ export function normalizeBlockMotion(block: MotionDocBlock): MotionDocBlock {
   } as MotionDocBlock;
 }
 
-export function normalizeSlideMotion(props: MotionPropInput): SlideMotionConfig {
+export function normalizeSlideMotion(props: MotionDocPropInput): SlideMotionConfig {
   const slideTransition = normalizeSlideTransition(props.slideTransition);
 
   if (slideTransition === "none") {
@@ -92,10 +89,10 @@ export function normalizeSlideMotion(props: MotionPropInput): SlideMotionConfig 
 }
 
 export function applySlideTransitionProps(
-  props: MotionPropRecord,
+  props: MotionDocProps,
   slideTransition: SlideTransition
-): MotionPropRecord {
-  const nextProps: MotionPropRecord = {
+): MotionDocProps {
+  const nextProps: MotionDocProps = {
     ...props,
     slideTransition
   };

@@ -9,7 +9,7 @@ export const enDictionary = {
     fallbackLabel: "Preset",
     ariaLabel: (title: string) => `${title} style thumbnail`,
     sceneLayers: "Slide layers",
-    layers: ["Text", "Icon", "Chart"],
+    layers: ["Text", "Icon", "Table"],
     motionReady: "Motion ready"
   }
 } as const;

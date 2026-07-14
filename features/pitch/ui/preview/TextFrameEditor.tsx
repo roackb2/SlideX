@@ -20,15 +20,16 @@ import { useEffect, useRef } from "react";
 import type { CSSProperties, CompositionEvent, ReactNode } from "react";
 import * as Toolbar from "@radix-ui/react-toolbar";
 import { numberValue } from "@/core/motion-doc/domain/frame";
+import type { MotionDocProps, MotionDocTextBlock } from "@/core/motion-doc/domain/motionDocTypes";
 import { hexColorValue } from "@/features/pitch/application/colorPalettes";
-import { stringValue, type EditableTextBlock } from "@/features/pitch/application/previewCanvas";
+import { stringValue } from "@/features/pitch/application/previewCanvas";
 import { autoSizeTextFrameProps } from "@/features/pitch/application/textFrameSizing";
-import type { BlockUpdater } from "@/features/pitch/ui/pitchCommandTypes";
+import type { BlockUpdater } from "@/features/pitch/application/pitchCommandTypes";
 import { useDynamicFont } from "@/features/pitch/ui/hooks/useDynamicFont";
 import { FontPicker } from "@/features/pitch/ui/preview/controls/FontPicker";
 
 type TextFrameEditorProps = {
-  block: EditableTextBlock;
+  block: MotionDocTextBlock;
   blockIndex: number;
   canvasScale: number;
   onBeginTextEdit: () => void;
@@ -153,7 +154,7 @@ function TextStyleToolbar({
   placement
 }: {
   alignment: "left" | "right";
-  block: EditableTextBlock;
+  block: MotionDocTextBlock;
   blockIndex: number;
   onUpdateBlock: BlockUpdater;
   placement: "above" | "below";
@@ -172,7 +173,7 @@ function TextStyleToolbar({
   const isBold = fontWeight >= 700 || block.props.fontWeight === "bold";
   const isBulletList = listType === "bullet";
 
-  function updateProps(nextProps: Record<string, string | number>, resizeFrame = false) {
+  function updateProps(nextProps: MotionDocProps, resizeFrame = false) {
     const resolvedProps = resizeFrame
       ? autoSizeTextFrameProps(block, block.text, { props: nextProps })
       : nextProps;
@@ -336,7 +337,7 @@ const textPresets: TextPreset[] = [
   { fontSize: 18, fontWeight: 500, label: "Caption", lineHeight: 1.35, role: "content", sample: "Details and notes" }
 ];
 
-function TextPresetPicker({ block, onSelect }: { block: EditableTextBlock; onSelect: (preset: TextPreset) => void }) {
+function TextPresetPicker({ block, onSelect }: { block: MotionDocTextBlock; onSelect: (preset: TextPreset) => void }) {
   const fontSize = numberValue(block.props.fontSize) ?? (block.type === "Title" ? 72 : 24);
   const activePreset = textPresets.find((preset) => preset.fontSize === fontSize);
 
@@ -369,7 +370,7 @@ function TextPresetPicker({ block, onSelect }: { block: EditableTextBlock; onSel
   );
 }
 
-function editableFrameStyle(block: EditableTextBlock): CSSProperties {
+function editableFrameStyle(block: MotionDocTextBlock): CSSProperties {
   const verticalAlign = stringValue(block.props.textVerticalAlign, "top");
 
   return {
@@ -380,7 +381,7 @@ function editableFrameStyle(block: EditableTextBlock): CSSProperties {
   };
 }
 
-function editableTextStyle(block: EditableTextBlock, canvasScale: number): CSSProperties {
+function editableTextStyle(block: MotionDocTextBlock, canvasScale: number): CSSProperties {
   const fontSize = Number(block.props.fontSize) || (block.type === "Title" ? 72 : 24);
   const textAlign = stringValue(block.props.textAlign, "left") as CSSProperties["textAlign"];
   const color = stringValue(block.props.color ?? block.props.textColor, "inherit");

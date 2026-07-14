@@ -2,28 +2,20 @@
 
 import { useState, type Dispatch, type MouseEvent as ReactMouseEvent, type SetStateAction } from "react";
 import { cloneBlock } from "@/core/motion-doc/application/motionDocSerialize";
-import type { MotionDocBlock, MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
-import { defaultTemplate, motionTemplates } from "@/core/motion-doc/presets/templates";
+import type { MotionDocBlock, MotionDocProps, MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import {
   deleteTableColumn,
   deleteTableRow,
   tableSizeFromProps
 } from "@/core/motion-doc/application/tableBlock";
 import {
-  appendBlankSlideSource,
-  appendLayoutSlideSource,
   appendBlockToSlide,
   appendTextBlockAtPosition,
-  applyAllSlidesStyleSource,
-  applyLayoutToSlide,
   applySelectionMdxSource,
-  applySlideStyleSource,
   deleteBlockAt,
   deleteBlocks,
-  deleteSlideSource,
   duplicateBlockAt,
   imageBlockAsSlideBackground,
-  insertBlankSlideSource,
   isPositionLocked,
   groupBlocks,
   moveBlockByDirection,
@@ -32,26 +24,23 @@ import {
   pasteBlocksIntoSlide,
   renameLayer,
   reorderBlocks,
-  reorderSlideSource,
   replaceSlideSource,
   selectedLayerIndices,
   toggleBlocksPositionLock,
   ungroupBlocks,
   updateBlockInSlide,
   updatePositionedBlockFrames as buildPositionedBlockFramesSlide,
-  type AddBlockOptions,
-  type FrameUpdate,
-  type InsertSlidePlacement
+  type AddBlockOptions
 } from "@/features/pitch/application/motionDocCommands";
-import { PitchAssetFileError } from "@/features/pitch/infrastructure/pitchAssetFiles";
-import { prepareAndRegisterPitchLocalFile } from "@/features/pitch/infrastructure/pitchLocalAssets";
+import type { BlockFramePatch } from "@/features/pitch/application/pitchGeometry";
 import {
   clearTableEditorSelectionProps,
   tableEditorSelectionFromProps
 } from "@/features/pitch/application/tableEditorSelection";
-import type { BlockUpdateOptions } from "@/features/pitch/ui/pitchCommandTypes";
+import type { BlockUpdateOptions } from "@/features/pitch/application/pitchCommandTypes";
 import { type AddBlockType } from "@/features/pitch/ui/pitchOptions";
-import { stringValue } from "@/common/util/valueUtils";
+import { usePitchAssetCommands } from "@/features/pitch/ui/hooks/usePitchAssetCommands";
+import { usePitchSlideCommands } from "@/features/pitch/ui/hooks/usePitchSlideCommands";
 
 type UsePitchCommandsArgs = {
   activeSlide: MotionDocScene | undefined;
@@ -95,6 +84,28 @@ export function usePitchCommands({
   source
 }: UsePitchCommandsArgs) {
   const [copiedBlocks, setCopiedBlocks] = useState<MotionDocBlock[]>([]);
+  const slideCommands = usePitchSlideCommands({
+    activeSlide,
+    activeSlideIndex,
+    commitSource,
+    scenes,
+    selectSingleBlock,
+    setActiveSlideIndex,
+    setIsTemplateModalOpen,
+    setNotice,
+    setReplayNonce,
+    setSelectedTemplateId
+  });
+  const assetCommands = usePitchAssetCommands({
+    activeSlide,
+    activeSlideIndex,
+    commitSource,
+    selectedBlockIndex,
+    selectSingleBlock,
+    setNotice,
+    setReplayNonce,
+    updateBlock
+  });
 
   function selectBlockFromLayer(index: number, event: ReactMouseEvent<HTMLDivElement>) {
     selectBlock(index, {
@@ -105,104 +116,6 @@ export function usePitchCommands({
 
   function beginBlockTransform() {
     pushUndoSnapshot();
-  }
-
-  function applyTemplate(templateId: string) {
-    const template = motionTemplates.find((item) => item.id === templateId) ?? defaultTemplate;
-    setSelectedTemplateId(template.id);
-    
-    // Extract properties from the first Slide tag
-    const match = template.source.match(/<(?:Slide|Scene)\b([^>]*)>/);
-    if (match) {
-      const attrsStr = match[1];
-      const attrRegex = /([a-zA-Z0-9]+)="([^"]*)"/g;
-      const updates: Record<string, string | number> = {};
-      let attrMatch;
-      while ((attrMatch = attrRegex.exec(attrsStr)) !== null) {
-        const key = attrMatch[1];
-        const val = attrMatch[2];
-        if (key !== "duration" && !key.startsWith("shader")) {
-          // Parse numbers if possible
-          const numVal = Number(val);
-          updates[key] = !isNaN(numVal) && val.trim() !== "" ? numVal : val;
-        }
-      }
-      updateAllSlidesStyle(updates);
-      
-      // Strip hardcoded colors from Title and Text blocks so the new theme takes effect properly
-      commitSource(src => src.replace(/<(Text|Title)([^>]*?)\s+color="[^"]*"/g, '<$1$2'));
-    }
-
-    setIsTemplateModalOpen(false);
-    setNotice(`${template.name} theme applied`);
-  }
-
-  function insertSnippet(code: string) {
-    commitSource((current) => `${current.trimEnd()}\n\n${code}`);
-    setReplayNonce((value) => value + 1);
-    setNotice("Block inserted");
-  }
-
-  function addSlide() {
-    commitSource((current) => appendBlankSlideSource(current, activeSlideIndex));
-    setActiveSlideIndex(scenes.length);
-    selectSingleBlock(null);
-    setReplayNonce((value) => value + 1);
-    setNotice("Blank slide added");
-  }
-
-  function insertSlideNearActive(placement: InsertSlidePlacement) {
-    commitSource((current) => insertBlankSlideSource(current, activeSlideIndex, placement));
-    setActiveSlideIndex(placement === "before" ? activeSlideIndex : activeSlideIndex + 1);
-    selectSingleBlock(null);
-    setReplayNonce((value) => value + 1);
-    setNotice(placement === "before" ? "Slide inserted before" : "Slide inserted after");
-  }
-
-  function addSlideWithLayout(layoutSource: string) {
-    commitSource((current) => appendLayoutSlideSource(current, activeSlideIndex, layoutSource));
-    setActiveSlideIndex(scenes.length);
-    selectSingleBlock(null);
-    setReplayNonce((value) => value + 1);
-    setNotice("Slide added with layout");
-  }
-
-  function applyLayoutToActiveSlide(layoutSource: string, layoutId: string) {
-    if (!activeSlide) {
-      return;
-    }
-
-    const nextSlide = applyLayoutToSlide(activeSlide, layoutSource, layoutId);
-    commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
-    selectSingleBlock(null);
-    setReplayNonce((value) => value + 1);
-    setNotice("Layout applied");
-  }
-
-  function deleteSlide(slideIndex: number) {
-    if (scenes.length <= 1) {
-      setNotice("Cannot delete last slide");
-      return;
-    }
-
-    commitSource((current) => deleteSlideSource(current, slideIndex));
-    setActiveSlideIndex((current) => Math.min(current, scenes.length - 2));
-    setReplayNonce((value) => value + 1);
-    setNotice("Slide deleted");
-  }
-
-  function reorderSlide(fromIndex: number, toIndex: number) {
-    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= scenes.length || toIndex >= scenes.length) return;
-
-    commitSource((current) => reorderSlideSource(current, fromIndex, toIndex));
-    
-    // Update active slide index to follow the moved slide, or adjust if affected by the move
-    setActiveSlideIndex((current) => {
-      if (current === fromIndex) return toIndex;
-      if (current > fromIndex && current <= toIndex) return current - 1;
-      if (current < fromIndex && current >= toIndex) return current + 1;
-      return current;
-    });
   }
 
   function deleteBlock(blockIndex: number) {
@@ -366,37 +279,6 @@ export function usePitchCommands({
     setNotice(blockIndices.length > 1 ? `${blockIndices.length} layers pasted` : "Layer pasted");
   }
 
-  async function pasteImageFile(file: File) {
-    if (!activeSlide || !file.type.startsWith("image/")) return;
-    try {
-      const preparedAsset = await prepareAndRegisterPitchLocalFile(file);
-      const src = preparedAsset.url;
-      const selectedBlock = selectedBlockIndex === null ? undefined : activeSlide.blocks[selectedBlockIndex];
-      if (selectedBlockIndex !== null && selectedBlock?.type === "ImageBlock") {
-        const slide = updateBlockInSlide(activeSlide, selectedBlockIndex, {
-          ...selectedBlock.props,
-          alt: file.name || "Pasted image",
-          fit: selectedBlock.props.fit || "contain",
-          src
-        });
-        if (!slide) return;
-        commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
-        setReplayNonce((value) => value + 1);
-        setNotice(preparedAsset.optimized ? "Image optimized and pasted into selected layer" : "Image pasted into selected layer");
-        return;
-      }
-      const { blockIndex, slide } = appendBlockToSlide(activeSlide, "Image", {
-        props: { alt: file.name || "Pasted image", fit: "contain", src }
-      });
-      commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
-      selectSingleBlock(blockIndex);
-      setReplayNonce((value) => value + 1);
-      setNotice(preparedAsset.optimized ? "Image optimized and pasted" : "Image pasted");
-    } catch (error) {
-      setNotice(error instanceof PitchAssetFileError ? error.message : "Unable to paste image");
-    }
-  }
-
   function moveSelectedBlocksToEdge(edge: "back" | "front") {
     if (!activeSlide) return;
     const indices = selectedLayerIndices(selectedBlockIndices, selectedBlockIndex);
@@ -519,7 +401,7 @@ export function usePitchCommands({
     setNotice("Text added");
   }
 
-  function updatePositionedBlockFrames(updates: FrameUpdate[]) {
+  function updatePositionedBlockFrames(updates: BlockFramePatch[]) {
     if (!activeSlide) return;
 
     const nextSlide = buildPositionedBlockFramesSlide(activeSlide, updates);
@@ -546,26 +428,7 @@ export function usePitchCommands({
     setNotice(indices.length > 1 ? "Layers nudged" : "Layer nudged");
   }
 
-  function updateActiveSlideStyle(updates: Record<string, string | number>) {
-    if (!activeSlide) {
-      return;
-    }
-
-    commitSource((current) => applySlideStyleSource(current, activeSlide, activeSlideIndex, updates));
-    setNotice("Slide style updated");
-  }
-
-  function updateAllSlidesStyle(updates: Record<string, string | number>) {
-    if (scenes.length === 0) {
-      return;
-    }
-
-    commitSource((current) => applyAllSlidesStyleSource(current, scenes, updates));
-    setReplayNonce((value) => value + 1);
-    setNotice("Theme applied to all slides");
-  }
-
-  function updateBlock(blockIndex: number, newProps: Record<string, string | number>, newText?: string, options?: BlockUpdateOptions) {
+  function updateBlock(blockIndex: number, newProps: MotionDocProps, newText?: string, options?: BlockUpdateOptions) {
     if (!activeSlide) return;
 
     const nextSlide = updateBlockInSlide(activeSlide, blockIndex, newProps, newText);
@@ -582,81 +445,6 @@ export function usePitchCommands({
       setReplayNonce((value) => value + 1);
     }
     setNotice("Block updated");
-  }
-
-  async function uploadImageForBlock(blockIndex: number, file: File | undefined) {
-    if (!activeSlide || !file) {
-      return;
-    }
-
-    const block = activeSlide.blocks[blockIndex];
-
-    if (!block || block.type !== "ImageBlock") {
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      setNotice("Choose an image file");
-      return;
-    }
-
-    try {
-      const preparedAsset = await prepareAndRegisterPitchLocalFile(file);
-      const url = preparedAsset.url;
-      
-      updateBlock(blockIndex, {
-        ...block.props,
-        alt: stringValue(block.props.alt) || file.name,
-        fit: stringValue(block.props.fit) || "cover",
-        src: url
-      });
-      setNotice(preparedAsset.optimized ? "Image optimized and loaded" : "Local image loaded");
-    } catch (error) {
-      setNotice(error instanceof PitchAssetFileError ? error.message : "Failed to load local image");
-    }
-  }
-
-  async function uploadVideoForBlock(blockIndex: number, file: File | undefined) {
-    if (!activeSlide || !file) {
-      return;
-    }
-
-    const block = activeSlide.blocks[blockIndex];
-
-    if (!block || block.type !== "VideoBlock") {
-      return;
-    }
-
-    if (!file.type.startsWith("video/")) {
-      setNotice("Choose a video file");
-      return;
-    }
-
-    try {
-      setNotice("Loading video...");
-      const preparedAsset = await prepareAndRegisterPitchLocalFile(file);
-      const url = preparedAsset.url;
-      
-      updateBlock(blockIndex, {
-        ...block.props,
-        controls: stringValue(block.props.controls) || "true",
-        fit: stringValue(block.props.fit) || "cover",
-        src: url
-      });
-      setNotice("Local video loaded");
-    } catch (error) {
-      setNotice(error instanceof PitchAssetFileError ? error.message : "Failed to load local video");
-    }
-  }
-
-  function goToPreviousSlide() {
-    setActiveSlideIndex((current) => Math.max(current - 1, 0));
-    setReplayNonce((value) => value + 1);
-  }
-
-  function goToNextSlide() {
-    setActiveSlideIndex((current) => Math.min(current + 1, Math.max(scenes.length - 1, 0)));
-    setReplayNonce((value) => value + 1);
   }
 
   function updateSelectionMdx(value: string) {
@@ -684,33 +472,24 @@ export function usePitchCommands({
   }
 
   return {
+    ...assetCommands,
+    ...slideCommands,
     addBlockToActiveSlide,
-    addSlide,
-    addSlideWithLayout,
     addTextAtPosition,
-    applyLayoutToActiveSlide,
-    applyTemplate,
     beginBlockTransform,
     copySelectedBlock,
     cutSelectedBlocks,
     deleteBlock,
     deleteSelectedBlocks,
-    deleteSlide,
     duplicateSelectedBlock,
-    goToNextSlide,
-    goToPreviousSlide,
     groupSelectedBlocks,
     hasCopiedBlock: copiedBlocks.length > 0,
-    insertSnippet,
-    insertSlideNearActive,
     moveBlock,
     moveBlockToEdge,
     nudgeSelectedBlocks,
     moveSelectedBlocksToEdge,
-    pasteImageFile,
     pasteCopiedBlock,
     reorderBlock,
-    reorderSlide,
     renameBlock,
     selectBlockFromLayer,
     selectedBlocksLocked: selectedLayerIndices(selectedBlockIndices, selectedBlockIndex).some((index) => {
@@ -720,13 +499,9 @@ export function usePitchCommands({
     toggleSelectedBlocksPositionLock,
     toggleBlockPositionLock,
     ungroupSelectedBlocks,
-    updateActiveSlideStyle,
-    updateAllSlidesStyle,
     updateBlock,
     updatePositionedBlockFrames,
     updateSelectionMdx,
-    useSelectedImageAsBackground,
-    uploadImageForBlock,
-    uploadVideoForBlock
+    useSelectedImageAsBackground
   };
 }

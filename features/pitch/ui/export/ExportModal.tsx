@@ -30,7 +30,7 @@ const formatOptions = [
     id: "pptx",
     label: "Editable PPTX",
     ext: ".pptx",
-    description: "Opens in PowerPoint, Keynote, and Google Slides. Charts and filtered images export as movable PNG objects for reliable cross-app display; other native content stays editable.",
+    description: "Opens in PowerPoint, Keynote, and Google Slides. Filtered images export as movable PNG objects; other native content stays editable.",
     icon: Presentation
   },
   {

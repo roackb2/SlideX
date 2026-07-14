@@ -4,8 +4,7 @@ const EDITABLE_CONTENT_SELECTORS = [
   ".block-table",
   ".block-icon",
   ".block-image",
-  ".block-shape",
-  ".block-chart"
+  ".block-shape"
 ] as const;
 
 /**

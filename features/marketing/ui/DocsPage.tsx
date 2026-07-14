@@ -123,7 +123,7 @@ export function DocsPage() {
 
           <section className="mt-12 scroll-mt-40" id="slides">
             <h3 className="text-[20px] font-semibold tracking-[-0.03em]">{isZh ? "投影片與圖層" : "Slides and layers"}</h3>
-            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/52">{isZh ? "每張投影片可以包含文字、圖片、影片、圖表、表格、圖示與形狀。圖層順序會決定畫布上的前後關係。" : "Each slide can contain text, images, video, charts, tables, icons, and shapes. Layer order controls the visual stacking order."}</p>
+            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/52">{isZh ? "每張投影片可以包含文字、圖片、影片、表格、圖示與形狀。圖層順序會決定畫布上的前後關係。" : "Each slide can contain text, images, video, tables, icons, and shapes. Layer order controls the visual stacking order."}</p>
           </section>
 
           <section className="mt-16 border-t border-white/[0.09] pt-12 scroll-mt-40" id="fill">
@@ -148,7 +148,7 @@ export function DocsPage() {
           <section className="mt-16 border-t border-white/[0.09] pt-12 scroll-mt-40" id="powerpoint">
             <h2 className="text-[30px] font-semibold tracking-[-0.045em]">{isZh ? "輸出" : "Export"}</h2>
             <h3 className="mt-7 text-[20px] font-semibold tracking-[-0.03em]">PowerPoint</h3>
-            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/52">{isZh ? "PPTX 可由 PowerPoint、Keynote 與 Google Slides 開啟。文字、表格與一般形狀保留為可編輯物件；所有圖表與套用濾鏡的圖片會各自烘焙成獨立 PNG 圖片物件，確保跨平台顯示一致，並可在簡報中移動、縮放或刪除。圖示會依投影片背景自動輸出成黑色或白色 PNG，影片則保留媒體物件與可點擊的封面連結。" : "PPTX files open in PowerPoint, Keynote, and Google Slides. Text, tables, and standard shapes remain editable; every chart and filtered image is baked into its own PNG image object for reliable cross-platform display while remaining movable, resizable, and removable. Icons export as black or white PNGs based on the slide background, and videos retain their media object plus a clickable cover link."}</p>
+            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/52">{isZh ? "PPTX 可由 PowerPoint、Keynote 與 Google Slides 開啟。文字、表格與一般形狀保留為可編輯物件；套用濾鏡的圖片會烘焙成獨立 PNG 圖片物件，確保跨平台顯示一致，並可在簡報中移動、縮放或刪除。圖示會依投影片背景自動輸出成黑色或白色 PNG，影片則保留媒體物件與可點擊的封面連結。" : "PPTX files open in PowerPoint, Keynote, and Google Slides. Text, tables, and standard shapes remain editable; filtered images are baked into movable PNG image objects for reliable cross-platform display. Icons export as black or white PNGs based on the slide background, and videos retain their media object plus a clickable cover link."}</p>
           </section>
 
           <section className="mt-12 scroll-mt-40" id="html">

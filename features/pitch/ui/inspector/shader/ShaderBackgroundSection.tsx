@@ -9,7 +9,7 @@ import {
   paperShaderDefinitions,
   paperShaderPresetUpdates
 } from "@/core/motion-doc/application/shaders/paperShaderCatalog";
-import type { PropRecord } from "@/features/pitch/application/themeColors";
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 import { Field } from "@/features/pitch/ui/inspector/InspectorControls";
 import { AccordionSection } from "@/features/pitch/ui/inspector/controls/AccordionSection";
 import { ShaderRangeControl } from "@/features/pitch/ui/inspector/shader/ShaderRangeControl";
@@ -32,7 +32,7 @@ type ShaderBackgroundSectionProps = {
   shaderScale: number;
   shaderSoftness: number;
   shaderSpeed: number;
-  updateActiveSlideStyle: (updates: PropRecord) => void;
+  updateActiveSlideStyle: (updates: MotionDocProps) => void;
 };
 
 export function ShaderBackgroundSection(props: ShaderBackgroundSectionProps) {
@@ -265,7 +265,7 @@ function ColorRow({
   );
 }
 
-function emptyShaderUpdates(): PropRecord {
+function emptyShaderUpdates(): MotionDocProps {
   return {
     shader: "",
     shaderAngle: "",

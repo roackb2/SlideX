@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocTypes";
 
 export function useLayerSelection(activeBlocks: MotionDocBlock[]) {
   const activeBlockCount = activeBlocks.length;

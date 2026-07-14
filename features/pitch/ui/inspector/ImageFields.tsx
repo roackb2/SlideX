@@ -1,6 +1,8 @@
 "use client";
 
 import { ImagePlus, Maximize, Minimize, RefreshCcw, Shrink, StretchHorizontal, Upload } from "lucide-react";
+import { useState } from "react";
+import { omitMotionDocProps } from "@/core/motion-doc/application/motionDocProps";
 import {
   Field,
   IconSegmentedControl,
@@ -12,13 +14,27 @@ import { ImageFilterSection } from "@/features/pitch/ui/inspector/image/ImageFil
 
 export function ImageFields({
   block,
+  importImageUrlForBlock,
   selectedBlockIndex,
   updateBlock,
   uploadImageForBlock
 }: BlockFieldProps & {
+  importImageUrlForBlock: (blockIndex: number, source: string) => void;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
 }) {
   const hasImage = Boolean(block.props.src);
+  const externalImageSource = externalSource(block.props.sourceUrl ?? block.props.src);
+
+  function commitImageUrl(value: string) {
+    const source = value.trim();
+    if (source === externalImageSource) return;
+    if (!source) {
+      const imageProps = omitMotionDocProps(block.props, ["sourceUrl"]);
+      updateBlock(selectedBlockIndex, { ...imageProps, src: "" });
+      return;
+    }
+    importImageUrlForBlock(selectedBlockIndex, source);
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -28,9 +44,12 @@ export function ImageFields({
           {hasImage ? (
             <>
               {/* Note: since it might be a local path or external URL, we just show a generic preview or the actual image if possible */}
-              <div 
-                className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-50 transition-opacity group-hover:opacity-30"
-                style={{ backgroundImage: `url(${block.props.src})` }}
+              <img
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover opacity-50 transition-opacity group-hover:opacity-30"
+                decoding="async"
+                loading="lazy"
+                src={String(block.props.src)}
               />
               <label className="relative z-10 flex cursor-pointer items-center gap-2 rounded-md bg-neutral-900/90 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-transform hover:scale-105 hover:bg-neutral-800">
                 <Upload size={14} />
@@ -64,11 +83,10 @@ export function ImageFields({
         </div>
       </Field>
 
-      <TextInput 
-        label="Image URL" 
-        placeholder="https://..." 
-        value={block.props.src ?? ""} 
-        onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, src: value })} 
+      <CommittedImageUrlInput
+        key={`${selectedBlockIndex}-${externalImageSource}`}
+        onCommit={commitImageUrl}
+        value={externalImageSource}
       />
 
       <TextInput 
@@ -130,4 +148,33 @@ export function ImageFields({
       <p className="-mt-2 text-[10px] leading-relaxed text-neutral-600">Fit and scale reset are also available directly on the selected image frame.</p>
     </div>
   );
+}
+
+function CommittedImageUrlInput({ onCommit, value }: { onCommit: (value: string) => void; value: string }) {
+  const [draft, setDraft] = useState(value);
+
+  return (
+    <Field label="Image URL">
+      <input
+        className="h-9 w-full rounded-xl border border-white/[0.055] bg-[#18181b] px-3 text-[12px] text-neutral-200 outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] transition-[border-color,background-color,box-shadow] placeholder:text-neutral-600 hover:border-white/[0.09] hover:bg-[#1b1b1e] focus:border-violet-300/35 focus:bg-[#1d1d20] focus:ring-2 focus:ring-violet-400/10"
+        onBlur={(event) => onCommit(event.currentTarget.value)}
+        onChange={(event) => setDraft(event.currentTarget.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") event.currentTarget.blur();
+          if (event.key === "Escape") {
+            setDraft(value);
+            event.currentTarget.blur();
+          }
+        }}
+        placeholder="https://..."
+        type="url"
+        value={draft}
+      />
+      <p className="text-[10px] leading-relaxed text-neutral-600">Imported on Enter or when the field loses focus.</p>
+    </Field>
+  );
+}
+
+function externalSource(value: string | number | undefined) {
+  return typeof value === "string" && /^https?:\/\//i.test(value.trim()) ? value.trim() : "";
 }

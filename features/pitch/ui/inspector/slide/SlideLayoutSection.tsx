@@ -1,26 +1,17 @@
 "use client";
 
-import { Grid3X3, Sliders } from "lucide-react";
-import type { PropRecord } from "@/features/pitch/application/themeColors";
-import { Field, NativeSelect } from "@/features/pitch/ui/inspector/InspectorControls";
+import { Grid3X3 } from "lucide-react";
+import { Field } from "@/features/pitch/ui/inspector/InspectorControls";
 import { AccordionSection } from "@/features/pitch/ui/inspector/controls/AccordionSection";
 
 type SlideLayoutSectionProps = {
-  alignX: string;
-  alignY: string;
   isGridVisible: boolean;
-  layout: string;
   setIsGridVisible: (value: boolean) => void;
-  updateActiveSlideStyle: (updates: PropRecord) => void;
 };
 
 export function SlideLayoutSection({
-  alignX,
-  alignY,
   isGridVisible,
-  layout,
-  setIsGridVisible,
-  updateActiveSlideStyle
+  setIsGridVisible
 }: SlideLayoutSectionProps) {
   return (
     <AccordionSection title="Canvas Grid & Layout" defaultOpen>

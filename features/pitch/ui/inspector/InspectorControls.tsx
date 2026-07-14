@@ -10,11 +10,8 @@ export {
 } from "@/features/pitch/ui/inspector/controls/BaseControls";
 export type {
   BlockFieldProps,
-  BlockWithProps,
   ControlOption,
-  IconControlOption,
-  PropRecord,
-  PropValue
+  IconControlOption
 } from "@/features/pitch/ui/inspector/controls/BaseControls";
 export { ColorControl } from "@/features/pitch/ui/inspector/color/ColorControl";
 export { SolidFillControl } from "@/features/pitch/ui/inspector/color/SolidFillControl";

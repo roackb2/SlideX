@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Download, FileUp, MessageSquareText, RotateCcw, Send, X } from "lucide-react";
-import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import type { SlideComment } from "@/features/pitch/application/slideComments";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/features/pitch/application/previewCanvas";
 import { useMobilePresentationGestures } from "@/features/pitch/ui/hooks/useMobilePresentationGestures";

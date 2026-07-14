@@ -1,4 +1,4 @@
-import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocParser";
+import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocTypes";
 import { normalizeEnterAnimation, type EnterAnimation } from "@/features/pitch/application/motionPresets";
 
 export type { EnterAnimation };

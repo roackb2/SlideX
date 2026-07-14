@@ -14,12 +14,13 @@ import { usePitchProject, type NewPitchProjectOptions } from "@/features/pitch/u
 import { usePitchShortcuts } from "@/features/pitch/ui/hooks/usePitchShortcuts";
 import { usePitchUndo } from "@/features/pitch/ui/hooks/usePitchUndo";
 import { defaultTemplate } from "@/core/motion-doc/presets/templates";
-import { defaultCanvasTool, type CanvasTool } from "@/features/pitch/application/canvasTools";
 import { importPitchProjectFile } from "@/features/pitch/infrastructure/pitchImport";
 import { slideCommentsDeckId } from "@/features/pitch/infrastructure/slideComments";
 import { embedPitchLocalImagesForPersistence } from "@/features/pitch/infrastructure/pitchLocalAssets";
 import { useMobilePitchViewport } from "@/features/pitch/ui/hooks/useMobilePitchViewport";
 import { useSlideComments } from "@/features/pitch/ui/hooks/useSlideComments";
+import { usePitchPersistence } from "@/features/pitch/ui/hooks/usePitchPersistence";
+import { usePitchWorkspaceViewState } from "@/features/pitch/ui/hooks/usePitchWorkspaceViewState";
 import { MobilePitchViewer } from "@/features/pitch/ui/mobile/MobilePitchViewer";
 import { PresentationPreviewModal } from "@/features/pitch/ui/PresentationPreviewModal";
 import {
@@ -52,33 +53,45 @@ export function MotionDocApp({
 }: MotionDocAppProps = {}) {
   const isMobileViewport = useMobilePitchViewport();
   const [source, setSource] = useState(initialProject?.source ?? defaultMdx);
-  const [replayNonce, setReplayNonce] = useState(0);
   const [selectedTemplateId, setSelectedTemplateId] = useState(initialProject?.templateId ?? defaultTemplate.id);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
-  const [notice, setNotice] = useState("Ready");
   const [draggedBlockIndex, setDraggedBlockIndex] = useState<number | null>(null);
   const [dragOverBlockIndex, setDragOverBlockIndex] = useState<number | null>(null);
-  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-  const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(initialResumeIntent === "export");
-  const [isPresentationPreviewOpen, setIsPresentationPreviewOpen] = useState(initialResumeIntent === "preview");
-  const [isExporting, setIsExporting] = useState(false);
-  const [fileModalMode, setFileModalMode] = useState<"export" | "import">("export");
-  const [isCanvasGridVisible, setIsCanvasGridVisible] = useState(false);
-  const [activeCanvasTool, setActiveCanvasTool] = useState<CanvasTool>(defaultCanvasTool);
-  const exportMenuRef = useRef<HTMLDivElement | null>(null);
   const undoStackRef = useRef<string[]>([]);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isMobileInspectorOpen, setIsMobileInspectorOpen] = useState(false);
-  const [guestSignInIntent, setGuestSignInIntent] = useState<GuestSignInIntent | null>(null);
+  const {
+    activeCanvasTool,
+    exportMenuRef,
+    fileModalMode,
+    guestSignInIntent,
+    isCanvasGridVisible,
+    isCodeEditorOpen,
+    isExporting,
+    isExportMenuOpen,
+    isMobileInspectorOpen,
+    isMobileSidebarOpen,
+    isPresentationPreviewOpen,
+    isTemplateModalOpen,
+    notice,
+    replayNonce,
+    setActiveCanvasTool,
+    setFileModalMode,
+    setGuestSignInIntent,
+    setIsCanvasGridVisible,
+    setIsCodeEditorOpen,
+    setIsExporting,
+    setIsExportMenuOpen,
+    setIsMobileInspectorOpen,
+    setIsMobileSidebarOpen,
+    setIsPresentationPreviewOpen,
+    setIsTemplateModalOpen,
+    setNotice,
+    setReplayNonce
+  } = usePitchWorkspaceViewState(initialResumeIntent);
 
   const {
     activeSlide,
     activeSlideAccent,
-    activeSlideAlignX,
-    activeSlideAlignY,
     activeSlideBackground,
-    activeSlideLayout,
     activeSlideLayoutPreset,
     activeSlideMutedColor,
     activeSlideShader,
@@ -160,12 +173,12 @@ export function MotionDocApp({
   const openExport = useCallback(() => {
     setFileModalMode("export");
     setIsExportMenuOpen(true);
-  }, []);
+  }, [setFileModalMode, setIsExportMenuOpen]);
 
   const requestRestrictedExportSignIn = useCallback(() => {
     setIsExportMenuOpen(false);
     setGuestSignInIntent("export");
-  }, []);
+  }, [setGuestSignInIntent, setIsExportMenuOpen]);
 
   const handleExportFromModal = useCallback(async (format: ExportFormat, filename: string) => {
     setIsExporting(true);
@@ -191,7 +204,7 @@ export function MotionDocApp({
     } finally {
       setIsExporting(false);
     }
-  }, [exportHtmlFile, exportMdxFile, exportPptxFile]);
+  }, [exportHtmlFile, exportMdxFile, exportPptxFile, setIsExportMenuOpen, setIsExporting]);
   const pitchCommands = usePitchCommands({
     activeSlide,
     activeSlideIndex,
@@ -220,26 +233,13 @@ export function MotionDocApp({
     });
   }, [sliderDocument.scenes.length]);
 
-  useEffect(() => {
-    if (!onProjectSourceChange || !initialProject) return;
-    let isCancelled = false;
-    const saveTimer = window.setTimeout(() => {
-      void (async () => {
-        try {
-          const persistedSource = accessMode === "guest"
-            ? await embedPitchLocalImagesForPersistence(source)
-            : source;
-          if (!isCancelled) onProjectSourceChange(persistedSource, projectName);
-        } catch {
-          if (!isCancelled) setNotice("This browser could not save the demo draft");
-        }
-      })();
-    }, 450);
-    return () => {
-      isCancelled = true;
-      window.clearTimeout(saveTimer);
-    };
-  }, [accessMode, initialProject, onProjectSourceChange, projectName, source]);
+  usePitchPersistence({
+    enabled: Boolean(initialProject),
+    onProjectSourceChange,
+    projectName,
+    setNotice,
+    source
+  });
 
   const continueGuestSignIn = useCallback(async (intent: GuestSignInIntent) => {
     try {
@@ -252,7 +252,7 @@ export function MotionDocApp({
       setGuestSignInIntent(null);
       setNotice("This browser could not save the demo draft. Free some storage and try again.");
     }
-  }, [onProjectSourceChange, onSignInRequested, projectName, source]);
+  }, [onProjectSourceChange, onSignInRequested, projectName, setGuestSignInIntent, setNotice, source]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -275,7 +275,7 @@ export function MotionDocApp({
 
     window.addEventListener("mousedown", handlePointerDown);
     return () => window.removeEventListener("mousedown", handlePointerDown);
-  }, [isExportMenuOpen]);
+  }, [exportMenuRef, isExportMenuOpen, setIsExportMenuOpen]);
 
   const startNewProject = useCallback(
     (options?: NewPitchProjectOptions) => {
@@ -382,121 +382,125 @@ export function MotionDocApp({
   return (
     <>
     <PitchWorkspace
-      accessMode={accessMode}
-      activeSlide={activeSlide}
-      activeSlideAccent={activeSlideAccent}
-      activeSlideAlignX={activeSlideAlignX}
-      activeSlideAlignY={activeSlideAlignY}
-      activeSlideBackground={activeSlideBackground}
-      activeSlideIndex={activeSlideIndex}
-      activeSlideLayout={activeSlideLayout}
-      activeSlideLayoutPreset={activeSlideLayoutPreset}
-      activeSlideMutedColor={activeSlideMutedColor}
-      activeSlideComments={(slideComments[activeSlideIndex] ?? []).filter((comment) => comment.status === "open")}
-      activeSlideShader={activeSlideShader}
-      activeSlideShaderAngle={activeSlideShaderAngle}
-      activeSlideShaderColor1={activeSlideShaderColor1}
-      activeSlideShaderColor2={activeSlideShaderColor2}
-      activeSlideShaderColor3={activeSlideShaderColor3}
-      activeSlideShaderColor4={activeSlideShaderColor4}
-      activeSlideShaderColor5={activeSlideShaderColor5}
-      activeSlideShaderColor6={activeSlideShaderColor6}
-
-      activeSlideShaderDetail={activeSlideShaderDetail}
-      activeSlideShaderEngine={activeSlideShaderEngine}
-      activeSlideShaderIntensity={activeSlideShaderIntensity}
-      activeSlideShaderPreset={activeSlideShaderPreset}
-      activeSlideShaderScale={activeSlideShaderScale}
-      activeSlideShaderSoftness={activeSlideShaderSoftness}
-      activeSlideShaderSpeed={activeSlideShaderSpeed}
-      activeSlideTextColor={activeSlideTextColor}
-      activeSlideTheme={activeSlideTheme}
-      activeCanvasTool={activeCanvasTool}
-      addBlockToActiveSlide={pitchCommands.addBlockToActiveSlide}
-      addSlide={pitchCommands.addSlide}
-      applyLayoutToActiveSlide={pitchCommands.applyLayoutToActiveSlide}
-      applyTemplate={pitchCommands.applyTemplate}
-      beginBlockTransform={pitchCommands.beginBlockTransform}
-      canvasSource={canvasSource}
-      clearBlockSelection={clearBlockSelection}
-      commitMdxSource={(value) => {
-        setSource(value);
-        markProjectDirty();
+      commands={{
+        addBlockToActiveSlide: pitchCommands.addBlockToActiveSlide,
+        addSlide: pitchCommands.addSlide,
+        applyLayoutToActiveSlide: pitchCommands.applyLayoutToActiveSlide,
+        applyTemplate: pitchCommands.applyTemplate,
+        beginBlockTransform: pitchCommands.beginBlockTransform,
+        commitMdxSource: (value) => {
+          setSource(value);
+          markProjectDirty();
+        },
+        copySelectedBlock: pitchCommands.copySelectedBlock,
+        copySource,
+        deleteBlock: pitchCommands.deleteBlock,
+        deleteSelectedBlocks: pitchCommands.deleteSelectedBlocks,
+        deleteSlide: pitchCommands.deleteSlide,
+        duplicateSelectedBlock: pitchCommands.duplicateSelectedBlock,
+        goToNextSlide: pitchCommands.goToNextSlide,
+        goToPreviousSlide: pitchCommands.goToPreviousSlide,
+        groupSelectedBlocks: pitchCommands.groupSelectedBlocks,
+        importImageUrlForBlock: pitchCommands.importImageUrlForBlock,
+        insertSlideNearActive: pitchCommands.insertSlideNearActive,
+        moveBlock: pitchCommands.moveBlock,
+        moveBlockToEdge: pitchCommands.moveBlockToEdge,
+        moveSelectedBlocksToEdge: pitchCommands.moveSelectedBlocksToEdge,
+        newProject: startNewProject,
+        onAddActiveSlideComment: (comment) => addSlideComment(activeSlideIndex, comment),
+        onPassActiveSlideComment: (commentId) => passSlideComment(activeSlideIndex, commentId),
+        openExport,
+        openPresentationPreview: () => setIsPresentationPreviewOpen(true),
+        pasteCopiedBlock: pitchCommands.pasteCopiedBlock,
+        pushUndoSnapshot,
+        renameBlock: pitchCommands.renameBlock,
+        reorderBlock: pitchCommands.reorderBlock,
+        reorderSlide: pitchCommands.reorderSlide,
+        setActiveSlideIndex,
+        toggleBlockPositionLock: pitchCommands.toggleBlockPositionLock,
+        toggleSelectedBlocksPositionLock: pitchCommands.toggleSelectedBlocksPositionLock,
+        undoLastChange,
+        ungroupSelectedBlocks: pitchCommands.ungroupSelectedBlocks,
+        updateActiveSlideStyle: pitchCommands.updateActiveSlideStyle,
+        updateAllSlidesStyle: pitchCommands.updateAllSlidesStyle,
+        updateBlock: pitchCommands.updateBlock,
+        updatePositionedBlockFrames: pitchCommands.updatePositionedBlockFrames,
+        updateSelectionMdx: pitchCommands.updateSelectionMdx,
+        uploadImageForBlock: pitchCommands.uploadImageForBlock,
+        uploadVideoForBlock: pitchCommands.uploadVideoForBlock,
+        useSelectedImageAsBackground: pitchCommands.useSelectedImageAsBackground
       }}
-      copySource={copySource}
-      copySelectedBlock={pitchCommands.copySelectedBlock}
-      deleteBlock={pitchCommands.deleteBlock}
-      deleteSelectedBlocks={pitchCommands.deleteSelectedBlocks}
-      deleteSlide={pitchCommands.deleteSlide}
-      duplicateSelectedBlock={pitchCommands.duplicateSelectedBlock}
-      groupSelectedBlocks={pitchCommands.groupSelectedBlocks}
-      draggedBlockIndex={draggedBlockIndex}
-      dragOverBlockIndex={dragOverBlockIndex}
-      exportMenuRef={exportMenuRef}
-      goToNextSlide={pitchCommands.goToNextSlide}
-      goToPreviousSlide={pitchCommands.goToPreviousSlide}
-      insertSnippet={pitchCommands.insertSnippet}
-      insertSlideNearActive={pitchCommands.insertSlideNearActive}
-      isCanvasGridVisible={isCanvasGridVisible}
-      isCodeEditorOpen={isCodeEditorOpen}
-      isExportMenuOpen={isExportMenuOpen}
-      isMobileInspectorOpen={isMobileInspectorOpen}
-      isMobileSidebarOpen={isMobileSidebarOpen}
-      isProjectDirty={isProjectDirty}
-      isTemplateModalOpen={isTemplateModalOpen}
-      hasCopiedBlock={pitchCommands.hasCopiedBlock}
-      moveBlock={pitchCommands.moveBlock}
-      moveBlockToEdge={pitchCommands.moveBlockToEdge}
-      moveSelectedBlocksToEdge={pitchCommands.moveSelectedBlocksToEdge}
-      newProject={startNewProject}
-      notice={notice}
-      openExport={openExport}
-      openPresentationPreview={() => setIsPresentationPreviewOpen(true)}
-      onAddActiveSlideComment={(comment) => addSlideComment(activeSlideIndex, comment)}
-      onPassActiveSlideComment={(commentId) => passSlideComment(activeSlideIndex, commentId)}
-      projectName={projectName}
-      pushUndoSnapshot={pushUndoSnapshot}
-      pasteCopiedBlock={pitchCommands.pasteCopiedBlock}
-      reorderBlock={pitchCommands.reorderBlock}
-      renameBlock={pitchCommands.renameBlock}
-      reorderSlide={pitchCommands.reorderSlide}
-      replayNonce={replayNonce}
-      scenes={sliderDocument.scenes}
-      selectBlock={selectBlock}
-      selectBlockFromLayer={pitchCommands.selectBlockFromLayer}
-      selectBlocks={selectBlocks}
-      selectedBlockIndex={selectedBlockIndex}
-      selectedBlockIndices={selectedBlockIndices}
-      selectedBlocksLocked={pitchCommands.selectedBlocksLocked}
-      selectedTemplateId={selectedTemplateId}
-      selectionMdx={selectionMdx}
-      selectSingleBlock={selectSingleBlock}
-      setActiveSlideIndex={setActiveSlideIndex}
-      setActiveCanvasTool={setActiveCanvasTool}
-      setDraggedBlockIndex={setDraggedBlockIndex}
-      setDragOverBlockIndex={setDragOverBlockIndex}
-      setIsCanvasGridVisible={setIsCanvasGridVisible}
-      setIsCodeEditorOpen={setIsCodeEditorOpen}
-      setIsExportMenuOpen={setIsExportMenuOpen}
-      setIsMobileInspectorOpen={setIsMobileInspectorOpen}
-      setIsMobileSidebarOpen={setIsMobileSidebarOpen}
-      setIsTemplateModalOpen={setIsTemplateModalOpen}
-      setReplayNonce={setReplayNonce}
-      slideRows={slideRows}
-      source={source}
-      toggleSelectedBlocksPositionLock={pitchCommands.toggleSelectedBlocksPositionLock}
-      toggleBlockPositionLock={pitchCommands.toggleBlockPositionLock}
-      ungroupSelectedBlocks={pitchCommands.ungroupSelectedBlocks}
-      totalDuration={stats.totalDuration}
-      undoLastChange={undoLastChange}
-      updateActiveSlideStyle={pitchCommands.updateActiveSlideStyle}
-      updateAllSlidesStyle={pitchCommands.updateAllSlidesStyle}
-      updateBlock={pitchCommands.updateBlock}
-      updatePositionedBlockFrames={pitchCommands.updatePositionedBlockFrames}
-      updateSelectionMdx={pitchCommands.updateSelectionMdx}
-      useSelectedImageAsBackground={pitchCommands.useSelectedImageAsBackground}
-      uploadImageForBlock={pitchCommands.uploadImageForBlock}
-      uploadVideoForBlock={pitchCommands.uploadVideoForBlock}
+      document={{
+        activeSlide,
+        activeSlideAccent,
+        activeSlideBackground,
+        activeSlideComments: (slideComments[activeSlideIndex] ?? []).filter((comment) => comment.status === "open"),
+        activeSlideIndex,
+        activeSlideLayoutPreset,
+        activeSlideMutedColor,
+        activeSlideShader,
+        activeSlideShaderAngle,
+        activeSlideShaderColor1,
+        activeSlideShaderColor2,
+        activeSlideShaderColor3,
+        activeSlideShaderColor4,
+        activeSlideShaderColor5,
+        activeSlideShaderColor6,
+        activeSlideShaderDetail,
+        activeSlideShaderEngine,
+        activeSlideShaderIntensity,
+        activeSlideShaderPreset,
+        activeSlideShaderScale,
+        activeSlideShaderSoftness,
+        activeSlideShaderSpeed,
+        activeSlideTextColor,
+        activeSlideTheme,
+        canvasSource,
+        isProjectDirty,
+        projectName,
+        scenes: sliderDocument.scenes,
+        selectedTemplateId,
+        slideRows,
+        source,
+        totalDuration: stats.totalDuration
+      }}
+      selection={{
+        clearBlockSelection,
+        draggedBlockIndex,
+        dragOverBlockIndex,
+        hasCopiedBlock: pitchCommands.hasCopiedBlock,
+        selectBlock,
+        selectBlockFromLayer: pitchCommands.selectBlockFromLayer,
+        selectBlocks,
+        selectedBlockIndex,
+        selectedBlockIndices,
+        selectedBlocksLocked: pitchCommands.selectedBlocksLocked,
+        selectionMdx,
+        selectSingleBlock,
+        setDraggedBlockIndex,
+        setDragOverBlockIndex
+      }}
+      view={{
+        accessMode,
+        activeCanvasTool,
+        exportMenuRef,
+        isCanvasGridVisible,
+        isCodeEditorOpen,
+        isExportMenuOpen,
+        isMobileInspectorOpen,
+        isMobileSidebarOpen,
+        isTemplateModalOpen,
+        notice,
+        replayNonce,
+        setActiveCanvasTool,
+        setIsCanvasGridVisible,
+        setIsCodeEditorOpen,
+        setIsExportMenuOpen,
+        setIsMobileInspectorOpen,
+        setIsMobileSidebarOpen,
+        setIsTemplateModalOpen,
+        setReplayNonce
+      }}
     />
     <PresentationPreviewModal
       activeSlideIndex={activeSlideIndex}

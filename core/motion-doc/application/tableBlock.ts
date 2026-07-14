@@ -1,3 +1,5 @@
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
+
 export type TableSelectionKind = "column" | "row";
 
 export type TableSelection = {
@@ -15,8 +17,6 @@ export type TableSize = {
   rows: number;
 };
 
-type PropRecord = Record<string, string | number>;
-
 export const TABLE_MIN_COLUMNS = 1;
 export const TABLE_MAX_COLUMNS = 50;
 export const TABLE_MIN_ROWS = 1;
@@ -27,7 +27,7 @@ const TABLE_MIN_TRACK = 0.28;
 const cellColumnSeparator = "|";
 const cellRowSeparator = ";";
 
-export function tableSizeFromProps(props: PropRecord): TableSize {
+export function tableSizeFromProps(props: MotionDocProps): TableSize {
   return {
     columns: normalizeTableDimension(props.columns ?? props.cols, 2, TABLE_MIN_COLUMNS, TABLE_MAX_COLUMNS),
     rows: normalizeTableDimension(props.rows, 2, TABLE_MIN_ROWS, TABLE_MAX_ROWS)
@@ -44,25 +44,25 @@ export function normalizeTableDimension(value: string | number | undefined, fall
   return Math.min(Math.max(Math.round(parsed), min), max);
 }
 
-export function tableColumnLabelsFromProps(props: PropRecord, columns: number) {
+export function tableColumnLabelsFromProps(props: MotionDocProps, columns: number) {
   return normalizeLabels(props.columnLabels, columns, columnLabel);
 }
 
-export function tableRowLabelsFromProps(props: PropRecord, rows: number) {
+export function tableRowLabelsFromProps(props: MotionDocProps, rows: number) {
   return normalizeLabels(props.rowLabels, rows, (index) => String(index + 1));
 }
 
-export function tableCellsFromProps(props: PropRecord, rows: number, columns: number) {
+export function tableCellsFromProps(props: MotionDocProps, rows: number, columns: number) {
   const rawCells = typeof props.cells === "string" ? props.cells : "";
   const parsedRows = parseSerializedCells(rawCells);
   return normalizeTableCells(parsedRows, rows, columns);
 }
 
-export function tableColumnTrackValuesFromProps(props: PropRecord, columns: number) {
+export function tableColumnTrackValuesFromProps(props: MotionDocProps, columns: number) {
   return normalizeTableTrackValues(parseTableTrackValues(props.columnWidths), columns);
 }
 
-export function tableRowTrackValuesFromProps(props: PropRecord, rows: number) {
+export function tableRowTrackValuesFromProps(props: MotionDocProps, rows: number) {
   return normalizeTableTrackValues(parseTableTrackValues(props.rowHeights), rows);
 }
 
@@ -70,7 +70,7 @@ export function tableTrackTemplate(values: number[]) {
   return values.map((value) => `${roundTrackValue(Math.max(value, TABLE_MIN_TRACK))}fr`).join(" ");
 }
 
-export function updateTableColumnTrackValues(props: PropRecord, values: number[]): PropRecord {
+export function updateTableColumnTrackValues(props: MotionDocProps, values: number[]): MotionDocProps {
   const { columns } = tableSizeFromProps(props);
   return {
     ...props,
@@ -78,7 +78,7 @@ export function updateTableColumnTrackValues(props: PropRecord, values: number[]
   };
 }
 
-export function updateTableRowTrackValues(props: PropRecord, values: number[]): PropRecord {
+export function updateTableRowTrackValues(props: MotionDocProps, values: number[]): MotionDocProps {
   const { rows } = tableSizeFromProps(props);
   return {
     ...props,
@@ -111,7 +111,7 @@ export function tableCellsFromTsv(value: string) {
   return rows.map((row) => row.split("\t").map((cell) => cell.trim()));
 }
 
-export function tablePropsFromTsv(props: PropRecord, value: string): PropRecord {
+export function tablePropsFromTsv(props: MotionDocProps, value: string): MotionDocProps {
   const parsedCells = tableCellsFromTsv(value);
   const rows = Math.min(Math.max(parsedCells.length, TABLE_MIN_ROWS), TABLE_MAX_ROWS);
   const columns = Math.min(
@@ -123,7 +123,7 @@ export function tablePropsFromTsv(props: PropRecord, value: string): PropRecord 
   return withTableSize(props, rows, columns, cells);
 }
 
-export function resizeTableProps(props: PropRecord, nextRows: number, nextColumns: number): PropRecord {
+export function resizeTableProps(props: MotionDocProps, nextRows: number, nextColumns: number): MotionDocProps {
   const currentSize = tableSizeFromProps(props);
   const currentCells = tableCellsFromProps(props, currentSize.rows, currentSize.columns);
   const rows = normalizeTableDimension(nextRows, currentSize.rows, TABLE_MIN_ROWS, TABLE_MAX_ROWS);
@@ -133,7 +133,7 @@ export function resizeTableProps(props: PropRecord, nextRows: number, nextColumn
   return withTableSize(props, rows, columns, cells);
 }
 
-export function insertTableRow(props: PropRecord, rowIndex: number): PropRecord {
+export function insertTableRow(props: MotionDocProps, rowIndex: number): MotionDocProps {
   const size = tableSizeFromProps(props);
 
   if (size.rows >= TABLE_MAX_ROWS) {
@@ -149,7 +149,7 @@ export function insertTableRow(props: PropRecord, rowIndex: number): PropRecord 
   return withTableSize(props, size.rows + 1, size.columns, cells, { rowHeights });
 }
 
-export function deleteTableRow(props: PropRecord, rowIndex: number): PropRecord {
+export function deleteTableRow(props: MotionDocProps, rowIndex: number): MotionDocProps {
   const size = tableSizeFromProps(props);
 
   if (size.rows <= TABLE_MIN_ROWS) {
@@ -165,7 +165,7 @@ export function deleteTableRow(props: PropRecord, rowIndex: number): PropRecord 
   return withTableSize(props, size.rows - 1, size.columns, cells, { rowHeights });
 }
 
-export function insertTableColumn(props: PropRecord, columnIndex: number): PropRecord {
+export function insertTableColumn(props: MotionDocProps, columnIndex: number): MotionDocProps {
   const size = tableSizeFromProps(props);
 
   if (size.columns >= TABLE_MAX_COLUMNS) {
@@ -184,7 +184,7 @@ export function insertTableColumn(props: PropRecord, columnIndex: number): PropR
   return withTableSize(props, size.rows, size.columns + 1, cells, { columnWidths });
 }
 
-export function deleteTableColumn(props: PropRecord, columnIndex: number): PropRecord {
+export function deleteTableColumn(props: MotionDocProps, columnIndex: number): MotionDocProps {
   const size = tableSizeFromProps(props);
 
   if (size.columns <= TABLE_MIN_COLUMNS) {
@@ -203,7 +203,7 @@ export function deleteTableColumn(props: PropRecord, columnIndex: number): PropR
   return withTableSize(props, size.rows, size.columns - 1, cells, { columnWidths });
 }
 
-export function tableClipboardFromSelection(props: PropRecord, selection: TableSelection): TableClipboard {
+export function tableClipboardFromSelection(props: MotionDocProps, selection: TableSelection): TableClipboard {
   const size = tableSizeFromProps(props);
   const cells = tableCellsFromProps(props, size.rows, size.columns);
 
@@ -220,7 +220,7 @@ export function tableClipboardFromSelection(props: PropRecord, selection: TableS
   };
 }
 
-export function clearTableSelection(props: PropRecord, selection: TableSelection): PropRecord {
+export function clearTableSelection(props: MotionDocProps, selection: TableSelection): MotionDocProps {
   const size = tableSizeFromProps(props);
   const cells = tableCellsFromProps(props, size.rows, size.columns);
 
@@ -235,7 +235,7 @@ export function clearTableSelection(props: PropRecord, selection: TableSelection
   return withTableSize(props, size.rows, size.columns, cells);
 }
 
-export function pasteTableClipboard(props: PropRecord, selection: TableSelection, clipboard: TableClipboard): PropRecord {
+export function pasteTableClipboard(props: MotionDocProps, selection: TableSelection, clipboard: TableClipboard): MotionDocProps {
   const size = tableSizeFromProps(props);
   const cells = tableCellsFromProps(props, size.rows, size.columns);
 
@@ -250,7 +250,7 @@ export function pasteTableClipboard(props: PropRecord, selection: TableSelection
   return withTableSize(props, size.rows, size.columns, cells);
 }
 
-export function updateTableCell(props: PropRecord, rowIndex: number, columnIndex: number, value: string): PropRecord {
+export function updateTableCell(props: MotionDocProps, rowIndex: number, columnIndex: number, value: string): MotionDocProps {
   const size = tableSizeFromProps(props);
   const cells = tableCellsFromProps(props, size.rows, size.columns);
 
@@ -277,7 +277,7 @@ export function columnLabel(index: number) {
 }
 
 function withTableSize(
-  props: PropRecord,
+  props: MotionDocProps,
   rows: number,
   columns: number,
   cells: string[][],
@@ -285,7 +285,7 @@ function withTableSize(
     columnWidths?: number[];
     rowHeights?: number[];
   }
-): PropRecord {
+): MotionDocProps {
   return {
     ...props,
     cells: serializeTableCells(cells),
@@ -374,35 +374,35 @@ export type CellStyleOverride = {
 
 export type StyleOverrides = Record<number, CellStyleOverride>;
 
-export function parseRowOverrides(props: PropRecord): StyleOverrides {
+export function parseRowOverrides(props: MotionDocProps): StyleOverrides {
   return parseOverridesJson(props.rowOverrides);
 }
 
-export function parseColOverrides(props: PropRecord): StyleOverrides {
+export function parseColOverrides(props: MotionDocProps): StyleOverrides {
   return parseOverridesJson(props.colOverrides);
 }
 
-export function updateRowOverride(props: PropRecord, rowIndex: number, patch: CellStyleOverride): PropRecord {
+export function updateRowOverride(props: MotionDocProps, rowIndex: number, patch: CellStyleOverride): MotionDocProps {
   const overrides = parseRowOverrides(props);
   overrides[rowIndex] = { ...overrides[rowIndex], ...patch };
   cleanEmptyOverride(overrides, rowIndex);
   return { ...props, rowOverrides: serializeOverrides(overrides) };
 }
 
-export function updateColOverride(props: PropRecord, colIndex: number, patch: CellStyleOverride): PropRecord {
+export function updateColOverride(props: MotionDocProps, colIndex: number, patch: CellStyleOverride): MotionDocProps {
   const overrides = parseColOverrides(props);
   overrides[colIndex] = { ...overrides[colIndex], ...patch };
   cleanEmptyOverride(overrides, colIndex);
   return { ...props, colOverrides: serializeOverrides(overrides) };
 }
 
-export function clearRowOverride(props: PropRecord, rowIndex: number): PropRecord {
+export function clearRowOverride(props: MotionDocProps, rowIndex: number): MotionDocProps {
   const overrides = parseRowOverrides(props);
   delete overrides[rowIndex];
   return { ...props, rowOverrides: serializeOverrides(overrides) };
 }
 
-export function clearColOverride(props: PropRecord, colIndex: number): PropRecord {
+export function clearColOverride(props: MotionDocProps, colIndex: number): MotionDocProps {
   const overrides = parseColOverrides(props);
   delete overrides[colIndex];
   return { ...props, colOverrides: serializeOverrides(overrides) };

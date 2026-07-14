@@ -1,6 +1,7 @@
 "use client";
 
 import { type CSSProperties } from "react";
+import type { MotionDocTableBlock } from "@/core/motion-doc/domain/motionDocTypes";
 import {
   parseColOverrides,
   parseRowOverrides,
@@ -13,15 +14,13 @@ import {
 import { MotionBlock, type AnimationProps, type RadiusProps } from "@/features/pitch/ui/preview/motion/MotionBlock";
 import { cssColor } from "@/features/pitch/ui/preview/motion/blockStyles";
 
-type TableProps = Record<string, string | number>;
-
 export function TableBlock({
   fillFrame,
   props,
   ...animation
 }: AnimationProps & RadiusProps & {
   fillFrame?: boolean;
-  props: TableProps;
+  props: MotionDocTableBlock["props"];
 }) {
   const { columns, rows } = tableSizeFromProps(props);
   const cells = tableCellsFromProps(props, rows, columns);
@@ -80,7 +79,7 @@ export function TableBlock({
   );
 }
 
-function tableRootStyle(props: TableProps, fillFrame: boolean | undefined): CSSProperties {
+function tableRootStyle(props: MotionDocTableBlock["props"], fillFrame: boolean | undefined): CSSProperties {
   const background = tableColor(props.background ?? props.backgroundColor ?? props.bg, "#ffffff");
   const color = tableColor(props.color ?? props.textColor, "#000000");
   const borderColor = tableColor(props.borderColor, "#d1d5db");
@@ -94,7 +93,7 @@ function tableRootStyle(props: TableProps, fillFrame: boolean | undefined): CSSP
   };
 }
 
-function tableCellStyle(props: TableProps, borderWidth: number, borderStyle: "dashed" | "dotted" | "solid", textAlign: "center" | "left" | "right"): CSSProperties {
+function tableCellStyle(props: MotionDocTableBlock["props"], borderWidth: number, borderStyle: "dashed" | "dotted" | "solid", textAlign: "center" | "left" | "right"): CSSProperties {
   return {
     alignItems: verticalAlignValue(props.textVerticalAlign),
     borderBottom: `${borderWidth}px ${borderStyle} ${tableColor(props.borderColor, "#d1d5db")}`,
@@ -115,7 +114,7 @@ function tableBorderStyle(value: string | number | undefined): "dashed" | "dotte
   return value === "dashed" || value === "dotted" ? value : "solid";
 }
 
-function tableCellBackground(props: TableProps, rowIndex: number) {
+function tableCellBackground(props: MotionDocTableBlock["props"], rowIndex: number) {
   const stripeBackground = typeof props.stripeBackground === "string" && props.stripeBackground.trim()
     ? props.stripeBackground
     : "";

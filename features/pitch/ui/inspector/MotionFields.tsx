@@ -5,9 +5,10 @@ import {
   normalizeEnterAnimation,
   type EnterAnimation
 } from "@/features/pitch/application/motionPresets";
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 import { applyElementAnimationProps } from "@/features/pitch/application/motionModel";
 import { autoSizeTextFrameProps } from "@/features/pitch/application/textFrameSizing";
-import { ColorControl, NumberInput, type BlockFieldProps, type PropRecord } from "@/features/pitch/ui/inspector/InspectorControls";
+import { ColorControl, NumberInput, type BlockFieldProps } from "@/features/pitch/ui/inspector/InspectorControls";
 import { AccordionSection } from "@/features/pitch/ui/inspector/controls/AccordionSection";
 import { MotionThumbnailGrid } from "@/features/pitch/ui/inspector/controls/MotionThumbnailGrid";
 
@@ -34,7 +35,7 @@ export function MotionFields({
   };
   
   const updateOptionalProp = (key: string, value: string, aliases: string[] = []) => {
-    const nextProps: PropRecord = { ...block.props };
+    const nextProps: MotionDocProps = { ...block.props };
 
     delete nextProps[key];
     aliases.forEach((alias) => delete nextProps[alias]);
@@ -148,7 +149,7 @@ export function MotionFields({
 
 function defaultRadius(type: string) {
   if (type === "ImageBlock") return 16;
-  if (type === "Card" || type === "Metric" || type === "Chart") return 16;
+  if (type === "Card" || type === "Metric") return 16;
 
   return 0;
 }

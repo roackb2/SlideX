@@ -10,6 +10,7 @@
     "build": "next build --webpack",
     "build:clean": "npm run clean && npm run build",
     "start": "next start",
+    "test": "tsx --test core/motion-doc/application/*.test.ts core/motion-doc/infrastructure/export/*.test.ts features/pitch/application/*.test.ts",
     "lint": "eslint .",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
@@ -63,6 +64,7 @@
     "postcss": "8.5.14",
     "supabase": "^2.109.1",
     "tailwindcss": "4.3.0",
+    "tsx": "^4.22.4",
     "typescript": "5.9.3"
   },
   "description": "SlideX Pitch is a focused presentation workspace with a precise canvas, solid fills, and editable motion.",

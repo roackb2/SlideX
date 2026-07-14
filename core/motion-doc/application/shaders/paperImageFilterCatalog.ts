@@ -1,4 +1,4 @@
-export type ImageFilterPropRecord = Record<string, string | number>;
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 
 export const PAPER_IMAGE_FILTER_CONTROL_KEYS = [
   "filterDistortion",
@@ -30,7 +30,7 @@ export type PaperImageFilterControl = {
 export type PaperImageFilterPreset = {
   name: string;
   params: PaperImageFilterRuntimeParams;
-  props: ImageFilterPropRecord;
+  props: MotionDocProps;
 };
 
 export type PaperImageFilterControlValues = Record<PaperImageFilterControlKey, number>;
@@ -711,7 +711,7 @@ export function resolvePaperImageFilterControlValue(
   return control.defaultValue;
 }
 
-export function paperImageFilterPresetUpdates(id: string, presetName?: string): ImageFilterPropRecord {
+export function paperImageFilterPresetUpdates(id: string, presetName?: string): MotionDocProps {
   const definition = getPaperImageFilterDefinition(id);
 
   if (!definition) {
@@ -728,7 +728,7 @@ export function paperImageFilterPresetUpdates(id: string, presetName?: string): 
   };
 }
 
-export function emptyImageFilterUpdates(): ImageFilterPropRecord {
+export function emptyImageFilterUpdates(): MotionDocProps {
   return {
     ...emptyImageFilterControlProps(),
     filter: "none",
@@ -745,8 +745,8 @@ export function paperImageFilterRuntimePresetTable() {
   ) as Record<PaperImageFilterId, Record<string, PaperImageFilterRuntimeParams>>;
 }
 
-function emptyImageFilterControlProps(): ImageFilterPropRecord {
-  return Object.fromEntries(PAPER_IMAGE_FILTER_CONTROL_KEYS.map((key) => [key, ""])) as ImageFilterPropRecord;
+function emptyImageFilterControlProps(): MotionDocProps {
+  return Object.fromEntries(PAPER_IMAGE_FILTER_CONTROL_KEYS.map((key) => [key, ""])) as MotionDocProps;
 }
 
 function makePreset(
@@ -764,7 +764,7 @@ function makePreset(
 function filterControlPropsFromParams(
   controls: readonly PaperImageFilterControl[],
   params: PaperImageFilterRuntimeParams
-): ImageFilterPropRecord {
+): MotionDocProps {
   const entries = controls.flatMap((item) => {
     const value = params[item.paramKey];
 
@@ -779,7 +779,7 @@ function filterControlPropsFromParams(
     return [];
   });
 
-  return Object.fromEntries(entries) as ImageFilterPropRecord;
+  return Object.fromEntries(entries) as MotionDocProps;
 }
 
 function numberParam(params: PaperImageFilterRuntimeParams, key: string, fallback: number) {

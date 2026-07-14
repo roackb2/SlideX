@@ -1,12 +1,11 @@
+import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 import { hexColorValue } from "@/features/pitch/application/colorPalettes";
-
-export type PropRecord = Record<string, string | number>;
 
 /**
  * Pitch uses one solid fill per slide. Supporting colors are derived from that
- * decision so copy, charts, and controls retain readable contrast.
+ * decision so copy and controls retain readable contrast.
  */
-export function solidFillUpdates(value: string): PropRecord {
+export function solidFillUpdates(value: string): MotionDocProps {
   const background = hexColorValue(value) ?? "#050505";
   const light = isLightTheme(background);
   const foreground = light ? "#111111" : "#f7f7f5";

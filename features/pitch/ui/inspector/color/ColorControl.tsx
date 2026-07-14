@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
+import type { MotionDocPropValue } from "@/core/motion-doc/domain/motionDocTypes";
 import { hexColorValue, uniqueColors } from "@/features/pitch/application/colorPalettes";
-import { Field, type PropValue } from "@/features/pitch/ui/inspector/controls/BaseControls";
+import { Field } from "@/features/pitch/ui/inspector/controls/BaseControls";
 import { colorSwatchStyle } from "@/features/pitch/ui/inspector/color/colorSwatchStyle";
 import { defaultColorPresets } from "@/features/pitch/ui/inspector/color/palettes";
 import { useCustomSwatches } from "@/features/pitch/ui/inspector/color/useCustomSwatches";
@@ -14,7 +15,7 @@ type ColorControlProps = {
   onChange: (value: string) => void;
   placeholder?: string;
   presets?: readonly string[];
-  value: PropValue | undefined;
+  value: MotionDocPropValue | undefined;
 };
 
 export function ColorControl({

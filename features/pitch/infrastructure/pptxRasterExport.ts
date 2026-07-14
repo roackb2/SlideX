@@ -1,13 +1,11 @@
 import { hidePptxEditableContent } from "@/features/pitch/infrastructure/pptxVisualFallback";
-
-type MotionDocExportWindow = Window & {
-  __motionDocExport?: {
-    prepareStaticExport: () => Promise<{ slideCount: number }>;
-  };
-};
+import {
+  preparePitchExportWindow,
+  waitForPitchExportIframe,
+  type MotionDocExportWindow
+} from "@/features/pitch/infrastructure/pitchExportRuntime";
 
 type PptxRasterExportOptions = {
-  captureChartsBySlide: readonly boolean[];
   captureFilteredImagesBySlide: readonly boolean[];
   captureSlideBackgroundsBySlide: readonly boolean[];
   slideCount: number;
@@ -15,7 +13,6 @@ type PptxRasterExportOptions = {
 };
 
 export type PptxRasterAssets = {
-  chartImagesBySlide: string[][];
   filteredImagesBySlide: string[][];
   slideBackgrounds: string[];
 };
@@ -23,9 +20,7 @@ export type PptxRasterAssets = {
 const DESIGN_HEIGHT = 576;
 const DESIGN_WIDTH = 1024;
 const EXPORT_SCALE = 1920 / DESIGN_WIDTH;
-const PPTX_BACKGROUND_JPEG_QUALITY = 0.9;
-const EXPORT_API_MAX_ATTEMPTS = 120;
-const EXPORT_RENDERER_LOAD_TIMEOUT_MS = 30_000;
+const PPTX_BACKGROUND_JPEG_QUALITY = 0.82;
 
 export async function renderPptxRasterAssets(
   rasterHtml: string,
@@ -35,7 +30,7 @@ export async function renderPptxRasterAssets(
   const iframe = document.createElement("iframe");
   iframe.style.cssText = `position:fixed;left:-9999px;top:-9999px;width:${DESIGN_WIDTH}px;height:${DESIGN_HEIGHT}px;pointer-events:none;opacity:0;`;
   document.body.appendChild(iframe);
-  const iframeLoad = waitForIframeLoad(iframe);
+  const iframeLoad = waitForPitchExportIframe(iframe);
   iframe.srcdoc = rasterHtml;
 
   try {
@@ -43,12 +38,11 @@ export async function renderPptxRasterAssets(
     const frameWindow = iframe.contentWindow as MotionDocExportWindow | null;
     if (!frameWindow?.document) throw new Error("Export renderer failed to load");
 
-    await prepareStaticExportWindow(frameWindow);
+    await preparePitchExportWindow(frameWindow);
     const slides = Array.from(frameWindow.document.querySelectorAll<HTMLElement>(".slide"));
     if (slides.length === 0) throw new Error("No slides to export");
 
     const html2canvas = await html2canvasPromise;
-    const chartImagesBySlide = Array.from({ length: options.slideCount }, () => [] as string[]);
     const filteredImagesBySlide = Array.from({ length: options.slideCount }, () => [] as string[]);
     const slideBackgrounds = Array.from({ length: options.slideCount }, () => "");
 
@@ -57,10 +51,6 @@ export async function renderPptxRasterAssets(
       const sourceSlideIndex = options.slideIndices[renderedSlideIndex];
       if (sourceSlideIndex === undefined) throw new Error("PowerPoint raster slide mapping failed");
       slide.classList.add("is-active");
-
-      chartImagesBySlide[sourceSlideIndex] = options.captureChartsBySlide[sourceSlideIndex]
-        ? await captureMotionBlocks(slide, ".block-chart", html2canvas)
-        : [];
 
       if (options.captureFilteredImagesBySlide[sourceSlideIndex]) {
         filteredImagesBySlide[sourceSlideIndex] = await captureMotionBlocks(
@@ -97,7 +87,7 @@ export async function renderPptxRasterAssets(
       slide.classList.remove("is-active");
     }
 
-    return { chartImagesBySlide, filteredImagesBySlide, slideBackgrounds };
+    return { filteredImagesBySlide, slideBackgrounds };
   } finally {
     iframe.remove();
   }
@@ -153,32 +143,4 @@ function canvasToDataUrl(canvas: HTMLCanvasElement, type: string, quality?: numb
       reader.readAsDataURL(blob);
     }, type, quality);
   });
-}
-
-function waitForIframeLoad(iframe: HTMLIFrameElement) {
-  return new Promise<void>((resolve, reject) => {
-    const timeout = window.setTimeout(() => {
-      reject(new Error("Export renderer timed out"));
-    }, EXPORT_RENDERER_LOAD_TIMEOUT_MS);
-    iframe.addEventListener("load", () => {
-      window.clearTimeout(timeout);
-      resolve();
-    }, { once: true });
-  });
-}
-
-async function prepareStaticExportWindow(frameWindow: MotionDocExportWindow) {
-  for (let attempt = 0; attempt < EXPORT_API_MAX_ATTEMPTS; attempt += 1) {
-    if (frameWindow.__motionDocExport?.prepareStaticExport) {
-      await frameWindow.__motionDocExport.prepareStaticExport();
-      return;
-    }
-    await wait(100);
-  }
-
-  throw new Error("Export renderer unavailable");
-}
-
-function wait(ms: number) {
-  return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 }

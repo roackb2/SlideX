@@ -1,28 +1,8 @@
-export type MotionDocBlock =
-  | {
-      type: "heading";
-      text: string;
-    }
-  | {
-      type: "Title" | "Text";
-      props: Record<string, string | number>;
-      text: string;
-    }
-  | {
-      type: "Card" | "Chart" | "Icon" | "ImageBlock" | "Metric" | "Shape" | "Stack" | "Table" | "VideoBlock";
-      props: Record<string, string | number>;
-    };
-
-export type MotionDocScene = {
-  duration: number;
-  props: Record<string, string | number>;
-  blocks: MotionDocBlock[];
-};
-
-export type ParsedMotionDoc = {
-  title: string;
-  scenes: MotionDocScene[];
-};
+import type {
+  MotionDocBlock,
+  MotionDocProps,
+  ParsedMotionDoc
+} from "@/core/motion-doc/domain/motionDocTypes";
 
 export function parseMotionDoc(source: string): ParsedMotionDoc {
   const title = source.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? "Slider Preview";
@@ -52,7 +32,7 @@ function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
   const normalizedSceneSource = expandGroupMarkup(sceneSource);
   const blocks: MotionDocBlock[] = [];
   const blockPattern =
-    /<(Title|Text)\b([^>]*)>([\s\S]*?)<\/\1>|<(Card|ImageBlock|VideoBlock|Metric|Chart|Icon|Shape|Stack|Table)\b([\s\S]*?)\/>/g;
+    /<(Title|Text)\b([^>]*)>([\s\S]*?)<\/\1>|<(Card|ImageBlock|VideoBlock|Metric|Icon|Shape|Stack|Table)\b([\s\S]*?)\/>/g;
   let markdownSource = normalizedSceneSource;
 
   for (const match of normalizedSceneSource.matchAll(blockPattern)) {
@@ -60,7 +40,6 @@ function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
     const pairedType = match[1] as "Title" | "Text" | undefined;
     const selfClosingType = match[4] as
       | "Card"
-      | "Chart"
       | "Icon"
       | "ImageBlock"
       | "Metric"
@@ -86,6 +65,8 @@ function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
       });
     }
   }
+
+  markdownSource = markdownSource.replace(/<[A-Z][A-Za-z0-9]*\b[\s\S]*?\/>/g, "\n");
 
   for (const line of markdownSource.split("\n")) {
     const trimmedLine = line.trim();
@@ -129,7 +110,7 @@ function expandGroupMarkup(sceneSource: string) {
     const groupAttrs = ` groupId="${encodeInjectedAttribute(groupId)}" groupName="${encodeInjectedAttribute(groupName)}"`;
 
     return children.replace(
-      /<(Title|Text|Card|ImageBlock|VideoBlock|Metric|Chart|Icon|Shape|Stack|Table)\b/g,
+      /<(Title|Text|Card|ImageBlock|VideoBlock|Metric|Icon|Shape|Stack|Table)\b/g,
       (opening) => `${opening}${groupAttrs}`
     );
   });
@@ -139,8 +120,8 @@ function encodeInjectedAttribute(value: string) {
   return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
-function parseProps(rawProps: string): Record<string, string | number> {
-  const props: Record<string, string | number> = {};
+function parseProps(rawProps: string): MotionDocProps {
+  const props: MotionDocProps = {};
   const propPattern = /([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|\{([^}]*)\})/g;
 
   for (const match of rawProps.matchAll(propPattern)) {
