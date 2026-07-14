@@ -1,4 +1,4 @@
-import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction } from "react";
+import type { Dispatch, MouseEvent as ReactMouseEvent, ReactNode, RefObject, SetStateAction } from "react";
 import type { MotionDocProps, MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import type { CanvasTool } from "@/features/pitch/application/canvasTools";
 import type { AddBlockOptions, InsertSlidePlacement } from "@/features/pitch/application/motionDocCommands";
@@ -9,6 +9,13 @@ import type { SlideRow } from "@/features/pitch/application/slideRows";
 import type { AddBlockType } from "@/features/pitch/ui/pitchOptions";
 
 export type SelectionMdx = { label: string; source: string };
+
+export type PitchWorkspaceAgent = {
+  isEnabled: boolean;
+  isPanelOpen: boolean;
+  panel?: ReactNode;
+  togglePanel: () => void;
+};
 
 export type PitchWorkspaceDocument = {
   activeSlide: MotionDocScene | undefined;
@@ -131,6 +138,7 @@ export type PitchWorkspaceView = {
 };
 
 export type PitchWorkspaceProps = {
+  agent?: PitchWorkspaceAgent;
   commands: PitchWorkspaceCommands;
   document: PitchWorkspaceDocument;
   selection: PitchWorkspaceSelection;

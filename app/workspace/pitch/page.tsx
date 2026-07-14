@@ -34,11 +34,13 @@ function LocalPitchWorkspace() {
         templateId: presentation.templateId
       }}
       initialResumeIntent={resumeIntent}
+      key={presentation.id}
       onSignInRequested={(intent) => {
         const nextPath = `${appRoutes.liveDemo}&intent=${intent}`;
         router.push(loginPath(nextPath));
       }}
       onProjectSourceChange={save}
+      presentationId={presentation.id}
     />
   );
 }

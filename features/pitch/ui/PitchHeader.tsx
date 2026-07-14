@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, type RefObject } from "react";
 import * as Popover from "@radix-ui/react-popover";
-import { Check, ChevronDown, Download, Layers, PanelRight, Play, Undo2 } from "lucide-react";
+import { Bot, Check, ChevronDown, Download, Layers, PanelRight, Play, Undo2 } from "lucide-react";
 import { appRoutes } from "@/common/lib/appRoutes";
 
 export function PitchHeader({
@@ -11,6 +11,8 @@ export function PitchHeader({
   exportMenuRef,
   isMobileInspectorOpen,
   isMobileSidebarOpen,
+  isAgentEnabled,
+  isAgentPanelOpen,
   notice,
   projectName,
   zoomLevel,
@@ -21,12 +23,15 @@ export function PitchHeader({
   onPlay,
   onUndo,
   onToggleInspector,
-  onToggleSidebar
+  onToggleSidebar,
+  onToggleAgentPanel
 }: {
   accessMode: "authenticated" | "guest";
   exportMenuRef: RefObject<HTMLDivElement | null>;
   isMobileInspectorOpen: boolean;
   isMobileSidebarOpen: boolean;
+  isAgentEnabled: boolean;
+  isAgentPanelOpen: boolean;
   notice: string;
   projectName: string;
   zoomLevel: number | "fit";
@@ -38,6 +43,7 @@ export function PitchHeader({
   onUndo: () => void;
   onToggleInspector: () => void;
   onToggleSidebar: () => void;
+  onToggleAgentPanel?: () => void;
 }) {
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const zoomOptions = ["fit", 0.5, 0.75, 1, 1.25, 1.5, 2] as const;
@@ -76,6 +82,19 @@ export function PitchHeader({
       {/* Right side actions */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-3.5">
         <span className="hidden max-w-[180px] truncate text-[11px] text-neutral-500 xl:block" title={notice}>{notice}</span>
+        {isAgentEnabled ? (
+          <button
+            aria-label="Toggle SlideX agent"
+            aria-pressed={isAgentPanelOpen}
+            className={`flex h-11 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${isAgentPanelOpen ? "bg-white/[0.1] text-white" : "text-neutral-400 hover:bg-white/[0.06] hover:text-white"}`}
+            onClick={onToggleAgentPanel}
+            type="button"
+          >
+            <Bot aria-hidden="true" size={16} />
+            <span className="hidden lg:inline">Agent</span>
+          </button>
+        ) : null}
+
         <Popover.Root onOpenChange={setIsZoomOpen} open={isZoomOpen}>
           <Popover.Trigger asChild>
             <button
