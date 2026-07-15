@@ -8,8 +8,8 @@
 目前資料模型已合併為一個 canonical migration：
 `supabase/migrations/20260713000000_initial_slidex_schema.sql`。
 
-就單人 MVP 範圍而言，資料表、程式端型別、Repository 呼叫與安全邊界一致，可以進入
-Supabase 實際套用測試。
+就單人 MVP 範圍而言，資料表、程式端型別、Repository 呼叫與安全邊界一致。遠端
+Supabase project 已確認四張核心資料表存在，官方 template catalog 也已同步為 13 筆。
 
 正式公開前仍需補使用量限制；這不阻擋封閉 MVP，但不建議在沒有總容量、簡報數量、
 每份簡報圖片數量與上傳頻率限制的情況下全面開放註冊。
@@ -108,22 +108,34 @@ Authenticated client 已撤除 `presentations.DELETE`，不能繞過圖片清理
 - `id/user_id/revision/timestamps` 不由 client 指定。
 - SQL 成功後才清除 local draft；失敗時可重試。
 
+既有登入使用者的舊版 local presentations 會在 Workspace 首次載入時逐筆匯入 SQL。
+每筆使用 deterministic import UUID 搭配 `(user_id, guest_import_id)` 去重；全部成功後才
+清除舊 local records，因此中斷後可安全重試。
+
 ## 8. Agent 整合
 
 - `presentations.source_revision` 已存在並由 CAS 控制。
 - 一份 presentation 可有多筆 `agent_sessions`。
 - `agent_sessions.id` 直接使用 Heddle conversation ID。
 - Session 僅保存 title、message count 與 timestamps，不鏡像 Heddle message content。
+- Editor 在 Heddle session 建立、還原、完成與狀態刷新時同步 `agent_sessions` metadata；
+  刪除 conversation 時同步刪除 metadata。
 - Agent backend 應轉送使用者 JWT 執行 session RLS 與 CAS，不應把 service-role key 交給 browser。
 
 ## 9. 驗證狀態
 
-已完成的 repository-level 驗證：
+已完成的 repository 與遠端驗證：
 
 - migration 目錄只剩一個 SQL 檔案。
 - SQL 結構、FK、check constraints、RLS policies、column grants、RPC signatures 靜態核對。
 - `database.types.ts` 與 presentation／Agent session 欄位及兩個 RPC 名稱一致。
 - Workspace repository、訪客匯入 API 與刪除 Edge Function 呼叫路徑一致。
+- Workspace list/create/duplicate/rename/delete、editor autosave、template ID、slide comments
+  與 Agent session metadata 都已接到 Supabase；只保留訪客草稿及純 UI preference 在本機。
+- 遠端 Data API 實測 `official_templates` 回傳 HTTP 200，catalog 為 13 筆，與 bundled
+  MotionDoc deck IDs 一致。
+- `delete-presentation` 遠端 endpoint 已部署；以無效、未登入請求驗證時正確回傳 401，
+  未執行任何資料刪除。
 - Repository 未發現 `NEXT_PUBLIC_*` service-role／secret key。
 - SQL 靜態 assertion 全數通過：單一 migration、4 tables、4 個 RLS-enabled tables、
   CAS／revision／Agent session 存在、Storage 無 SVG、UUID path policy 存在、一般使用者
@@ -136,8 +148,8 @@ Authenticated client 已撤除 `presentations.DELETE`，不能繞過圖片清理
 
 ## 10. 上線前驗收
 
-將 canonical migration 套用到目標 Supabase project，並部署 `delete-presentation`
-Edge Function。
+遠端 baseline schema、13 筆 template catalog 與 `delete-presentation` Edge Function 已存在。
+正式驗收仍應用有效測試帳號確認圖片先刪、資料列後刪的完整流程。
 
 最後以兩個測試帳號確認：跨帳號 presentation／comment／session／image 全部不可讀寫、
 CAS conflict 不覆寫、訪客匯入重試不重複、刪除簡報後 Storage folder 為空。

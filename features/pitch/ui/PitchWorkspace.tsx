@@ -11,8 +11,10 @@ import { WorkspaceLayerSidebar } from "@/features/pitch/ui/workspace/WorkspaceLa
 import { WorkspaceScrollbarStyle } from "@/features/pitch/ui/workspace/WorkspaceScrollbarStyle";
 import { WorkspaceTemplateDialog } from "@/features/pitch/ui/workspace/WorkspaceTemplateDialog";
 import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWorkspaceTypes";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 export function PitchWorkspace({ agent, commands, document, selection, view }: PitchWorkspaceProps) {
+  const { tx } = usePitchI18n();
   const sceneCount = document.scenes.length;
   const setActiveCanvasTool = view.setActiveCanvasTool;
   const [zoomLevel, setZoomLevel] = useState<number | "fit">("fit");
@@ -66,7 +68,7 @@ export function PitchWorkspace({ agent, commands, document, selection, view }: P
         }}
         onToggleAgentPanel={agent?.togglePanel}
         onUndo={commands.undoLastChange}
-        projectName={`${document.projectName}${document.isProjectDirty ? " - Edited" : ""}`}
+        projectName={`${document.projectName}${document.isProjectDirty ? ` - ${tx("Edited")}` : ""}`}
         setZoomLevel={setZoomLevel}
         zoomLevel={zoomLevel}
       />

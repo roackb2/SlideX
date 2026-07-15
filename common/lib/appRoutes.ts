@@ -1,6 +1,7 @@
 import { locales } from "@/common/lib/i18n";
 
 export const appRoutes = {
+  authCallback: "/auth/callback/",
   exampleDeck: "/workspace/pitch?demo=1&view=preview",
   liveDemo: "/workspace/pitch?demo=1",
   login: "/login",

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { appRoutes } from "@/common/lib/appRoutes";
+import { appUrl } from "@/common/lib/siteUrl";
 import { createSupabaseServerClient } from "@/common/lib/supabase/serverClient";
 import { resolveSafeAuthNextPath } from "@/features/auth";
 
@@ -15,11 +16,11 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      return NextResponse.redirect(new URL(nextPath, request.url));
+      return NextResponse.redirect(appUrl(request, nextPath));
     }
   }
 
-  const loginUrl = new URL(appRoutes.login, request.url);
+  const loginUrl = appUrl(request, appRoutes.login);
   loginUrl.searchParams.set("error", "oauth_callback_failed");
   loginUrl.searchParams.set("next", nextPath);
   return NextResponse.redirect(loginUrl);

@@ -1,7 +1,8 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ImagePlus } from "lucide-react";
+import { clampImageMediaPosition, imageMediaDimensions } from "@/core/motion-doc/application/imageCrop";
 import { youtubeEmbedUrl } from "@/core/motion-doc/domain/videoSource";
 import { MotionBlock, type AnimationProps, type RadiusProps } from "@/features/pitch/ui/preview/motion/MotionBlock";
 import { surfaceStyle } from "@/features/pitch/ui/preview/motion/blockStyles";
@@ -25,6 +26,8 @@ export function ImageBlock({
   fetchPriority = "auto",
   full = false,
   loading = "eager",
+  cropX = 0,
+  cropY = 0,
   scaleX = 1,
   scaleY = 1,
   src,
@@ -35,6 +38,8 @@ export function ImageBlock({
   fetchPriority?: "auto" | "high" | "low";
   full?: boolean;
   loading?: "eager" | "lazy";
+  cropX?: number;
+  cropY?: number;
   scaleX?: number;
   scaleY?: number;
   src: string;
@@ -54,10 +59,38 @@ export function ImageBlock({
   const mediaClassName = full || fillFrame ? "h-full w-full" : "aspect-video w-full";
   const objectFit = normalizeImageFit(fit);
   const hasSource = Boolean(src.trim());
+  const mediaContainerRef = useRef<HTMLDivElement | null>(null);
+  const [frameAspectRatio, setFrameAspectRatio] = useState(16 / 9);
+  const [imageAspectRatio, setImageAspectRatio] = useState<number | null>(null);
+  const imageDimensions = imageMediaDimensions(objectFit, frameAspectRatio, imageAspectRatio);
+  const normalizedScaleX = clampImageScale(scaleX);
+  const normalizedScaleY = clampImageScale(scaleY);
+  const renderedCropX = objectFit === "cover"
+    ? clampImageMediaPosition(cropX, 0, 100, imageDimensions.width * normalizedScaleX)
+    : clampCropPosition(cropX);
+  const renderedCropY = objectFit === "cover"
+    ? clampImageMediaPosition(cropY, 0, 100, imageDimensions.height * normalizedScaleY)
+    : clampCropPosition(cropY);
   const mediaTransform: CSSProperties = {
-    transform: `scale(${clampImageScale(scaleX)}, ${clampImageScale(scaleY)})`,
+    transform: `translate(${renderedCropX}%, ${renderedCropY}%) scale(${normalizedScaleX}, ${normalizedScaleY})`,
     transformOrigin: "center"
   };
+
+  useEffect(() => {
+    const container = mediaContainerRef.current;
+    if (!container) return;
+    const mediaContainer = container;
+
+    function syncAspectRatio() {
+      const rect = mediaContainer.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) setFrameAspectRatio(rect.width / rect.height);
+    }
+
+    syncAspectRatio();
+    const observer = new ResizeObserver(syncAspectRatio);
+    observer.observe(mediaContainer);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <MotionBlock
@@ -71,17 +104,21 @@ export function ImageBlock({
       style={surfaceStyle({ background, backgroundColor })}
       {...animation}
     >
-      <div className={`relative overflow-hidden ${mediaClassName}`} style={{ borderRadius: "inherit" }}>
+      <div className={`relative overflow-hidden ${mediaClassName}`} ref={mediaContainerRef} style={{ borderRadius: "inherit" }}>
         {hasSource ? (
           <div className="absolute inset-0" style={mediaTransform}>
             <img
               alt={alt}
-              className="absolute inset-0 h-full w-full"
+              className="absolute left-1/2 top-1/2 max-w-none -translate-x-1/2 -translate-y-1/2"
               decoding="async"
               fetchPriority={fetchPriority}
               loading={loading}
+              onLoad={(event) => {
+                const image = event.currentTarget;
+                if (image.naturalWidth > 0 && image.naturalHeight > 0) setImageAspectRatio(image.naturalWidth / image.naturalHeight);
+              }}
               src={src}
-              style={{ objectFit }}
+              style={{ height: `${imageDimensions.height}%`, width: `${imageDimensions.width}%` }}
             />
             <PaperImageFilterLayer
               filter={filter}
@@ -112,7 +149,12 @@ export function ImageBlock({
 
 function clampImageScale(value: number | undefined) {
   if (!Number.isFinite(value)) return 1;
-  return Math.min(Math.max(value ?? 1, 0.1), 4);
+  return Math.min(Math.max(value ?? 1, 0.1), 8);
+}
+
+function clampCropPosition(value: number | undefined) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(Math.max(value ?? 0, -350), 350);
 }
 
 export function VideoBlock({

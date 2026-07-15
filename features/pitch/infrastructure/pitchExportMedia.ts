@@ -149,7 +149,12 @@ export function assertPitchPortableVideoSources(sourceText: string) {
 }
 
 async function fetchCompressedImage(url: string) {
-  const response = await fetch(url, { mode: "cors", credentials: "omit" });
+  const requestUrl = new URL(url, window.location.origin);
+  const isSameOrigin = requestUrl.origin === window.location.origin;
+  const response = await fetch(requestUrl, {
+    credentials: isSameOrigin ? "same-origin" : "omit",
+    mode: isSameOrigin ? "same-origin" : "cors"
+  });
   if (!response.ok) throw new Error(`Image request failed (${response.status})`);
   const blob = await response.blob();
   if (!blob.type.startsWith("image/")) throw new Error("URL did not return an image");

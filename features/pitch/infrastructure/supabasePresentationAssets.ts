@@ -4,6 +4,7 @@ import {
   PitchAssetFileError,
   preparePitchAssetFile
 } from "@/features/pitch/infrastructure/pitchAssetFiles";
+import { isPresentationImageStoragePath } from "@/features/pitch/application/presentationImagePath";
 
 const presentationImagesBucket = "presentation-images";
 const storageListPageSize = 100;
@@ -20,9 +21,75 @@ export type UploadedSupabasePresentationImage = {
   id: string;
   mimeType: string;
   name: string;
+  optimized: boolean;
   path: string;
   size: number;
 };
+
+export class PresentationImageAuthenticationRequiredError extends Error {
+  constructor(message = "Sign in to manage presentation images") {
+    super(message);
+    this.name = "PresentationImageAuthenticationRequiredError";
+  }
+}
+
+export async function deletePresentationImageViaApi(
+  image: Pick<UploadedSupabasePresentationImage, "path">
+) {
+  const response = await fetch("/api/presentation-images/", {
+    body: JSON.stringify({ path: image.path }),
+    headers: { "content-type": "application/json" },
+    method: "DELETE"
+  });
+
+  if (response.status === 401) {
+    throw new PresentationImageAuthenticationRequiredError("Sign in before removing images");
+  }
+  if (!response.ok) {
+    throw new PitchAssetFileError(
+      response.status === 404
+        ? "This image is unavailable. Reload SlideX and try again."
+        : "The image could not be removed. Try again."
+    );
+  }
+}
+
+export async function uploadPresentationImageViaApi(
+  file: File,
+  presentationId: string
+): Promise<UploadedSupabasePresentationImage> {
+  const preparedImage = await preparePitchAssetFile(file);
+  if (preparedImage.kind !== "image") {
+    throw new PitchAssetFileError("Only images can be uploaded to a presentation");
+  }
+
+  const formData = new FormData();
+  formData.set("file", preparedImage.file);
+  formData.set("presentationId", presentationId);
+
+  const response = await fetch("/api/presentation-images/", {
+    body: formData,
+    method: "POST"
+  });
+  const responseBody: unknown = await response.json().catch(() => null);
+
+  if (response.status === 401) {
+    throw new PresentationImageAuthenticationRequiredError("Sign in before uploading images");
+  }
+  if (!response.ok) {
+    throw new PitchAssetFileError(uploadErrorMessage(response.status, responseBody));
+  }
+
+  const uploadedImage = uploadedImageFromResponse(responseBody);
+  if (!uploadedImage) {
+    throw new PitchAssetFileError("The image upload returned an invalid response");
+  }
+
+  return {
+    ...uploadedImage,
+    optimized: preparedImage.optimized || uploadedImage.optimized
+  };
+}
 
 export async function uploadSupabasePresentationImage(
   client: SlideXSupabaseClient,
@@ -48,6 +115,7 @@ export async function uploadSupabasePresentationImage(
     id,
     mimeType: preparedImage.file.type,
     name: preparedImage.file.name,
+    optimized: preparedImage.optimized,
     path,
     size: preparedImage.file.size
   };
@@ -133,4 +201,45 @@ function imageExtension(mimeType: string) {
   const extension = extensions[mimeType.toLowerCase()];
   if (!extension) throw new PitchAssetFileError("This image type is not supported");
   return extension;
+}
+
+function uploadedImageFromResponse(value: unknown): UploadedSupabasePresentationImage | null {
+  if (!value || typeof value !== "object" || !("image" in value)) return null;
+  const image = value.image;
+  if (!image || typeof image !== "object") return null;
+
+  const candidate = image as Partial<UploadedSupabasePresentationImage>;
+  if (
+    typeof candidate.id !== "string" ||
+    typeof candidate.mimeType !== "string" ||
+    typeof candidate.name !== "string" ||
+    typeof candidate.optimized !== "boolean" ||
+    typeof candidate.path !== "string" ||
+    typeof candidate.size !== "number" ||
+    !Number.isFinite(candidate.size) ||
+    !isPresentationImageStoragePath(candidate.path)
+  ) {
+    return null;
+  }
+
+  return candidate as UploadedSupabasePresentationImage;
+}
+
+function uploadErrorMessage(status: number, value: unknown) {
+  if (
+    status === 400 &&
+    value &&
+    typeof value === "object" &&
+    "message" in value &&
+    typeof value.message === "string"
+  ) {
+    return value.message;
+  }
+  if (status === 404) {
+    return "This presentation is unavailable. Reload SlideX and try again.";
+  }
+  if (status === 413) {
+    return "Images must be 10 MB or smaller";
+  }
+  return "The image could not be uploaded. Try again.";
 }

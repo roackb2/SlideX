@@ -1,47 +1,75 @@
 import type { PptxSize } from "@/features/pitch/infrastructure/pptxTypes";
 
-const PPTX_IMAGE_JPEG_QUALITY = 0.82;
+const PPTX_IMAGE_JPEG_QUALITY = 0.94;
 const PPTX_PASSTHROUGH_MAX_BYTES = 384 * 1024;
 const PPTX_PNG_REPLACEMENT_RATIO = 0.9;
-const PPTX_RASTER_PIXELS_PER_INCH = 120;
+const PPTX_RASTER_PIXELS_PER_INCH = 144;
 const PPTX_RASTER_MAX_DIMENSION = 4096;
+
+export type PptxImageFit = "contain" | "cover" | "fill";
 
 /**
  * Google Slides does not reliably import WebP, AVIF, GIF, or SVG images stored
  * inside a PPTX. Convert those formats and oversized PNGs at the actual display
  * size, preserving transparent PNGs and using JPEG for opaque raster content.
+ * The fit is baked into a frame-sized bitmap because passing only frame
+ * dimensions to PptxGenJS sizing loses the source aspect ratio and stretches it.
  */
-export async function portablePptxImageData(source: string, frame: PptxSize) {
+export async function portablePptxImageData(
+  source: string,
+  frame: PptxSize,
+  fit: PptxImageFit = "fill"
+) {
   const mimeType = dataImageMimeType(source);
   if (!mimeType) return source;
 
   const image = await loadImage(source);
-  const width = rasterDimension(frame.w);
-  const height = rasterDimension(frame.h);
+  const targetWidth = rasterDimension(frame.w);
+  const targetHeight = rasterDimension(frame.h);
+  const placement = fittedRasterPlacement(
+    image.naturalWidth,
+    image.naturalHeight,
+    targetWidth,
+    targetHeight,
+    fit
+  );
   const sourceByteSize = dataUrlByteSize(source);
+  const sourceCanUseFrame = fit === "fill" || approximatelySameAspectRatio(
+    image.naturalWidth,
+    image.naturalHeight,
+    targetWidth,
+    targetHeight
+  );
 
   if (
     (mimeType === "image/jpeg" || mimeType === "image/png") &&
+    sourceCanUseFrame &&
     sourceByteSize <= PPTX_PASSTHROUGH_MAX_BYTES &&
-    image.naturalWidth <= width * 1.25 &&
-    image.naturalHeight <= height * 1.25
+    image.naturalWidth <= targetWidth * 1.25 &&
+    image.naturalHeight <= targetHeight * 1.25
   ) {
     image.src = "";
     return source;
   }
 
   const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
 
   const context = canvas.getContext("2d");
   if (!context) throw new Error("PowerPoint image conversion is unavailable in this browser");
 
-  context.drawImage(image, 0, 0, width, height);
+  context.drawImage(
+    image,
+    placement.x,
+    placement.y,
+    placement.width,
+    placement.height
+  );
   image.src = "";
 
   try {
-    const hasTransparency = canvasHasTransparency(context, width, height);
+    const hasTransparency = canvasHasTransparency(context, targetWidth, targetHeight);
     const optimizedBlob = await canvasToBlob(
       canvas,
       hasTransparency ? "image/png" : "image/jpeg",
@@ -50,6 +78,7 @@ export async function portablePptxImageData(source: string, frame: PptxSize) {
 
     if (
       mimeType === "image/png" &&
+      sourceCanUseFrame &&
       optimizedBlob.size >= sourceByteSize * PPTX_PNG_REPLACEMENT_RATIO
     ) {
       return source;
@@ -62,6 +91,50 @@ export async function portablePptxImageData(source: string, frame: PptxSize) {
   }
 }
 
+export function fittedRasterPlacement(
+  sourceWidth: number,
+  sourceHeight: number,
+  targetWidth: number,
+  targetHeight: number,
+  fit: PptxImageFit
+) {
+  const { height, width } = fittedRasterSize(
+    sourceWidth,
+    sourceHeight,
+    targetWidth,
+    targetHeight,
+    fit
+  );
+
+  return {
+    height,
+    width,
+    x: Math.round((targetWidth - width) / 2),
+    y: Math.round((targetHeight - height) / 2)
+  };
+}
+
+export function fittedRasterSize(
+  sourceWidth: number,
+  sourceHeight: number,
+  targetWidth: number,
+  targetHeight: number,
+  fit: PptxImageFit
+) {
+  if (fit === "fill" || sourceWidth <= 0 || sourceHeight <= 0) {
+    return { height: targetHeight, width: targetWidth };
+  }
+
+  const scale = fit === "cover"
+    ? Math.max(targetWidth / sourceWidth, targetHeight / sourceHeight)
+    : Math.min(targetWidth / sourceWidth, targetHeight / sourceHeight);
+
+  return {
+    height: Math.max(1, Math.round(sourceHeight * scale)),
+    width: Math.max(1, Math.round(sourceWidth * scale))
+  };
+}
+
 function dataImageMimeType(source: string) {
   const match = source.match(/^data:(image\/[a-z0-9.+-]+)(?:;[^,]*)?,/i);
   return match?.[1]?.toLowerCase();
@@ -69,6 +142,16 @@ function dataImageMimeType(source: string) {
 
 function rasterDimension(inches: number) {
   return Math.max(1, Math.min(Math.round(inches * PPTX_RASTER_PIXELS_PER_INCH), PPTX_RASTER_MAX_DIMENSION));
+}
+
+function approximatelySameAspectRatio(
+  sourceWidth: number,
+  sourceHeight: number,
+  targetWidth: number,
+  targetHeight: number
+) {
+  if (sourceWidth <= 0 || sourceHeight <= 0 || targetWidth <= 0 || targetHeight <= 0) return false;
+  return Math.abs(sourceWidth / sourceHeight - targetWidth / targetHeight) < 0.001;
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: number) {

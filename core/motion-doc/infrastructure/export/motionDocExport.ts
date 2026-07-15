@@ -14,7 +14,7 @@ import {
   tableTrackTemplate
 } from "@/core/motion-doc/application/tableBlock";
 import { makeMotionDocExportRuntime } from "@/core/motion-doc/infrastructure/export/motionDocExportRuntime";
-import { youtubeEmbedUrl } from "@/core/motion-doc/domain/videoSource";
+import { youtubeEmbedUrl, youtubeVideoId } from "@/core/motion-doc/domain/videoSource";
 import { motionDocExportStyles } from "@/core/motion-doc/infrastructure/export/motionDocExportStyles";
 
 export const MOTION_DOC_PNG_HEIGHT = MOTION_DOC_CANVAS_HEIGHT;
@@ -83,7 +83,7 @@ function exportRuntimeSecurity() {
     "font-src https: data:",
     "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
     "img-src https: blob: data:",
-    "media-src https: blob:",
+    "media-src https: blob: data:",
     "object-src 'none'",
     `script-src 'nonce-${nonce}'`,
     "style-src 'unsafe-inline'"
@@ -379,14 +379,20 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
 
   if (block.type === "ImageBlock") {
     const fit = fitProp(block.props.fit);
+    const imageCropX = clampExportImageCropPosition(optionalNumberProp(block.props.cropX));
+    const imageCropY = clampExportImageCropPosition(optionalNumberProp(block.props.cropY));
     const imageScaleX = clampExportImageScale(optionalNumberProp(block.props.scaleX));
     const imageScaleY = clampExportImageScale(optionalNumberProp(block.props.scaleY));
+    const imageTransform = `translate(${imageCropX}%, ${imageCropY}%) scale(${imageScaleX}, ${imageScaleY})`;
+    const hasImageCropTransform = imageCropX !== 0 || imageCropY !== 0 || imageScaleX !== 1 || imageScaleY !== 1;
     const imageScaleStyle = {
       "object-fit": fit,
-      "transform": `scale(${imageScaleX}, ${imageScaleY})`,
+      "transform": imageTransform,
       "transform-origin": "center"
     };
     const filterDefinition = getPaperImageFilterDefinition(stringProp(block.props.filter));
+    const needsExactImageRaster = Boolean(filterDefinition) || hasImageCropTransform;
+    const exactRasterAttr = needsExactImageRaster ? ` data-exact-image-raster="true"` : "";
 
     if (filterDefinition && !options.rasterMode) {
       const fPreset = stringProp(block.props.filterPreset) || filterDefinition.defaultPreset;
@@ -405,24 +411,76 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
       const fSpeedAttr = fSpeed !== undefined ? ` data-filter-speed="${fSpeed}"` : "";
       const fDetailAttr = fDetail !== undefined ? ` data-filter-detail="${fDetail}"` : "";
       const fFitAttr = ` data-filter-fit="${escapeAttribute(shaderFitProp(fit))}"`;
+      const cropFilterClass = hasImageCropTransform ? " block-image__crop-filter" : "";
+      const filterStyle = hasImageCropTransform
+        ? inlineCss({
+            "height": "100%",
+            "left": "50%",
+            "position": "absolute",
+            "top": "50%",
+            "transform": "translate(-50%, -50%)",
+            "width": "100%"
+          })
+        : inlineCss({
+            "height": "100%",
+            "inset": "0",
+            "object-fit": fit,
+            "position": "absolute",
+            "transform": imageTransform,
+            "transform-origin": "center",
+            "width": "100%"
+          });
+      const filterCanvas = `<canvas class="image-filter-canvas${cropFilterClass}" data-shader="${escapeAttribute(filterDefinition.id)}"${fPresetAttr}${fFitAttr}${fDistortionAttr}${fSizeAttr}${fAngleAttr}${fContrastAttr}${fSpeedAttr}${fDetailAttr} style="${escapeAttribute(filterStyle)}" data-shader-image="${escapeAttribute(String(block.props.src ?? ""))}"></canvas>`;
+      const filteredImageContent = hasImageCropTransform
+        ? renderCroppedImageMedia(
+            String(block.props.src ?? ""),
+            String(block.props.alt ?? ""),
+            fit,
+            imageCropX,
+            imageCropY,
+            imageScaleX,
+            imageScaleY,
+            filterCanvas
+          )
+        : `<img src="${escapeAttribute(String(block.props.src ?? ""))}" alt="${escapeAttribute(String(block.props.alt ?? ""))}" style="${escapeAttribute(inlineCss(imageScaleStyle))}" />${filterCanvas}`;
 
       return renderMotionBlock(
         block,
-        `<figure class="block-image"><img src="${escapeAttribute(String(block.props.src ?? ""))}" alt="${escapeAttribute(String(block.props.alt ?? ""))}" style="${escapeAttribute(inlineCss(imageScaleStyle))}" /><canvas class="image-filter-canvas" data-shader="${escapeAttribute(filterDefinition.id)}"${fPresetAttr}${fFitAttr}${fDistortionAttr}${fSizeAttr}${fAngleAttr}${fContrastAttr}${fSpeedAttr}${fDetailAttr} style="${escapeAttribute(inlineCss({ "object-fit": fit, "position": "absolute", "inset": "0", "width": "100%", "height": "100%", "transform": `scale(${imageScaleX}, ${imageScaleY})`, "transform-origin": "center" }))}" data-shader-image="${escapeAttribute(String(block.props.src ?? ""))}"></canvas></figure>`
+        `<figure class="block-image"${exactRasterAttr}>${filteredImageContent}</figure>`
       );
     }
 
+    const imageContent = hasImageCropTransform
+      ? renderCroppedImageMedia(
+          String(block.props.src ?? ""),
+          String(block.props.alt ?? ""),
+          fit,
+          imageCropX,
+          imageCropY,
+          imageScaleX,
+          imageScaleY
+        )
+      : `<img src="${escapeAttribute(String(block.props.src ?? ""))}" alt="${escapeAttribute(String(block.props.alt ?? ""))}" style="${escapeAttribute(inlineCss(imageScaleStyle))}" />`;
+
     return renderMotionBlock(
       block,
-      `<figure class="block-image"><img src="${escapeAttribute(String(block.props.src ?? ""))}" alt="${escapeAttribute(String(block.props.alt ?? ""))}" style="${escapeAttribute(inlineCss(imageScaleStyle))}" /></figure>`
+      `<figure class="block-image"${exactRasterAttr}>${imageContent}</figure>`
     );
   }
 
   if (block.type === "VideoBlock") {
     const fit = fitProp(block.props.fit);
     const poster = stringProp(block.props.poster);
+    const src = stringProp(block.props.src);
 
     if (options.rasterMode) {
+      return renderMotionBlock(
+        block,
+        `<figure class="block-image block-video">${poster ? `<img src="${escapeAttribute(poster)}" alt="" style="${escapeAttribute(inlineCss({ "object-fit": fit }))}" />` : ""}</figure>`
+      );
+    }
+
+    if (!src) {
       return renderMotionBlock(
         block,
         `<figure class="block-image block-video">${poster ? `<img src="${escapeAttribute(poster)}" alt="" style="${escapeAttribute(inlineCss({ "object-fit": fit }))}" />` : ""}</figure>`
@@ -432,7 +490,7 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
     const controlsEnabled = boolProp(block.props.controls, true);
     const loopEnabled = boolProp(block.props.loop, true);
     const mutedEnabled = boolProp(block.props.muted, true);
-    const src = String(block.props.src ?? "");
+    const youtubeId = youtubeVideoId(src);
     const youtubeSrc = youtubeEmbedUrl(src, {
       autoplay: mutedEnabled,
       controls: controlsEnabled,
@@ -441,9 +499,14 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
     });
 
     if (youtubeSrc) {
+      const youtubeWatchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(youtubeId ?? "")}`;
+      const youtubePoster = poster
+        ? `<img class="block-video__youtube-poster" src="${escapeAttribute(poster)}" alt="" style="${escapeAttribute(inlineCss({ "object-fit": fit }))}" />`
+        : "";
+
       return renderMotionBlock(
         block,
-        `<figure class="block-image block-video"><iframe src="${escapeAttribute(youtubeSrc)}" title="YouTube video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" allowfullscreen></iframe></figure>`
+        `<figure class="block-image block-video block-video--youtube" data-youtube-embed><iframe data-youtube-src="${escapeAttribute(youtubeSrc)}" title="YouTube video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" allowfullscreen></iframe><a class="block-video__youtube-fallback" href="${escapeAttribute(youtubeWatchUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open video on YouTube">${youtubePoster}<span class="block-video__youtube-fallback-content"><span class="block-video__youtube-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 7.5v9l7-4.5-7-4.5Z"/></svg></span><strong>Open on YouTube</strong><span>Online playback is unavailable in a local HTML file.</span></span></a></figure>`
       );
     }
 
@@ -510,6 +573,22 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
   }
 
   return "";
+}
+
+function renderCroppedImageMedia(
+  source: string,
+  alt: string,
+  fit: string,
+  cropX: number,
+  cropY: number,
+  scaleX: number,
+  scaleY: number,
+  overlay = ""
+) {
+  return `<div class="block-image__crop-media" data-image-crop-x="${cropX}" data-image-crop-y="${cropY}" data-image-fit="${escapeAttribute(fit)}" data-image-layout-ready="false" data-image-scale-x="${scaleX}" data-image-scale-y="${scaleY}" style="${escapeAttribute(inlineCss({
+    "transform": `translate(${cropX}%, ${cropY}%) scale(${scaleX}, ${scaleY})`,
+    "transform-origin": "center"
+  }))}"><img class="block-image__crop-image" src="${escapeAttribute(source)}" alt="${escapeAttribute(alt)}" />${overlay}</div>`;
 }
 
 function renderTableBlock(props: MotionDocProps) {
@@ -880,7 +959,12 @@ function backgroundSizeFromFit(value: string | undefined) {
 
 function clampExportImageScale(value: number | undefined) {
   if (!Number.isFinite(value)) return 1;
-  return Math.min(Math.max(value ?? 1, 0.1), 4);
+  return Math.min(Math.max(value ?? 1, 0.1), 8);
+}
+
+function clampExportImageCropPosition(value: number | undefined) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(Math.max(value ?? 0, -350), 350);
 }
 
 function cssImageUrl(value: string) {

@@ -25,6 +25,10 @@ This file remains authoritative for the editor-local boundary.
   conversation selection for each canonical presentation ID. It preserves
   independent bindings when the user moves between presentations; it is not a
   session catalog and does not invent editor-only project identity.
+- `infrastructure/supabaseAgentSessions.ts` mirrors only Heddle conversation
+  metadata (`id`, title, message count, and presentation ownership) into the
+  RLS-protected `agent_sessions` catalog. Heddle remains authoritative for
+  message content, run state, and the latest MotionDoc artifact.
 - `ui/agent/usePitchAgent.ts` coordinates editor-facing state, retry timers, tool
   progress, history hydration, detach/delete semantics, stale-session recovery,
   cancellation, and stale-source conflict handling. Heddle's
@@ -57,7 +61,8 @@ The workspace route must pass its durable presentation ID into `MotionDocApp`.
 Without that identity the agent is not mounted, because SlideX cannot safely
 relate a conversation to the artifact. `sessionStorage` remembers only the
 active session ID and replay cursor for each presentation in the current tab;
-the server remains authoritative for durable session records. Hydration restores
+Supabase stores the durable session index while the Heddle server remains
+authoritative for conversation content and run state. Hydration restores
 chat/run state but never replaces the canonical presentation with a session
 snapshot.
 

@@ -85,7 +85,8 @@ export type PitchWorkspaceCommands = {
   goToNextSlide: () => void;
   goToPreviousSlide: () => void;
   groupSelectedBlocks: () => void;
-  importImageUrlForBlock: (blockIndex: number, source: string) => void;
+  imageSourceRequiresAbsoluteUrl: boolean;
+  importImageUrlForBlock: (blockIndex: number, source: string) => boolean;
   insertSlideNearActive: (placement: InsertSlidePlacement) => void;
   moveBlock: (blockIndex: number, direction: -1 | 1) => void;
   moveBlockToEdge: (blockIndex: number, edge: "back" | "front") => void;
@@ -97,6 +98,9 @@ export type PitchWorkspaceCommands = {
   openPresentationPreview: () => void;
   pasteCopiedBlock: () => void;
   pushUndoSnapshot: () => void;
+  removeImageForBlock: (blockIndex: number) => void;
+  requestImageRemoval: () => boolean;
+  requestImageUpload: () => boolean;
   renameBlock: (blockIndex: number, name: string) => void;
   reorderBlock: (fromIndex: number, toIndex: number) => void;
   reorderSlide: (fromIndex: number, toIndex: number) => void;
@@ -111,7 +115,6 @@ export type PitchWorkspaceCommands = {
   updatePositionedBlockFrames: (updates: BlockFramePatch[]) => void;
   updateSelectionMdx: (value: string) => void;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
-  uploadVideoForBlock: (blockIndex: number, file: File | undefined) => void;
   useSelectedImageAsBackground: () => void;
 };
 

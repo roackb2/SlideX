@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { appRoutes } from "@/common/lib/appRoutes";
 import { PitchWorkspace } from "@/features/pitch/ui/PitchWorkspace";
 import { ExportModal, type ExportFormat } from "@/features/pitch/ui/export/ExportModal";
 import { defaultMdx } from "@/core/motion-doc/presets/defaultMdx";
@@ -44,11 +45,13 @@ type MotionDocAppProps = {
   initialAgentSessionId?: string;
   initialProject?: MotionDocInitialProject;
   initialResumeIntent?: "export" | "preview";
+  onLocalProjectSourceChange?: (source: string) => void;
   onOpenAgentSession?: (presentationId: string, sessionId: string) => void;
   onSignInRequested?: (intent: GuestSignInIntent) => void;
-  onProjectSourceChange?: (source: string, title: string) => Promise<void> | void;
+  onProjectSourceChange?: (source: string, title: string, templateId?: string) => Promise<void> | void;
   onSelectedAgentSessionChange?: (sessionId?: string) => void;
   presentationId?: string;
+  projectVersion?: number;
 };
 
 const guestLockedExportFormats = ["html", "mdx"] as const satisfies readonly ExportFormat[];
@@ -58,11 +61,13 @@ export function MotionDocApp({
   initialAgentSessionId,
   initialProject,
   initialResumeIntent,
+  onLocalProjectSourceChange,
   onOpenAgentSession,
   onProjectSourceChange,
   onSignInRequested,
   onSelectedAgentSessionChange,
-  presentationId
+  presentationId,
+  projectVersion
 }: MotionDocAppProps = {}) {
   const isMobileViewport = useMobilePitchViewport();
   const [source, setSource] = useState(initialProject?.source ?? defaultMdx);
@@ -71,7 +76,11 @@ export function MotionDocApp({
   const [draggedBlockIndex, setDraggedBlockIndex] = useState<number | null>(null);
   const [dragOverBlockIndex, setDragOverBlockIndex] = useState<number | null>(null);
   const undoStackRef = useRef<string[]>([]);
+  const syncedProjectVersionRef = useRef(projectVersion);
   const [isAgentPanelOpen, setIsAgentPanelOpen] = useState(false);
+  useEffect(() => {
+    onLocalProjectSourceChange?.(source);
+  }, [onLocalProjectSourceChange, source]);
   const {
     activeCanvasTool,
     exportMenuRef,
@@ -152,6 +161,7 @@ export function MotionDocApp({
     markProjectDirty,
     newProject,
     projectName,
+    syncProject
   } = usePitchProject({
     canvasSource,
     documentTitle: sliderDocument.title,
@@ -163,12 +173,40 @@ export function MotionDocApp({
     setSource,
     undoStackRef
   });
+  useEffect(() => {
+    if (!initialProject || projectVersion === undefined || syncedProjectVersionRef.current === projectVersion) return;
+    syncedProjectVersionRef.current = projectVersion;
+
+    const incomingTemplateId = initialProject.templateId ?? defaultTemplate.id;
+    if (
+      initialProject.source === source &&
+      initialProject.name === projectName &&
+      incomingTemplateId === selectedTemplateId
+    ) {
+      return;
+    }
+
+    setSelectedTemplateId(incomingTemplateId);
+    syncProject({
+      name: initialProject.name,
+      notice: "Presentation updated in Realtime",
+      source: initialProject.source,
+      templateId: initialProject.templateId
+    });
+  }, [initialProject, projectName, projectVersion, selectedTemplateId, source, syncProject]);
   const commentsDeckId = useMemo(() => slideCommentsDeckId(projectName), [projectName]);
   const {
     addComment: addSlideComment,
     comments: slideComments,
+    error: slideCommentsError,
     passComment: passSlideComment
-  } = useSlideComments(commentsDeckId);
+  } = useSlideComments({
+    localDeckId: commentsDeckId,
+    presentationId: accessMode === "authenticated" ? presentationId : undefined
+  });
+  useEffect(() => {
+    if (slideCommentsError) setNotice(slideCommentsError);
+  }, [setNotice, slideCommentsError]);
   const { commitSource, pushUndoSnapshot, undoLastChange } = usePitchUndo({
     clearBlockSelection,
     markProjectDirty,
@@ -219,6 +257,14 @@ export function MotionDocApp({
     setGuestSignInIntent("export");
   }, [setGuestSignInIntent, setIsExportMenuOpen]);
 
+  const requestImageUploadSignIn = useCallback(() => {
+    setGuestSignInIntent("upload-image");
+  }, [setGuestSignInIntent]);
+
+  const requestImageRemovalSignIn = useCallback(() => {
+    setGuestSignInIntent("remove-image");
+  }, [setGuestSignInIntent]);
+
   const handleExportFromModal = useCallback(async (format: ExportFormat, filename: string) => {
     setIsExporting(true);
     try {
@@ -249,6 +295,9 @@ export function MotionDocApp({
     activeSlideIndex,
     commitSource,
     markProjectDirty,
+    onImageUploadAuthRequired: requestImageUploadSignIn,
+    onImageRemovalAuthRequired: requestImageRemovalSignIn,
+    presentationId: accessMode === "authenticated" ? presentationId : undefined,
     pushUndoSnapshot,
     scenes: sliderDocument.scenes,
     selectBlock,
@@ -276,6 +325,8 @@ export function MotionDocApp({
     enabled: Boolean(initialProject),
     onProjectSourceChange,
     projectName,
+    projectVersion,
+    templateId: selectedTemplateId,
     setNotice,
     source
   });
@@ -284,14 +335,14 @@ export function MotionDocApp({
     try {
       if (onProjectSourceChange) {
         const persistedSource = await embedPitchLocalImagesForPersistence(source);
-        await onProjectSourceChange(persistedSource, projectName);
+        await onProjectSourceChange(persistedSource, projectName, selectedTemplateId);
       }
       onSignInRequested?.(intent);
     } catch {
       setGuestSignInIntent(null);
       setNotice("This browser could not save the demo draft. Free some storage and try again.");
     }
-  }, [onProjectSourceChange, onSignInRequested, projectName, setGuestSignInIntent, setNotice, source]);
+  }, [onProjectSourceChange, onSignInRequested, projectName, selectedTemplateId, setGuestSignInIntent, setNotice, source]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -384,7 +435,8 @@ export function MotionDocApp({
           activeSlideIndex={activeSlideIndex}
           comments={(slideComments[activeSlideIndex] ?? []).filter((comment) => comment.status === "open")}
           documentTitle={sliderDocument.title}
-          onAddComment={(comment) => addSlideComment(activeSlideIndex, comment)}
+          homeHref={accessMode === "guest" ? "/" : appRoutes.workspace}
+          onAddComment={(comment) => void addSlideComment(activeSlideIndex, comment)}
           onExport={openExport}
           onImport={() => {
             setFileModalMode("import");
@@ -392,7 +444,7 @@ export function MotionDocApp({
           }}
           onNextSlide={pitchCommands.goToNextSlide}
           onPreviousSlide={pitchCommands.goToPreviousSlide}
-          onPassComment={(commentId) => passSlideComment(activeSlideIndex, commentId)}
+          onPassComment={(commentId) => void passSlideComment(activeSlideIndex, commentId)}
           replayNonce={replayNonce}
           scene={activeSlide}
           sceneCount={sliderDocument.scenes.length}
@@ -453,12 +505,16 @@ export function MotionDocApp({
         moveBlockToEdge: pitchCommands.moveBlockToEdge,
         moveSelectedBlocksToEdge: pitchCommands.moveSelectedBlocksToEdge,
         newProject: startNewProject,
-        onAddActiveSlideComment: (comment) => addSlideComment(activeSlideIndex, comment),
-        onPassActiveSlideComment: (commentId) => passSlideComment(activeSlideIndex, commentId),
+        onAddActiveSlideComment: (comment) => void addSlideComment(activeSlideIndex, comment),
+        onPassActiveSlideComment: (commentId) => void passSlideComment(activeSlideIndex, commentId),
         openExport,
         openPresentationPreview: () => setIsPresentationPreviewOpen(true),
         pasteCopiedBlock: pitchCommands.pasteCopiedBlock,
         pushUndoSnapshot,
+        imageSourceRequiresAbsoluteUrl: pitchCommands.imageSourceRequiresAbsoluteUrl,
+        removeImageForBlock: pitchCommands.removeImageForBlock,
+        requestImageRemoval: pitchCommands.requestImageRemoval,
+        requestImageUpload: pitchCommands.requestImageUpload,
         renameBlock: pitchCommands.renameBlock,
         reorderBlock: pitchCommands.reorderBlock,
         reorderSlide: pitchCommands.reorderSlide,
@@ -473,7 +529,6 @@ export function MotionDocApp({
         updatePositionedBlockFrames: pitchCommands.updatePositionedBlockFrames,
         updateSelectionMdx: pitchCommands.updateSelectionMdx,
         uploadImageForBlock: pitchCommands.uploadImageForBlock,
-        uploadVideoForBlock: pitchCommands.uploadVideoForBlock,
         useSelectedImageAsBackground: pitchCommands.useSelectedImageAsBackground
       }}
       document={{
@@ -584,6 +639,7 @@ export function MotionDocApp({
       onApplyMotionDoc={applyAgentMotionDoc}
       onOpenSession={openAgentSession}
       onSelectedSessionChange={onSelectedAgentSessionChange}
+      persistSessionMetadata={accessMode === "authenticated"}
       presentationId={presentationId}
       presentationTitle={projectName}
       source={source}

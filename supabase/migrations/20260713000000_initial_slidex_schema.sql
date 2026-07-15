@@ -17,6 +17,8 @@ create table public.presentations (
   id uuid primary key default extensions.gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   title text not null check (char_length(trim(title)) between 1 and 240),
+  kind text not null default 'presentation'
+    constraint presentations_kind_check check (kind in ('presentation', 'template')),
   source text not null default '',
   source_revision bigint not null default 0,
   template_id text references public.official_templates (id) on delete set null,
@@ -51,6 +53,83 @@ values
     'A polished product launch narrative for modern teams.',
     '/images/workspace-welcome/launch-deck.svg',
     20
+  ),
+  (
+    'black-commercial',
+    'Black Boardroom',
+    'A premium 8-page boardroom deck with decision framing, market context, metrics, visual proof, operating strategy, execution plan, and a clear executive ask.',
+    null,
+    100
+  ),
+  (
+    'white-commercial',
+    'White Executive',
+    'A polished 8-page executive proposal deck with a consulting-style structure, clean metrics, strategic context, visual proof, operational scaling, and a precise decision page.',
+    null,
+    110
+  ),
+  (
+    'revenue-command',
+    'Revenue Command Center',
+    'A polished revenue leadership deck for pipeline health, buyer signals, operating priorities, and executive decisions.',
+    null,
+    120
+  ),
+  (
+    'investor-update',
+    'Investor Update',
+    'A crisp investor update deck for performance, market signals, risk, capital priorities, and operating asks.',
+    null,
+    130
+  ),
+  (
+    'product-launch-board',
+    'Product Launch Board',
+    'A premium launch strategy deck for positioning, audience clarity, adoption signals, GTM readiness, and launch governance.',
+    null,
+    140
+  ),
+  (
+    'customer-success-qbr',
+    'Customer Success QBR',
+    'A refined QBR deck for customer outcomes, adoption evidence, value realization, renewal health, and next-quarter priorities.',
+    null,
+    150
+  ),
+  (
+    'saas-operating-review',
+    'SaaS Operating Review',
+    'A sophisticated operating review deck for SaaS performance, retention, product adoption, GTM execution, and risk controls.',
+    null,
+    160
+  ),
+  (
+    'market-entry-strategy',
+    'Market Entry Strategy',
+    'A consulting-style market entry deck for opportunity sizing, segment selection, risk, launch sequencing, and executive approval.',
+    null,
+    170
+  ),
+  (
+    'brand-partnership-pitch',
+    'Brand Partnership Pitch',
+    'A sleek partnership pitch deck for audience fit, campaign value, co-marketing proof, economics, and next steps.',
+    null,
+    180
+  ),
+  (
+    'digital-transformation-roadmap',
+    'Digital Transformation Roadmap',
+    'An executive transformation roadmap deck for opportunity selection, risk controls, operating model, pilots, and investment approval.',
+    null,
+    190
+  ),
+  (
+    'talent-strategy-review',
+    'Talent Strategy Review',
+    'An executive review for organizational design, headcount planning, performance metrics, and culture investments.',
+    null,
+    200
   );
 
 create table public.slide_comments (

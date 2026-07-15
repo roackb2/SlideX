@@ -3,7 +3,7 @@
 import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { appRoutes, loginPath } from "@/common/lib/appRoutes";
-import { MotionDocApp } from "@/features/pitch";
+import { MotionDocApp, PitchLocaleOverride, PitchWorkspaceSkeleton } from "@/features/pitch";
 import { useLocalPitchPresentation } from "@/features/workspace";
 
 function LocalPitchWorkspace() {
@@ -17,7 +17,8 @@ function LocalPitchWorkspace() {
     openAgentSession,
     presentation,
     save,
-    selectAgentSession
+    selectAgentSession,
+    trackLocalSource
   } = useLocalPitchPresentation();
   const resumeIntent = searchParams.get("intent") === "export"
     ? "export"
@@ -31,7 +32,7 @@ function LocalPitchWorkspace() {
   }, [accessMode, isReady, presentation, resumeIntent, router]);
 
   if (!isReady) {
-    return <main className="min-h-[100dvh] bg-[#050505]" />;
+    return <PitchWorkspaceSkeleton />;
   }
 
   if (error || !presentation) {
@@ -47,31 +48,35 @@ function LocalPitchWorkspace() {
   }
 
   return (
-    <MotionDocApp
-      accessMode={accessMode}
-      initialProject={{
-        name: presentation.title,
-        source: presentation.source,
-        templateId: presentation.templateId
-      }}
-      initialAgentSessionId={agentSessionId}
-      initialResumeIntent={resumeIntent}
-      key={presentation.id}
-      onOpenAgentSession={openAgentSession}
-      onSignInRequested={(intent) => {
-        const nextPath = `${appRoutes.liveDemo}&intent=${intent}`;
-        router.push(loginPath(nextPath));
-      }}
-      onProjectSourceChange={save}
-      onSelectedAgentSessionChange={selectAgentSession}
-      presentationId={presentation.id}
-    />
+    <PitchLocaleOverride locale={accessMode === "guest" ? "en" : undefined}>
+      <MotionDocApp
+        accessMode={accessMode}
+        initialProject={{
+          name: presentation.title,
+          source: presentation.source,
+          templateId: presentation.templateId
+        }}
+        initialAgentSessionId={agentSessionId}
+        initialResumeIntent={resumeIntent}
+        key={presentation.id}
+        onLocalProjectSourceChange={trackLocalSource}
+        onOpenAgentSession={openAgentSession}
+        onSignInRequested={(intent) => {
+          const nextPath = `${appRoutes.liveDemo}&intent=${intent}`;
+          router.push(loginPath(nextPath));
+        }}
+        onProjectSourceChange={save}
+        onSelectedAgentSessionChange={selectAgentSession}
+        presentationId={presentation.id}
+        projectVersion={presentation.sourceRevision}
+      />
+    </PitchLocaleOverride>
   );
 }
 
 export default function PitchWorkspacePage() {
   return (
-    <Suspense fallback={<main className="min-h-[100dvh] bg-[#050505]" />}>
+    <Suspense fallback={<PitchWorkspaceSkeleton />}>
       <LocalPitchWorkspace />
     </Suspense>
   );

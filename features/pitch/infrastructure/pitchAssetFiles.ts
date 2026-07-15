@@ -29,6 +29,10 @@ export async function preparePitchAssetFile(file: File): Promise<PreparedPitchAs
     throw new PitchAssetFileError(sourceValidation.message);
   }
 
+  if (sourceValidation.kind === "image") {
+    await assertPitchImageSignature(file);
+  }
+
   const preparedFile = sourceValidation.kind === "image"
     ? await optimizePitchImageFile(file)
     : file;
@@ -38,12 +42,69 @@ export async function preparePitchAssetFile(file: File): Promise<PreparedPitchAs
     throw new PitchAssetFileError(preparedValidation.message);
   }
 
+  if (preparedValidation.kind === "image" && preparedFile !== file) {
+    await assertPitchImageSignature(preparedFile);
+  }
+
   return {
     file: preparedFile,
     kind: preparedValidation.kind,
     optimized: preparedFile !== file,
     originalFile: file
   };
+}
+
+export async function detectPitchImageMimeType(file: Blob) {
+  const bytes = new Uint8Array(await file.slice(0, 128).arrayBuffer());
+
+  if (startsWithBytes(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+    return "image/png";
+  }
+  if (startsWithBytes(bytes, [0xff, 0xd8, 0xff])) {
+    return "image/jpeg";
+  }
+
+  const header = ascii(bytes, 0, 12);
+  if (header.startsWith("GIF87a") || header.startsWith("GIF89a")) {
+    return "image/gif";
+  }
+  if (header.startsWith("RIFF") && header.slice(8, 12) === "WEBP") {
+    return "image/webp";
+  }
+  if (ascii(bytes, 4, 8) === "ftyp" && hasAvifBrand(bytes)) {
+    return "image/avif";
+  }
+
+  return null;
+}
+
+async function assertPitchImageSignature(file: File) {
+  const detectedMimeType = await detectPitchImageMimeType(file);
+  if (!detectedMimeType || detectedMimeType !== file.type.trim().toLowerCase()) {
+    throw new PitchAssetFileError("The image contents do not match the selected file type");
+  }
+}
+
+function startsWithBytes(bytes: Uint8Array, signature: readonly number[]) {
+  return signature.every((byte, index) => bytes[index] === byte);
+}
+
+function ascii(bytes: Uint8Array, start: number, end: number) {
+  return String.fromCharCode(...bytes.slice(start, end));
+}
+
+function hasAvifBrand(bytes: Uint8Array) {
+  const declaredBoxSize = bytes.length >= 4
+    ? new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0)
+    : 0;
+  const boxEnd = Math.min(bytes.length, declaredBoxSize >= 16 ? declaredBoxSize : bytes.length);
+
+  for (let index = 8; index + 4 <= boxEnd; index += 4) {
+    const brand = ascii(bytes, index, index + 4);
+    if (brand === "avif" || brand === "avis") return true;
+  }
+
+  return false;
 }
 
 async function optimizePitchImageFile(file: File) {

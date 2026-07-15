@@ -47,12 +47,12 @@ export function usePitchProject({
     setIsMounted(true);
   }, []);
 
-  const applyProject = useCallback((options: NewPitchProjectOptions) => {
+  const applyProject = useCallback((options: NewPitchProjectOptions, resetActiveSlide: boolean) => {
     setSource(options.source ?? defaultMdx);
     setProjectName(options.name ?? "Untitled");
     setIsProjectDirty(false);
     undoStackRef.current = [];
-    setActiveSlideIndex(0);
+    if (resetActiveSlide) setActiveSlideIndex(0);
     resetSelection();
     setReplayNonce((value) => value + 1);
     setNotice(options.notice ?? "New project");
@@ -66,7 +66,11 @@ export function usePitchProject({
   ]);
 
   const newProject = useCallback((options: NewPitchProjectOptions = {}) => {
-    applyProject(options);
+    applyProject(options, true);
+  }, [applyProject]);
+
+  const syncProject = useCallback((options: NewPitchProjectOptions) => {
+    applyProject(options, false);
   }, [applyProject]);
 
   const markProjectDirty = useCallback(() => {
@@ -78,6 +82,7 @@ export function usePitchProject({
     isProjectDirty,
     markProjectDirty,
     newProject,
-    projectName
+    projectName,
+    syncProject
   };
 }

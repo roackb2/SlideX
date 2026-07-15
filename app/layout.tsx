@@ -1,14 +1,21 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
+import localFont from "next/font/local";
 import { I18nProvider } from "@/common/lib/I18nProvider";
 import { defaultLocale, dictionaries } from "@/common/lib/i18n";
+import { resolveSiteOrigin } from "@/common/lib/siteUrl";
 import { AuthenticatedHomeRedirect } from "@/features/auth";
 import "./globals.css";
 
+const geistSans = localFont({
+  display: "swap",
+  preload: false,
+  src: "../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2",
+  variable: "--font-geist-sans",
+  weight: "100 900"
+});
+
 const defaultMetadata = dictionaries[defaultLocale].metadata;
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
-  ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
-  : undefined;
+const siteUrl = new URL(resolveSiteOrigin());
 const ogImage = {
   alt: "SlideX motion deck editor preview",
   height: 630,
@@ -60,7 +67,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning translate="no" className={GeistSans.variable}>
+    <html lang="en" suppressHydrationWarning translate="no" className={geistSans.variable}>
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>

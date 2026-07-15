@@ -1,3 +1,5 @@
+import { sanitizeMotionDocMediaSource } from "@/core/motion-doc/domain/mediaSource";
+
 export type YouTubeEmbedOptions = {
   autoplay?: boolean;
   controls?: boolean;
@@ -6,6 +8,13 @@ export type YouTubeEmbedOptions = {
 };
 
 const youtubeVideoIdPattern = /^[a-zA-Z0-9_-]{6,64}$/;
+
+export function sanitizeMotionDocVideoSource(value: string) {
+  const source = sanitizeMotionDocMediaSource(value);
+  if (source.startsWith("blob:")) return "";
+  if (source.startsWith("data:") && !source.toLowerCase().startsWith("data:video/")) return "";
+  return source;
+}
 
 export function youtubeEmbedUrl(source: string, options: YouTubeEmbedOptions = {}) {
   const videoId = youtubeVideoId(source);

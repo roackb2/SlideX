@@ -8,6 +8,7 @@ import { appRoutes } from "@/common/lib/appRoutes";
 import { createSupabaseBrowserClient } from "@/common/lib/supabase/browserClient";
 import { resolveSafeAuthNextPath } from "@/features/auth/application/authRedirect";
 import type { AuthProvider } from "@/features/auth/domain/authSession";
+import { LoginPageSkeleton } from "@/features/auth/ui/LoginPageSkeleton";
 import { useAuthSession } from "@/features/auth/ui/useAuthSession";
 
 function GoogleMark() {
@@ -42,11 +43,14 @@ export function LoginPage() {
     setIsStartingOAuth(true);
     setOAuthError(null);
 
-    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    const callbackUrl = new URL(appRoutes.authCallback, window.location.origin);
     callbackUrl.searchParams.set("next", nextPath);
     const { error } = await createSupabaseBrowserClient().auth.signInWithOAuth({
       provider,
-      options: { redirectTo: callbackUrl.toString() }
+      options: {
+        redirectTo: callbackUrl.toString(),
+        queryParams: provider === "google" ? { prompt: "select_account" } : undefined
+      }
     });
 
     if (error) {
@@ -56,14 +60,14 @@ export function LoginPage() {
   }
 
   if (!isReady || session) {
-    return <main className="min-h-[100dvh] bg-[#111111]" />;
+    return <LoginPageSkeleton />;
   }
 
   return (
     <main className="flex min-h-[100dvh] items-center justify-center bg-[#111111] px-5 py-12 text-[#f3f3f0]">
       <section className="w-full max-w-[460px]">
         <Link aria-label="SlideX home" className="mx-auto flex w-fit items-center justify-center" href="/">
-          <Image alt="SlideX" className="h-auto w-[112px] object-contain" height={72} priority src="/logo.png" width={260} />
+          <Image alt="SlideX" className="h-auto w-[112px] object-contain" height={72} loading="eager" priority src="/logo.png" width={260} />
         </Link>
 
         <div className="mt-9 rounded-[12px] border border-white/[0.11] bg-[#1a1a1a] px-7 py-8 shadow-[0_24px_70px_rgba(0,0,0,0.24)] sm:px-9 sm:py-10">

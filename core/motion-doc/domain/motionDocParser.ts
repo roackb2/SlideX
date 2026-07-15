@@ -4,6 +4,7 @@ import type {
   ParsedMotionDoc
 } from "@/core/motion-doc/domain/motionDocTypes";
 import { sanitizeMotionDocMediaSource } from "@/core/motion-doc/domain/mediaSource";
+import { sanitizeMotionDocVideoSource } from "@/core/motion-doc/domain/videoSource";
 
 const mediaSourcePropNames = new Set(["backgroundImage", "poster", "src"]);
 
@@ -62,9 +63,14 @@ function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
     }
 
     if (selfClosingType) {
+      const props = parseProps(match[5] ?? "");
+      if (selfClosingType === "VideoBlock") {
+        delete props.sourceType;
+        if (typeof props.src === "string") props.src = sanitizeMotionDocVideoSource(props.src);
+      }
       blocks.push({
         type: selfClosingType,
-        props: parseProps(match[5] ?? "")
+        props
       });
     }
   }

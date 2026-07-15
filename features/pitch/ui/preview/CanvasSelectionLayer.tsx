@@ -1,6 +1,7 @@
 "use client";
 
 import type { PointerEvent } from "react";
+import type { ImageCropRect } from "@/core/motion-doc/application/imageCrop";
 import type { MotionDocFrame } from "@/core/motion-doc/domain/frame";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import {
@@ -23,6 +24,7 @@ import {
   type ResizeHandle
 } from "@/features/pitch/application/previewCanvas";
 import { tableEditorSelectionProps } from "@/features/pitch/application/tableEditorSelection";
+import { visualFrameToolbarPlacement } from "@/features/pitch/application/visualFrameToolbar";
 import {
   AlignmentGuideLine,
   FrameInteractionHalo,
@@ -33,6 +35,7 @@ import {
 import { TableFrameEditor } from "@/features/pitch/ui/preview/TableFrameEditor";
 import { TextFrameEditor } from "@/features/pitch/ui/preview/TextFrameEditor";
 import { VisualFrameEditor } from "@/features/pitch/ui/preview/VisualFrameEditor";
+import { ImageCropEditor } from "@/features/pitch/ui/preview/ImageCropEditor";
 import type { CanvasInteractionMode } from "@/features/pitch/ui/preview/interaction/useCanvasInteractionEngine";
 
 type CanvasSelectionLayerProps = {
@@ -43,15 +46,20 @@ type CanvasSelectionLayerProps = {
   frameOverrides: ReadonlyMap<number, MotionDocFrame>;
   interactionBlockIndex: number | null;
   interactionMode: CanvasInteractionMode;
+  imageCropBlockIndex: number | null;
+  imageCropRect: ImageCropRect | null;
   marqueeSelection: MarqueeSelection | null;
   onCancelMarquee: (event: PointerEvent<HTMLDivElement>) => void;
   onEndInteraction: (event: PointerEvent<HTMLDivElement>, blockIndex: number) => void;
   onEndMarquee: (event: PointerEvent<HTMLDivElement>) => void;
   onBeginTextEdit: (blockIndex: number) => void;
+  onBeginBlockTransform: () => void;
+  onImageCropRectChange: (rect: ImageCropRect) => void;
   onSelectBlock: (index: number) => void;
   onStartMarquee: (event: PointerEvent<HTMLDivElement>) => void;
   onStartMove: (event: PointerEvent<HTMLDivElement>, blockIndex: number, frame: MotionDocFrame) => void;
   onStartResize: (event: PointerEvent<HTMLSpanElement>, blockIndex: number, handle: ResizeHandle, frame: MotionDocFrame, blockIndices?: readonly number[]) => void;
+  onToggleImageCrop: (blockIndex: number) => void;
   onUpdateBlock: BlockUpdater;
   onUpdateInteraction: (event: PointerEvent<HTMLDivElement>) => void;
   onUpdateMarquee: (event: PointerEvent<HTMLDivElement>) => void;
@@ -67,15 +75,20 @@ export function CanvasSelectionLayer({
   frameOverrides,
   interactionBlockIndex,
   interactionMode,
+  imageCropBlockIndex,
+  imageCropRect,
   marqueeSelection,
   onCancelMarquee,
   onEndInteraction,
   onEndMarquee,
   onBeginTextEdit,
+  onBeginBlockTransform,
+  onImageCropRectChange,
   onSelectBlock,
   onStartMarquee,
   onStartMove,
   onStartResize,
+  onToggleImageCrop,
   onUpdateBlock,
   onUpdateInteraction,
   onUpdateMarquee,
@@ -120,6 +133,7 @@ export function CanvasSelectionLayer({
         const tableBlock = isEditableTableBlock(block) ? block : null;
         const isTextBlock = isEditableTextBlock(block);
         const isVisualBlock = block.type === "Icon" || block.type === "ImageBlock" || block.type === "VideoBlock";
+        const isImageCropActive = block.type === "ImageBlock" && imageCropBlockIndex === blockIndex;
         const isLineShape = block.type === "Shape" && block.props.shape === "line";
         const showIndividualTextEditor = isSelected && isTextBlock && (isTextMultiSelection || (!isMultiSelection && isPrimarySelection));
         const showIndividualControls = !isMultiSelection && isPrimarySelection || isTextMultiSelection && isTextBlock;
@@ -135,12 +149,15 @@ export function CanvasSelectionLayer({
               isLocked,
               isPrimarySelection: isPrimarySelection || isTextMultiSelection && isTextBlock,
               isSelected,
-              isTextBlock
+              isTextBlock,
+              isImageCropActive
             })}
             data-block-index={blockIndex}
             data-frame-control
             key={`${block.type}-control-${blockIndex}`}
-            onPointerDown={(event) => onStartMove(event, blockIndex, frame)}
+            onPointerDown={(event) => {
+              if (!isImageCropActive) onStartMove(event, blockIndex, frame);
+            }}
             onPointerMove={(event) => {
               if (interactionBlockIndex === blockIndex) onUpdateInteraction(event);
             }}
@@ -156,6 +173,16 @@ export function CanvasSelectionLayer({
             }}
             tabIndex={0}
           >
+            {isImageCropActive && imageCropRect && block.type === "ImageBlock" ? (
+              <ImageCropEditor
+                block={block}
+                blockIndex={blockIndex}
+                cropRect={imageCropRect}
+                onBeginBlockTransform={onBeginBlockTransform}
+                onCropRectChange={onImageCropRectChange}
+                onUpdateBlock={onUpdateBlock}
+              />
+            ) : null}
             {isSelected && showIndividualControls && !isLocked && !isLineShape && !isVisualBlock ? <FrameInteractionHalo isTextBlock={isTextBlock} /> : null}
             {showIndividualTextEditor ? (
               <TextFrameEditor
@@ -170,7 +197,15 @@ export function CanvasSelectionLayer({
               />
             ) : null}
             {isSelected && isPrimarySelection && !isMultiSelection && isVisualBlock && !isLocked ? (
-              <VisualFrameEditor block={block} blockIndex={blockIndex} onSelectBlock={onSelectBlock} onUpdateBlock={onUpdateBlock} placement={frame.y < 11 ? "below" : "above"} />
+              <VisualFrameEditor
+                block={block}
+                blockIndex={blockIndex}
+                isImageCropActive={isImageCropActive}
+                onSelectBlock={onSelectBlock}
+                onToggleImageCrop={onToggleImageCrop}
+                onUpdateBlock={onUpdateBlock}
+                placement={visualFrameToolbarPlacement(frame, canvasScale)}
+              />
             ) : null}
             {isSelected && isPrimarySelection && !isMultiSelection && tableBlock ? (
               <TableFrameEditor
@@ -181,7 +216,7 @@ export function CanvasSelectionLayer({
                 onUpdateBlock={onUpdateBlock}
               />
             ) : null}
-            {isSelected ? (
+            {isSelected && !isImageCropActive ? (
               <SelectedFrameControls
                 frame={frame}
                 interactionMode={interactionBlockIndex === blockIndex ? interactionMode : "idle"}
@@ -221,7 +256,8 @@ function frameControlClass({
   isPrimarySelection,
   isLineShape,
   isSelected,
-  isTextBlock
+  isTextBlock,
+  isImageCropActive
 }: {
   isInteracting: boolean;
   isLocked: boolean;
@@ -229,12 +265,14 @@ function frameControlClass({
   isLineShape: boolean;
   isSelected: boolean;
   isTextBlock: boolean;
+  isImageCropActive: boolean;
 }) {
   const cursorClass = isLocked ? "cursor-default" : "cursor-move";
   const baseClass = "group/frame absolute box-border touch-none overflow-visible border bg-transparent text-left outline-none transition-[border-color,box-shadow] duration-150 focus-visible:ring-2 focus-visible:ring-violet-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
 
   if (isLineShape) return `${baseClass} select-none border-transparent shadow-none ${cursorClass}`;
   if (!isSelected) return `${baseClass} select-none border-white/0 hover:border-violet-400/70 ${cursorClass}`;
+  if (isImageCropActive) return `${baseClass} select-none cursor-default border-transparent shadow-none`;
   if (!isPrimarySelection) return `${baseClass} select-none border-violet-300/55 ${cursorClass}`;
   if (isInteracting) return `${baseClass} select-none border-violet-300 shadow-[0_0_0_2px_rgba(139,92,246,0.2),0_0_18px_rgba(88,55,170,0.22)] ${cursorClass}`;
   if (isTextBlock) return `${baseClass} select-text border-violet-500 shadow-[0_0_0_1px_rgba(139,92,246,0.28),0_0_0_3px_rgba(139,92,246,0.08)] ${cursorClass}`;

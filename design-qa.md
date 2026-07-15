@@ -36,3 +36,45 @@ No actionable P0, P1, or P2 differences remain for the requested directional mat
 - P3: Add collaborative ownership and sharing states when workspace membership is implemented.
 
 final result: passed
+
+---
+
+# Workspace interactive dot field design QA
+
+- Source visual truth: `/var/folders/fp/bv98vn2s2v9dchl651zpsvn00000gn/T/TemporaryItems/NSIRD_screencaptureui_eoIFdc/截圖 2026-07-15 上午11.23.43.png`
+- Full implementation screenshot: `/Users/zz41354899/Desktop/Animark/.codex-artifacts/workspace-dot-field-full-view.png`
+- Focused active-state screenshot: `/Users/zz41354899/Desktop/Animark/.codex-artifacts/workspace-interactive-dot-field-active.png`
+- Focused restored-state screenshot: `/Users/zz41354899/Desktop/Animark/.codex-artifacts/workspace-interactive-dot-field-restored.png`
+- Side-by-side comparison: `/Users/zz41354899/Desktop/Animark/.codex-artifacts/workspace-dot-field-comparison.png`
+- Viewport: 1920 x 798 at device pixel ratio 1
+- State: signed-in Workspace Home, pointer active over the blank-presentation card, then pointer moved outside the card
+
+## Full-view comparison evidence
+
+The dot field remains contained within the blank-presentation card and preserves the existing Workspace hierarchy, sidebar, official-template cards, recent-work section, typography, spacing, border radius, and CTA placement. The visual effect does not spill into the page background or change any navigation or presentation behavior.
+
+## Focused region comparison evidence
+
+- Fonts and typography: the existing SlideX title, description, and CTA typography remain unchanged and legible above the low-contrast dots.
+- Spacing and layout rhythm: the reference's evenly spaced orthogonal grid is reproduced at a 20px interval across the full card without changing its padding or dimensions.
+- Colors and visual tokens: the field uses the existing charcoal surface and neutral white-opacity palette. Resting dots are subdued; only the pointer-radius region gains brightness.
+- Image quality and asset fidelity: no raster asset is substituted for the interactive field. Canvas output is rendered at the current device pixel ratio, capped at 2, so dots remain crisp without unnecessary GPU or memory cost.
+- Copy and content: the blank-card copy remains unchanged; the separate page-header action uses `Create` / `建立` per the follow-up request.
+- Interaction: moving the pointer into the card locally enlarges, brightens, and displaces nearby dots; moving it outside returns the field to its uniform resting state. Reduced-motion users receive a static field.
+- Browser console: no warnings or errors were emitted during the resting, active, or restored interaction states.
+
+## Comparison history
+
+1. The earlier implementation used two CSS dot layers that translated as whole surfaces. This did not match the reference's localized interactive response and was treated as a P2 interaction mismatch.
+2. The CSS layers were replaced with a workspace-owned Canvas component using a fixed grid and pointer-radius falloff.
+3. Post-fix browser captures confirm a uniform resting grid, a localized pointer response, unchanged card content, and clean recovery when the pointer leaves.
+
+## Findings
+
+No actionable P0, P1, or P2 differences remain for the requested interactive-dot treatment. The implementation intentionally overlays SlideX card content on the field because the reference image defines the visual behavior rather than a standalone production card layout.
+
+## Follow-up polish
+
+- P3: Pointer radius and displacement strength can be tuned after observing the effect at the user's preferred display scaling.
+
+final result: passed
