@@ -16,6 +16,10 @@ import {
 } from "@/features/pitch/infrastructure/editablePptxExport";
 import { createPptxPresentation } from "@/features/pitch/infrastructure/pptxBrowser";
 import {
+  sanitizePptxExportError,
+  withPptxConsoleRedaction
+} from "@/features/pitch/infrastructure/pptxConsole";
+import {
   embedPitchLocalFiles,
   getPitchExportDeviceProfile
 } from "@/features/pitch/infrastructure/pitchExportMedia";
@@ -158,38 +162,40 @@ export function usePitchExport({
     const pptxFilename = `${slugifyFilename(finalTitle)}.pptx`;
 
     try {
-      setNotice("Rendering PowerPoint…");
-      const [finalSource, pptx] = await Promise.all([
-        preparePitchPptxSource(canvasSource),
-        createPptxPresentation()
-      ]);
-      const document = parseMotionDoc(finalSource);
-      const rasterRequirements = pptxRasterRequirements(document);
-      const rasterAssets = rasterRequirements.slideIndices.length > 0
-        ? await renderPptxRasterAssets(
-            buildMotionDocRasterHtml(finalSource, finalTitle, rasterRequirements.slideIndices),
-            rasterRequirements
-          )
-        : { filteredImagesBySlide: [], slideBackgrounds: [] };
-      pptx.layout = "LAYOUT_WIDE";
-      pptx.author = "SlideX Pitch";
-      pptx.company = "SlideX";
-      pptx.subject = "Presentation exported from SlideX Pitch";
-      pptx.title = finalTitle;
+      await withPptxConsoleRedaction(async () => {
+        setNotice("Rendering PowerPoint…");
+        const [finalSource, pptx] = await Promise.all([
+          preparePitchPptxSource(canvasSource),
+          createPptxPresentation()
+        ]);
+        const document = parseMotionDoc(finalSource);
+        const rasterRequirements = pptxRasterRequirements(document);
+        const rasterAssets = rasterRequirements.slideIndices.length > 0
+          ? await renderPptxRasterAssets(
+              buildMotionDocRasterHtml(finalSource, finalTitle, rasterRequirements.slideIndices),
+              rasterRequirements
+            )
+          : { filteredImagesBySlide: [], slideBackgrounds: [] };
+        pptx.layout = "LAYOUT_WIDE";
+        pptx.author = "SlideX Pitch";
+        pptx.company = "SlideX";
+        pptx.subject = "Presentation exported from SlideX Pitch";
+        pptx.title = finalTitle;
 
-      setNotice("Building editable slides…");
-      await addEditableSlides(
-        pptx,
-        document,
-        rasterAssets.slideBackgrounds,
-        rasterAssets.filteredImagesBySlide
-      );
+        setNotice("Building editable slides…");
+        await addEditableSlides(
+          pptx,
+          document,
+          rasterAssets.slideBackgrounds,
+          rasterAssets.filteredImagesBySlide
+        );
 
-      setNotice("Building PowerPoint…");
-      await pptx.writeFile({ fileName: pptxFilename, compression: true });
-      setNotice("Editable PowerPoint exported ✓");
+        setNotice("Building PowerPoint…");
+        await pptx.writeFile({ fileName: pptxFilename, compression: true });
+        setNotice("Editable PowerPoint exported ✓");
+      });
     } catch (error) {
-      const exportError = error instanceof Error ? error : new Error("PowerPoint export failed");
+      const exportError = sanitizePptxExportError(error);
       setNotice(exportError.message);
       throw exportError;
     }
