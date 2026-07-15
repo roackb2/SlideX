@@ -44,6 +44,17 @@ export function normalizeDirectPitchImageSource(value: string) {
   return source;
 }
 
+export function normalizeAbsolutePitchImageSource(value: string) {
+  const source = normalizeDirectPitchImageSource(value);
+  if (!source) return null;
+
+  try {
+    return new URL(source).protocol === "https:" ? source : null;
+  } catch {
+    return null;
+  }
+}
+
 export function pitchAssetKindFromMimeType(mimeType: string): PitchAssetKind | null {
   const normalizedMimeType = mimeType.trim().toLowerCase();
 

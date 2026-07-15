@@ -1,7 +1,6 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import { createSupabaseBrowserClient } from "@/common/lib/supabase/browserClient";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import { omitMotionDocProps } from "@/core/motion-doc/application/motionDocProps";
 import {
@@ -10,7 +9,10 @@ import {
   updateBlockInSlide
 } from "@/features/pitch/application/motionDocCommands";
 import type { BlockUpdater } from "@/features/pitch/application/pitchCommandTypes";
-import { normalizeDirectPitchImageSource } from "@/features/pitch/application/pitchAssetPolicy";
+import {
+  normalizeAbsolutePitchImageSource,
+  normalizeDirectPitchImageSource
+} from "@/features/pitch/application/pitchAssetPolicy";
 import {
   presentationImageReferenceCount,
   presentationImageSource,
@@ -18,8 +20,9 @@ import {
 } from "@/features/pitch/application/presentationImagePath";
 import { PitchAssetFileError } from "@/features/pitch/infrastructure/pitchAssetFiles";
 import {
-  deleteSupabasePresentationImage,
-  uploadSupabasePresentationImage
+  deletePresentationImageViaApi,
+  PresentationImageAuthenticationRequiredError,
+  uploadPresentationImageViaApi
 } from "@/features/pitch/infrastructure/supabasePresentationAssets";
 import { stringValue } from "@/common/util/valueUtils";
 
@@ -27,6 +30,8 @@ type UsePitchAssetCommandsArgs = {
   activeSlide: MotionDocScene | undefined;
   activeSlideIndex: number;
   commitSource: (nextSource: string | ((current: string) => string)) => void;
+  onImageUploadAuthRequired: () => void;
+  onImageRemovalAuthRequired: () => void;
   presentationId?: string;
   scenes: MotionDocScene[];
   selectedBlockIndex: number | null;
@@ -40,6 +45,8 @@ export function usePitchAssetCommands({
   activeSlide,
   activeSlideIndex,
   commitSource,
+  onImageUploadAuthRequired,
+  onImageRemovalAuthRequired,
   presentationId,
   scenes,
   selectedBlockIndex,
@@ -48,15 +55,24 @@ export function usePitchAssetCommands({
   setReplayNonce,
   updateBlock
 }: UsePitchAssetCommandsArgs) {
+  function requestImageUpload() {
+    if (presentationId) return true;
+    onImageUploadAuthRequired();
+    return false;
+  }
+
+  function requestImageRemoval() {
+    if (presentationId) return true;
+    onImageRemovalAuthRequired();
+    return false;
+  }
+
   async function uploadPresentationImage(file: File) {
     if (!presentationId) {
       throw new PitchAssetFileError("Sign in and open a saved presentation before uploading images");
     }
 
-    const uploadedImage = await uploadSupabasePresentationImage(
-      createSupabaseBrowserClient(),
-      { file, presentationId }
-    );
+    const uploadedImage = await uploadPresentationImageViaApi(file, presentationId);
     return {
       ...uploadedImage,
       url: presentationImageSource(uploadedImage.path)
@@ -65,6 +81,7 @@ export function usePitchAssetCommands({
 
   async function pasteImageFile(file: File) {
     if (!activeSlide || !file.type.startsWith("image/")) return;
+    if (!requestImageUpload()) return;
 
     try {
       setNotice("Uploading image...");
@@ -94,12 +111,16 @@ export function usePitchAssetCommands({
       setReplayNonce((value) => value + 1);
       setNotice(preparedAsset.optimized ? "Image optimized, uploaded, and pasted" : "Image uploaded and pasted");
     } catch (error) {
+      if (error instanceof PresentationImageAuthenticationRequiredError) {
+        onImageUploadAuthRequired();
+      }
       setNotice(error instanceof Error ? error.message : "Unable to paste image");
     }
   }
 
   async function uploadImageForBlock(blockIndex: number, file: File | undefined) {
     if (!activeSlide || !file) return;
+    if (!requestImageUpload()) return;
     const block = activeSlide.blocks[blockIndex];
     if (!block || block.type !== "ImageBlock") return;
     if (!file.type.startsWith("image/")) {
@@ -119,28 +140,39 @@ export function usePitchAssetCommands({
       });
       setNotice(preparedAsset.optimized ? "Image optimized and uploaded" : "Image uploaded");
     } catch (error) {
+      if (error instanceof PresentationImageAuthenticationRequiredError) {
+        onImageUploadAuthRequired();
+      }
       setNotice(error instanceof Error ? error.message : "Failed to upload image");
     }
   }
 
-  async function importImageUrlForBlock(blockIndex: number, source: string) {
-    if (!activeSlide) return;
+  function importImageUrlForBlock(blockIndex: number, source: string) {
+    if (!activeSlide) return false;
     const block = activeSlide.blocks[blockIndex];
-    if (!block || block.type !== "ImageBlock") return;
+    if (!block || block.type !== "ImageBlock") return false;
 
-    const directSource = normalizeDirectPitchImageSource(source);
+    const directSource = presentationId
+      ? normalizeDirectPitchImageSource(source)
+      : normalizeAbsolutePitchImageSource(source);
     if (!directSource) {
-      setNotice("Enter a valid https URL or image path");
-      return;
+      setNotice(
+        presentationId
+          ? "Enter a valid https URL or image path"
+          : "Guests must use a complete https:// image URL"
+      );
+      return false;
     }
 
     const imageProps = omitMotionDocProps(block.props, ["sourceUrl"]);
     updateBlock(blockIndex, { ...imageProps, src: directSource });
     setNotice("Image path loaded");
+    return true;
   }
 
   async function removeImageForBlock(blockIndex: number) {
     if (!activeSlide) return;
+    if (!requestImageRemoval()) return;
     const block = activeSlide.blocks[blockIndex];
     if (!block || block.type !== "ImageBlock") return;
 
@@ -154,7 +186,7 @@ export function usePitchAssetCommands({
         if (!presentationId) {
           throw new PitchAssetFileError("Sign in before removing uploaded images");
         }
-        await deleteSupabasePresentationImage(createSupabaseBrowserClient(), { path: storagePath });
+        await deletePresentationImageViaApi({ path: storagePath });
       }
 
       const imageProps = omitMotionDocProps(block.props, ["sourceUrl"]);
@@ -167,9 +199,20 @@ export function usePitchAssetCommands({
             : "Image removed from this layer"
       );
     } catch (error) {
+      if (error instanceof PresentationImageAuthenticationRequiredError) {
+        onImageRemovalAuthRequired();
+      }
       setNotice(error instanceof Error ? error.message : "Failed to remove image");
     }
   }
 
-  return { importImageUrlForBlock, pasteImageFile, removeImageForBlock, uploadImageForBlock };
+  return {
+    importImageUrlForBlock,
+    imageSourceRequiresAbsoluteUrl: !presentationId,
+    pasteImageFile,
+    removeImageForBlock,
+    requestImageRemoval,
+    requestImageUpload,
+    uploadImageForBlock
+  };
 }

@@ -231,6 +231,14 @@ export function MotionDocApp({
     setGuestSignInIntent("export");
   }, [setGuestSignInIntent, setIsExportMenuOpen]);
 
+  const requestImageUploadSignIn = useCallback(() => {
+    setGuestSignInIntent("upload-image");
+  }, [setGuestSignInIntent]);
+
+  const requestImageRemovalSignIn = useCallback(() => {
+    setGuestSignInIntent("remove-image");
+  }, [setGuestSignInIntent]);
+
   const handleExportFromModal = useCallback(async (format: ExportFormat, filename: string) => {
     setIsExporting(true);
     try {
@@ -261,6 +269,8 @@ export function MotionDocApp({
     activeSlideIndex,
     commitSource,
     markProjectDirty,
+    onImageUploadAuthRequired: requestImageUploadSignIn,
+    onImageRemovalAuthRequired: requestImageRemovalSignIn,
     presentationId: accessMode === "authenticated" ? presentationId : undefined,
     pushUndoSnapshot,
     scenes: sliderDocument.scenes,
@@ -475,7 +485,10 @@ export function MotionDocApp({
         openPresentationPreview: () => setIsPresentationPreviewOpen(true),
         pasteCopiedBlock: pitchCommands.pasteCopiedBlock,
         pushUndoSnapshot,
+        imageSourceRequiresAbsoluteUrl: pitchCommands.imageSourceRequiresAbsoluteUrl,
         removeImageForBlock: pitchCommands.removeImageForBlock,
+        requestImageRemoval: pitchCommands.requestImageRemoval,
+        requestImageUpload: pitchCommands.requestImageUpload,
         renameBlock: pitchCommands.renameBlock,
         reorderBlock: pitchCommands.reorderBlock,
         reorderSlide: pitchCommands.reorderSlide,

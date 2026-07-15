@@ -13,8 +13,11 @@ import type { BlockFieldProps } from "@/features/pitch/ui/inspector/InspectorCon
 import type { MotionDocBlockType } from "@/core/motion-doc/domain/motionDocTypes";
 
 type BlockFieldRegistryContext = BlockFieldProps & {
-  importImageUrlForBlock: (blockIndex: number, source: string) => void;
+  imageSourceRequiresAbsoluteUrl: boolean;
+  importImageUrlForBlock: (blockIndex: number, source: string) => boolean;
   removeImageForBlock: (blockIndex: number) => void;
+  requestImageRemoval: () => boolean;
+  requestImageUpload: () => boolean;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
 };
 
@@ -36,8 +39,11 @@ const blockFieldRegistry: Partial<Record<MotionDocBlockType, BlockFieldRegistryE
     render: (context) => (
       <ImageFields
         {...context}
+        imageSourceRequiresAbsoluteUrl={context.imageSourceRequiresAbsoluteUrl}
         importImageUrlForBlock={context.importImageUrlForBlock}
         removeImageForBlock={context.removeImageForBlock}
+        requestImageRemoval={context.requestImageRemoval}
+        requestImageUpload={context.requestImageUpload}
         uploadImageForBlock={context.uploadImageForBlock}
       />
     ),

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  normalizeAbsolutePitchImageSource,
   normalizeDirectPitchImageSource,
   pitchAssetMimeTypes,
   validatePitchAssetSource
@@ -33,4 +34,14 @@ test("direct image sources reject temporary blobs and unsafe paths", () => {
   assert.equal(normalizeDirectPitchImageSource("blob:https://app.example.com/temporary"), null);
   assert.equal(normalizeDirectPitchImageSource("javascript:alert(1)"), null);
   assert.equal(normalizeDirectPitchImageSource("../private/image.png"), null);
+});
+
+test("guest image sources require a complete HTTPS URL", () => {
+  assert.equal(
+    normalizeAbsolutePitchImageSource(" https://cdn.example.com/image.png "),
+    "https://cdn.example.com/image.png"
+  );
+  assert.equal(normalizeAbsolutePitchImageSource("/images/cover.webp"), null);
+  assert.equal(normalizeAbsolutePitchImageSource("images/cover.webp"), null);
+  assert.equal(normalizeAbsolutePitchImageSource("http://cdn.example.com/image.png"), null);
 });

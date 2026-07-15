@@ -96,11 +96,14 @@ export function PitchInspector({
   activeSlideTextColor,
   activeSlideTheme,
   applyLayoutToActiveSlide,
+  imageSourceRequiresAbsoluteUrl,
   importImageUrlForBlock,
   isGridVisible,
   onOpenMdxEditor,
   pushUndoSnapshot,
   removeImageForBlock,
+  requestImageRemoval,
+  requestImageUpload,
   selectedBlockIndex,
   selectedBlockIndices = [],
   setIsGridVisible,
@@ -132,11 +135,14 @@ export function PitchInspector({
   activeSlideTextColor: string;
   activeSlideTheme: string;
   applyLayoutToActiveSlide: (layoutSource: string, layoutId: string) => void;
-  importImageUrlForBlock: (blockIndex: number, source: string) => void;
+  imageSourceRequiresAbsoluteUrl: boolean;
+  importImageUrlForBlock: (blockIndex: number, source: string) => boolean;
   isGridVisible: boolean;
   onOpenMdxEditor: () => void;
   pushUndoSnapshot: () => void;
   removeImageForBlock: (blockIndex: number) => void;
+  requestImageRemoval: () => boolean;
+  requestImageUpload: () => boolean;
   selectedBlockIndex: number | null;
   selectedBlockIndices?: number[];
   setIsGridVisible: (value: boolean) => void;
@@ -211,9 +217,12 @@ export function PitchInspector({
           ) : (
             <ElementSettings
               activeSlide={activeSlide}
+              imageSourceRequiresAbsoluteUrl={imageSourceRequiresAbsoluteUrl}
               importImageUrlForBlock={importImageUrlForBlock}
               pushUndoSnapshot={pushUndoSnapshot}
               removeImageForBlock={removeImageForBlock}
+              requestImageRemoval={requestImageRemoval}
+              requestImageUpload={requestImageUpload}
               selectedBlockIndex={selectedBlockIndex as number}
               updateBlock={updateBlock}
               uploadImageForBlock={uploadImageForBlock}
@@ -227,17 +236,23 @@ export function PitchInspector({
 
 function ElementSettings({
   activeSlide,
+  imageSourceRequiresAbsoluteUrl,
   importImageUrlForBlock,
   pushUndoSnapshot,
   removeImageForBlock,
+  requestImageRemoval,
+  requestImageUpload,
   selectedBlockIndex,
   updateBlock,
   uploadImageForBlock
 }: {
   activeSlide: MotionDocScene | undefined;
-  importImageUrlForBlock: (blockIndex: number, source: string) => void;
+  imageSourceRequiresAbsoluteUrl: boolean;
+  importImageUrlForBlock: (blockIndex: number, source: string) => boolean;
   pushUndoSnapshot: () => void;
   removeImageForBlock: (blockIndex: number) => void;
+  requestImageRemoval: () => boolean;
+  requestImageUpload: () => boolean;
   selectedBlockIndex: number;
   updateBlock: BlockUpdater;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
@@ -310,8 +325,11 @@ function ElementSettings({
 	            <div className="flex flex-col gap-4">
 	              {blockFieldEntry.render({
 	                block,
+	                imageSourceRequiresAbsoluteUrl,
 	                importImageUrlForBlock,
 	                removeImageForBlock,
+	                requestImageRemoval,
+	                requestImageUpload,
 	                selectedBlockIndex,
 	                updateBlock,
 	                uploadImageForBlock

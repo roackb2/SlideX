@@ -90,10 +90,14 @@ SVG uploads are intentionally disabled. Every object path must follow:
 <user-id>/<presentation-id>/<uuid>.<trusted-extension>
 ```
 
-The adapter derives the user ID from the authenticated Supabase session and
-generates the UUID filename itself; it never puts the original upload name in
-the path. Storage RLS verifies the first folder against `auth.uid()` and verifies
-that the second folder is a presentation owned by the same user.
+The browser sends prepared images to the authenticated Next route at
+`POST /api/presentation-images` and removes them through `DELETE` on the same
+route. Both operations verify the session and presentation ownership before the
+caller-scoped Supabase client changes Storage. The upload adapter derives the
+user ID from that authenticated session and generates the UUID filename itself;
+it never puts the original upload name in the path. Storage RLS then verifies the
+first folder against `auth.uid()` and verifies that the second folder is a
+presentation owned by the same user.
 
 `deleteSupabasePresentation` always removes the presentation's Storage objects
 through the authenticated `delete-presentation` Edge Function before deleting

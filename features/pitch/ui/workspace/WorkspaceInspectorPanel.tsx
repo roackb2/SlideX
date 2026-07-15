@@ -85,11 +85,14 @@ function PitchInspectorContent({ commands, document, onOpenMdxEditor, selection,
       activeSlideTextColor={document.activeSlideTextColor}
       activeSlideTheme={document.activeSlideTheme}
       applyLayoutToActiveSlide={commands.applyLayoutToActiveSlide}
+      imageSourceRequiresAbsoluteUrl={commands.imageSourceRequiresAbsoluteUrl}
       importImageUrlForBlock={commands.importImageUrlForBlock}
       isGridVisible={view.isCanvasGridVisible}
       onOpenMdxEditor={onOpenMdxEditor ?? (() => view.setIsCodeEditorOpen(true))}
       pushUndoSnapshot={commands.pushUndoSnapshot}
       removeImageForBlock={commands.removeImageForBlock}
+      requestImageRemoval={commands.requestImageRemoval}
+      requestImageUpload={commands.requestImageUpload}
       selectedBlockIndex={selection.selectedBlockIndex}
       selectedBlockIndices={selection.selectedBlockIndices}
       setIsGridVisible={view.setIsCanvasGridVisible}

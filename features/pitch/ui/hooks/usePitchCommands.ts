@@ -47,6 +47,8 @@ type UsePitchCommandsArgs = {
   activeSlideIndex: number;
   commitSource: (nextSource: string | ((current: string) => string)) => void;
   markProjectDirty: () => void;
+  onImageUploadAuthRequired: () => void;
+  onImageRemovalAuthRequired: () => void;
   presentationId?: string;
   pushUndoSnapshot: () => void;
   scenes: MotionDocScene[];
@@ -69,6 +71,8 @@ export function usePitchCommands({
   activeSlideIndex,
   commitSource,
   markProjectDirty,
+  onImageUploadAuthRequired,
+  onImageRemovalAuthRequired,
   presentationId,
   pushUndoSnapshot,
   scenes,
@@ -102,6 +106,8 @@ export function usePitchCommands({
     activeSlide,
     activeSlideIndex,
     commitSource,
+    onImageUploadAuthRequired,
+    onImageRemovalAuthRequired,
     presentationId,
     scenes,
     selectedBlockIndex,

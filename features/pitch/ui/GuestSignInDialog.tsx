@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { LogIn, X } from "lucide-react";
 
-export type GuestSignInIntent = "export";
+export type GuestSignInIntent = "export" | "remove-image" | "upload-image";
 
 type GuestSignInDialogProps = {
   intent: GuestSignInIntent | null;
@@ -14,9 +14,20 @@ type GuestSignInDialogProps = {
 const intentCopy = {
   export: {
     body: "PowerPoint export is available in the Live Demo. Sign in to unlock HTML and MDX export. Your demo changes will stay with you.",
-    button: "Sign in to unlock"
+    button: "Sign in to unlock",
+    title: "Unlock this export format"
+  },
+  "remove-image": {
+    body: "Guests can replace an image with a complete HTTPS URL, but removing images requires an account. Sign in first—your current demo changes will stay with you.",
+    button: "Sign in to remove",
+    title: "Sign in to remove images"
+  },
+  "upload-image": {
+    body: "Image uploads are saved to private SlideX storage and must belong to an account. Sign in first—your current demo changes will stay with you.",
+    button: "Sign in to upload",
+    title: "Sign in to upload images"
   }
-} satisfies Record<GuestSignInIntent, { body: string; button: string }>;
+} satisfies Record<GuestSignInIntent, { body: string; button: string; title: string }>;
 
 export function GuestSignInDialog({ intent, onClose, onContinue }: GuestSignInDialogProps) {
   useEffect(() => {
@@ -49,7 +60,7 @@ export function GuestSignInDialog({ intent, onClose, onContinue }: GuestSignInDi
         <div className="flex items-start justify-between gap-5">
           <div>
             <p className="text-[12px] font-semibold text-[#c4ee87]">Sign in required</p>
-            <h2 className="mt-2 text-[22px] font-semibold tracking-[-0.03em]" id="guest-sign-in-title">Unlock this export format</h2>
+            <h2 className="mt-2 text-[22px] font-semibold tracking-[-0.03em]" id="guest-sign-in-title">{copy.title}</h2>
           </div>
           <button
             aria-label="Close sign in dialog"

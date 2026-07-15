@@ -15,14 +15,20 @@ import { ImageFilterSection } from "@/features/pitch/ui/inspector/image/ImageFil
 
 export function ImageFields({
   block,
+  imageSourceRequiresAbsoluteUrl,
   importImageUrlForBlock,
   removeImageForBlock,
+  requestImageRemoval,
+  requestImageUpload,
   selectedBlockIndex,
   updateBlock,
   uploadImageForBlock
 }: BlockFieldProps & {
-  importImageUrlForBlock: (blockIndex: number, source: string) => void;
+  imageSourceRequiresAbsoluteUrl: boolean;
+  importImageUrlForBlock: (blockIndex: number, source: string) => boolean;
   removeImageForBlock: (blockIndex: number) => void;
+  requestImageRemoval: () => boolean;
+  requestImageUpload: () => boolean;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
 }) {
   const hasImage = Boolean(block.props.src);
@@ -33,11 +39,11 @@ export function ImageFields({
     const source = value.trim();
     if (source === externalImageSource) return true;
     if (!source) {
+      if (!requestImageRemoval()) return false;
       setIsRemoveConfirmationOpen(true);
       return false;
     }
-    importImageUrlForBlock(selectedBlockIndex, source);
-    return true;
+    return importImageUrlForBlock(selectedBlockIndex, source);
   }
 
   function removeImage() {
@@ -73,13 +79,18 @@ export function ImageFields({
                       uploadImageForBlock(selectedBlockIndex, event.target.files?.[0]);
                       event.currentTarget.value = "";
                     }}
+                    onClick={(event) => {
+                      if (!requestImageUpload()) event.preventDefault();
+                    }}
                     type="file"
                   />
                 </label>
                 <button
                   aria-label="Remove image"
                   className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-400 outline-none transition hover:bg-rose-500/15 hover:text-rose-300 active:scale-90 focus-visible:ring-1 focus-visible:ring-rose-300/60"
-                  onClick={() => setIsRemoveConfirmationOpen(true)}
+                  onClick={() => {
+                    if (requestImageRemoval()) setIsRemoveConfirmationOpen(true);
+                  }}
                   title="Remove image"
                   type="button"
                 >
@@ -107,6 +118,9 @@ export function ImageFields({
                   uploadImageForBlock(selectedBlockIndex, event.target.files?.[0]);
                   event.currentTarget.value = "";
                 }}
+                onClick={(event) => {
+                  if (!requestImageUpload()) event.preventDefault();
+                }}
                 type="file"
               />
             </label>
@@ -115,6 +129,7 @@ export function ImageFields({
       </Field>
 
       <CommittedImageUrlInput
+        absoluteUrlOnly={imageSourceRequiresAbsoluteUrl}
         key={`${selectedBlockIndex}-${externalImageSource}`}
         onCommit={commitImageUrl}
         value={externalImageSource}
@@ -186,11 +201,19 @@ export function ImageFields({
   );
 }
 
-function CommittedImageUrlInput({ onCommit, value }: { onCommit: (value: string) => boolean; value: string }) {
+function CommittedImageUrlInput({
+  absoluteUrlOnly,
+  onCommit,
+  value
+}: {
+  absoluteUrlOnly: boolean;
+  onCommit: (value: string) => boolean;
+  value: string;
+}) {
   const [draft, setDraft] = useState(value);
 
   return (
-    <Field label="Image URL / path">
+    <Field label={absoluteUrlOnly ? "HTTPS image URL" : "Image URL / path"}>
       <input
         className="h-9 w-full rounded-xl border border-white/[0.055] bg-[#18181b] px-3 text-[12px] text-neutral-200 outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] transition-[border-color,background-color,box-shadow] placeholder:text-neutral-600 hover:border-white/[0.09] hover:bg-[#1b1b1e] focus:border-violet-300/35 focus:bg-[#1d1d20] focus:ring-2 focus:ring-violet-400/10"
         onBlur={(event) => {
@@ -204,11 +227,15 @@ function CommittedImageUrlInput({ onCommit, value }: { onCommit: (value: string)
             event.currentTarget.blur();
           }
         }}
-        placeholder="https://... or /images/..."
+        placeholder={absoluteUrlOnly ? "https://..." : "https://... or /images/..."}
         type="text"
         value={draft}
       />
-      <p className="text-[10px] leading-relaxed text-neutral-600">URLs and existing paths are used directly on Enter or blur.</p>
+      <p className="text-[10px] leading-relaxed text-neutral-600">
+        {absoluteUrlOnly
+          ? "Guests can replace images only with a complete HTTPS URL."
+          : "URLs and existing paths are used directly on Enter or blur."}
+      </p>
     </Field>
   );
 }

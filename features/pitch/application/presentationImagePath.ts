@@ -11,6 +11,12 @@ export function isPresentationImageStoragePath(value: string) {
   return presentationImageStoragePathPattern.test(value);
 }
 
+export function presentationImageStoragePathIdentity(value: string) {
+  if (!isPresentationImageStoragePath(value)) return null;
+  const [userId, presentationId] = value.split("/");
+  return { presentationId, userId };
+}
+
 export function presentationImageSource(storagePath: string) {
   if (!isPresentationImageStoragePath(storagePath)) {
     throw new Error("Invalid presentation image path");

@@ -4,6 +4,7 @@ import {
   isPresentationImageStoragePath,
   presentationImageReferenceCount,
   presentationImageStoragePathFromSource,
+  presentationImageStoragePathIdentity,
   presentationImageSource
 } from "@/features/pitch/application/presentationImagePath";
 
@@ -27,6 +28,14 @@ test("presentation image sources recover their Supabase Storage path", () => {
   assert.equal(presentationImageStoragePathFromSource(presentationImageSource(validPath)), validPath);
   assert.equal(presentationImageStoragePathFromSource("https://cdn.example.com/image.webp"), null);
   assert.equal(presentationImageStoragePathFromSource("/api/presentation-images/not-valid.svg"), null);
+});
+
+test("presentation image paths expose only their validated owner identity", () => {
+  assert.deepEqual(presentationImageStoragePathIdentity(validPath), {
+    presentationId: "22222222-2222-4222-8222-222222222222",
+    userId: "11111111-1111-4111-8111-111111111111"
+  });
+  assert.equal(presentationImageStoragePathIdentity("../../private/image.png"), null);
 });
 
 test("presentation image references include blocks and slide backgrounds", () => {
