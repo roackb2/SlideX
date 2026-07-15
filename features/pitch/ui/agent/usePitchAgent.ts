@@ -11,10 +11,9 @@ import {
 import { ConversationRunConsumerService } from "@roackb2/heddle-remote";
 import { ConversationRunHttpSseClientError } from "@roackb2/heddle-remote/http-sse";
 import {
-  SlideXAgentClient,
+  type SlideXAgentClient,
   SlideXAgentClientError
 } from "@/features/pitch/infrastructure/slidexAgentClient";
-import { slideXAgentIdentity } from "@/features/pitch/infrastructure/slidexAgentIdentity";
 import {
   clearAgentPresentationBinding,
   readAgentPresentationBinding,
@@ -23,13 +22,10 @@ import {
 import type {
   AgentRunEvent,
   AgentSession,
+  AgentSessionSummary,
   AgentSessionState,
   AgentToolActivity
 } from "@/features/pitch/domain/agentRun";
-
-const client = new SlideXAgentClient({
-  getHeaders: () => slideXAgentIdentity.authorizationHeaders()
-});
 
 type AgentRunConsumer = ConversationRunConsumerService<{ runId: string }>;
 export type AgentStatus = "idle" | "running" | "reconnecting" | "detached" | "error";
@@ -50,16 +46,31 @@ type MotionDocReconciliation = {
   error?: string;
 };
 
+const MOTION_DOC_APPLY_ERROR =
+  "The agent finished, but SlideX could not apply its deck result automatically.";
+
 export type PitchAgentRuntimeInput = {
+  initialSessionId?: string;
   presentationId: string;
   presentationTitle: string;
   source: string;
-  onApplyMotionDoc: (motionDoc: string, summary: string) => void;
+  onApplyMotionDoc: (
+    motionDoc: string,
+    summary: string
+  ) => void | Promise<void>;
+  onOpenSession?: (session: AgentSessionSummary) => void;
+  onSelectedSessionChange?: (sessionId?: string) => void;
 };
 
-export function usePitchAgent(input: PitchAgentRuntimeInput) {
+export function usePitchAgent(
+  input: PitchAgentRuntimeInput,
+  client: SlideXAgentClient,
+  onSessionChanged?: () => void
+) {
   const inputRef = useRef(input);
+  const initialSessionIdRef = useRef(input.initialSessionId);
   const sourceRef = useRef(input.source);
+  const sessionChangedRef = useRef(onSessionChanged);
 
   const [messages, setMessages] = useState<PitchAgentMessage[]>([]);
   const [tools, setTools] = useState<AgentToolActivity[]>([]);
@@ -84,6 +95,14 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
     inputRef.current = input;
     sourceRef.current = input.source;
   }, [input]);
+
+  useEffect(() => {
+    sessionChangedRef.current = onSessionChanged;
+  }, [onSessionChanged]);
+
+  const notifySessionChanged = useCallback(() => {
+    void sessionChangedRef.current?.();
+  }, []);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -166,7 +185,6 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
     }
     if (event.kind === "result") {
       const result = event.result;
-      setMessages(toPitchMessages(result.session));
       const reconciliation = await reconcileMotionDoc({
         assistantMessage: result.assistantMessage,
         baseSourceRevision: result.baseSourceRevision,
@@ -174,23 +192,30 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
         motionDoc: result.motionDoc,
         onApply: inputRef.current.onApplyMotionDoc
       });
+      if (!mountedRef.current) {
+        return;
+      }
+      setMessages(toPitchMessages(result.session));
       setPendingMotionDoc(reconciliation.pending);
       setError(reconciliation.error);
       setErrorCode(undefined);
+      notifySessionChanged();
       settleRun(reconciliation.error ? "error" : "idle");
       return;
     }
     if (event.kind === "cancelled") {
       setAssistantMessage("Run cancelled.");
       setErrorCode(undefined);
+      notifySessionChanged();
       settleRun("idle");
       return;
     }
     setAssistantMessage(event.error.message);
     setError(event.error.message);
     setErrorCode(event.error.code);
+    notifySessionChanged();
     settleRun("error");
-  }, [setAssistantMessage, settleRun]);
+  }, [notifySessionChanged, setAssistantMessage, settleRun]);
 
   const subscribeWithReconnect = useCallback(async (
     runId: string,
@@ -249,7 +274,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
         await wait(retry.delayMs, signal);
       }
     }
-  }, [handleEvent, persistBinding]);
+  }, [client, handleEvent, persistBinding]);
 
   const restoreSessionState = useCallback((state: AgentSessionState): void => {
     updateSessionId(state.session.id);
@@ -260,6 +285,53 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
     setTools([]);
   }, [updateSessionId]);
 
+  const hydrateConversation = useCallback(async (
+    targetSessionId: string,
+    binding: ReturnType<typeof readAgentPresentationBinding>,
+    controller: AbortController
+  ): Promise<void> => {
+    await client.attachSession(targetSessionId, {
+      presentationId: inputRef.current.presentationId,
+      presentationTitle: inputRef.current.presentationTitle
+    }, controller.signal);
+    const state = await client.session(targetSessionId, controller.signal);
+    if (controller.signal.aborted) {
+      return;
+    }
+
+    restoreSessionState(state);
+    notifySessionChanged();
+    if (!state.activeRun) {
+      persistBinding();
+      setStatus("idle");
+      return;
+    }
+
+    const restoresStoredRun = binding?.runId === state.activeRun.runId;
+    const afterSequence = restoresStoredRun ? binding.afterSequence : undefined;
+    activeSequenceRef.current = afterSequence;
+    activeSourceRevisionRef.current = restoresStoredRun
+      ? binding.baseSourceRevision
+      : undefined;
+    updateActiveRunId(state.activeRun.runId);
+    persistBinding(state.activeRun.runId, afterSequence);
+    setMessages((current) => ensureAssistantPlaceholder(current));
+    setStatus("reconnecting");
+    setIsHydrating(false);
+    await subscribeWithReconnect(
+      state.activeRun.runId,
+      controller.signal,
+      afterSequence
+    );
+  }, [
+    client,
+    notifySessionChanged,
+    persistBinding,
+    restoreSessionState,
+    subscribeWithReconnect,
+    updateActiveRunId
+  ]);
+
   useEffect(() => {
     requestAbortRef.current?.abort();
     const controller = new AbortController();
@@ -267,11 +339,16 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
     resetRuntimeState();
     setIsHydrating(false);
 
-    const binding = readAgentPresentationBinding(
+    const storedBinding = readAgentPresentationBinding(
       window.sessionStorage,
       input.presentationId
     );
-    if (!binding) {
+    const requestedSessionId = initialSessionIdRef.current?.trim();
+    const targetSessionId = requestedSessionId || storedBinding?.sessionId;
+    const binding = storedBinding?.sessionId === targetSessionId
+      ? storedBinding
+      : undefined;
+    if (!targetSessionId) {
       requestAbortRef.current = undefined;
       return () => controller.abort();
     }
@@ -279,34 +356,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
     setIsHydrating(true);
     void (async () => {
       try {
-        const state = await client.session(binding.sessionId, controller.signal);
-        if (controller.signal.aborted) {
-          return;
-        }
-        restoreSessionState(state);
-        if (!state.activeRun) {
-          persistBinding();
-          return;
-        }
-
-        const restoresStoredRun = binding.runId === state.activeRun.runId;
-        const afterSequence = restoresStoredRun
-          ? binding.afterSequence
-          : undefined;
-        activeSequenceRef.current = afterSequence;
-        activeSourceRevisionRef.current = restoresStoredRun
-          ? binding.baseSourceRevision
-          : undefined;
-        updateActiveRunId(state.activeRun.runId);
-        persistBinding(state.activeRun.runId, afterSequence);
-        setMessages((current) => ensureAssistantPlaceholder(current));
-        setStatus("reconnecting");
-        setIsHydrating(false);
-        await subscribeWithReconnect(
-          state.activeRun.runId,
-          controller.signal,
-          afterSequence
-        );
+        await hydrateConversation(targetSessionId, binding, controller);
       } catch (caught) {
         if (controller.signal.aborted || !mountedRef.current) {
           return;
@@ -319,6 +369,8 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
           resetRuntimeState(
             "The previous conversation was unavailable, so a new one will start."
           );
+          inputRef.current.onSelectedSessionChange?.();
+          notifySessionChanged();
           return;
         }
         const message = errorMessage(caught);
@@ -336,12 +388,59 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
 
     return () => controller.abort();
   }, [
+    hydrateConversation,
     input.presentationId,
-    persistBinding,
+    notifySessionChanged,
     resetRuntimeState,
-    restoreSessionState,
-    subscribeWithReconnect,
-    updateActiveRunId
+  ]);
+
+  const selectConversation = useCallback(async (targetSessionId: string) => {
+    if (targetSessionId === sessionIdRef.current
+      || activeRunIdRef.current
+      || isHydrating
+      || isDeleting
+      || isCheckingStatus) {
+      return false;
+    }
+
+    requestAbortRef.current?.abort();
+    const controller = new AbortController();
+    requestAbortRef.current = controller;
+    setIsHydrating(true);
+    setError(undefined);
+    setErrorCode(undefined);
+    setNotice(undefined);
+    setPendingMotionDoc(undefined);
+
+    try {
+      await hydrateConversation(targetSessionId, undefined, controller);
+      return true;
+    } catch (caught) {
+      if (controller.signal.aborted || !mountedRef.current) {
+        return false;
+      }
+      if (isMissingSessionError(caught)) {
+        setNotice("That conversation is no longer available.");
+        notifySessionChanged();
+        return false;
+      }
+      setError(errorMessage(caught));
+      setStatus(statusAfterRunFailure(caught, Boolean(activeRunIdRef.current)));
+      return false;
+    } finally {
+      if (mountedRef.current && !controller.signal.aborted) {
+        setIsHydrating(false);
+      }
+      if (requestAbortRef.current === controller) {
+        requestAbortRef.current = undefined;
+      }
+    }
+  }, [
+    hydrateConversation,
+    isCheckingStatus,
+    isDeleting,
+    isHydrating,
+    notifySessionChanged
   ]);
 
   const submit = useCallback(async (message: string, llmApiKey: string) => {
@@ -374,7 +473,8 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
       const motionDoc = sourceRef.current;
       const sourceRevision = await hashSource(motionDoc);
       const request = {
-        title: inputRef.current.presentationTitle,
+        presentationId: inputRef.current.presentationId,
+        presentationTitle: inputRef.current.presentationTitle,
         message: trimmedMessage,
         motionDoc,
         sourceRevision,
@@ -395,6 +495,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
           window.sessionStorage,
           inputRef.current.presentationId
         );
+        inputRef.current.onSelectedSessionChange?.();
         updateSessionId(undefined);
         setNotice("The previous conversation was unavailable, so this message started a new one.");
         accepted = await client.runs.start(request, controller.signal);
@@ -406,6 +507,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
       updateActiveRunId(accepted.runId);
       setMessages(ensureAssistantPlaceholder(toPitchMessages(accepted.session)));
       persistBinding(accepted.runId, 0);
+      notifySessionChanged();
       await subscribeWithReconnect(accepted.runId, controller.signal);
     } catch (caught) {
       if (controller.signal.aborted || !mountedRef.current) {
@@ -451,9 +553,11 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
       }
     }
   }, [
+    client,
     isHydrating,
     isDeleting,
     isCheckingStatus,
+    notifySessionChanged,
     persistBinding,
     restoreSessionState,
     setAssistantMessage,
@@ -476,7 +580,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
     } catch (caught) {
       setError(errorMessage(caught));
     }
-  }, []);
+  }, [client]);
 
   const checkRunStatus = useCallback(async () => {
     const currentSessionId = sessionIdRef.current;
@@ -533,6 +637,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
           window.sessionStorage,
           inputRef.current.presentationId
         );
+        inputRef.current.onSelectedSessionChange?.();
         resetRuntimeState(
           "The previous conversation was unavailable, so a new one will start."
         );
@@ -546,6 +651,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
       }
     }
   }, [
+    client,
     isCheckingStatus,
     persistBinding,
     resetRuntimeState,
@@ -561,37 +667,51 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
       window.sessionStorage,
       inputRef.current.presentationId
     );
+    inputRef.current.onSelectedSessionChange?.();
     resetRuntimeState(
       "New conversation started. The previous conversation was kept."
     );
   }, [isCheckingStatus, isDeleting, isHydrating, resetRuntimeState]);
 
-  const deleteConversation = useCallback(async () => {
+  const deleteConversation = useCallback(async (targetSessionId?: string) => {
     if (activeRunIdRef.current || isDeleting || isHydrating || isCheckingStatus) {
       return;
     }
-    const currentSessionId = sessionIdRef.current;
-    if (!currentSessionId) {
+    const selectedSessionId = sessionIdRef.current;
+    const sessionToDelete = targetSessionId ?? selectedSessionId;
+    if (!sessionToDelete) {
       return;
     }
 
     setIsDeleting(true);
     try {
-      await client.deleteSession(currentSessionId);
-      clearAgentPresentationBinding(
-        window.sessionStorage,
-        inputRef.current.presentationId
-      );
-      resetRuntimeState("Conversation deleted. The current deck was kept.");
-    } catch (caught) {
-      if (isMissingSessionError(caught)) {
+      await client.deleteSession(sessionToDelete);
+      if (sessionToDelete === selectedSessionId) {
         clearAgentPresentationBinding(
           window.sessionStorage,
           inputRef.current.presentationId
         );
-        resetRuntimeState(
-          "The conversation was already unavailable. A new one will start."
-        );
+        inputRef.current.onSelectedSessionChange?.();
+        resetRuntimeState("Conversation deleted. The current deck was kept.");
+      } else {
+        setNotice("Conversation deleted.");
+      }
+      notifySessionChanged();
+    } catch (caught) {
+      if (isMissingSessionError(caught)) {
+        if (sessionToDelete === selectedSessionId) {
+          clearAgentPresentationBinding(
+            window.sessionStorage,
+            inputRef.current.presentationId
+          );
+          inputRef.current.onSelectedSessionChange?.();
+          resetRuntimeState(
+            "The conversation was already unavailable. A new one will start."
+          );
+        } else {
+          setNotice("That conversation was already unavailable.");
+        }
+        notifySessionChanged();
       } else {
         setError(errorMessage(caught));
         setStatus("error");
@@ -599,17 +719,31 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
     } finally {
       setIsDeleting(false);
     }
-  }, [isCheckingStatus, isDeleting, isHydrating, resetRuntimeState]);
+  }, [
+    client,
+    isCheckingStatus,
+    isDeleting,
+    isHydrating,
+    notifySessionChanged,
+    resetRuntimeState
+  ]);
 
-  const applyPendingMotionDoc = useCallback(() => {
+  const applyPendingMotionDoc = useCallback(async () => {
     if (!pendingMotionDoc) {
       return;
     }
-    inputRef.current.onApplyMotionDoc(
-      pendingMotionDoc.motionDoc,
-      pendingMotionDoc.assistantMessage
-    );
-    setPendingMotionDoc(undefined);
+    try {
+      await inputRef.current.onApplyMotionDoc(
+        pendingMotionDoc.motionDoc,
+        pendingMotionDoc.assistantMessage
+      );
+      setPendingMotionDoc(undefined);
+      setError(undefined);
+      setStatus("idle");
+    } catch {
+      setError(MOTION_DOC_APPLY_ERROR);
+      setStatus("error");
+    }
   }, [pendingMotionDoc]);
 
   const clearCredentialError = useCallback(() => {
@@ -627,6 +761,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
       messages,
       notice,
       pendingMotionDoc,
+      sessionId,
       status,
       tools
     },
@@ -637,6 +772,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
       clearCredentialError,
       deleteConversation,
       dismissPendingMotionDoc: () => setPendingMotionDoc(undefined),
+      selectConversation,
       startNewConversation,
       submit
     },
@@ -644,6 +780,10 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
       canDeleteConversation: Boolean(sessionId) && !activeRunId,
       canStartNewConversation: Boolean(sessionId || messages.length > 0)
         && !activeRunId,
+      canSwitchConversation: !activeRunId
+        && !isCheckingStatus
+        && !isDeleting
+        && !isHydrating,
       isCheckingStatus,
       isDeleting,
       isHydrating,
@@ -693,7 +833,10 @@ async function reconcileMotionDoc(input: {
   baseSourceRevision?: string;
   currentSource: string;
   motionDoc: string;
-  onApply: (motionDoc: string, summary: string) => void;
+  onApply: (
+    motionDoc: string,
+    summary: string
+  ) => void | Promise<void>;
 }): Promise<MotionDocReconciliation> {
   if (input.motionDoc === input.currentSource) {
     return {};
@@ -712,12 +855,12 @@ async function reconcileMotionDoc(input: {
     if (currentRevision !== input.baseSourceRevision) {
       return { pending };
     }
-    input.onApply(input.motionDoc, input.assistantMessage);
+    await input.onApply(input.motionDoc, input.assistantMessage);
     return {};
   } catch {
     return {
       pending,
-      error: "The agent finished, but SlideX could not apply its deck result automatically."
+      error: MOTION_DOC_APPLY_ERROR
     };
   }
 }

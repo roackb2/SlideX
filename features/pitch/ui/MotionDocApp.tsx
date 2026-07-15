@@ -29,6 +29,7 @@ import {
   GuestSignInDialog,
   type GuestSignInIntent
 } from "@/features/pitch/ui/GuestSignInDialog";
+import type { AgentSessionSummary } from "@/features/pitch/domain/agentRun";
 
 const isSlideXAgentEnabled = process.env.NEXT_PUBLIC_SLIDEX_AGENT_ENABLED === "true";
 
@@ -40,10 +41,13 @@ export type MotionDocInitialProject = {
 
 type MotionDocAppProps = {
   accessMode?: "authenticated" | "guest";
+  initialAgentSessionId?: string;
   initialProject?: MotionDocInitialProject;
   initialResumeIntent?: "export" | "preview";
+  onOpenAgentSession?: (presentationId: string, sessionId: string) => void;
   onSignInRequested?: (intent: GuestSignInIntent) => void;
   onProjectSourceChange?: (source: string, title: string) => Promise<void> | void;
+  onSelectedAgentSessionChange?: (sessionId?: string) => void;
   presentationId?: string;
 };
 
@@ -51,10 +55,13 @@ const guestLockedExportFormats = ["html", "mdx"] as const satisfies readonly Exp
 
 export function MotionDocApp({
   accessMode = "authenticated",
+  initialAgentSessionId,
   initialProject,
   initialResumeIntent,
+  onOpenAgentSession,
   onProjectSourceChange,
   onSignInRequested,
+  onSelectedAgentSessionChange,
   presentationId
 }: MotionDocAppProps = {}) {
   const isMobileViewport = useMobilePitchViewport();
@@ -176,12 +183,31 @@ export function MotionDocApp({
     documentTitle: sliderDocument.title,
     setNotice
   });
-  const applyAgentMotionDoc = useCallback((motionDoc: string, summary: string) => {
+  const applyAgentMotionDoc = useCallback(async (
+    motionDoc: string,
+    summary: string
+  ) => {
+    if (onProjectSourceChange) {
+      const persistedSource = await embedPitchLocalImagesForPersistence(motionDoc);
+      await onProjectSourceChange(persistedSource, projectName);
+    }
     commitSource(motionDoc);
     clearBlockSelection();
     setReplayNonce((value) => value + 1);
     setNotice(summary || "Agent changes applied");
-  }, [clearBlockSelection, commitSource, setNotice, setReplayNonce]);
+  }, [
+    clearBlockSelection,
+    commitSource,
+    onProjectSourceChange,
+    projectName,
+    setNotice,
+    setReplayNonce
+  ]);
+
+  const openAgentSession = useCallback(async (session: AgentSessionSummary) => {
+    await onProjectSourceChange?.(source, projectName);
+    onOpenAgentSession?.(session.presentation.id, session.id);
+  }, [onOpenAgentSession, onProjectSourceChange, projectName, source]);
 
   const openExport = useCallback(() => {
     setFileModalMode("export");
@@ -554,7 +580,10 @@ export function MotionDocApp({
   );
   return isAgentAvailable && presentationId ? (
     <PitchAgentProvider
+      initialSessionId={initialAgentSessionId}
       onApplyMotionDoc={applyAgentMotionDoc}
+      onOpenSession={openAgentSession}
+      onSelectedSessionChange={onSelectedAgentSessionChange}
       presentationId={presentationId}
       presentationTitle={projectName}
       source={source}

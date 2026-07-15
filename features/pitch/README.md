@@ -14,7 +14,8 @@ This file remains authoritative for the editor-local boundary.
   product-session routes with Heddle Remote's HTTP/SSE run client. Heddle owns
   run start/subscribe/cancel requests, framing, validation, abort cleanup, and
   transport errors. SlideX injects sync/async auth headers and retains its
-  session/delete API, but does not acquire tokens or choose model credentials.
+  bounded catalog, detail, immutable Presentation association, and deletion
+  APIs, but does not acquire tokens or choose model credentials.
 - `infrastructure/slidexAgentIdentity.ts` lazily restores or creates the
   Supabase anonymous product identity and supplies its bearer token to the
   client. Concurrent requests share one sign-in attempt. This identity may
@@ -30,10 +31,20 @@ This file remains authoritative for the editor-local boundary.
   detection, terminal state, and bounded retry attempts.
 - `ui/agent/PitchAgentProvider.tsx` owns the live run and current-tab composer
   state independently from the visual surface. A panel, sheet, or FAB may
-  unmount without cancelling the run or forgetting the in-memory model key.
+  unmount without cancelling the run or forgetting the in-memory model key. It
+  also creates one authenticated client and TanStack Query cache shared by the
+  runtime and catalog.
+- `ui/agent/useAgentSessionCatalog.ts` owns bounded catalog loading, pagination,
+  cache invalidation, and retry state. It does not own selection or deck state.
+- `ui/agent/PitchAgentSessionList.tsx` renders the portable catalog surface.
+  Keep it independent from the editor chrome so it can move into a panel,
+  sheet, or FAB-triggered surface without changing lifecycle behavior.
 - `ui/agent/PitchAgentPanel.tsx` renders the current surface and delegates
   MotionDoc application back to the editor's existing undo-aware `commitSource`
-  path.
+  path. An automatically accepted result is persisted through the workspace
+  source callback before its terminal assistant message is rendered; therefore
+  a visible completed turn is safe to reload immediately. Persistence failures
+  keep the result pending instead of presenting an unsaved deck as complete.
 
 Execution, event replay, run-consumer policy, and cancellation semantics belong
 to Heddle. Product
@@ -47,6 +58,13 @@ active session ID and replay cursor for each presentation in the current tab;
 the server remains authoritative for durable session records. Hydration restores
 chat/run state but never replaces the canonical presentation with a session
 snapshot.
+
+Selecting a conversation for the current Presentation hydrates its chat and
+retained run only; the current Presentation source remains the base for the
+next turn. Selecting a conversation for another Presentation synchronously
+saves the current local source, navigates with canonical `presentation` and
+`agentSession` query parameters, then hydrates the target chat. Switching is
+disabled while a run, hydration, status check, or deletion is active.
 
 **New conversation** only detaches the current selection and keeps the old
 server session for the session list. **Delete conversation** is the separate,
