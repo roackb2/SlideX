@@ -16,10 +16,11 @@ This file remains authoritative for the editor-local boundary.
   transport errors. SlideX injects sync/async auth headers and retains its
   bounded catalog, detail, immutable Presentation association, and deletion
   APIs, but does not acquire tokens or choose model credentials.
-- `infrastructure/slidexAgentIdentity.ts` lazily restores or creates the
-  Supabase anonymous product identity and supplies its bearer token to the
-  client. Concurrent requests share one sign-in attempt. This identity may
-  persist across refresh; it never receives the user's model key.
+- `infrastructure/slidexAgentIdentity.ts` restores the signed-in Supabase
+  product identity from the application's shared browser client and supplies
+  its bearer token to the agent client. Concurrent requests share one session
+  read. It never creates a second auth client, falls back to another identity,
+  or receives the user's model key.
 - `infrastructure/slidexAgentPersistence.ts` owns the tab-scoped active
   conversation selection for each canonical presentation ID. It preserves
   independent bindings when the user moves between presentations; it is not a
@@ -32,8 +33,9 @@ This file remains authoritative for the editor-local boundary.
 - `ui/agent/PitchAgentProvider.tsx` owns the live run and current-tab composer
   state independently from the visual surface. A panel, sheet, or FAB may
   unmount without cancelling the run or forgetting the in-memory model key. It
-  also creates one authenticated client and TanStack Query cache shared by the
-  runtime and catalog.
+  also injects the application-wide Supabase browser client into the agent
+  identity service, then creates one authenticated agent client and TanStack
+  Query cache shared by the runtime and catalog.
 - `ui/agent/useAgentSessionCatalog.ts` owns bounded catalog loading, pagination,
   cache invalidation, and retry state. It does not own selection or deck state.
 - `ui/agent/PitchAgentSessionList.tsx` renders the portable catalog surface.
@@ -94,10 +96,11 @@ Agent button and panel. Next.js inlines public environment variables into the
 client bundle, so changing the flag requires a rebuild and redeploy.
 
 The enabled editor also requires `NEXT_PUBLIC_SUPABASE_URL` and
-`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, with anonymous sign-ins enabled for that
-Supabase project. These values establish product identity only. The user's
-OpenAI key is entered at runtime and must not be placed in an environment
-variable or deployment secret.
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, plus a supported OAuth provider for
+SlideX login. Agent requests reuse that signed-in product session; anonymous
+sign-in is neither required nor used. These values establish product identity
+only. The user's OpenAI key is entered at runtime and must not be placed in an
+environment variable or deployment secret.
 
 The editor flag only controls presentation. A deployment must also set
 `SLIDEX_AGENT_ENABLED=true` on the SlideX agent server to register the
