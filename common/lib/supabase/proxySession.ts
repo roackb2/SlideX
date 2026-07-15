@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { appUrl } from "@/common/lib/siteUrl";
 import type { Database } from "@/common/lib/supabase/database.types";
 import { readSupabasePublicEnvironment } from "@/common/lib/supabase/env";
 
@@ -51,7 +52,7 @@ export async function updateSupabaseSession(request: NextRequest) {
   const isAuthenticated = Boolean(data?.claims?.sub);
 
   if (!isAuthenticated && isProtectedWorkspaceRequest(request)) {
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = appUrl(request, "/login");
     loginUrl.searchParams.set(
       "next",
       `${request.nextUrl.pathname}${request.nextUrl.search}`

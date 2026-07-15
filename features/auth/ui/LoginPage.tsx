@@ -43,7 +43,7 @@ export function LoginPage() {
     setIsStartingOAuth(true);
     setOAuthError(null);
 
-    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    const callbackUrl = new URL(appRoutes.authCallback, window.location.origin);
     callbackUrl.searchParams.set("next", nextPath);
     const { error } = await createSupabaseBrowserClient().auth.signInWithOAuth({
       provider,
