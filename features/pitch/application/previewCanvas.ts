@@ -13,6 +13,7 @@ import type {
   MotionDocTableBlock,
   MotionDocTextBlock
 } from "@/core/motion-doc/domain/motionDocTypes";
+import { motionDocBlockKey } from "@/core/motion-doc/application/motionDocBlockIdentity";
 import { MOTION_DOC_CANVAS_HEIGHT, MOTION_DOC_CANVAS_WIDTH } from "@/core/motion-doc/domain/viewport";
 import type { ResolvedBlockFrameUpdate } from "@/features/pitch/application/pitchGeometry";
 
@@ -26,6 +27,7 @@ const GUIDE_THRESHOLD = 0.7;
 export type ResizeHandle = "n" | "e" | "s" | "w" | "nw" | "ne" | "sw" | "se";
 export type CanvasPoint = { x: number; y: number };
 export type CanvasInteraction = {
+  blockId: string;
   blockIndex: number;
   handle?: ResizeHandle;
   mode: "move" | "resize";
@@ -147,13 +149,15 @@ export function interactionFrameUpdates(interaction: CanvasInteraction, pointer:
 
     return [
       {
+        blockId: interaction.blockId,
         blockIndex: interaction.blockIndex,
         frame: resizedFrame
       }
     ];
   }
 
-  return interaction.startFrames.map(({ blockIndex, frame }) => ({
+  return interaction.startFrames.map(({ blockId, blockIndex, frame }) => ({
+    blockId,
     blockIndex,
     frame: {
       h: frame.h,
@@ -172,7 +176,8 @@ export function resizeSelectionFrames(
   const scaleX = selectionFrame.w === 0 ? 1 : resizedSelectionFrame.w / selectionFrame.w;
   const scaleY = selectionFrame.h === 0 ? 1 : resizedSelectionFrame.h / selectionFrame.h;
 
-  return frames.map(({ blockIndex, frame }) => ({
+  return frames.map(({ blockId, blockIndex, frame }) => ({
+    blockId,
     blockIndex,
     frame: {
       h: clampPercent(frame.h * scaleY),
@@ -330,12 +335,12 @@ function intersectsRect(frame: MotionDocFrame, rect: MotionDocFrame) {
 }
 
 function getAlignmentTargets(blocks: MotionDocScene["blocks"], movingFrames: readonly ResolvedBlockFrameUpdate[]) {
-  const movingIndices = new Set(movingFrames.map(({ blockIndex }) => blockIndex));
+  const movingBlockIds = new Set(movingFrames.map(({ blockId }) => blockId));
   const verticalTargets = [0, 50, 100];
   const horizontalTargets = [0, 50, 100];
 
   blocks.forEach((block, index) => {
-    if (movingIndices.has(index) || !isMovableBlock(block)) {
+    if (movingBlockIds.has(motionDocBlockKey(block, index)) || !isMovableBlock(block)) {
       return;
     }
 

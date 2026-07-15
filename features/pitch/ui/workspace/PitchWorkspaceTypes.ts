@@ -137,7 +137,6 @@ export type PitchWorkspaceView = {
   setIsMobileInspectorOpen: Dispatch<SetStateAction<boolean>>;
   setIsMobileSidebarOpen: Dispatch<SetStateAction<boolean>>;
   setIsTemplateModalOpen: Dispatch<SetStateAction<boolean>>;
-  setReplayNonce: Dispatch<SetStateAction<number>>;
 };
 
 export type PitchWorkspaceProps = {

@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
   }
 
   const insertPayload = {
+    editor_template_id: parsedInput.data.editorTemplateId ?? null,
     guest_import_id: parsedInput.data.importId,
     source: parsedInput.data.source,
     template_id: template.id,
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
       ignoreDuplicates: true,
       onConflict: "user_id,guest_import_id"
     })
-    .select("id,user_id,title,kind,source,source_revision,template_id,created_at,updated_at,last_opened_at")
+    .select("id,user_id,title,kind,source,source_revision,template_id,editor_template_id,created_at,updated_at,last_opened_at")
     .maybeSingle();
 
   if (insertError) {
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
     ? { data: insertedPresentation, error: null }
     : await supabase
         .from("presentations")
-        .select("id,user_id,title,kind,source,source_revision,template_id,created_at,updated_at,last_opened_at")
+        .select("id,user_id,title,kind,source,source_revision,template_id,editor_template_id,created_at,updated_at,last_opened_at")
         .eq("guest_import_id", parsedInput.data.importId)
         .eq("user_id", userId)
         .single();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { memo, useState, type CSSProperties } from "react";
 import { ImagePlus } from "lucide-react";
 import { clampImageMediaPosition, imageMediaDimensions } from "@/core/motion-doc/application/imageCrop";
 import { youtubeEmbedUrl } from "@/core/motion-doc/domain/videoSource";
@@ -10,7 +10,7 @@ import { PaperImageFilterLayer } from "@/features/pitch/ui/preview/paperImageFil
 
 type ImageFit = NonNullable<CSSProperties["objectFit"]>;
 
-export function ImageBlock({
+export const ImageBlock = memo(function ImageBlock({
   alt,
   background,
   backgroundColor,
@@ -24,6 +24,7 @@ export function ImageBlock({
   filterSpeed,
   fit = "cover",
   fetchPriority = "auto",
+  frameAspectRatio = 16 / 9,
   full = false,
   loading = "eager",
   cropX = 0,
@@ -36,6 +37,7 @@ export function ImageBlock({
   alt: string;
   fit?: string;
   fetchPriority?: "auto" | "high" | "low";
+  frameAspectRatio?: number;
   full?: boolean;
   loading?: "eager" | "lazy";
   cropX?: number;
@@ -59,9 +61,11 @@ export function ImageBlock({
   const mediaClassName = full || fillFrame ? "h-full w-full" : "aspect-video w-full";
   const objectFit = normalizeImageFit(fit);
   const hasSource = Boolean(src.trim());
-  const mediaContainerRef = useRef<HTMLDivElement | null>(null);
-  const [frameAspectRatio, setFrameAspectRatio] = useState(16 / 9);
-  const [imageAspectRatio, setImageAspectRatio] = useState<number | null>(null);
+  const [loadedImage, setLoadedImage] = useState<{ aspectRatio: number | null; src: string }>({
+    aspectRatio: null,
+    src: ""
+  });
+  const imageAspectRatio = loadedImage.src === src ? loadedImage.aspectRatio : null;
   const imageDimensions = imageMediaDimensions(objectFit, frameAspectRatio, imageAspectRatio);
   const normalizedScaleX = clampImageScale(scaleX);
   const normalizedScaleY = clampImageScale(scaleY);
@@ -76,22 +80,6 @@ export function ImageBlock({
     transformOrigin: "center"
   };
 
-  useEffect(() => {
-    const container = mediaContainerRef.current;
-    if (!container) return;
-    const mediaContainer = container;
-
-    function syncAspectRatio() {
-      const rect = mediaContainer.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) setFrameAspectRatio(rect.width / rect.height);
-    }
-
-    syncAspectRatio();
-    const observer = new ResizeObserver(syncAspectRatio);
-    observer.observe(mediaContainer);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <MotionBlock
       className={
@@ -104,7 +92,7 @@ export function ImageBlock({
       style={surfaceStyle({ background, backgroundColor })}
       {...animation}
     >
-      <div className={`relative overflow-hidden ${mediaClassName}`} ref={mediaContainerRef} style={{ borderRadius: "inherit" }}>
+      <div className={`relative overflow-hidden ${mediaClassName}`} style={{ borderRadius: "inherit" }}>
         {hasSource ? (
           <div className="absolute inset-0" style={mediaTransform}>
             <img
@@ -112,10 +100,16 @@ export function ImageBlock({
               className="absolute left-1/2 top-1/2 max-w-none -translate-x-1/2 -translate-y-1/2"
               decoding="async"
               fetchPriority={fetchPriority}
+              key={src}
               loading={loading}
               onLoad={(event) => {
                 const image = event.currentTarget;
-                if (image.naturalWidth > 0 && image.naturalHeight > 0) setImageAspectRatio(image.naturalWidth / image.naturalHeight);
+                if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+                  setLoadedImage({
+                    aspectRatio: image.naturalWidth / image.naturalHeight,
+                    src
+                  });
+                }
               }}
               src={src}
               style={{ height: `${imageDimensions.height}%`, width: `${imageDimensions.width}%` }}
@@ -145,7 +139,7 @@ export function ImageBlock({
       </div>
     </MotionBlock>
   );
-}
+});
 
 function clampImageScale(value: number | undefined) {
   if (!Number.isFinite(value)) return 1;

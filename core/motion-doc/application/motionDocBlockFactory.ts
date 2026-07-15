@@ -1,5 +1,6 @@
 import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocTypes";
 import { createTableCells, serializeTableCells } from "@/core/motion-doc/application/tableBlock";
+import { withNewMotionDocBlockId } from "@/core/motion-doc/application/motionDocBlockIdentity";
 
 export type AddBlockType =
   | "Title"
@@ -24,6 +25,10 @@ export type AddBlockType =
   | "ShapeStar";
 
 export function createMotionDocBlock(type: AddBlockType): MotionDocBlock {
+  return withNewMotionDocBlockId(createMotionDocBlockWithoutId(type));
+}
+
+function createMotionDocBlockWithoutId(type: AddBlockType): MotionDocBlock {
   switch (type) {
     case "Table":
       return {

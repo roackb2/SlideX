@@ -13,9 +13,16 @@ const validInput = {
 };
 
 test("accepts and normalizes a valid guest demo import", () => {
-  const result = parseGuestDemoImportInput({ ...validInput, title: "  Launch Deck  " });
+  const result = parseGuestDemoImportInput({
+    ...validInput,
+    editorTemplateId: "blank:basic-white",
+    title: "  Launch Deck  "
+  });
   assert.equal(result.success, true);
-  if (result.success) assert.equal(result.data.title, "Launch Deck");
+  if (result.success) {
+    assert.equal(result.data.editorTemplateId, "blank:basic-white");
+    assert.equal(result.data.title, "Launch Deck");
+  }
 });
 
 test("rejects system fields and malformed import IDs", () => {

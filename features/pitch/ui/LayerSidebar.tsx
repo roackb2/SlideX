@@ -4,6 +4,7 @@ import { Group, Layers, Plus, Trash2 } from "lucide-react";
 import type { MouseEvent } from "react";
 import { useState } from "react";
 import { LayerRow } from "@/features/pitch/ui/LayerRow";
+import { motionDocBlockKey } from "@/core/motion-doc/application/motionDocBlockIdentity";
 import type { MotionDocBlock, MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import { SlideThumbnailPreview } from "@/features/pitch/ui/preview/SlideThumbnailPreview";
 import type { SlideRow } from "@/features/pitch/application/slideRows";
@@ -242,7 +243,7 @@ export function LayerSidebar({
                                     draggedBlockIndex={draggedBlockIndex}
                                     dragOverBlockIndex={dragOverBlockIndex}
                                     index={blockIndex}
-                                    key={blockIndex}
+                                    key={motionDocBlockKey(block, blockIndex)}
                                     moveBlock={moveBlock}
                                     moveBlockToEdge={moveBlockToEdge}
                                     onSelectBlock={onSelectBlock}
@@ -269,7 +270,7 @@ export function LayerSidebar({
                             draggedBlockIndex={draggedBlockIndex}
                             dragOverBlockIndex={dragOverBlockIndex}
                             index={blockIndex}
-                            key={blockIndex}
+                            key={motionDocBlockKey(block, blockIndex)}
                             moveBlock={moveBlock}
                             moveBlockToEdge={moveBlockToEdge}
                             onSelectBlock={onSelectBlock}

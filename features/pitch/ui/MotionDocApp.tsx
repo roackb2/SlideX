@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { appRoutes } from "@/common/lib/appRoutes";
 import { PitchWorkspace } from "@/features/pitch/ui/PitchWorkspace";
 import { ExportModal, type ExportFormat } from "@/features/pitch/ui/export/ExportModal";
 import { defaultMdx } from "@/core/motion-doc/presets/defaultMdx";
-import { getSelectionMdx } from "@/core/motion-doc/application/motionDocSerialize";
+import {
+  ensureMotionDocSourceBlockIds,
+  getSelectionMdx
+} from "@/core/motion-doc/application/motionDocSerialize";
 import { useLayerSelection } from "@/features/pitch/ui/hooks/useLayerSelection";
 import { useMotionDocDocument } from "@/features/pitch/ui/hooks/useMotionDocDocument";
 import { usePitchCommands } from "@/features/pitch/ui/hooks/usePitchCommands";
@@ -14,7 +17,6 @@ import { usePitchExport } from "@/features/pitch/ui/hooks/usePitchExport";
 import { usePitchProject, type NewPitchProjectOptions } from "@/features/pitch/ui/hooks/usePitchProject";
 import { usePitchShortcuts } from "@/features/pitch/ui/hooks/usePitchShortcuts";
 import { usePitchUndo } from "@/features/pitch/ui/hooks/usePitchUndo";
-import { defaultTemplate } from "@/core/motion-doc/presets/templates";
 import { PitchAgentPanel } from "@/features/pitch/ui/agent/PitchAgentPanel";
 import { PitchAgentProvider } from "@/features/pitch/ui/agent/PitchAgentProvider";
 import { importPitchProjectFile } from "@/features/pitch/infrastructure/pitchImport";
@@ -45,13 +47,19 @@ type MotionDocAppProps = {
   initialAgentSessionId?: string;
   initialProject?: MotionDocInitialProject;
   initialResumeIntent?: "export" | "preview";
-  onLocalProjectSourceChange?: (source: string) => void;
+  onLocalProjectChange?: (source: string, title: string, templateId?: string) => void;
   onOpenAgentSession?: (presentationId: string, sessionId: string) => void;
   onSignInRequested?: (intent: GuestSignInIntent) => void;
-  onProjectSourceChange?: (source: string, title: string, templateId?: string) => Promise<void> | void;
+  onProjectSourceChange?: (
+    source: string,
+    title: string,
+    templateId?: string,
+    editorSource?: string
+  ) => Promise<void> | void;
   onSelectedAgentSessionChange?: (sessionId?: string) => void;
   presentationId?: string;
   projectVersion?: number;
+  syncWarning?: string | null;
 };
 
 const guestLockedExportFormats = ["html", "mdx"] as const satisfies readonly ExportFormat[];
@@ -61,26 +69,24 @@ export function MotionDocApp({
   initialAgentSessionId,
   initialProject,
   initialResumeIntent,
-  onLocalProjectSourceChange,
+  onLocalProjectChange,
   onOpenAgentSession,
   onProjectSourceChange,
   onSignInRequested,
   onSelectedAgentSessionChange,
   presentationId,
-  projectVersion
+  projectVersion,
+  syncWarning
 }: MotionDocAppProps = {}) {
   const isMobileViewport = useMobilePitchViewport();
-  const [source, setSource] = useState(initialProject?.source ?? defaultMdx);
-  const [selectedTemplateId, setSelectedTemplateId] = useState(initialProject?.templateId ?? defaultTemplate.id);
+  const [source, setSource] = useState(() => ensureMotionDocSourceBlockIds(initialProject?.source ?? defaultMdx));
+  const [selectedTemplateId, setSelectedTemplateId] = useState(initialProject?.templateId ?? "");
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [draggedBlockIndex, setDraggedBlockIndex] = useState<number | null>(null);
   const [dragOverBlockIndex, setDragOverBlockIndex] = useState<number | null>(null);
   const undoStackRef = useRef<string[]>([]);
   const syncedProjectVersionRef = useRef(projectVersion);
   const [isAgentPanelOpen, setIsAgentPanelOpen] = useState(false);
-  useEffect(() => {
-    onLocalProjectSourceChange?.(source);
-  }, [onLocalProjectSourceChange, source]);
   const {
     activeCanvasTool,
     exportMenuRef,
@@ -107,8 +113,7 @@ export function MotionDocApp({
     setIsMobileSidebarOpen,
     setIsPresentationPreviewOpen,
     setIsTemplateModalOpen,
-    setNotice,
-    setReplayNonce
+    setNotice
   } = usePitchWorkspaceViewState(initialResumeIntent);
 
   const {
@@ -169,15 +174,20 @@ export function MotionDocApp({
     resetSelection: clearBlockSelection,
     setActiveSlideIndex,
     setNotice,
-    setReplayNonce,
     setSource,
     undoStackRef
   });
+  useLayoutEffect(() => {
+    onLocalProjectChange?.(source, projectName, selectedTemplateId || undefined);
+  }, [onLocalProjectChange, projectName, selectedTemplateId, source]);
+  useEffect(() => {
+    if (syncWarning) setNotice(syncWarning);
+  }, [setNotice, syncWarning]);
   useEffect(() => {
     if (!initialProject || projectVersion === undefined || syncedProjectVersionRef.current === projectVersion) return;
     syncedProjectVersionRef.current = projectVersion;
 
-    const incomingTemplateId = initialProject.templateId ?? defaultTemplate.id;
+    const incomingTemplateId = initialProject.templateId ?? "";
     if (
       initialProject.source === source &&
       initialProject.name === projectName &&
@@ -211,7 +221,6 @@ export function MotionDocApp({
     clearBlockSelection,
     markProjectDirty,
     setNotice,
-    setReplayNonce,
     setSource,
     source,
     undoStackRef
@@ -227,25 +236,37 @@ export function MotionDocApp({
   ) => {
     if (onProjectSourceChange) {
       const persistedSource = await embedPitchLocalImagesForPersistence(motionDoc);
-      await onProjectSourceChange(persistedSource, projectName);
+      await onProjectSourceChange(
+        persistedSource,
+        projectName,
+        selectedTemplateId || undefined,
+        motionDoc
+      );
     }
     commitSource(motionDoc);
     clearBlockSelection();
-    setReplayNonce((value) => value + 1);
     setNotice(summary || "Agent changes applied");
   }, [
     clearBlockSelection,
     commitSource,
     onProjectSourceChange,
     projectName,
+    selectedTemplateId,
     setNotice,
-    setReplayNonce
   ]);
 
   const openAgentSession = useCallback(async (session: AgentSessionSummary) => {
-    await onProjectSourceChange?.(source, projectName);
+    if (onProjectSourceChange) {
+      const persistedSource = await embedPitchLocalImagesForPersistence(source);
+      await onProjectSourceChange(
+        persistedSource,
+        projectName,
+        selectedTemplateId || undefined,
+        source
+      );
+    }
     onOpenAgentSession?.(session.presentation.id, session.id);
-  }, [onOpenAgentSession, onProjectSourceChange, projectName, source]);
+  }, [onOpenAgentSession, onProjectSourceChange, projectName, selectedTemplateId, source]);
 
   const openExport = useCallback(() => {
     setFileModalMode("export");
@@ -308,7 +329,6 @@ export function MotionDocApp({
     setActiveSlideIndex,
     setIsTemplateModalOpen,
     setNotice,
-    setReplayNonce,
     setSelectedTemplateId,
     setSource,
     source
@@ -325,8 +345,7 @@ export function MotionDocApp({
     enabled: Boolean(initialProject),
     onProjectSourceChange,
     projectName,
-    projectVersion,
-    templateId: selectedTemplateId,
+    templateId: selectedTemplateId || undefined,
     setNotice,
     source
   });
@@ -335,7 +354,12 @@ export function MotionDocApp({
     try {
       if (onProjectSourceChange) {
         const persistedSource = await embedPitchLocalImagesForPersistence(source);
-        await onProjectSourceChange(persistedSource, projectName, selectedTemplateId);
+        await onProjectSourceChange(
+          persistedSource,
+          projectName,
+          selectedTemplateId || undefined,
+          source
+        );
       }
       onSignInRequested?.(intent);
     } catch {
@@ -369,7 +393,7 @@ export function MotionDocApp({
 
   const startNewProject = useCallback(
     (options?: NewPitchProjectOptions) => {
-      setSelectedTemplateId(options?.templateId ?? defaultTemplate.id);
+      setSelectedTemplateId(options?.templateId ?? "");
       newProject(options);
     },
     [newProject]
@@ -486,10 +510,7 @@ export function MotionDocApp({
         applyLayoutToActiveSlide: pitchCommands.applyLayoutToActiveSlide,
         applyTemplate: pitchCommands.applyTemplate,
         beginBlockTransform: pitchCommands.beginBlockTransform,
-        commitMdxSource: (value) => {
-          setSource(value);
-          markProjectDirty();
-        },
+        commitMdxSource: (value) => commitSource(value),
         copySelectedBlock: pitchCommands.copySelectedBlock,
         copySource,
         deleteBlock: pitchCommands.deleteBlock,
@@ -599,8 +620,7 @@ export function MotionDocApp({
         setIsExportMenuOpen,
         setIsMobileInspectorOpen,
         setIsMobileSidebarOpen,
-        setIsTemplateModalOpen,
-        setReplayNonce
+        setIsTemplateModalOpen
       }}
     />
     <PresentationPreviewModal

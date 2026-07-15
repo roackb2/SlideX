@@ -10,6 +10,7 @@ export type MotionDocProps = Record<string, MotionDocPropValue>;
 
 export type MotionDocBlockMap = {
   heading: {
+    id?: string;
     type: "heading";
     text: string;
   };

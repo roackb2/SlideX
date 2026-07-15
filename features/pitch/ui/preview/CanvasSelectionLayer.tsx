@@ -4,6 +4,8 @@ import type { PointerEvent } from "react";
 import type { ImageCropRect } from "@/core/motion-doc/application/imageCrop";
 import type { MotionDocFrame } from "@/core/motion-doc/domain/frame";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
+import { motionDocBlockKey } from "@/core/motion-doc/application/motionDocBlockIdentity";
+import type { BlockFrameOverrides } from "@/features/pitch/application/pitchGeometry";
 import {
   combinedSelectionFrame,
   minimumCanvasFrameSize,
@@ -43,14 +45,14 @@ type CanvasSelectionLayerProps = {
   activeSlide: MotionDocScene | undefined;
   alignmentGuides: AlignmentGuide[];
   canvasScale: number;
-  frameOverrides: ReadonlyMap<number, MotionDocFrame>;
-  interactionBlockIndex: number | null;
+  frameOverrides: BlockFrameOverrides;
+  interactionBlockId: string | null;
   interactionMode: CanvasInteractionMode;
   imageCropBlockIndex: number | null;
   imageCropRect: ImageCropRect | null;
   marqueeSelection: MarqueeSelection | null;
   onCancelMarquee: (event: PointerEvent<HTMLDivElement>) => void;
-  onEndInteraction: (event: PointerEvent<HTMLDivElement>, blockIndex: number) => void;
+  onEndInteraction: (event: PointerEvent<HTMLDivElement>, blockId: string) => void;
   onEndMarquee: (event: PointerEvent<HTMLDivElement>) => void;
   onBeginTextEdit: (blockIndex: number) => void;
   onBeginBlockTransform: () => void;
@@ -73,7 +75,7 @@ export function CanvasSelectionLayer({
   alignmentGuides,
   canvasScale,
   frameOverrides,
-  interactionBlockIndex,
+  interactionBlockId,
   interactionMode,
   imageCropBlockIndex,
   imageCropRect,
@@ -100,7 +102,12 @@ export function CanvasSelectionLayer({
   const isTextMultiSelection = isMultiSelection && isTextOnlySelection(activeSlide?.blocks ?? [], selectedIndices);
   const multiSelectionFrame = isMultiSelection ? combinedSelectionFrame(activeSlide, selectedIndices, frameOverrides) : null;
   const spacingGuides = isMultiSelection
-    ? selectionSpacingGuides(selectedIndices.map((index) => frameOverrides.get(index) ?? blockFrame(activeSlide?.blocks[index])))
+    ? selectionSpacingGuides(selectedIndices.map((index) => {
+        const block = activeSlide?.blocks[index];
+        return block
+          ? frameOverrides.get(motionDocBlockKey(block, index)) ?? blockFrame(block)
+          : blockFrame(undefined);
+      }))
     : [];
   const unlockedSelectedIndices = selectedIndices.filter((index) => {
     const block = activeSlide?.blocks[index];
@@ -109,6 +116,11 @@ export function CanvasSelectionLayer({
   const groupInteractionIndex = unlockedSelectedIndices.includes(selectedBlockIndex ?? -1)
     ? selectedBlockIndex
     : unlockedSelectedIndices[0] ?? null;
+  const groupInteractionBlockId = groupInteractionIndex === null
+    ? null
+    : activeSlide?.blocks[groupInteractionIndex]
+      ? motionDocBlockKey(activeSlide.blocks[groupInteractionIndex], groupInteractionIndex)
+      : null;
 
   return (
     <div
@@ -137,14 +149,15 @@ export function CanvasSelectionLayer({
         const isLineShape = block.type === "Shape" && block.props.shape === "line";
         const showIndividualTextEditor = isSelected && isTextBlock && (isTextMultiSelection || (!isMultiSelection && isPrimarySelection));
         const showIndividualControls = !isMultiSelection && isPrimarySelection || isTextMultiSelection && isTextBlock;
-        const frame = frameOverrides.get(blockIndex) ?? blockFrame(block);
+        const blockKey = motionDocBlockKey(block, blockIndex);
+        const frame = frameOverrides.get(blockKey) ?? blockFrame(block);
         const minFrameSize = minimumCanvasFrameSize(block, canvasScale);
 
         return (
           <div
             aria-label={`Move ${block.type} layer ${blockIndex + 1}`}
             className={frameControlClass({
-              isInteracting: interactionBlockIndex === blockIndex,
+              isInteracting: interactionBlockId === blockKey,
               isLineShape,
               isLocked,
               isPrimarySelection: isPrimarySelection || isTextMultiSelection && isTextBlock,
@@ -154,20 +167,20 @@ export function CanvasSelectionLayer({
             })}
             data-block-index={blockIndex}
             data-frame-control
-            key={`${block.type}-control-${blockIndex}`}
+            key={blockKey}
             onPointerDown={(event) => {
               if (!isImageCropActive) onStartMove(event, blockIndex, frame);
             }}
             onPointerMove={(event) => {
-              if (interactionBlockIndex === blockIndex) onUpdateInteraction(event);
+              if (interactionBlockId === blockKey) onUpdateInteraction(event);
             }}
-            onPointerUp={(event) => onEndInteraction(event, blockIndex)}
+            onPointerUp={(event) => onEndInteraction(event, blockKey)}
             role="button"
             style={{
               height: `${frame.h}%`,
               left: `${frame.x}%`,
-              minHeight: minFrameSize.height,
-              minWidth: minFrameSize.width,
+              minHeight: isImageCropActive ? undefined : minFrameSize.height,
+              minWidth: isImageCropActive ? undefined : minFrameSize.width,
               top: `${frame.y}%`,
               width: `${frame.w}%`
             }}
@@ -219,7 +232,7 @@ export function CanvasSelectionLayer({
             {isSelected && !isImageCropActive ? (
               <SelectedFrameControls
                 frame={frame}
-                interactionMode={interactionBlockIndex === blockIndex ? interactionMode : "idle"}
+                interactionMode={interactionBlockId === blockKey ? interactionMode : "idle"}
                 isTextBlock={isTextBlock}
                 isLineShape={isLineShape}
                 isLocked={isLocked}
@@ -237,9 +250,9 @@ export function CanvasSelectionLayer({
           count={selectedIndices.length}
           frame={multiSelectionFrame}
           interactionMode={interactionMode}
-          isTransforming={interactionBlockIndex === groupInteractionIndex}
+          isTransforming={interactionBlockId !== null}
           lockedCount={selectedIndices.length - unlockedSelectedIndices.length}
-          onEndInteraction={(event) => onEndInteraction(event, groupInteractionIndex)}
+          onEndInteraction={(event) => onEndInteraction(event, interactionBlockId ?? groupInteractionBlockId ?? `missing-${groupInteractionIndex}`)}
           onPointerMove={onUpdateInteraction}
           onStartMove={(event) => onStartMove(event, groupInteractionIndex, multiSelectionFrame)}
           onStartResize={(event, handle) => onStartResize(event, groupInteractionIndex, handle, multiSelectionFrame, unlockedSelectedIndices)}

@@ -11,6 +11,9 @@ export type BlockFramePatch = {
 };
 
 export type ResolvedBlockFrameUpdate = {
+  blockId: string;
   blockIndex: number;
   frame: MotionDocFrame;
 };
+
+export type BlockFrameOverrides = ReadonlyMap<string, MotionDocFrame>;

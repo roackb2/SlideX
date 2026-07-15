@@ -141,9 +141,7 @@ export function ImageFields({
         value={block.props.alt ?? ""} 
         onChange={(value) => updateBlock(
           selectedBlockIndex,
-          { ...block.props, alt: value },
-          undefined,
-          { skipReplay: true }
+          { ...block.props, alt: value }
         )}
       />
 

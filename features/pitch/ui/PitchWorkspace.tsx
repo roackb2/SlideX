@@ -42,7 +42,6 @@ export function PitchWorkspace({ agent, commands, document, selection, view }: P
   function selectSlide(index: number) {
     commands.setActiveSlideIndex(index);
     selection.selectSingleBlock(null);
-    view.setReplayNonce((value) => value + 1);
   }
 
   return (

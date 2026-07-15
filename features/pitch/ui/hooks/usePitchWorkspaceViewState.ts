@@ -19,7 +19,6 @@ export function usePitchWorkspaceViewState(initialResumeIntent?: "export" | "pre
   const [isPresentationPreviewOpen, setIsPresentationPreviewOpen] = useState(initialResumeIntent === "preview");
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [notice, setNotice] = useState("Ready");
-  const [replayNonce, setReplayNonce] = useState(0);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
 
   return {
@@ -36,7 +35,7 @@ export function usePitchWorkspaceViewState(initialResumeIntent?: "export" | "pre
     isPresentationPreviewOpen,
     isTemplateModalOpen,
     notice,
-    replayNonce,
+    replayNonce: 0,
     setActiveCanvasTool,
     setFileModalMode,
     setGuestSignInIntent,
@@ -48,7 +47,6 @@ export function usePitchWorkspaceViewState(initialResumeIntent?: "export" | "pre
     setIsMobileSidebarOpen,
     setIsPresentationPreviewOpen,
     setIsTemplateModalOpen,
-    setNotice,
-    setReplayNonce
+    setNotice
   };
 }

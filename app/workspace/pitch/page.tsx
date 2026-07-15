@@ -18,7 +18,8 @@ function LocalPitchWorkspace() {
     presentation,
     save,
     selectAgentSession,
-    trackLocalSource
+    syncWarning,
+    trackLocalProject
   } = useLocalPitchPresentation();
   const resumeIntent = searchParams.get("intent") === "export"
     ? "export"
@@ -54,12 +55,12 @@ function LocalPitchWorkspace() {
         initialProject={{
           name: presentation.title,
           source: presentation.source,
-          templateId: presentation.templateId
+          templateId: presentation.editorTemplateId
         }}
         initialAgentSessionId={agentSessionId}
         initialResumeIntent={resumeIntent}
         key={presentation.id}
-        onLocalProjectSourceChange={trackLocalSource}
+        onLocalProjectChange={trackLocalProject}
         onOpenAgentSession={openAgentSession}
         onSignInRequested={(intent) => {
           const nextPath = `${appRoutes.liveDemo}&intent=${intent}`;
@@ -69,6 +70,7 @@ function LocalPitchWorkspace() {
         onSelectedAgentSessionChange={selectAgentSession}
         presentationId={presentation.id}
         projectVersion={presentation.sourceRevision}
+        syncWarning={syncWarning}
       />
     </PitchLocaleOverride>
   );

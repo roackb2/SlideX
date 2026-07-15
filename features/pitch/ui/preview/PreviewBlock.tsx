@@ -1,8 +1,9 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { memo, type CSSProperties } from "react";
 import type { MotionDocFrame } from "@/core/motion-doc/domain/frame";
 import type { MotionDocBlock } from "@/core/motion-doc/domain/motionDocTypes";
+import type { BlockFrameOverrides } from "@/features/pitch/application/pitchGeometry";
 import {
   blockWidthProp,
   booleanProp,
@@ -24,11 +25,12 @@ import { TableBlock } from "@/features/pitch/ui/preview/motion/TableBlock";
 
 export type PreviewBlockItem = {
   block: MotionDocBlock;
+  blockKey: string;
   originalIndex: number;
 };
 
 type PreviewBlockListProps = {
-  frameOverrides?: ReadonlyMap<number, MotionDocFrame>;
+  frameOverrides?: BlockFrameOverrides;
   hiddenBlockIndices: Set<number>;
   imageFetchPriority?: "auto" | "high" | "low";
   imageLoading?: "eager" | "lazy";
@@ -48,35 +50,69 @@ export function PreviewBlockList({
 
   return (
     <>
-      {flowBlocks.map(({ block, originalIndex }) => (
-        <div key={`${block.type}-${originalIndex}`}>
+      {flowBlocks.map(({ block, blockKey }) => (
+        <div key={blockKey}>
           <PreviewBlock block={block} imageFetchPriority={imageFetchPriority} imageLoading={imageLoading} />
         </div>
       ))}
-      {positionedBlocks.map(({ block, originalIndex }) => (
-        <div
-          className="motion-positioned-block"
-          key={`${block.type}-positioned-${originalIndex}`}
-          style={positionedBlockStyle(block, originalIndex, frameOverrides?.get(originalIndex))}
-        >
-          <PreviewBlock block={block} fillFrame imageFetchPriority={imageFetchPriority} imageLoading={imageLoading} />
-        </div>
+      {positionedBlocks.map(({ block, blockKey, originalIndex }) => (
+        <PositionedPreviewBlock
+          block={block}
+          frameOverride={frameOverrides?.get(blockKey)}
+          imageFetchPriority={imageFetchPriority}
+          imageLoading={imageLoading}
+          key={blockKey}
+          originalIndex={originalIndex}
+        />
       ))}
     </>
   );
 }
 
-export function PreviewBlock({
+function PositionedPreviewBlock({
   block,
-  fillFrame = false,
-  imageFetchPriority = "auto",
-  imageLoading = "eager"
-}: {
-  block: MotionDocBlock;
-  fillFrame?: boolean;
+  frameOverride,
+  imageFetchPriority,
+  imageLoading,
+  originalIndex
+}: Omit<PreviewBlockItem, "blockKey"> & {
+  frameOverride?: MotionDocFrame;
   imageFetchPriority?: "auto" | "high" | "low";
   imageLoading?: "eager" | "lazy";
 }) {
+  const frame = frameOverride ?? blockFrame(block);
+
+  return (
+    <div
+      className="motion-positioned-block"
+      style={positionedBlockStyle(block, originalIndex, frame)}
+    >
+      <PreviewBlock
+        block={block}
+        fillFrame
+        frameAspectRatio={frame.h > 0 ? frame.w / frame.h * (16 / 9) : 16 / 9}
+        imageFetchPriority={imageFetchPriority}
+        imageLoading={imageLoading}
+      />
+    </div>
+  );
+}
+
+type PreviewBlockProps = {
+  block: MotionDocBlock;
+  fillFrame?: boolean;
+  frameAspectRatio?: number;
+  imageFetchPriority?: "auto" | "high" | "low";
+  imageLoading?: "eager" | "lazy";
+};
+
+export const PreviewBlock = memo(function PreviewBlock({
+  block,
+  fillFrame = false,
+  frameAspectRatio,
+  imageFetchPriority = "auto",
+  imageLoading = "eager"
+}: PreviewBlockProps) {
   if (block.type === "heading") {
     return (
       <h2 className="text-sm font-semibold tracking-widest text-neutral-400">
@@ -166,6 +202,7 @@ export function PreviewBlock({
         filterSpeed={numberProp(block.props.filterSpeed)}
         fetchPriority={imageFetchPriority}
         fit={fitProp(block.props.fit)}
+        frameAspectRatio={frameAspectRatio}
         full={booleanProp(block.props.full)}
         loading={imageLoading}
         radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
@@ -287,6 +324,30 @@ export function PreviewBlock({
   }
 
   return null;
+}, previewBlockPropsEqual);
+
+function previewBlockPropsEqual(previous: PreviewBlockProps, next: PreviewBlockProps) {
+  return (
+    previous.fillFrame === next.fillFrame &&
+    previous.frameAspectRatio === next.frameAspectRatio &&
+    previous.imageFetchPriority === next.imageFetchPriority &&
+    previous.imageLoading === next.imageLoading &&
+    motionDocBlocksEqual(previous.block, next.block)
+  );
+}
+
+function motionDocBlocksEqual(previous: MotionDocBlock, next: MotionDocBlock) {
+  if (previous === next) return true;
+  if (previous.type !== next.type) return false;
+  if ("text" in previous && "text" in next && previous.text !== next.text) return false;
+  if (!("props" in previous) || !("props" in next)) return true;
+
+  const previousEntries = Object.entries(previous.props);
+  const nextEntries = Object.entries(next.props);
+  return (
+    previousEntries.length === nextEntries.length &&
+    previousEntries.every(([key, value]) => next.props[key] === value)
+  );
 }
 
 function positionedBlockStyle(block: MotionDocBlock, index: number, frameOverride?: MotionDocFrame): CSSProperties {

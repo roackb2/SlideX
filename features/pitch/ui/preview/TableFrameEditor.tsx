@@ -210,7 +210,7 @@ export function TableFrameEditor({
   const updateTableProps = useCallback(function updateTableProps(nextProps: MotionDocProps, transient = false) {
     const cleanProps = cleanTableEditorProps(nextProps);
     latestPropsRef.current = cleanProps;
-    onUpdateBlock(blockIndex, cleanProps, undefined, transient ? { transient: true } : { skipReplay: true });
+    onUpdateBlock(blockIndex, cleanProps, undefined, transient ? { transient: true } : undefined);
   }, [blockIndex, onUpdateBlock]);
 
   const startTableTrackResize = useTableTrackResize({

@@ -5,6 +5,7 @@ import { InteractiveDotField } from "@/common/ui/InteractiveDotField";
 import { applyImageCropRect, fullImageCropRect, type ImageCropRect } from "@/core/motion-doc/application/imageCrop";
 import type { MotionDocFrame } from "@/core/motion-doc/domain/frame";
 import type { MotionDocProps, MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
+import { motionDocBlockKey } from "@/core/motion-doc/application/motionDocBlockIdentity";
 import type { CanvasTool } from "@/features/pitch/application/canvasTools";
 import type { BlockFramePatch } from "@/features/pitch/application/pitchGeometry";
 import {
@@ -136,10 +137,7 @@ export function PreviewCanvas({
   const [imageCropTarget, setImageCropTarget] = useState<{ blockIndex: number; cropRect: ImageCropRect; slideIndex: number } | null>(null);
   const { closeContextMenu, contextMenu, openContextMenu } = useCanvasContextMenu();
   const { actualScale, canvasFrameStyle, canvasStripSidePadding } = useCanvasViewportMetrics({
-    activeSlideIndex,
-    canvasRef,
     onFitScaleChange,
-    sceneCount,
     scrollAreaRef,
     zoomLevel
   });
@@ -173,6 +171,11 @@ export function PreviewCanvas({
   const viewportCursorClass = activeCanvasTool === "hand"
     ? isPanningCanvas ? "cursor-grabbing" : "cursor-grab"
     : activeCanvasTool === "zoom" ? zoomDirection === "out" ? "cursor-zoom-out" : "cursor-zoom-in" : "";
+  const isDotFieldInteractive = (
+    (canvasInteraction.mode === "idle" || canvasInteraction.mode === "selected") &&
+    !isPanningCanvas &&
+    imageCropBlockIndex === null
+  );
   const hiddenPreviewBlockIndices = useMemo(
     () => hiddenEditablePreviewBlockIndices(activeSlide?.blocks ?? [], selectedBlockIndex, selectedBlockIndices),
     [activeSlide?.blocks, selectedBlockIndex, selectedBlockIndices]
@@ -193,6 +196,17 @@ export function PreviewCanvas({
         : selectedBlockIndex === null ? [] : [selectedBlockIndex]
     });
   }, [selectedBlockIndex, selectedBlockIndices, syncSelection]);
+
+  useEffect(() => {
+    const transform = canvasInteraction.transform;
+    if (!transform) return;
+    const transformStillExists = activeSlide?.blocks.some(
+      (block, blockIndex) => motionDocBlockKey(block, blockIndex) === transform.blockId
+    );
+    if (transformStillExists) return;
+    transientFramePreview.reset();
+    canvasInteraction.clearInteraction();
+  }, [activeSlide?.blocks, canvasInteraction, transientFramePreview]);
 
   useEffect(() => {
     if (activeCanvasTool !== "zoom") {
@@ -227,9 +241,11 @@ export function PreviewCanvas({
       return;
     }
 
-    window.requestAnimationFrame(() => {
+    const animationFrame = window.requestAnimationFrame(() => {
       scrollSlideFrameIntoView(activeSlideFrame, scrollAreaRef.current);
     });
+
+    return () => window.cancelAnimationFrame(animationFrame);
   }, [activeSlideIndex, isPanActive, sceneCount]);
 
   function getCanvasPosition(event: { clientX: number; clientY: number }) {
@@ -308,10 +324,14 @@ export function PreviewCanvas({
       });
 
     const interaction: CanvasInteraction = {
+      blockId: block ? motionDocBlockKey(block, blockIndex) : `missing-${blockIndex}`,
       blockIndex,
       mode: "move",
       startFrame: frame,
       startFrames: moveIndices.map((index) => ({
+        blockId: activeSlide?.blocks[index]
+          ? motionDocBlockKey(activeSlide.blocks[index], index)
+          : `missing-${index}`,
         blockIndex: index,
         frame: blockFrame(activeSlide?.blocks[index])
       })),
@@ -352,11 +372,15 @@ export function PreviewCanvas({
     }
 
     const interaction: CanvasInteraction = {
+      blockId: block ? motionDocBlockKey(block, blockIndex) : `missing-${blockIndex}`,
       blockIndex,
       handle,
       mode: "resize",
       startFrame: frame,
       startFrames: blockIndices.map((index) => ({
+        blockId: activeSlide?.blocks[index]
+          ? motionDocBlockKey(activeSlide.blocks[index], index)
+          : `missing-${index}`,
         blockIndex: index,
         frame: blockFrame(activeSlide?.blocks[index])
       })),
@@ -402,13 +426,15 @@ export function PreviewCanvas({
     transientFramePreview.preview(updates);
   }
 
-  function endInteraction(event: PointerEvent<HTMLDivElement>, blockIndex: number) {
-    if (!canvasInteraction.isTransformingBlock(blockIndex)) {
+  function endInteraction(event: PointerEvent<HTMLDivElement>, blockId: string) {
+    if (!canvasInteraction.isTransformingBlock(blockId)) {
       return;
     }
 
     updateInteraction(event, true);
-    event.currentTarget.releasePointerCapture(event.pointerId);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
     canvasInteraction.finishTransform();
   }
 
@@ -560,7 +586,10 @@ export function PreviewCanvas({
       id="canvas-v4"
       onContextMenuCapture={handleCanvasContextMenu}
     >
-      <InteractiveDotField className="z-0 opacity-65" />
+      <InteractiveDotField
+        className="z-0 opacity-65"
+        interactive={isDotFieldInteractive}
+      />
       <CanvasSlideNav
         activeSlideIndex={activeSlideIndex}
         onNextSlide={onNextSlide}
@@ -662,7 +691,7 @@ export function PreviewCanvas({
                         alignmentGuides={transientFramePreview.alignmentGuides}
                         canvasScale={actualScale}
                         frameOverrides={transientFramePreview.frameOverrides}
-                        interactionBlockIndex={canvasInteraction.transform?.blockIndex ?? null}
+                        interactionBlockId={canvasInteraction.transform?.blockId ?? null}
                         interactionMode={canvasInteraction.mode}
                         imageCropBlockIndex={imageCropBlockIndex}
                         imageCropRect={imageCropRect}

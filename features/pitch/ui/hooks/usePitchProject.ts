@@ -7,6 +7,7 @@ import {
   type SetStateAction
 } from "react";
 import { defaultMdx } from "@/core/motion-doc/presets/defaultMdx";
+import { ensureMotionDocSourceBlockIds } from "@/core/motion-doc/application/motionDocSerialize";
 
 export type NewPitchProjectOptions = {
   name?: string;
@@ -25,7 +26,6 @@ type UsePitchProjectArgs = {
   resetSelection: () => void;
   setActiveSlideIndex: Dispatch<SetStateAction<number>>;
   setNotice: Dispatch<SetStateAction<string>>;
-  setReplayNonce: Dispatch<SetStateAction<number>>;
   setSource: Dispatch<SetStateAction<string>>;
   undoStackRef: MutableRefObject<string[]>;
 };
@@ -35,7 +35,6 @@ export function usePitchProject({
   initialProject,
   setActiveSlideIndex,
   setNotice,
-  setReplayNonce,
   setSource,
   undoStackRef
 }: UsePitchProjectArgs) {
@@ -48,19 +47,17 @@ export function usePitchProject({
   }, []);
 
   const applyProject = useCallback((options: NewPitchProjectOptions, resetActiveSlide: boolean) => {
-    setSource(options.source ?? defaultMdx);
+    setSource(ensureMotionDocSourceBlockIds(options.source ?? defaultMdx));
     setProjectName(options.name ?? "Untitled");
     setIsProjectDirty(false);
     undoStackRef.current = [];
     if (resetActiveSlide) setActiveSlideIndex(0);
     resetSelection();
-    setReplayNonce((value) => value + 1);
     setNotice(options.notice ?? "New project");
   }, [
     resetSelection,
     setActiveSlideIndex,
     setNotice,
-    setReplayNonce,
     setSource,
     undoStackRef
   ]);

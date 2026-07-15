@@ -15,6 +15,15 @@ type PinchState = {
   startScale: number;
 };
 
+type PendingPinchFrame = {
+  pinchState: PinchState;
+  pointerX: number;
+  pointerY: number;
+  scrollArea: HTMLDivElement;
+  scale: number;
+  zoomRatio: number;
+};
+
 type UseCanvasPinchZoomArgs = {
   actualScale: number;
   getScrollArea: () => HTMLDivElement | null;
@@ -32,6 +41,7 @@ export function useCanvasPinchZoom({
   const pinchStateRef = useRef<PinchState | null>(null);
   const pointsRef = useRef(new Map<number, TouchPoint>());
   const rafRef = useRef<number | null>(null);
+  const pendingFrameRef = useRef<PendingPinchFrame | null>(null);
 
   useEffect(() => {
     actualScaleRef.current = actualScale;
@@ -95,17 +105,25 @@ export function useCanvasPinchZoom({
     );
     const zoomRatio = nextScale / Math.max(pinchState.startScale, 0.01);
 
-    onSetZoomLevel(nextScale);
-
-    if (rafRef.current !== null) {
-      window.cancelAnimationFrame(rafRef.current);
+    pendingFrameRef.current = {
+      pinchState,
+      pointerX,
+      pointerY,
+      scale: nextScale,
+      scrollArea,
+      zoomRatio
+    };
+    if (rafRef.current === null) {
+      rafRef.current = window.requestAnimationFrame(() => {
+        rafRef.current = null;
+        const frame = pendingFrameRef.current;
+        pendingFrameRef.current = null;
+        if (!frame) return;
+        onSetZoomLevel(frame.scale);
+        frame.scrollArea.scrollLeft = frame.pinchState.anchorContentX * frame.zoomRatio - frame.pointerX;
+        frame.scrollArea.scrollTop = frame.pinchState.anchorContentY * frame.zoomRatio - frame.pointerY;
+      });
     }
-
-    rafRef.current = window.requestAnimationFrame(() => {
-      rafRef.current = null;
-      scrollArea.scrollLeft = pinchState.anchorContentX * zoomRatio - pointerX;
-      scrollArea.scrollTop = pinchState.anchorContentY * zoomRatio - pointerY;
-    });
     return true;
   }, [getScrollArea, onSetZoomLevel]);
 
@@ -119,15 +137,27 @@ export function useCanvasPinchZoom({
 
     if (pointsRef.current.size < 2) {
       pinchStateRef.current = null;
+      if (pendingFrameRef.current) {
+        const frame = pendingFrameRef.current;
+        pendingFrameRef.current = null;
+        if (rafRef.current !== null) {
+          window.cancelAnimationFrame(rafRef.current);
+          rafRef.current = null;
+        }
+        onSetZoomLevel(frame.scale);
+        frame.scrollArea.scrollLeft = frame.pinchState.anchorContentX * frame.zoomRatio - frame.pointerX;
+        frame.scrollArea.scrollTop = frame.pinchState.anchorContentY * frame.zoomRatio - frame.pointerY;
+      }
     }
 
     return wasPinching;
-  }, []);
+  }, [onSetZoomLevel]);
 
   useEffect(() => () => {
     if (rafRef.current !== null) {
       window.cancelAnimationFrame(rafRef.current);
     }
+    pendingFrameRef.current = null;
   }, []);
 
   return {

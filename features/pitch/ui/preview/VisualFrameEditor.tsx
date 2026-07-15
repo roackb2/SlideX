@@ -31,7 +31,7 @@ export function VisualFrameEditor({ block, blockIndex, isImageCropActive = false
   if (!isIcon && !isImage && !isVideo) return null;
 
   function update(updates: MotionDocProps) {
-    onUpdateBlock(blockIndex, { ...block.props, ...updates }, undefined, { skipReplay: true });
+    onUpdateBlock(blockIndex, { ...block.props, ...updates });
   }
 
   return (

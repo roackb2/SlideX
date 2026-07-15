@@ -73,6 +73,7 @@ export type Database = {
       presentations: {
         Row: {
           created_at: string;
+          editor_template_id: string | null;
           guest_import_id: string | null;
           id: string;
           kind: "presentation" | "template";
@@ -86,6 +87,7 @@ export type Database = {
         };
         Insert: {
           created_at?: string;
+          editor_template_id?: string | null;
           guest_import_id?: string | null;
           id?: string;
           kind?: "presentation" | "template";
@@ -98,6 +100,7 @@ export type Database = {
           user_id?: string;
         };
         Update: {
+          editor_template_id?: string | null;
           guest_import_id?: string | null;
           kind?: "presentation" | "template";
           last_opened_at?: string;
@@ -154,6 +157,21 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      compare_and_swap_presentation_document: {
+        Args: {
+          expected_source_revision: number;
+          next_editor_template_id?: string | null;
+          next_source: string;
+          next_title?: string | null;
+          target_presentation_id: string;
+        };
+        Returns: Array<{
+          editor_template_id: string | null;
+          presentation_id: string;
+          source_revision: number;
+          updated_at: string;
+        }>;
+      };
       compare_and_swap_presentation_source: {
         Args: {
           expected_source_revision: number;

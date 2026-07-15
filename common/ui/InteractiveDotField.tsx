@@ -18,14 +18,22 @@ type DotFieldPointerState = {
 
 type InteractiveDotFieldProps = {
   className?: string;
+  interactive?: boolean;
 };
 
 function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
-export function InteractiveDotField({ className = "opacity-85" }: InteractiveDotFieldProps) {
+export function InteractiveDotField({ className = "opacity-85", interactive = true }: InteractiveDotFieldProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const interactiveRef = useRef(interactive);
+  const requestDrawRef = useRef<() => void>(() => undefined);
+
+  useEffect(() => {
+    interactiveRef.current = interactive;
+    if (interactive) requestDrawRef.current();
+  }, [interactive]);
 
   useEffect(() => {
     if (canvasRef.current === null) return;
@@ -45,6 +53,8 @@ export function InteractiveDotField({ className = "opacity-85" }: InteractiveDot
       y: 0
     };
     let animationFrame: number | null = null;
+    let canvasBounds: DOMRect | null = null;
+    let isTemporarilyPaused = false;
     let height = 0;
     let width = 0;
 
@@ -86,6 +96,11 @@ export function InteractiveDotField({ className = "opacity-85" }: InteractiveDot
     }
 
     function animate() {
+      if (!interactiveRef.current || isTemporarilyPaused) {
+        animationFrame = null;
+        return;
+      }
+
       pointer.x += (pointer.targetX - pointer.x) * 0.16;
       pointer.y += (pointer.targetY - pointer.y) * 0.16;
       pointer.influence += (pointer.targetInfluence - pointer.influence) * 0.14;
@@ -109,13 +124,16 @@ export function InteractiveDotField({ className = "opacity-85" }: InteractiveDot
     }
 
     function requestDraw() {
+      if (!interactiveRef.current || isTemporarilyPaused) return;
       if (animationFrame === null) {
         animationFrame = window.requestAnimationFrame(animate);
       }
     }
+    requestDrawRef.current = requestDraw;
 
     function resizeCanvas() {
       const bounds = canvas.getBoundingClientRect();
+      canvasBounds = bounds;
       width = bounds.width;
       height = bounds.height;
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
@@ -128,9 +146,11 @@ export function InteractiveDotField({ className = "opacity-85" }: InteractiveDot
     }
 
     function handlePointerMove(event: PointerEvent) {
+      if (!interactiveRef.current) return;
       if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
 
-      const bounds = canvas.getBoundingClientRect();
+      const bounds = canvasBounds;
+      if (!bounds) return;
       const isInside = (
         event.clientX >= bounds.left &&
         event.clientX <= bounds.right &&
@@ -150,15 +170,34 @@ export function InteractiveDotField({ className = "opacity-85" }: InteractiveDot
       requestDraw();
     }
 
+    function handleGestureStart(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest("[data-dot-field-pause]")) return;
+      isTemporarilyPaused = true;
+    }
+
+    function handleGestureEnd() {
+      if (!isTemporarilyPaused) return;
+      isTemporarilyPaused = false;
+      requestDraw();
+    }
+
     const resizeObserver = new ResizeObserver(resizeCanvas);
     resizeObserver.observe(canvas);
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerdown", handleGestureStart, { capture: true, passive: true });
+    window.addEventListener("pointerup", handleGestureEnd, { capture: true, passive: true });
+    window.addEventListener("pointercancel", handleGestureEnd, { capture: true, passive: true });
     reducedMotionQuery.addEventListener("change", handleReducedMotionChange);
     resizeCanvas();
 
     return () => {
+      requestDrawRef.current = () => undefined;
       resizeObserver.disconnect();
       window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerdown", handleGestureStart, true);
+      window.removeEventListener("pointerup", handleGestureEnd, true);
+      window.removeEventListener("pointercancel", handleGestureEnd, true);
       reducedMotionQuery.removeEventListener("change", handleReducedMotionChange);
       if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
     };

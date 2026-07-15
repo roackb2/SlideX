@@ -85,8 +85,8 @@ export function useCanvasInteractionEngine() {
       transformRef.current = null;
       dispatch({ type: "finish-transform" });
     }, []),
-    isTransformingBlock: useCallback((blockIndex: number) => {
-      return transformRef.current?.blockIndex === blockIndex;
+    isTransformingBlock: useCallback((blockId: string) => {
+      return transformRef.current?.blockId === blockId;
     }, []),
     select: useCallback((snapshot: CanvasSelectionSnapshot) => {
       transformRef.current = null;
