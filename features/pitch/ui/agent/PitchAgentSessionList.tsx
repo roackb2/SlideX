@@ -97,6 +97,21 @@ export function PitchAgentSessionList({ onClose }: { onClose: () => void }) {
         </p>
       )}
 
+      {state.sessionsWarning && !state.sessionsError && (
+        <div className="mb-4 border border-amber-300/25 bg-amber-300/[0.06] p-3" role="status">
+          <p className="text-pretty text-xs leading-5 text-amber-100">
+            {state.sessionsWarning}
+          </p>
+          <button
+            className="mt-2 flex h-11 items-center gap-2 rounded-md border border-amber-200/30 px-3 text-xs font-medium text-amber-50 hover:bg-amber-200/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/60"
+            onClick={() => void actions.retrySessions()}
+            type="button"
+          >
+            <RefreshCw aria-hidden="true" size={14} /> Retry sync
+          </button>
+        </div>
+      )}
+
       {state.sessionsError && (
         <div className="mb-4 border border-red-400/25 bg-red-400/[0.06] p-3" role="alert">
           <p className="text-xs leading-5 text-red-200">{state.sessionsError}</p>

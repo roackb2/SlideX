@@ -14,10 +14,11 @@ There are deliberately no profiles, workspaces, memberships, roles, preferences,
 AI message mirrors, asset metadata, quota functions, or custom enums. Add those only
 when a shipped feature needs them.
 
-The complete MVP schema is intentionally kept in one canonical migration:
-`migrations/20260713000000_initial_slidex_schema.sql`, with later catalog
-cleanup migrations preserving only the official templates currently shipped in
-the workspace.
+The MVP baseline lives in
+`migrations/20260713000000_initial_slidex_schema.sql`. Later additive migrations
+preserve deployed projects while tightening a specific contract; they must be
+applied in timestamp order. Template cleanup migrations preserve only the
+official templates currently shipped in the workspace.
 
 ## Local development
 
@@ -78,8 +79,21 @@ authenticated updates to `title` and `source` are revoked.
 `agent_sessions.id` is the Heddle conversation ID. Each row belongs to one user
 and one presentation and stores only session metadata: title, message count,
 and timestamps. Heddle message content/state is not duplicated into Supabase.
-The Agent backend should forward the signed-in user's JWT so CAS and session RLS
-run as that user; the browser never receives a service-role key.
+The Heddle-backed server catalog remains the read authority. The authenticated
+browser verifies its Presentation relationships through RLS and calls
+`sync_agent_session_catalog` to repair the product index in one atomic batch.
+That RPC rejects ownership/identity conflicts and ignores stale writes that
+would reduce a session's message count. Direct authenticated inserts and updates
+are revoked; deletion stays RLS-scoped so a removed Heddle session can clean up
+its metadata by canonical session ID. If projection repair fails, SlideX keeps
+the canonical conversation list usable and shows a retryable warning.
+
+Apply `20260715140000_sync_agent_session_catalog.sql` before deploying the
+reconciled editor. Until that migration is present, conversations still load
+from Heddle, but the UI reports that its Supabase index could not be updated.
+The Agent backend should forward the signed-in user's JWT so document CAS and
+session ownership use the same product identity; the browser never receives a
+service-role key.
 
 ## Image paths
 

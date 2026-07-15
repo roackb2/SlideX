@@ -167,6 +167,10 @@ export type Database = {
           updated_at: string;
         }>;
       };
+      sync_agent_session_catalog: {
+        Args: { entries: Json };
+        Returns: undefined;
+      };
       touch_presentation_opened: {
         Args: { target_presentation_id: string };
         Returns: string | null;

@@ -142,6 +142,22 @@ export function usePitchAgent(
     });
   }, []);
 
+  const removeSessionMetadata = useCallback(async (
+    targetSessionId: string
+  ): Promise<boolean> => {
+    if (!inputRef.current.persistSessionMetadata) return true;
+
+    try {
+      await deleteSupabaseAgentSession(
+        createSupabaseBrowserClient(),
+        targetSessionId
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
   const persistBinding = useCallback((runId?: string, afterSequence?: number) => {
     const currentSessionId = sessionIdRef.current;
     if (!currentSessionId) {
@@ -384,12 +400,15 @@ export function usePitchAgent(
           return;
         }
         if (isMissingSessionError(caught)) {
+          const metadataRemoved = await removeSessionMetadata(targetSessionId);
           clearAgentPresentationBinding(
             window.sessionStorage,
             input.presentationId
           );
           resetRuntimeState(
-            "The previous conversation was unavailable, so a new one will start."
+            metadataRemoved
+              ? "The previous conversation was unavailable, so a new one will start."
+              : "The previous conversation was unavailable. A new one will start, but its Supabase index could not be cleaned up."
           );
           inputRef.current.onSelectedSessionChange?.();
           notifySessionChanged();
@@ -413,6 +432,7 @@ export function usePitchAgent(
     hydrateConversation,
     input.presentationId,
     notifySessionChanged,
+    removeSessionMetadata,
     resetRuntimeState,
   ]);
 
@@ -442,7 +462,11 @@ export function usePitchAgent(
         return false;
       }
       if (isMissingSessionError(caught)) {
-        setNotice("That conversation is no longer available.");
+        const metadataRemoved = await removeSessionMetadata(targetSessionId);
+        setNotice(metadataRemoved
+          ? "That conversation is no longer available."
+          : "That conversation is no longer available, and its Supabase index could not be cleaned up."
+        );
         notifySessionChanged();
         return false;
       }
@@ -462,7 +486,8 @@ export function usePitchAgent(
     isCheckingStatus,
     isDeleting,
     isHydrating,
-    notifySessionChanged
+    notifySessionChanged,
+    removeSessionMetadata
   ]);
 
   const submit = useCallback(async (message: string, llmApiKey: string) => {
@@ -513,13 +538,17 @@ export function usePitchAgent(
         if (!currentSessionId || !isMissingSessionError(caught)) {
           throw caught;
         }
+        const metadataRemoved = await removeSessionMetadata(currentSessionId);
         clearAgentPresentationBinding(
           window.sessionStorage,
           inputRef.current.presentationId
         );
         inputRef.current.onSelectedSessionChange?.();
         updateSessionId(undefined);
-        setNotice("The previous conversation was unavailable, so this message started a new one.");
+        setNotice(metadataRemoved
+          ? "The previous conversation was unavailable, so this message started a new one."
+          : "The previous conversation was unavailable, so this message started a new one. Its Supabase index still needs cleanup."
+        );
         accepted = await client.runs.start(request, controller.signal);
       }
 
@@ -583,6 +612,7 @@ export function usePitchAgent(
     notifySessionChanged,
     persistBinding,
     persistSessionMetadata,
+    removeSessionMetadata,
     restoreSessionState,
     setAssistantMessage,
     subscribeWithReconnect,
@@ -658,13 +688,16 @@ export function usePitchAgent(
         return;
       }
       if (isMissingSessionError(caught)) {
+        const metadataRemoved = await removeSessionMetadata(currentSessionId);
         clearAgentPresentationBinding(
           window.sessionStorage,
           inputRef.current.presentationId
         );
         inputRef.current.onSelectedSessionChange?.();
         resetRuntimeState(
-          "The previous conversation was unavailable, so a new one will start."
+          metadataRemoved
+            ? "The previous conversation was unavailable, so a new one will start."
+            : "The previous conversation was unavailable. A new one will start, but its Supabase index could not be cleaned up."
         );
         return;
       }
@@ -680,6 +713,7 @@ export function usePitchAgent(
     isCheckingStatus,
     persistBinding,
     persistSessionMetadata,
+    removeSessionMetadata,
     resetRuntimeState,
     updateActiveRunId,
     updateSessionId
@@ -711,44 +745,37 @@ export function usePitchAgent(
 
     setIsDeleting(true);
     try {
-      await client.deleteSession(sessionToDelete);
-      if (inputRef.current.persistSessionMetadata) {
-        await deleteSupabaseAgentSession(
-          createSupabaseBrowserClient(),
-          inputRef.current.presentationId,
-          sessionToDelete
-        );
+      let wasAlreadyMissing = false;
+      try {
+        await client.deleteSession(sessionToDelete);
+      } catch (caught) {
+        if (!isMissingSessionError(caught)) throw caught;
+        wasAlreadyMissing = true;
       }
+      const metadataRemoved = await removeSessionMetadata(sessionToDelete);
+      const cleanupNotice = metadataRemoved
+        ? ""
+        : " Its Supabase index could not be cleaned up.";
       if (sessionToDelete === selectedSessionId) {
         clearAgentPresentationBinding(
           window.sessionStorage,
           inputRef.current.presentationId
         );
         inputRef.current.onSelectedSessionChange?.();
-        resetRuntimeState("Conversation deleted. The current deck was kept.");
+        resetRuntimeState(wasAlreadyMissing
+          ? `The conversation was already unavailable.${cleanupNotice} A new one will start.`
+          : `Conversation deleted. The current deck was kept.${cleanupNotice}`
+        );
       } else {
-        setNotice("Conversation deleted.");
+        setNotice(wasAlreadyMissing
+          ? `That conversation was already unavailable.${cleanupNotice}`
+          : `Conversation deleted.${cleanupNotice}`
+        );
       }
       notifySessionChanged();
     } catch (caught) {
-      if (isMissingSessionError(caught)) {
-        if (sessionToDelete === selectedSessionId) {
-          clearAgentPresentationBinding(
-            window.sessionStorage,
-            inputRef.current.presentationId
-          );
-          inputRef.current.onSelectedSessionChange?.();
-          resetRuntimeState(
-            "The conversation was already unavailable. A new one will start."
-          );
-        } else {
-          setNotice("That conversation was already unavailable.");
-        }
-        notifySessionChanged();
-      } else {
-        setError(errorMessage(caught));
-        setStatus("error");
-      }
+      setError(errorMessage(caught));
+      setStatus("error");
     } finally {
       setIsDeleting(false);
     }
@@ -758,6 +785,7 @@ export function usePitchAgent(
     isDeleting,
     isHydrating,
     notifySessionChanged,
+    removeSessionMetadata,
     resetRuntimeState
   ]);
 

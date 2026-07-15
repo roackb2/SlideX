@@ -27,6 +27,7 @@ type PitchAgentContextValue = {
     llmApiKey: string;
     sessions: AgentSessionSummary[];
     sessionsError?: string;
+    sessionsWarning?: string;
   };
   actions: PitchAgentRuntime["actions"] & {
     setDraft: Dispatch<SetStateAction<string>>;
@@ -84,7 +85,10 @@ function PitchAgentRuntimeProvider({
   client: SlideXAgentClient;
   runtimeInput: PitchAgentRuntimeInput;
 }) {
-  const catalog = useAgentSessionCatalog(client);
+  const catalog = useAgentSessionCatalog(
+    client,
+    Boolean(runtimeInput.persistSessionMetadata)
+  );
   const runtime = usePitchAgent(runtimeInput, client, catalog.invalidate);
   const [draft, setDraft] = useState("");
   const [llmApiKey, setLlmApiKey] = useState("");
@@ -112,7 +116,8 @@ function PitchAgentRuntimeProvider({
           draft,
           llmApiKey,
           sessions: catalog.sessions,
-          sessionsError: catalog.error
+          sessionsError: catalog.error,
+          sessionsWarning: catalog.warning
         },
         actions: {
           ...runtime.actions,
