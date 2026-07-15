@@ -20,6 +20,11 @@ export async function portablePptxImageData(
   frame: PptxSize,
   fit: PptxImageFit = "fill"
 ) {
+  const currentPageLocation = getCurrentPageLocation();
+  if (currentPageLocation && isPptxPageLocation(source, currentPageLocation)) {
+    throw new Error("PowerPoint image source is invalid");
+  }
+
   const mimeType = dataImageMimeType(source);
   if (!mimeType) return source;
 
@@ -135,9 +140,31 @@ export function fittedRasterSize(
   };
 }
 
+type PptxPageLocation = {
+  origin: string;
+  pathname: string;
+};
+
+export function isPptxPageLocation(source: string, pageLocation: PptxPageLocation) {
+  try {
+    const candidate = new URL(source, pageLocation.origin);
+    return candidate.origin === pageLocation.origin && candidate.pathname === pageLocation.pathname;
+  } catch {
+    return false;
+  }
+}
+
 function dataImageMimeType(source: string) {
   const match = source.match(/^data:(image\/[a-z0-9.+-]+)(?:;[^,]*)?,/i);
   return match?.[1]?.toLowerCase();
+}
+
+function getCurrentPageLocation(): PptxPageLocation | null {
+  if (typeof window === "undefined") return null;
+  return {
+    origin: window.location.origin,
+    pathname: window.location.pathname
+  };
 }
 
 function rasterDimension(inches: number) {

@@ -4,7 +4,8 @@ import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
 import { pptxRasterRequirements } from "@/features/pitch/infrastructure/editablePptxExport";
 import {
   fittedRasterPlacement,
-  fittedRasterSize
+  fittedRasterSize,
+  isPptxPageLocation
 } from "@/features/pitch/infrastructure/pptxImageExport";
 
 test("cover preserves a portrait image ratio while covering a landscape frame", () => {
@@ -46,6 +47,20 @@ test("contain centers the fitted raster inside the exported frame", () => {
     x: 0,
     y: 547
   });
+});
+
+test("the current Pitch page URL is never accepted as an image source", () => {
+  const pageLocation = {
+    origin: "http://localhost:3000",
+    pathname: "/workspace/pitch/"
+  };
+
+  assert.equal(
+    isPptxPageLocation("http://localhost:3000/workspace/pitch/?demo=1", pageLocation),
+    true
+  );
+  assert.equal(isPptxPageLocation("/workspace/pitch/?demo=1", pageLocation), true);
+  assert.equal(isPptxPageLocation("/images/portrait.jpg", pageLocation), false);
 });
 
 test("cropped images request an exact block raster for editable PowerPoint", () => {
