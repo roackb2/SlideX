@@ -31,7 +31,7 @@ export function VideoFields({
         />
       </div>
       <p className="-mt-3 text-[10px] leading-relaxed text-neutral-600">
-        {youtubeId ? "YouTube path detected. Preview and HTML export will use the embedded player." : "Use an existing relative path, YouTube URL, or direct MP4/WebM URL."}
+        {youtubeId ? "YouTube path detected. Preview and hosted HTML use the player; local HTML opens YouTube safely." : "Use an existing relative path, YouTube URL, or direct MP4/WebM URL."}
       </p>
       <div className="grid grid-cols-[34px_1fr] items-end gap-2">
         <span className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-black/35 text-neutral-400">

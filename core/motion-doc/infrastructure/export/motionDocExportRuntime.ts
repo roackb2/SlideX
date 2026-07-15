@@ -71,6 +71,24 @@ export function makeMotionDocExportRuntime() {
         const DESIGN_WIDTH = ${MOTION_DOC_CANVAS_WIDTH};
         const DESIGN_HEIGHT = ${MOTION_DOC_CANVAS_HEIGHT};
 
+        function hydrateYouTubeEmbeds() {
+          const canEmbed = window.location.protocol === "http:" || window.location.protocol === "https:";
+
+          document.querySelectorAll("[data-youtube-embed]").forEach((container) => {
+            const iframe = container.querySelector("iframe[data-youtube-src]");
+            const source = iframe?.dataset.youtubeSrc;
+
+            if (!iframe || !source || !canEmbed) {
+              iframe?.remove();
+              container.dataset.youtubeMode = "link";
+              return;
+            }
+
+            container.dataset.youtubeMode = "embed";
+            iframe.src = source;
+          });
+        }
+
         function croppedImageDimensions(fit, frameAspectRatio, imageAspectRatio) {
           if (!imageAspectRatio || fit === "fill") return { height: 100, width: 100 };
           const useContain = fit === "contain" || fit === "scale-down";
@@ -1254,6 +1272,8 @@ export function makeMotionDocExportRuntime() {
         window.__motionDocExport = {
           prepareStaticExport
         };
+
+        hydrateYouTubeEmbeds();
 
         function stopShader(canvas) {
           const state = shaderStates.get(canvas);

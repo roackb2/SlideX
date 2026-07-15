@@ -75,6 +75,20 @@ test("HTML exports preserve image data and video paths without empty media loads
   assert.doesNotMatch(html, /(?:img|video|iframe) src=""/);
 });
 
+test("HTML exports load YouTube embeds only when a web origin is available", () => {
+  const html = buildMotionDocHtml(`<Slide>
+    <VideoBlock src="https://youtu.be/M7lc1UVf-VE" poster="data:image/webp;base64,AAAA" />
+  </Slide>`);
+
+  assert.match(html, /data-youtube-embed/);
+  assert.match(html, /data-youtube-src="https:\/\/www\.youtube\.com\/embed\/M7lc1UVf-VE\?/);
+  assert.doesNotMatch(html, /<iframe\b[^>]*\ssrc=/);
+  assert.match(html, /href="https:\/\/www\.youtube\.com\/watch\?v=M7lc1UVf-VE"/);
+  assert.match(html, /class="block-video__youtube-fallback"/);
+  assert.match(html, /window\.location\.protocol === "http:" \|\| window\.location\.protocol === "https:"/);
+  assert.match(html, /iframe\.src = source/);
+});
+
 test("HTML exports position the full image before clipping cropped media", () => {
   const html = buildMotionDocHtml(`<Slide>
     <ImageBlock src="/images/team.webp" cropX={0} cropY={43.8} scaleX={1} scaleY={1} fit="cover" />

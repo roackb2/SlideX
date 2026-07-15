@@ -14,7 +14,7 @@ import {
   tableTrackTemplate
 } from "@/core/motion-doc/application/tableBlock";
 import { makeMotionDocExportRuntime } from "@/core/motion-doc/infrastructure/export/motionDocExportRuntime";
-import { youtubeEmbedUrl } from "@/core/motion-doc/domain/videoSource";
+import { youtubeEmbedUrl, youtubeVideoId } from "@/core/motion-doc/domain/videoSource";
 import { motionDocExportStyles } from "@/core/motion-doc/infrastructure/export/motionDocExportStyles";
 
 export const MOTION_DOC_PNG_HEIGHT = MOTION_DOC_CANVAS_HEIGHT;
@@ -490,6 +490,7 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
     const controlsEnabled = boolProp(block.props.controls, true);
     const loopEnabled = boolProp(block.props.loop, true);
     const mutedEnabled = boolProp(block.props.muted, true);
+    const youtubeId = youtubeVideoId(src);
     const youtubeSrc = youtubeEmbedUrl(src, {
       autoplay: mutedEnabled,
       controls: controlsEnabled,
@@ -498,9 +499,14 @@ function renderBlock(block: MotionDocBlock, blockIndex: number, options: RenderS
     });
 
     if (youtubeSrc) {
+      const youtubeWatchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(youtubeId ?? "")}`;
+      const youtubePoster = poster
+        ? `<img class="block-video__youtube-poster" src="${escapeAttribute(poster)}" alt="" style="${escapeAttribute(inlineCss({ "object-fit": fit }))}" />`
+        : "";
+
       return renderMotionBlock(
         block,
-        `<figure class="block-image block-video"><iframe src="${escapeAttribute(youtubeSrc)}" title="YouTube video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" allowfullscreen></iframe></figure>`
+        `<figure class="block-image block-video block-video--youtube" data-youtube-embed><iframe data-youtube-src="${escapeAttribute(youtubeSrc)}" title="YouTube video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" allowfullscreen></iframe><a class="block-video__youtube-fallback" href="${escapeAttribute(youtubeWatchUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open video on YouTube">${youtubePoster}<span class="block-video__youtube-fallback-content"><span class="block-video__youtube-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 7.5v9l7-4.5-7-4.5Z"/></svg></span><strong>Open on YouTube</strong><span>Online playback is unavailable in a local HTML file.</span></span></a></figure>`
       );
     }
 
