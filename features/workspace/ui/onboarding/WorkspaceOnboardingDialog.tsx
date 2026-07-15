@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, X } from "lucide-react";
 import { SlideXFeatureVisual } from "@/common/ui/SlideXFeatureVisual";
+import { useWorkspaceI18n } from "@/features/workspace/ui/workspaceI18n";
 
 type WorkspaceOnboardingDialogProps = {
   onComplete: () => void;
@@ -16,6 +17,7 @@ const onboardingPoints = [
 ] as const;
 
 export function WorkspaceOnboardingDialog({ onComplete }: WorkspaceOnboardingDialogProps) {
+  const { tx } = useWorkspaceI18n();
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const primaryButtonRef = useRef<HTMLButtonElement | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -78,7 +80,7 @@ export function WorkspaceOnboardingDialog({ onComplete }: WorkspaceOnboardingDia
         transition={{ duration: reduceMotion ? 0 : 0.24, ease: [0.16, 1, 0.3, 1] }}
       >
         <button
-          aria-label="Close welcome dialog"
+          aria-label={tx("Close welcome dialog")}
           className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-[7px] border border-white/[0.1] bg-[#111315]/82 text-white/44 backdrop-blur transition hover:border-white/[0.2] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c4ee87]"
           onClick={onComplete}
           type="button"
@@ -102,28 +104,28 @@ export function WorkspaceOnboardingDialog({ onComplete }: WorkspaceOnboardingDia
         <div className="flex min-h-[430px] flex-col px-6 pb-6 pt-16 sm:px-8 sm:pb-8 lg:min-h-0 lg:px-9 lg:pb-9 lg:pt-12">
           <div className="flex items-center gap-3 text-[10px] font-semibold tracking-[0.14em] text-[#c4ee87]">
             <span className="h-px w-8 bg-[#c4ee87]/42" />
-            <span>WELCOME TO SLIDEX</span>
+            <span>{tx("WELCOME TO SLIDEX")}</span>
           </div>
 
           <h2 className="mt-8 text-[clamp(30px,4vw,42px)] font-semibold leading-[0.98] tracking-[-0.045em] text-white [text-wrap:balance]" id="workspace-onboarding-title">
-            Your ideas, ready for the stage.
+            {tx("Your ideas, ready for the stage.")}
           </h2>
           <p className="mt-5 max-w-[38ch] text-[14px] leading-6 text-white/48" id="workspace-onboarding-description">
-            Start with a blank canvas and shape every slide your way. Design visually, refine in MDX, then present or export when you’re ready.
+            {tx("Start with a blank canvas and shape every slide your way. Design visually, refine in MDX, then present or export when you’re ready.")}
           </p>
 
           <div className="mt-7 space-y-3 border-t border-white/[0.09] pt-5">
             {onboardingPoints.map((point, index) => (
               <div className="flex items-center gap-3 text-[13px] leading-5 text-white/68" key={point}>
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] bg-white/[0.06] text-[9px] tabular-nums text-white/38">0{index + 1}</span>
-                <span>{point}</span>
+                <span>{tx(point)}</span>
               </div>
             ))}
           </div>
 
           <div className="mt-auto flex flex-wrap items-center gap-3 pt-10">
             <button className="h-11 px-1 text-[11px] font-medium text-white/36 transition hover:text-white/72 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30" onClick={onComplete} type="button">
-              Skip for now
+              {tx("Skip for now")}
             </button>
             <button
               className="ml-auto inline-flex h-11 items-center justify-center gap-2 rounded-[8px] bg-[#c4ee87] px-4 text-[12px] font-semibold text-[#132000] transition hover:bg-[#d4f5a3] active:translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#c4ee87]/24"
@@ -131,7 +133,7 @@ export function WorkspaceOnboardingDialog({ onComplete }: WorkspaceOnboardingDia
               ref={primaryButtonRef}
               type="button"
             >
-              Start creating
+              {tx("Start creating")}
               <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.8} />
             </button>
           </div>

@@ -90,13 +90,14 @@ export function ensureGuestDemoDraft({
   return draft;
 }
 
-export function updateGuestDemoDraft(source: string, title: string) {
+export function updateGuestDemoDraft(source: string, title: string, templateId?: string) {
   const draft = readGuestDemoDraft();
   if (!draft) throw new Error("This browser could not store the Live Demo draft.");
 
   const updatedDraft = {
     ...draft,
     source,
+    templateId: templateId ?? draft.templateId,
     title: title.trim() || draft.title,
     updatedAt: new Date().toISOString()
   } satisfies GuestDemoDraft;

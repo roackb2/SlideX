@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { appRoutes, isMarketingHomePath } from "@/common/lib/appRoutes";
+import { SiteHomeSkeleton } from "@/common/ui/SiteHomeSkeleton";
 import { useAuthSession } from "@/features/auth/ui/useAuthSession";
 
 type AuthenticatedHomeRedirectProps = {
@@ -22,7 +23,7 @@ export function AuthenticatedHomeRedirect({ children }: AuthenticatedHomeRedirec
   }, [isHomePath, isReady, router, session]);
 
   if (isHomePath && (!isReady || session)) {
-    return <main aria-busy="true" className="min-h-[100dvh] bg-[#0b0c0f]" />;
+    return <SiteHomeSkeleton />;
   }
 
   return children;

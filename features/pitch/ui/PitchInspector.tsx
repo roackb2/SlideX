@@ -24,6 +24,7 @@ import { FontPicker } from "@/features/pitch/ui/preview/controls/FontPicker";
 import { useDynamicFont } from "@/features/pitch/ui/hooks/useDynamicFont";
 import type { MotionDocProps, MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import type { BlockUpdater } from "@/features/pitch/application/pitchCommandTypes";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 function Section({
   title,
@@ -37,6 +38,7 @@ function Section({
   rightElement?: React.ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const { tx } = usePitchI18n();
   return (
     <div className="flex flex-col border-b border-white/[0.04] last:border-b-0">
       <div className="flex w-full items-center justify-between py-3">
@@ -49,7 +51,7 @@ function Section({
             {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </div>
           <span className="text-[13px] font-medium text-neutral-300 group-hover:text-white transition-colors">
-            {title}
+            {tx(title)}
           </span>
         </button>
         {rightElement && (
@@ -98,14 +100,14 @@ export function PitchInspector({
   isGridVisible,
   onOpenMdxEditor,
   pushUndoSnapshot,
+  removeImageForBlock,
   selectedBlockIndex,
   selectedBlockIndices = [],
   setIsGridVisible,
   updateAllSlidesStyle,
   updateActiveSlideStyle,
   updateBlock,
-  uploadImageForBlock,
-  uploadVideoForBlock
+  uploadImageForBlock
 }: {
   activeSlide: MotionDocScene | undefined;
   activeSlideAccent: string;
@@ -134,6 +136,7 @@ export function PitchInspector({
   isGridVisible: boolean;
   onOpenMdxEditor: () => void;
   pushUndoSnapshot: () => void;
+  removeImageForBlock: (blockIndex: number) => void;
   selectedBlockIndex: number | null;
   selectedBlockIndices?: number[];
   setIsGridVisible: (value: boolean) => void;
@@ -141,9 +144,9 @@ export function PitchInspector({
   updateActiveSlideStyle: (updates: MotionDocProps) => void;
   updateBlock: BlockUpdater;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
-  uploadVideoForBlock: (blockIndex: number, file: File | undefined) => void;
 }) {
   const isMultiSelection = selectedBlockIndices.length >= 2;
+  const { locale, tx } = usePitchI18n();
 
   return (
     <div id="inspector-v4" className="flex w-full sm:w-[300px] md:w-[320px] shrink-0 flex-col overflow-hidden border-l border-white/[0.12] bg-[#111111] select-none h-full relative z-10 transition-all duration-700 font-sans antialiased">
@@ -151,7 +154,7 @@ export function PitchInspector({
       {/* Inspector Header */}
       <div className="flex shrink-0 items-center justify-between px-5 h-[52px]">
         <span className="text-[14px] font-medium text-neutral-200">
-          {isMultiSelection ? "Multiple Items" : selectedBlockIndex === null ? "Slide" : activeSlide?.blocks[selectedBlockIndex]?.type || "Element"}
+          {tx(isMultiSelection ? "Multiple Items" : selectedBlockIndex === null ? "Slide" : activeSlide?.blocks[selectedBlockIndex]?.type || "Element")}
         </span>
         <button
           className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-transparent hover:bg-white/[0.05] text-neutral-500 hover:text-white px-2 text-xs font-medium transition-colors cursor-pointer"
@@ -167,7 +170,7 @@ export function PitchInspector({
         <div className="flex flex-col">
           {isMultiSelection ? (
             <div className="mb-5 rounded-lg bg-white/[0.03] px-3 py-3 text-sm font-medium text-neutral-300 text-center">
-              {selectedBlockIndices.length} items selected
+              {locale === "zh-TW" ? `已選取 ${selectedBlockIndices.length} 個項目` : `${selectedBlockIndices.length} items selected`}
             </div>
           ) : selectedBlockIndex === null ? (
             <div className="flex flex-col">
@@ -210,10 +213,10 @@ export function PitchInspector({
               activeSlide={activeSlide}
               importImageUrlForBlock={importImageUrlForBlock}
               pushUndoSnapshot={pushUndoSnapshot}
+              removeImageForBlock={removeImageForBlock}
               selectedBlockIndex={selectedBlockIndex as number}
               updateBlock={updateBlock}
               uploadImageForBlock={uploadImageForBlock}
-              uploadVideoForBlock={uploadVideoForBlock}
             />
           )}
         </div>
@@ -226,23 +229,24 @@ function ElementSettings({
   activeSlide,
   importImageUrlForBlock,
   pushUndoSnapshot,
+  removeImageForBlock,
   selectedBlockIndex,
   updateBlock,
-  uploadImageForBlock,
-  uploadVideoForBlock
+  uploadImageForBlock
 }: {
   activeSlide: MotionDocScene | undefined;
   importImageUrlForBlock: (blockIndex: number, source: string) => void;
   pushUndoSnapshot: () => void;
+  removeImageForBlock: (blockIndex: number) => void;
   selectedBlockIndex: number;
   updateBlock: BlockUpdater;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
-  uploadVideoForBlock: (blockIndex: number, file: File | undefined) => void;
 }) {
+  const { locale } = usePitchI18n();
   const block = activeSlide?.blocks[selectedBlockIndex];
 
   if (!block) {
-    return <div className="p-4 text-center text-[11px] italic text-neutral-500">Element no longer exists.</div>;
+    return <div className="p-4 text-center text-[11px] italic text-neutral-500">{locale === "zh-TW" ? "這個元素已不存在。" : "Element no longer exists."}</div>;
   }
 
   const isTextType = block.type === "Title" || block.type === "Text" || block.type === "heading";
@@ -294,7 +298,7 @@ function ElementSettings({
                 event.target.style.height = "auto";
                 event.target.style.height = `${event.target.scrollHeight}px`;
               }}
-              placeholder="Enter text content..."
+              placeholder={locale === "zh-TW" ? "輸入文字內容…" : "Enter text content..."}
               style={{ minHeight: block.type === "Title" ? "64px" : "100px", overflow: "hidden" }}
               value={textValue}
             />
@@ -307,10 +311,10 @@ function ElementSettings({
 	              {blockFieldEntry.render({
 	                block,
 	                importImageUrlForBlock,
+	                removeImageForBlock,
 	                selectedBlockIndex,
 	                updateBlock,
-	                uploadImageForBlock,
-	                uploadVideoForBlock
+	                uploadImageForBlock
 	              })}
 	            </div>
 	          </Section>

@@ -169,6 +169,8 @@ export function PreviewBlock({
         full={booleanProp(block.props.full)}
         loading={imageLoading}
         radius={spacingProp(block.props.radius ?? block.props.borderRadius)}
+        cropX={numberProp(block.props.cropX)}
+        cropY={numberProp(block.props.cropY)}
         scaleX={numberProp(block.props.scaleX)}
         scaleY={numberProp(block.props.scaleY)}
         src={String(block.props.src ?? "")}

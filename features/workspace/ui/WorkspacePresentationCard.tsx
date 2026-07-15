@@ -6,6 +6,7 @@ import {
   type WorkspacePresentation
 } from "@/features/workspace/domain/presentation";
 import { workspacePresentationCoverPath } from "@/features/workspace/ui/workspacePresentationCovers";
+import { useWorkspaceI18n } from "@/features/workspace/ui/workspaceI18n";
 
 type WorkspacePresentationCardProps = {
   isMenuOpen: boolean;
@@ -15,18 +16,19 @@ type WorkspacePresentationCardProps = {
   onRename: (title: string) => void;
   onToggleMenu: () => void;
   presentation: WorkspacePresentation;
+  textSize?: "default" | "large";
 };
 
-function formatUpdatedAt(value: string) {
+function formatUpdatedAt(value: string, locale: "en" | "zh-TW") {
   const date = new Date(value);
-  const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
   const elapsedMinutes = Math.round((date.getTime() - Date.now()) / 60_000);
   if (Math.abs(elapsedMinutes) < 60) return formatter.format(elapsedMinutes, "minute");
   const elapsedHours = Math.round(elapsedMinutes / 60);
   if (Math.abs(elapsedHours) < 24) return formatter.format(elapsedHours, "hour");
   const elapsedDays = Math.round(elapsedHours / 24);
   if (Math.abs(elapsedDays) < 30) return formatter.format(elapsedDays, "day");
-  return new Intl.DateTimeFormat("en", { day: "numeric", month: "short", year: "numeric" }).format(date);
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" }).format(date);
 }
 
 function PresentationArtwork({ presentation }: { presentation: WorkspacePresentation }) {
@@ -34,21 +36,24 @@ function PresentationArtwork({ presentation }: { presentation: WorkspacePresenta
 
   if (coverPath) {
     return (
-      <div className="relative aspect-video bg-[#242424]">
-        <Image alt={`${presentation.title} cover`} className="object-cover" fill sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw" src={coverPath} />
+      <div className="relative aspect-video overflow-hidden bg-[#242424]">
+        <div aria-hidden="true" className="absolute inset-0 animate-pulse bg-white/[0.04]" />
+        <Image alt={`${presentation.title} cover`} className="object-cover transition-transform duration-500 group-hover:scale-[1.018]" decoding="async" fill loading="lazy" sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw" src={coverPath} />
       </div>
     );
   }
 
   return (
-    <div className="relative aspect-video overflow-hidden bg-[#272727] p-[8%]">
-      <Image alt="SlideX" className="h-auto w-[20%] object-contain opacity-45" height={72} src="/logo.png" width={260} />
-      <div className="absolute bottom-[12%] left-[8%] max-w-[76%] text-[clamp(15px,1.8vw,24px)] font-medium leading-[0.98] tracking-[-0.04em] text-white/86">{presentation.title}</div>
+    <div className="relative aspect-video overflow-hidden bg-[#242424] p-[8%]">
+      <div aria-hidden="true" className="absolute inset-x-0 top-[38%] h-px bg-white/[0.055]" />
+      <Image alt="SlideX" className="relative h-auto w-[18%] object-contain opacity-38" decoding="async" height={72} loading="lazy" src="/logo.png" width={260} />
+      <div className="absolute bottom-[12%] left-[8%] max-w-[78%] text-[clamp(16px,1.7vw,25px)] font-medium leading-[0.98] tracking-[-0.04em] text-white/86">{presentation.title}</div>
     </div>
   );
 }
 
-export function WorkspacePresentationCard({ isMenuOpen, onDelete, onDuplicate, onOpen, onRename, onToggleMenu, presentation }: WorkspacePresentationCardProps) {
+export function WorkspacePresentationCard({ isMenuOpen, onDelete, onDuplicate, onOpen, onRename, onToggleMenu, presentation, textSize = "default" }: WorkspacePresentationCardProps) {
+  const { locale, tx } = useWorkspaceI18n();
   const [isRenaming, setIsRenaming] = useState(false);
   const [draftTitle, setDraftTitle] = useState(presentation.title);
   const menuContainerRef = useRef<HTMLDivElement | null>(null);
@@ -112,29 +117,29 @@ export function WorkspacePresentationCard({ isMenuOpen, onDelete, onDuplicate, o
   }
 
   return (
-    <article className="group relative">
+    <article className="group relative [contain-intrinsic-size:auto_320px] [content-visibility:auto]">
       <div className="relative" ref={menuContainerRef}>
-        <button className="block w-full overflow-hidden rounded-[8px] border border-white/[0.1] bg-[#242424] text-left transition duration-200 hover:border-white/[0.22] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/10" onClick={onOpen} type="button">
+        <button className="block w-full overflow-hidden rounded-[12px] border border-white/[0.09] bg-[#242424] text-left transition duration-200 hover:border-white/[0.19] active:scale-[0.995] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/10" onClick={onOpen} type="button">
           <PresentationArtwork presentation={presentation} />
         </button>
-        <button aria-expanded={isMenuOpen} aria-haspopup="menu" aria-label={`More options for ${presentation.title}`} className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-[6px] border border-white/[0.11] bg-[#151515]/90 text-white/62 transition hover:bg-[#222] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/12 ${isMenuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"}`} onClick={onToggleMenu} ref={moreButtonRef} type="button">
+        <button aria-expanded={isMenuOpen} aria-haspopup="menu" aria-label={`${tx("More options for")} ${presentation.title}`} className={`absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-[7px] border border-white/[0.1] bg-[#151515]/86 text-white/58 backdrop-blur-md transition duration-200 hover:bg-[#292929] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/12 ${isMenuOpen ? "opacity-100" : "opacity-55 group-hover:opacity-100 group-focus-within:opacity-100"}`} onClick={onToggleMenu} ref={moreButtonRef} type="button">
           <MoreHorizontal className="h-4 w-4" strokeWidth={1.8} />
         </button>
         {isMenuOpen ? (
-          <div className="absolute right-2 top-10 z-30 w-44 rounded-[8px] border border-white/[0.1] bg-[#202020] p-1.5 shadow-[0_18px_50px_rgba(0,0,0,0.42)]" onKeyDown={navigateMenu} ref={menuRef} role="menu">
+          <div className="absolute right-2.5 top-12 z-30 w-44 rounded-[10px] border border-white/[0.1] bg-[#202020] p-1.5 shadow-[0_18px_50px_rgba(0,0,0,0.42)]" onKeyDown={navigateMenu} ref={menuRef} role="menu">
             <button className="flex h-9 w-full items-center gap-2.5 rounded-[5px] px-2.5 text-left text-[13px] text-white/72 transition hover:bg-white/[0.07] hover:text-white" onClick={onDuplicate} role="menuitem" type="button">
               <Copy className="h-4 w-4" strokeWidth={1.7} />
-              Duplicate
+              {tx("Duplicate")}
             </button>
             <button className="flex h-9 w-full items-center gap-2.5 rounded-[5px] px-2.5 text-left text-[13px] text-white/72 transition hover:bg-white/[0.07] hover:text-white" onClick={startRename} role="menuitem" type="button">
               <Pencil className="h-4 w-4" strokeWidth={1.7} />
-              Rename
+              {tx("Rename")}
             </button>
             {canDelete ? <div className="my-1 h-px bg-white/[0.07]" /> : null}
             {canDelete ? (
               <button className="flex h-9 w-full items-center gap-2.5 rounded-[5px] px-2.5 text-left text-[13px] text-[#ff9b9b] transition hover:bg-white/[0.07]" onClick={onDelete} role="menuitem" type="button">
                 <Trash2 className="h-4 w-4" strokeWidth={1.7} />
-                Delete
+                {tx("Delete")}
               </button>
             ) : null}
           </div>
@@ -143,14 +148,14 @@ export function WorkspacePresentationCard({ isMenuOpen, onDelete, onDuplicate, o
 
       {isRenaming ? (
         <form className="mt-2.5 flex items-center gap-1.5" onSubmit={submitRename}>
-          <input aria-label="Presentation name" autoFocus className="h-9 min-w-0 flex-1 rounded-[6px] border border-white/[0.16] bg-[#222] px-2.5 text-[14px] text-white outline-none focus:border-white/[0.3]" maxLength={120} onChange={(event) => setDraftTitle(event.target.value)} value={draftTitle} />
-          <button aria-label="Save name" className="flex h-8 w-8 items-center justify-center rounded-[6px] bg-[#f1f0eb] text-[#181818] hover:bg-white" type="submit"><Check className="h-3.5 w-3.5" /></button>
-          <button aria-label="Cancel rename" className="flex h-8 w-8 items-center justify-center rounded-[6px] border border-white/[0.1] text-white/46 hover:bg-white/[0.06] hover:text-white" onClick={() => setIsRenaming(false)} type="button"><X className="h-3.5 w-3.5" /></button>
+          <input aria-label={tx("Presentation name")} autoFocus className="h-9 min-w-0 flex-1 rounded-[6px] border border-white/[0.16] bg-[#222] px-2.5 text-[14px] text-white outline-none focus:border-white/[0.3]" maxLength={120} onChange={(event) => setDraftTitle(event.target.value)} value={draftTitle} />
+          <button aria-label={tx("Save name")} className="flex h-8 w-8 items-center justify-center rounded-[6px] bg-[#f1f0eb] text-[#181818] hover:bg-white" type="submit"><Check className="h-3.5 w-3.5" /></button>
+          <button aria-label={tx("Cancel rename")} className="flex h-8 w-8 items-center justify-center rounded-[6px] border border-white/[0.1] text-white/46 hover:bg-white/[0.06] hover:text-white" onClick={() => setIsRenaming(false)} type="button"><X className="h-3.5 w-3.5" /></button>
         </form>
       ) : (
-        <button className="mt-2.5 block w-full px-0.5 text-left" onClick={onOpen} type="button">
-          <span className="block truncate text-[15px] font-medium leading-5 text-white/82 transition group-hover:text-white">{presentation.title}</span>
-          <span className="mt-1 block text-[12px] leading-4 text-white/34">{presentation.kind === "template" ? "Built-in template · " : "Edited "}{formatUpdatedAt(presentation.updatedAt)}</span>
+        <button className="mt-3 block w-full px-0.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20" onClick={onOpen} type="button">
+          <span className={`block truncate font-medium tracking-[-0.015em] text-white/84 transition group-hover:text-white ${textSize === "large" ? "text-[17px] leading-6" : "text-[15px] leading-5"}`}>{presentation.title}</span>
+          <span className={`mt-1.5 block text-white/38 ${textSize === "large" ? "text-[13px] leading-5" : "text-[11px] leading-4"}`}>{tx(presentation.kind === "template" ? "Built-in template" : "Edited")} · {formatUpdatedAt(presentation.updatedAt, locale)}</span>
         </button>
       )}
     </article>

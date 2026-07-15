@@ -1,16 +1,19 @@
 "use client";
 
-import { Eye, EyeOff, Maximize, Minimize, Minus, Plus, RefreshCcw, Shrink, StretchHorizontal, Volume2, VolumeX } from "lucide-react";
+import { Check, Crop, Eye, EyeOff, Maximize, Minimize, Minus, Plus, RefreshCcw, Shrink, StretchHorizontal, Volume2, VolumeX } from "lucide-react";
 import type { MotionDocProps, MotionDocVisualBlock } from "@/core/motion-doc/domain/motionDocTypes";
 import { iconFrameForSize } from "@/core/motion-doc/domain/iconSizing";
 import type { BlockUpdater } from "@/features/pitch/application/pitchCommandTypes";
+import type { VisualFrameToolbarPlacement } from "@/features/pitch/application/visualFrameToolbar";
 
 type VisualFrameEditorProps = {
   block: MotionDocVisualBlock;
   blockIndex: number;
   onSelectBlock: (index: number) => void;
+  isImageCropActive?: boolean;
+  onToggleImageCrop?: (blockIndex: number) => void;
   onUpdateBlock: BlockUpdater;
-  placement?: "above" | "below";
+  placement?: VisualFrameToolbarPlacement;
 };
 
 const fitOptions = [
@@ -20,7 +23,7 @@ const fitOptions = [
   { icon: <Shrink size={13} />, label: "Scale down", value: "scale-down" }
 ] as const;
 
-export function VisualFrameEditor({ block, blockIndex, onSelectBlock, onUpdateBlock, placement = "above" }: VisualFrameEditorProps) {
+export function VisualFrameEditor({ block, blockIndex, isImageCropActive = false, onSelectBlock, onToggleImageCrop, onUpdateBlock, placement = "above" }: VisualFrameEditorProps) {
   const isIcon = block.type === "Icon";
   const isImage = block.type === "ImageBlock";
   const isVideo = block.type === "VideoBlock";
@@ -34,7 +37,7 @@ export function VisualFrameEditor({ block, blockIndex, onSelectBlock, onUpdateBl
   return (
     <div
       aria-label={`${block.type} quick controls`}
-      className={`absolute left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-white/[0.09] bg-[#151419]/95 p-1 shadow-[0_12px_36px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl ${placement === "below" ? "top-[calc(100%+10px)]" : "bottom-[calc(100%+10px)]"}`}
+      className={`absolute left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-white/[0.09] bg-[#151419]/95 p-1 shadow-[0_12px_36px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl ${toolbarPlacementClass(placement)}`}
       onPointerDown={(event) => {
         event.stopPropagation();
         onSelectBlock(blockIndex);
@@ -42,9 +45,23 @@ export function VisualFrameEditor({ block, blockIndex, onSelectBlock, onUpdateBl
       role="toolbar"
     >
       {isIcon ? <IconQuickControls block={block} onUpdate={update} /> : null}
-      {isImage || isVideo ? <MediaQuickControls block={block} isVideo={isVideo} onUpdate={update} /> : null}
+      {isImage || isVideo ? (
+        <MediaQuickControls
+          block={block}
+          isImageCropActive={isImageCropActive}
+          isVideo={isVideo}
+          onToggleImageCrop={isImage ? () => onToggleImageCrop?.(blockIndex) : undefined}
+          onUpdate={update}
+        />
+      ) : null}
     </div>
   );
+}
+
+function toolbarPlacementClass(placement: VisualFrameToolbarPlacement) {
+  if (placement === "below") return "top-[calc(100%+10px)]";
+  if (placement === "inside-top") return "top-3";
+  return "bottom-[calc(100%+10px)]";
 }
 
 function IconQuickControls({ block, onUpdate }: { block: MotionDocVisualBlock; onUpdate: (updates: MotionDocProps) => void }) {
@@ -72,7 +89,19 @@ function IconQuickControls({ block, onUpdate }: { block: MotionDocVisualBlock; o
   );
 }
 
-function MediaQuickControls({ block, isVideo, onUpdate }: { block: MotionDocVisualBlock; isVideo: boolean; onUpdate: (updates: MotionDocProps) => void }) {
+function MediaQuickControls({
+  block,
+  isImageCropActive,
+  isVideo,
+  onToggleImageCrop,
+  onUpdate
+}: {
+  block: MotionDocVisualBlock;
+  isImageCropActive: boolean;
+  isVideo: boolean;
+  onToggleImageCrop?: () => void;
+  onUpdate: (updates: MotionDocProps) => void;
+}) {
   const fit = normalizeFit(block.props.fit);
   const isMuted = normalizeBoolean(block.props.muted, true);
   const showsControls = normalizeBoolean(block.props.controls, true);
@@ -96,8 +125,37 @@ function MediaQuickControls({ block, isVideo, onUpdate }: { block: MotionDocVisu
           </ToolbarButton>
         </>
       ) : (
-        <ToolbarButton label="Reset image scale" onClick={() => onUpdate({ scaleX: 1, scaleY: 1 })}><RefreshCcw size={13} /></ToolbarButton>
+        <>
+          <ToolbarButton active={isImageCropActive} label={isImageCropActive ? "Apply crop" : "Crop image"} onClick={() => onToggleImageCrop?.()}>{isImageCropActive ? <Check size={13} /> : <Crop size={13} />}</ToolbarButton>
+          {isImageCropActive ? <CropZoomControls block={block} onUpdate={onUpdate} /> : null}
+          <ToolbarButton label="Reset image crop" onClick={() => onUpdate({ cropX: 0, cropY: 0, scaleX: 1, scaleY: 1 })}><RefreshCcw size={13} /></ToolbarButton>
+        </>
       )}
+    </>
+  );
+}
+
+function CropZoomControls({ block, onUpdate }: { block: MotionDocVisualBlock; onUpdate: (updates: MotionDocProps) => void }) {
+  const scale = Math.max(numberProp(block.props.scaleX, 1), numberProp(block.props.scaleY, 1));
+
+  function setScale(nextValue: number) {
+    const nextScale = Math.round(Math.min(Math.max(nextValue, 1), 8) * 20) / 20;
+    const scaleRatio = nextScale / Math.max(scale, 0.1);
+    onUpdate({
+      cropX: clampImagePosition(numberProp(block.props.cropX, 0) * scaleRatio),
+      cropY: clampImagePosition(numberProp(block.props.cropY, 0) * scaleRatio),
+      scaleX: nextScale,
+      scaleY: nextScale
+    });
+  }
+
+  return (
+    <>
+      <ToolbarDivider />
+      <ToolbarButton label="Zoom out 5%" onClick={() => setScale(scale - 0.05)}><Minus size={12} /></ToolbarButton>
+      <span className="min-w-8 text-center font-mono text-[9px] tabular-nums text-neutral-400">{Math.round(scale * 100)}%</span>
+      <ToolbarButton label="Zoom in 5%" onClick={() => setScale(scale + 0.05)}><Plus size={12} /></ToolbarButton>
+      <ToolbarDivider />
     </>
   );
 }
@@ -135,4 +193,8 @@ function normalizeBoolean(value: string | number | undefined, fallback: boolean)
 
 function normalizeHexColor(value: string) {
   return /^#[0-9a-f]{6}$/i.test(value) ? value : "#ffffff";
+}
+
+function clampImagePosition(value: number) {
+  return Math.round(Math.min(Math.max(value, -350), 350) * 100) / 100;
 }

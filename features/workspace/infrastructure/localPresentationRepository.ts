@@ -61,6 +61,17 @@ function writePresentations(ownerId: string, presentations: WorkspacePresentatio
   window.localStorage.setItem(storageKey(ownerId), JSON.stringify(presentations));
 }
 
+export function clearLocalPresentations(ownerId: string) {
+  window.localStorage.removeItem(storageKey(ownerId));
+
+  for (let index = window.localStorage.length - 1; index >= 0; index -= 1) {
+    const key = window.localStorage.key(index);
+    if (key?.startsWith(`slidex_workspace_seed_v1:${ownerId}:`)) {
+      window.localStorage.removeItem(key);
+    }
+  }
+}
+
 export function listLocalPresentations(ownerId: string): WorkspacePresentation[] {
   try {
     const storedValue = window.localStorage.getItem(storageKey(ownerId));

@@ -75,6 +75,7 @@ export type Database = {
           created_at: string;
           guest_import_id: string | null;
           id: string;
+          kind: "presentation" | "template";
           last_opened_at: string;
           source: string;
           source_revision: number;
@@ -87,6 +88,7 @@ export type Database = {
           created_at?: string;
           guest_import_id?: string | null;
           id?: string;
+          kind?: "presentation" | "template";
           last_opened_at?: string;
           source?: string;
           source_revision?: number;
@@ -97,6 +99,7 @@ export type Database = {
         };
         Update: {
           guest_import_id?: string | null;
+          kind?: "presentation" | "template";
           last_opened_at?: string;
           source?: string;
           source_revision?: number;

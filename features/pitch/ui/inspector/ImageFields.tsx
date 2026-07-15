@@ -1,8 +1,9 @@
 "use client";
 
-import { ImagePlus, Maximize, Minimize, RefreshCcw, Shrink, StretchHorizontal, Upload } from "lucide-react";
+import { ImagePlus, Maximize, Minimize, RefreshCcw, Shrink, StretchHorizontal, Trash2, Upload, X } from "lucide-react";
 import { useState } from "react";
-import { omitMotionDocProps } from "@/core/motion-doc/application/motionDocProps";
+import { normalizeDirectPitchImageSource } from "@/features/pitch/application/pitchAssetPolicy";
+import { presentationImageStoragePathFromSource } from "@/features/pitch/application/presentationImagePath";
 import {
   Field,
   IconSegmentedControl,
@@ -15,55 +16,85 @@ import { ImageFilterSection } from "@/features/pitch/ui/inspector/image/ImageFil
 export function ImageFields({
   block,
   importImageUrlForBlock,
+  removeImageForBlock,
   selectedBlockIndex,
   updateBlock,
   uploadImageForBlock
 }: BlockFieldProps & {
   importImageUrlForBlock: (blockIndex: number, source: string) => void;
+  removeImageForBlock: (blockIndex: number) => void;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
 }) {
   const hasImage = Boolean(block.props.src);
+  const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
   const externalImageSource = externalSource(block.props.sourceUrl ?? block.props.src);
 
   function commitImageUrl(value: string) {
     const source = value.trim();
-    if (source === externalImageSource) return;
+    if (source === externalImageSource) return true;
     if (!source) {
-      const imageProps = omitMotionDocProps(block.props, ["sourceUrl"]);
-      updateBlock(selectedBlockIndex, { ...imageProps, src: "" });
-      return;
+      setIsRemoveConfirmationOpen(true);
+      return false;
     }
     importImageUrlForBlock(selectedBlockIndex, source);
+    return true;
   }
+
+  function removeImage() {
+    setIsRemoveConfirmationOpen(false);
+    removeImageForBlock(selectedBlockIndex);
+    return true;
+  }
+
+  const removesSupabaseFile = presentationImageStoragePathFromSource(String(block.props.src ?? "")) !== null;
 
   return (
     <div className="flex flex-col gap-5">
       {/* Visual Image Uploader/Preview Area */}
       <Field label="Content">
-        <div className="group relative flex h-32 w-full flex-col items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-neutral-900/50 transition-all hover:border-white/20">
+        <div className="group relative flex h-32 w-full flex-col items-center justify-center overflow-hidden rounded-xl border border-white/[0.07] bg-[#151518] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] transition-[border-color,box-shadow] hover:border-white/[0.13] hover:shadow-[0_10px_28px_rgba(0,0,0,0.22)]">
           {hasImage ? (
             <>
-              {/* Note: since it might be a local path or external URL, we just show a generic preview or the actual image if possible */}
               <img
                 alt=""
-                className="absolute inset-0 h-full w-full object-cover opacity-50 transition-opacity group-hover:opacity-30"
+                className="absolute inset-0 h-full w-full object-cover opacity-75 transition-[opacity,transform] duration-300 group-hover:scale-[1.015] group-hover:opacity-60"
                 decoding="async"
                 loading="lazy"
                 src={String(block.props.src)}
               />
-              <label className="relative z-10 flex cursor-pointer items-center gap-2 rounded-md bg-neutral-900/90 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-transform hover:scale-105 hover:bg-neutral-800">
-                <Upload size={14} />
-                Replace Image
-                <input
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={(event) => {
-                    uploadImageForBlock(selectedBlockIndex, event.target.files?.[0]);
-                    event.currentTarget.value = "";
-                  }}
-                  type="file"
-                />
-              </label>
+              <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/45" />
+              <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-[10px] border border-white/10 bg-black/55 p-1 shadow-lg backdrop-blur-md">
+                <label aria-label="Replace image" className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-neutral-300 outline-none transition hover:bg-white/10 hover:text-white active:scale-90" title="Replace image">
+                  <Upload size={14} />
+                  <input
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(event) => {
+                      uploadImageForBlock(selectedBlockIndex, event.target.files?.[0]);
+                      event.currentTarget.value = "";
+                    }}
+                    type="file"
+                  />
+                </label>
+                <button
+                  aria-label="Remove image"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-400 outline-none transition hover:bg-rose-500/15 hover:text-rose-300 active:scale-90 focus-visible:ring-1 focus-visible:ring-rose-300/60"
+                  onClick={() => setIsRemoveConfirmationOpen(true)}
+                  title="Remove image"
+                  type="button"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+              {isRemoveConfirmationOpen ? (
+                <div className="absolute inset-x-2 bottom-2 z-20 flex items-center gap-2 rounded-xl border border-white/10 bg-[#111114]/95 p-2 shadow-[0_12px_30px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+                  <p className="min-w-0 flex-1 text-[10px] leading-snug text-neutral-300">
+                    {removesSupabaseFile ? "Remove from this slide and delete the unused Supabase file?" : "Remove this image from the slide?"}
+                  </p>
+                  <button aria-label="Cancel remove" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition hover:bg-white/[0.07] hover:text-white" onClick={() => setIsRemoveConfirmationOpen(false)} title="Cancel" type="button"><X size={13} /></button>
+                  <button aria-label="Confirm remove" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-rose-500/15 text-rose-300 transition hover:bg-rose-500/25 hover:text-rose-200 active:scale-90" onClick={removeImage} title="Remove" type="button"><Trash2 size={13} /></button>
+                </div>
+              ) : null}
             </>
           ) : (
             <label className="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-2 text-neutral-500 transition-colors hover:text-neutral-300">
@@ -93,7 +124,12 @@ export function ImageFields({
         label="Alt Text" 
         placeholder="Image description" 
         value={block.props.alt ?? ""} 
-        onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, alt: value })} 
+        onChange={(value) => updateBlock(
+          selectedBlockIndex,
+          { ...block.props, alt: value },
+          undefined,
+          { skipReplay: true }
+        )}
       />
 
       <IconSegmentedControl
@@ -112,7 +148,7 @@ export function ImageFields({
         <div className="grid grid-cols-[1fr_1fr_auto] gap-1.5">
           <NumberInput
             min="0.1"
-            max="4"
+            max="8"
             onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, scaleX: value === "" ? 1 : value })}
             prefix={<span className="text-[9px] font-semibold text-neutral-500">X</span>}
             step="0.05"
@@ -121,7 +157,7 @@ export function ImageFields({
           />
           <NumberInput
             min="0.1"
-            max="4"
+            max="8"
             onChange={(value) => updateBlock(selectedBlockIndex, { ...block.props, scaleY: value === "" ? 1 : value })}
             prefix={<span className="text-[9px] font-semibold text-neutral-500">Y</span>}
             step="0.05"
@@ -131,7 +167,7 @@ export function ImageFields({
           <button
             aria-label="Reset image scale"
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.055] bg-[#18181b] text-neutral-500 transition-all hover:border-white/10 hover:bg-white/[0.06] hover:text-white active:scale-95"
-            onClick={() => updateBlock(selectedBlockIndex, { ...block.props, scaleX: 1, scaleY: 1 })}
+            onClick={() => updateBlock(selectedBlockIndex, { ...block.props, cropX: 0, cropY: 0, scaleX: 1, scaleY: 1 })}
             title="Reset image scale"
             type="button"
           >
@@ -150,14 +186,16 @@ export function ImageFields({
   );
 }
 
-function CommittedImageUrlInput({ onCommit, value }: { onCommit: (value: string) => void; value: string }) {
+function CommittedImageUrlInput({ onCommit, value }: { onCommit: (value: string) => boolean; value: string }) {
   const [draft, setDraft] = useState(value);
 
   return (
-    <Field label="Image URL">
+    <Field label="Image URL / path">
       <input
         className="h-9 w-full rounded-xl border border-white/[0.055] bg-[#18181b] px-3 text-[12px] text-neutral-200 outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] transition-[border-color,background-color,box-shadow] placeholder:text-neutral-600 hover:border-white/[0.09] hover:bg-[#1b1b1e] focus:border-violet-300/35 focus:bg-[#1d1d20] focus:ring-2 focus:ring-violet-400/10"
-        onBlur={(event) => onCommit(event.currentTarget.value)}
+        onBlur={(event) => {
+          if (!onCommit(event.currentTarget.value)) setDraft(value);
+        }}
         onChange={(event) => setDraft(event.currentTarget.value)}
         onKeyDown={(event) => {
           if (event.key === "Enter") event.currentTarget.blur();
@@ -166,15 +204,15 @@ function CommittedImageUrlInput({ onCommit, value }: { onCommit: (value: string)
             event.currentTarget.blur();
           }
         }}
-        placeholder="https://..."
-        type="url"
+        placeholder="https://... or /images/..."
+        type="text"
         value={draft}
       />
-      <p className="text-[10px] leading-relaxed text-neutral-600">Imported on Enter or when the field loses focus.</p>
+      <p className="text-[10px] leading-relaxed text-neutral-600">URLs and existing paths are used directly on Enter or blur.</p>
     </Field>
   );
 }
 
 function externalSource(value: string | number | undefined) {
-  return typeof value === "string" && /^https?:\/\//i.test(value.trim()) ? value.trim() : "";
+  return typeof value === "string" ? normalizeDirectPitchImageSource(value) ?? "" : "";
 }

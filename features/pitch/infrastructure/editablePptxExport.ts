@@ -10,7 +10,10 @@ import {
 } from "@/core/motion-doc/application/tableBlock";
 import type { MotionDocBlock, MotionDocProps, ParsedMotionDoc } from "@/core/motion-doc/domain/motionDocTypes";
 import { blockFrame } from "@/features/pitch/application/previewCanvas";
-import { portablePptxImageData } from "@/features/pitch/infrastructure/pptxImageExport";
+import {
+  portablePptxImageData,
+  type PptxImageFit
+} from "@/features/pitch/infrastructure/pptxImageExport";
 import { addPptxVideo } from "@/features/pitch/infrastructure/pptxVideoExport";
 
 const SLIDE_HEIGHT = 7.5;
@@ -21,6 +24,7 @@ type PropsBlock = Extract<MotionDocBlock, { props: MotionDocProps }>;
 type PreparedBlockAssets = Map<MotionDocBlock, string>;
 type PortableBlockAssetJob = {
   block: MotionDocBlock;
+  fit: PptxImageFit;
   frame: ReturnType<typeof pptxFrame>;
   source: string;
 };
@@ -91,7 +95,7 @@ export async function addEditableSlides(
       if (block.type === "Title" || block.type === "Text" || block.type === "heading") {
         addEditableText(slide, block, theme.foreground, theme.muted);
       } else if (block.type === "ImageBlock") {
-        const needsFilterRasterization = imageNeedsPptxFilterRasterization(block);
+        const needsFilterRasterization = imageNeedsPptxRasterization(block);
         const filteredImageData = needsFilterRasterization
           ? filteredImagesBySlide[sceneIndex]?.[filteredImageIndex++]
           : undefined;
@@ -119,9 +123,9 @@ async function preparePortableBlockAssets(document: ParsedMotionDoc): Promise<Pr
     const theme = resolveSlideThemeColors(scene.props);
 
     return scene.blocks.flatMap((block): PortableBlockAssetJob[] => {
-      if (block.type === "ImageBlock" && !imageNeedsPptxFilterRasterization(block)) {
+      if (block.type === "ImageBlock" && !imageNeedsPptxRasterization(block)) {
         const source = stringProp(block.props.src);
-        return source ? [{ block, frame: pptxFrame(blockFrame(block)), source }] : [];
+        return source ? [{ block, fit: imageFit(block.props.fit), frame: pptxFrame(blockFrame(block)), source }] : [];
       }
 
       if (block.type === "Icon") {
@@ -130,13 +134,14 @@ async function preparePortableBlockAssets(document: ParsedMotionDoc): Promise<Pr
           color: theme.isLight ? "#000000" : "#ffffff",
           strokeWidth: numericProp(block.props.strokeWidth, 2)
         });
-        return source ? [{ block, frame: pptxFrame(blockFrame(block)), source }] : [];
+        return source ? [{ block, fit: "contain", frame: pptxFrame(blockFrame(block)), source }] : [];
       }
 
       if (block.type === "Shape" && shapeNeedsExactSvgExport(block.props)) {
         const sourceShape = stringProp(block.props.shape) ?? "rectangle";
         return [{
           block,
+          fit: "contain",
           frame: pptxFrame(blockFrame(block)),
           source: shapeVectorSvgDataUri(block.props, `pptx-${sourceShape}`)
         }];
@@ -148,11 +153,11 @@ async function preparePortableBlockAssets(document: ParsedMotionDoc): Promise<Pr
   const preparedAssets: PreparedBlockAssets = new Map();
   const conversionCache = new Map<string, Promise<string>>();
 
-  await mapWithConcurrency(jobs, pptxAssetConversionConcurrency(), async ({ block, frame, source }) => {
-    const cacheKey = `${frame.w.toFixed(3)}x${frame.h.toFixed(3)}:${source}`;
+  await mapWithConcurrency(jobs, pptxAssetConversionConcurrency(), async ({ block, fit, frame, source }) => {
+    const cacheKey = `${fit}:${frame.w.toFixed(3)}x${frame.h.toFixed(3)}:${source}`;
     let conversion = conversionCache.get(cacheKey);
     if (!conversion) {
-      conversion = portablePptxImageData(source, frame);
+      conversion = portablePptxImageData(source, frame, fit);
       conversionCache.set(cacheKey, conversion);
     }
     preparedAssets.set(block, await conversion);
@@ -191,7 +196,7 @@ async function mapWithConcurrency<T>(
 
 export function pptxRasterRequirements(document: ParsedMotionDoc) {
   const captureFilteredImagesBySlide = document.scenes.map((scene) => (
-    scene.blocks.some(imageNeedsPptxFilterRasterization)
+    scene.blocks.some(imageNeedsPptxRasterization)
   ));
   const captureSlideBackgroundsBySlide = document.scenes.map((scene) => (
     needsVisualFallback(scene.blocks, scene.props)
@@ -242,7 +247,8 @@ async function addEditableImage(slide: PptxSlide, block: PropsBlock, renderedDat
   if (!src) return;
 
   const frame = pptxFrame(blockFrame(block));
-  const data = renderedData ?? await portablePptxImageData(src, frame);
+  const fit = imageFit(block.props.fit);
+  const data = renderedData ?? await portablePptxImageData(src, frame, fit);
 
   slide.addImage({
     data,
@@ -367,10 +373,14 @@ function needsVisualFallback(blocks: readonly MotionDocBlock[], props: MotionDoc
   );
 }
 
-function imageNeedsPptxFilterRasterization(block: MotionDocBlock) {
-  return block.type === "ImageBlock" && Boolean(
-    getPaperImageFilterDefinition(stringProp(block.props.filter))
-  );
+function imageNeedsPptxRasterization(block: MotionDocBlock) {
+  if (block.type !== "ImageBlock") return false;
+
+  return Boolean(getPaperImageFilterDefinition(stringProp(block.props.filter))) ||
+    Math.abs(numericProp(block.props.cropX, 0)) > 0.001 ||
+    Math.abs(numericProp(block.props.cropY, 0)) > 0.001 ||
+    Math.abs(numericProp(block.props.scaleX, 1) - 1) > 0.001 ||
+    Math.abs(numericProp(block.props.scaleY, 1) - 1) > 0.001;
 }
 
 function isNativePptxBlock(block: MotionDocBlock) {
@@ -454,6 +464,12 @@ function stringProp(value: string | number | undefined) {
 function numericProp(value: string | number | undefined, fallback: number) {
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function imageFit(value: string | number | undefined): PptxImageFit {
+  if (value === "contain" || value === "scale-down") return "contain";
+  if (value === "fill") return "fill";
+  return "cover";
 }
 
 function textAlign(value: string | number | undefined): "center" | "left" | "right" {

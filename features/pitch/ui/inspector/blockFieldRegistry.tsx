@@ -14,8 +14,8 @@ import type { MotionDocBlockType } from "@/core/motion-doc/domain/motionDocTypes
 
 type BlockFieldRegistryContext = BlockFieldProps & {
   importImageUrlForBlock: (blockIndex: number, source: string) => void;
+  removeImageForBlock: (blockIndex: number) => void;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
-  uploadVideoForBlock: (blockIndex: number, file: File | undefined) => void;
 };
 
 type BlockFieldRegistryEntry = {
@@ -37,6 +37,7 @@ const blockFieldRegistry: Partial<Record<MotionDocBlockType, BlockFieldRegistryE
       <ImageFields
         {...context}
         importImageUrlForBlock={context.importImageUrlForBlock}
+        removeImageForBlock={context.removeImageForBlock}
         uploadImageForBlock={context.uploadImageForBlock}
       />
     ),
@@ -59,7 +60,7 @@ const blockFieldRegistry: Partial<Record<MotionDocBlockType, BlockFieldRegistryE
     title: "Table properties"
   },
   VideoBlock: {
-    render: (context) => <VideoFields {...context} uploadVideoForBlock={context.uploadVideoForBlock} />,
+    render: (context) => <VideoFields {...context} />,
     title: "Video properties"
   }
 };

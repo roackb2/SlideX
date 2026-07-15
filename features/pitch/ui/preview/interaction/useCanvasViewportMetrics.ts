@@ -4,13 +4,9 @@ import { useEffect, useState, type CSSProperties, type RefObject } from "react";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/features/pitch/application/previewCanvas";
 
 const mobileCanvasBreakpoint = 640;
-const workspaceGridBaseSize = 24;
-const workspaceGridBaseDotSize = 1.5;
-
 type UseCanvasViewportMetricsOptions = {
   activeSlideIndex: number;
   canvasRef: RefObject<HTMLDivElement | null>;
-  canvasViewportOffset: { x: number; y: number };
   onFitScaleChange?: (scale: number) => void;
   sceneCount: number;
   scrollAreaRef: RefObject<HTMLDivElement | null>;
@@ -20,7 +16,6 @@ type UseCanvasViewportMetricsOptions = {
 export function useCanvasViewportMetrics({
   activeSlideIndex,
   canvasRef,
-  canvasViewportOffset,
   onFitScaleChange,
   sceneCount,
   scrollAreaRef,
@@ -74,8 +69,7 @@ export function useCanvasViewportMetrics({
   return {
     actualScale,
     canvasFrameStyle: frameStyle(zoomLevel, fitCanvasWidth),
-    canvasStripSidePadding: Math.max(canvasStripMinimumPadding, Math.round((canvasViewportWidth - canvasFrameWidth) / 2)),
-    workspaceGridStyle: gridStyle(actualScale, canvasViewportOffset)
+    canvasStripSidePadding: Math.max(canvasStripMinimumPadding, Math.round((canvasViewportWidth - canvasFrameWidth) / 2))
   };
 }
 
@@ -85,15 +79,4 @@ function frameStyle(zoomLevel: number | "fit", fitCanvasWidth: number): CSSPrope
   }
 
   return { height: CANVAS_HEIGHT * zoomLevel, width: CANVAS_WIDTH * zoomLevel };
-}
-
-function gridStyle(scale: number, offset: { x: number; y: number }): CSSProperties {
-  const gridSize = Math.max(3, Math.min(640, workspaceGridBaseSize * scale));
-  const dotSize = Math.max(0.6, Math.min(6, workspaceGridBaseDotSize * scale));
-
-  return {
-    backgroundImage: `radial-gradient(circle, #ffffff30 ${dotSize}px, transparent ${dotSize}px)`,
-    backgroundPosition: `${offset.x}px ${offset.y}px`,
-    backgroundSize: `${gridSize}px ${gridSize}px`
-  };
 }

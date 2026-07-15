@@ -215,6 +215,7 @@ export function usePitchShortcuts({
 
       if (nextCanvasTool) {
         event.preventDefault();
+        canvasToolRef.current = nextCanvasTool;
         setActiveCanvasTool(nextCanvasTool);
         return;
       }

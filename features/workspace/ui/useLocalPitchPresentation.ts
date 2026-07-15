@@ -17,11 +17,12 @@ import {
   ensureGuestDemoDraft,
   updateGuestDemoDraft
 } from "@/features/workspace/infrastructure/guestDemoDraft";
-import { getLocalPresentation, updateLocalPresentation } from "@/features/workspace/infrastructure/localPresentationRepository";
 import {
   getSupabasePresentation,
   importGuestDemoPresentation,
-  updateSupabasePresentation
+  parseSupabasePresentationRealtimeChange,
+  updateSupabasePresentation,
+  updateSupabasePresentationTemplate
 } from "@/features/workspace/infrastructure/supabasePresentationRepository";
 
 export type PitchAccessMode = "authenticated" | "guest";
@@ -31,11 +32,13 @@ export function useLocalPitchPresentation() {
   const searchParams = useSearchParams();
   const { isReady: isAuthReady, session } = useAuthSession();
   const [presentation, setPresentation] = useState<WorkspacePresentation | null>(null);
-  const [persistence, setPersistence] = useState<"local" | "supabase" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const activeImportRef = useRef<string | null>(null);
   const sourceRevisionRef = useRef(0);
+  const templateIdRef = useRef<string | undefined>(undefined);
+  const presentationRef = useRef<WorkspacePresentation | null>(null);
+  const localSourceRef = useRef<string | null>(null);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const presentationId = searchParams.get("presentation");
   const isDemoEntry = searchParams.get("demo") === "1";
@@ -82,7 +85,7 @@ export function useLocalPitchPresentation() {
           return;
         }
 
-        setPresentation({
+        const guestPresentation: WorkspacePresentation = {
           createdAt: guestDraft.createdAt,
           id: guestDraft.id,
           kind: "presentation",
@@ -93,9 +96,12 @@ export function useLocalPitchPresentation() {
           templateId: guestDraft.templateId,
           title: guestDraft.title,
           updatedAt: guestDraft.updatedAt
-        });
+        };
+        presentationRef.current = guestPresentation;
+        localSourceRef.current = guestPresentation.source;
+        setPresentation(guestPresentation);
         sourceRevisionRef.current = 0;
-        setPersistence(null);
+        templateIdRef.current = guestDraft.templateId;
         setIsReady(true);
         return;
       }
@@ -106,16 +112,6 @@ export function useLocalPitchPresentation() {
       }
       if (!presentationId) {
         router.replace(appRoutes.workspace);
-        return;
-      }
-
-      const localPresentation = getLocalPresentation(session.user.id, presentationId);
-      if (localPresentation) {
-        sourceRevisionRef.current = localPresentation.sourceRevision;
-        saveQueueRef.current = Promise.resolve();
-        setPresentation(localPresentation);
-        setPersistence("local");
-        setIsReady(true);
         return;
       }
 
@@ -130,9 +126,11 @@ export function useLocalPitchPresentation() {
           return;
         }
         sourceRevisionRef.current = remotePresentation.sourceRevision;
+        templateIdRef.current = remotePresentation.templateId;
+        presentationRef.current = remotePresentation;
+        localSourceRef.current = remotePresentation.source;
         saveQueueRef.current = Promise.resolve();
         setPresentation(remotePresentation);
-        setPersistence("supabase");
         setIsReady(true);
       } catch {
         if (!isCancelled) {
@@ -147,53 +145,133 @@ export function useLocalPitchPresentation() {
     };
   }, [isAuthReady, isDemoEntry, presentationId, router, searchParams, session]);
 
-  const save = useCallback(async (source: string, title: string) => {
+  useEffect(() => {
+    const userId = session?.user.id;
+    if (!userId || !presentationId || isDemoEntry) return;
+
+    const client = createSupabaseBrowserClient();
+    let channel: ReturnType<typeof client.channel> | null = null;
+    let isCancelled = false;
+
+    void client.realtime.setAuth().then(() => {
+      if (isCancelled) return;
+      channel = client
+        .channel(`workspace-presentations:${userId}`, {
+          config: { private: true }
+        })
+        .on("broadcast", { event: "*" }, (message) => {
+          const change = parseSupabasePresentationRealtimeChange(message, userId);
+          if (!change || change.presentation.id !== presentationId) return;
+
+          if (change.event === "DELETE") {
+            presentationRef.current = null;
+            setPresentation(null);
+            router.replace(appRoutes.workspace);
+            return;
+          }
+
+          if (change.event !== "UPDATE") return;
+          const remotePresentation = change.presentation;
+
+          // updated_at also changes for metadata-only writes such as
+          // last_opened_at. Only a newer source revision may replace the
+          // editor document, otherwise an upload that is still being saved
+          // can be reverted to the previous image-less source.
+          if (remotePresentation.sourceRevision <= sourceRevisionRef.current) return;
+          const persistedSource = presentationRef.current?.source;
+          const localSource = localSourceRef.current;
+          const hasLocalSourceChanges = persistedSource !== undefined &&
+            localSource !== null &&
+            localSource !== persistedSource;
+          if (hasLocalSourceChanges && remotePresentation.source !== localSource) return;
+
+          sourceRevisionRef.current = remotePresentation.sourceRevision;
+          templateIdRef.current = remotePresentation.templateId;
+          presentationRef.current = remotePresentation;
+          localSourceRef.current = remotePresentation.source;
+          setPresentation(remotePresentation);
+        })
+        .subscribe((status) => {
+          if (!isCancelled && (status === "CHANNEL_ERROR" || status === "TIMED_OUT")) {
+            setError("The presentation could not connect to Supabase Realtime.");
+          }
+        });
+    }).catch(() => {
+      if (!isCancelled) setError("The presentation could not connect to Supabase Realtime.");
+    });
+
+    return () => {
+      isCancelled = true;
+      if (channel) void client.removeChannel(channel);
+    };
+  }, [isDemoEntry, presentationId, router, session?.user.id]);
+
+  const save = useCallback(async (source: string, title: string, templateId?: string) => {
     if (isDemoEntry && !session) {
-      updateGuestDemoDraft(source, title);
+      updateGuestDemoDraft(source, title, templateId);
       return;
     }
     if (!session || !presentationId) return;
-    if (persistence === "supabase") {
-      const saveOperation = saveQueueRef.current.then(async () => {
+    const currentPresentation = presentationRef.current;
+    const normalizedTitle = title.trim() || currentPresentation?.title || title;
+    if (
+      currentPresentation?.source === source &&
+      currentPresentation.title === normalizedTitle &&
+      currentPresentation.templateId === templateId
+    ) {
+      return;
+    }
+    const saveOperation = saveQueueRef.current.then(async () => {
+      const persistedPresentation = presentationRef.current;
+      if (!persistedPresentation || persistedPresentation.id !== presentationId) return;
+
+      let sourceRevision = persistedPresentation.sourceRevision;
+      let updatedAt = persistedPresentation.updatedAt;
+      if (persistedPresentation.source !== source || persistedPresentation.title !== normalizedTitle) {
         const result = await updateSupabasePresentation(
           createSupabaseBrowserClient(),
           presentationId,
           sourceRevisionRef.current,
           { source, title }
         );
+        sourceRevision = result.sourceRevision;
+        updatedAt = result.updatedAt;
         sourceRevisionRef.current = result.sourceRevision;
-        setPresentation((currentPresentation) => currentPresentation?.id === presentationId
-          ? {
-              ...currentPresentation,
-              source,
-              sourceRevision: result.sourceRevision,
-              title: title.trim() || currentPresentation.title,
-              updatedAt: result.updatedAt
-            }
-          : currentPresentation);
-      });
-      saveQueueRef.current = saveOperation.catch(() => undefined);
-      await saveOperation;
-      return;
-    }
-    if (persistence === "local") {
-      const updatedPresentation = updateLocalPresentation(
-        session.user.id,
-        presentationId,
-        { source, title }
-      );
-      if (updatedPresentation) {
-        sourceRevisionRef.current = updatedPresentation.sourceRevision;
-        setPresentation(updatedPresentation);
       }
-    }
-  }, [isDemoEntry, persistence, presentationId, session]);
+      const savedTemplateId = templateId === templateIdRef.current
+        ? templateId
+        : await updateSupabasePresentationTemplate(
+            createSupabaseBrowserClient(),
+            presentationId,
+            templateId
+          );
+      templateIdRef.current = savedTemplateId;
+      const savedPresentation = {
+        ...persistedPresentation,
+        source,
+        sourceRevision,
+        templateId: savedTemplateId,
+        title: normalizedTitle,
+        updatedAt
+      };
+      presentationRef.current = savedPresentation;
+      localSourceRef.current = source;
+      setPresentation(savedPresentation);
+    });
+    saveQueueRef.current = saveOperation.catch(() => undefined);
+    await saveOperation;
+  }, [isDemoEntry, presentationId, session]);
+
+  const trackLocalSource = useCallback((source: string) => {
+    localSourceRef.current = source;
+  }, []);
 
   return {
     accessMode,
     error,
     isReady,
     presentation,
-    save
+    save,
+    trackLocalSource
   };
 }

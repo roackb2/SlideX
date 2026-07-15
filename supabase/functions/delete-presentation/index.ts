@@ -1,13 +1,13 @@
 import { withSupabase } from "npm:@supabase/server@^1";
 import { createClient } from "npm:@supabase/supabase-js@^2";
+import { corsHeaders } from "npm:@supabase/supabase-js@^2/cors";
 
 const bucket = "presentation-images";
 const deleteBatchSize = 100;
 const listPageSize = 100;
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const handler = {
-  fetch: withSupabase({ auth: "user" }, async (request, context) => {
+const authenticatedHandler = withSupabase({ auth: "user" }, async (request, context) => {
     if (request.method !== "POST") {
       return Response.json({ error: "Method not allowed" }, { status: 405 });
     }
@@ -26,13 +26,16 @@ const handler = {
 
       const { data: ownedPresentation, error: ownershipError } = await context.supabase
         .from("presentations")
-        .select("id")
+        .select("id,kind")
         .eq("id", presentationId)
         .maybeSingle();
 
       if (ownershipError) throw ownershipError;
       if (!ownedPresentation) {
         return Response.json({ error: "Presentation not found or access denied" }, { status: 404 });
+      }
+      if (isOfficialWorkspaceStarter(ownedPresentation)) {
+        return Response.json({ error: "Official templates cannot be deleted" }, { status: 403 });
       }
 
       const admin = createServiceRoleClient();
@@ -76,7 +79,19 @@ const handler = {
       const message = error instanceof Error ? error.message : "Failed to delete presentation";
       return Response.json({ error: message }, { status: 500 });
     }
-  })
+  });
+
+const handler = {
+  async fetch(request: Request, context: Parameters<typeof authenticatedHandler>[1]) {
+    // The browser sends this before the authenticated POST. It must not enter
+    // the JWT wrapper, otherwise the preflight is rejected before deletion runs.
+    if (request.method === "OPTIONS") {
+      return new Response("ok", { headers: corsHeaders });
+    }
+
+    const response = await authenticatedHandler(request, context);
+    return withCors(response);
+  }
 };
 
 export default handler;
@@ -101,4 +116,21 @@ function presentationIdFromBody(value: unknown) {
   if (!value || typeof value !== "object" || !("presentationId" in value)) return null;
   const presentationId = value.presentationId;
   return typeof presentationId === "string" && uuidPattern.test(presentationId) ? presentationId : null;
+}
+
+function isOfficialWorkspaceStarter(presentation: { kind: string }) {
+  return presentation.kind === "template";
+}
+
+function withCors(response: Response) {
+  const headers = new Headers(response.headers);
+  for (const [name, value] of Object.entries(corsHeaders)) {
+    headers.set(name, value);
+  }
+
+  return new Response(response.body, {
+    headers,
+    status: response.status,
+    statusText: response.statusText
+  });
 }

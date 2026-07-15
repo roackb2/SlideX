@@ -1,3 +1,5 @@
+import { sanitizeMotionDocMediaSource } from "@/core/motion-doc/domain/mediaSource";
+
 export const pitchAssetKinds = ["image", "video"] as const;
 
 export type PitchAssetKind = (typeof pitchAssetKinds)[number];
@@ -35,6 +37,12 @@ export const pitchAssetAllowedMimeTypes = Object.values(pitchAssetMimeTypes).fla
 
 export const pitchAssetCacheControlSeconds = 31_536_000;
 export const pitchWorkspaceDefaultQuotaBytes = 1024 * mebibyte;
+
+export function normalizeDirectPitchImageSource(value: string) {
+  const source = sanitizeMotionDocMediaSource(value);
+  if (!source || source.startsWith("blob:") || source.startsWith("data:")) return null;
+  return source;
+}
 
 export function pitchAssetKindFromMimeType(mimeType: string): PitchAssetKind | null {
   const normalizedMimeType = mimeType.trim().toLowerCase();

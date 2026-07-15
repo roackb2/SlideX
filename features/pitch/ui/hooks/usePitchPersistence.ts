@@ -5,18 +5,22 @@ import { embedPitchLocalImagesForPersistence } from "@/features/pitch/infrastruc
 
 type UsePitchPersistenceOptions = {
   enabled: boolean;
-  onProjectSourceChange?: (source: string, title: string) => Promise<void> | void;
+  onProjectSourceChange?: (source: string, title: string, templateId?: string) => Promise<void> | void;
   projectName: string;
+  projectVersion?: number;
   setNotice: (notice: string) => void;
   source: string;
+  templateId?: string;
 };
 
 export function usePitchPersistence({
   enabled,
   onProjectSourceChange,
   projectName,
+  projectVersion,
   setNotice,
-  source
+  source,
+  templateId
 }: UsePitchPersistenceOptions) {
   useEffect(() => {
     if (!enabled || !onProjectSourceChange) return;
@@ -26,7 +30,7 @@ export function usePitchPersistence({
       void (async () => {
         try {
           const persistedSource = await embedPitchLocalImagesForPersistence(source);
-          if (!isCancelled) await onProjectSourceChange(persistedSource, projectName);
+          if (!isCancelled) await onProjectSourceChange(persistedSource, projectName, templateId);
         } catch (error) {
           if (!isCancelled) {
             setNotice(error instanceof Error && error.name === "PresentationRevisionConflictError"
@@ -41,5 +45,5 @@ export function usePitchPersistence({
       isCancelled = true;
       window.clearTimeout(saveTimer);
     };
-  }, [enabled, onProjectSourceChange, projectName, setNotice, source]);
+  }, [enabled, onProjectSourceChange, projectName, projectVersion, setNotice, source, templateId]);
 }

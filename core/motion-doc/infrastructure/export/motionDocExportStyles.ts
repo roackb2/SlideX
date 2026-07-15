@@ -469,6 +469,25 @@ export const motionDocExportStyles = `      :root {
         aspect-ratio: auto;
         object-fit: cover;
       }
+      .block-image__crop-media {
+        position: absolute;
+        inset: 0;
+        transform-origin: center;
+      }
+      .block-image img.block-image__crop-image,
+      .block-image .block-image__crop-filter {
+        display: block;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        aspect-ratio: auto;
+        object-fit: fill;
+        transform: translate(-50%, -50%);
+        transform-origin: center;
+      }
       .block-video video,
       .block-video iframe {
         display: block;

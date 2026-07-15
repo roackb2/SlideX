@@ -26,7 +26,7 @@ export function SiteFooter() {
         <div className="grid gap-12 md:grid-cols-[minmax(0,1.45fr)_minmax(0,0.55fr)_minmax(0,0.55fr)] md:gap-8">
           <div>
             <Link href={localePath("/")} className="inline-flex items-center opacity-95 transition-opacity hover:opacity-70">
-              <Image alt="SlideX" className="h-auto w-[96px] object-contain" height={72} src="/logo.png" width={260} />
+              <Image alt="SlideX" className="h-auto w-[96px] object-contain" height={72} loading="eager" src="/logo.png" width={260} />
             </Link>
             <p className="mt-5 max-w-xs text-[14px] leading-6 text-white/48">
               {isZh ? "在瀏覽器完成簡報，準備好後匯出 PowerPoint。" : "Create presentations in the browser and export to PowerPoint when they are ready."}

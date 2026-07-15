@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Download, FileCode2, Globe2, Lock, Presentation, Upload, X } from "lucide-react";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 export type ExportFormat = "html" | "mdx" | "pptx";
 
@@ -65,6 +66,7 @@ export function ExportModal({
   lockedFormats = [],
   onLockedFormat
 }: ExportModalProps) {
+  const { locale, tx } = usePitchI18n();
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("pptx");
   const [mode, setMode] = useState<"export" | "import">("export");
   const [filename, setFilename] = useState("");
@@ -156,11 +158,11 @@ export function ExportModal({
       >
         <header className="flex items-start justify-between border-b border-white/[0.08] px-4 py-4 sm:px-6 sm:py-5">
           <div>
-            <h2 className="text-[18px] font-semibold tracking-[-0.03em] text-white" id="export-dialog-title">Presentation file</h2>
-            <p className="mt-1 text-[13px] leading-5 text-neutral-500">Bring a deck in or prepare it for sharing.</p>
+            <h2 className="text-[18px] font-semibold tracking-[-0.03em] text-white" id="export-dialog-title">{tx("Presentation file")}</h2>
+            <p className="mt-1 text-[13px] leading-5 text-neutral-500">{locale === "zh-TW" ? "匯入簡報，或準備分享用的檔案。" : "Bring a deck in or prepare it for sharing."}</p>
           </div>
           <button
-            aria-label="Close export dialog"
+            aria-label={locale === "zh-TW" ? "關閉簡報檔案視窗" : "Close export dialog"}
             className="flex h-8 w-8 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-1 focus-visible:outline-white"
             onClick={onClose}
             type="button"
@@ -183,7 +185,7 @@ export function ExportModal({
                 type="button"
               >
                 <Icon size={15} />
-                {item.label}
+                {tx(item.label)}
               </button>
               );
             })}
@@ -192,7 +194,7 @@ export function ExportModal({
 
         <div className="max-h-[min(66dvh,620px)] overflow-y-auto px-4 py-4 sm:max-h-[min(72dvh,620px)] sm:px-6 sm:py-5">
           {mode === "export" ? <>
-          <p className="mb-3 text-[12px] font-semibold text-neutral-400">Format</p>
+          <p className="mb-3 text-[12px] font-semibold text-neutral-400">{locale === "zh-TW" ? "格式" : "Format"}</p>
           <div className="overflow-hidden rounded-lg border border-white/[0.08]">
             {formatOptions.map((option) => {
               const Icon = option.icon;
@@ -201,7 +203,7 @@ export function ExportModal({
 
               return (
                 <button
-                  aria-label={isLocked ? `${option.label}. Sign in required` : option.label}
+                  aria-label={isLocked ? `${tx(option.label)}. ${locale === "zh-TW" ? "需要登入" : "Sign in required"}` : tx(option.label)}
                   aria-pressed={isActive}
                   className={`flex w-full items-center gap-3 border-b border-white/[0.07] px-4 py-3.5 text-left transition-colors last:border-b-0 ${
                     isActive ? "bg-[#9ad7ff]/10" : isLocked ? "bg-white/[0.01] hover:bg-white/[0.035]" : "bg-white/[0.015] hover:bg-white/[0.04]"
@@ -219,11 +221,11 @@ export function ExportModal({
                   <Icon className={isActive ? "text-[#9ad7ff]" : isLocked ? "text-neutral-600" : "text-neutral-500"} size={18} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline gap-2">
-                      <span className={`text-[14px] font-semibold ${isActive ? "text-white" : isLocked ? "text-neutral-500" : "text-neutral-300"}`}>{option.label}</span>
+                      <span className={`text-[14px] font-semibold ${isActive ? "text-white" : isLocked ? "text-neutral-500" : "text-neutral-300"}`}>{tx(option.label)}</span>
                       <span className="font-mono text-[10px] text-neutral-600">{option.ext}</span>
                     </span>
                     <span className="mt-1 block text-[11px] leading-4 text-neutral-500">
-                      {isLocked ? "Sign in required. " : ""}{option.description}
+                      {isLocked ? (locale === "zh-TW" ? "需要登入。" : "Sign in required. ") : ""}{tx(option.description)}
                     </span>
                   </span>
                   {isLocked ? (
@@ -238,7 +240,7 @@ export function ExportModal({
             })}
           </div>
 
-          <label className="mt-5 block text-[12px] font-semibold text-neutral-400" htmlFor="export-filename">Filename</label>
+          <label className="mt-5 block text-[12px] font-semibold text-neutral-400" htmlFor="export-filename">{locale === "zh-TW" ? "檔案名稱" : "Filename"}</label>
           <div className="mt-2 flex h-11 items-center overflow-hidden rounded-lg border border-white/[0.1] bg-black/20 focus-within:border-[#9ad7ff]/50 focus-within:ring-1 focus-within:ring-[#9ad7ff]/20">
             <input
               autoComplete="off"
@@ -272,17 +274,17 @@ export function ExportModal({
               type="button"
             >
               <Upload className="mb-3 text-neutral-400" size={20} />
-              <span className="text-[14px] font-semibold text-white">{isImporting ? "Importing…" : "Choose an MDX or HTML file"}</span>
-              <span className="mt-1.5 max-w-xs text-[12px] leading-5 text-neutral-500">MDX opens directly. SlideX HTML restores its embedded editable source.</span>
+              <span className="text-[14px] font-semibold text-white">{isImporting ? tx("Importing…") : (locale === "zh-TW" ? "選擇 MDX 或 HTML 檔案" : "Choose an MDX or HTML file")}</span>
+              <span className="mt-1.5 max-w-xs text-[12px] leading-5 text-neutral-500">{locale === "zh-TW" ? "MDX 可直接開啟；SlideX HTML 會還原內嵌的可編輯原始碼。" : "MDX opens directly. SlideX HTML restores its embedded editable source."}</span>
             </button>
           </div>}
           {errorMessage ? <p className="mt-3 rounded-md border border-red-400/20 bg-red-400/[0.06] px-3 py-2.5 text-[12px] leading-5 text-red-200" role="alert">{errorMessage}</p> : null}
         </div>
 
         <footer className="flex items-center justify-between gap-4 border-t border-white/[0.08] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:py-4">
-          <p className="hidden text-[11px] text-neutral-600 sm:block">Esc to close</p>
+          <p className="hidden text-[11px] text-neutral-600 sm:block">{tx("Esc to close")}</p>
           <div className="ml-auto flex items-center gap-2">
-            <button className="h-10 rounded-md px-4 text-[13px] font-semibold text-neutral-400 transition-colors hover:bg-white/[0.04] hover:text-white" onClick={onClose} type="button">Cancel</button>
+            <button className="h-10 rounded-md px-4 text-[13px] font-semibold text-neutral-400 transition-colors hover:bg-white/[0.04] hover:text-white" onClick={onClose} type="button">{tx("Cancel")}</button>
             {mode === "export" ? <button
               className="inline-flex h-10 min-w-28 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#f4f4f1] px-4 text-[13px] font-semibold text-[#0b0c0f] transition-colors hover:bg-white active:translate-y-px disabled:cursor-wait disabled:opacity-55"
               disabled={isExporting}
@@ -290,7 +292,7 @@ export function ExportModal({
               type="button"
             >
               <Download size={14} />
-              {isExporting ? "Exporting" : "Export"}
+              {tx(isExporting ? "Exporting" : "Export")}
             </button> : null}
           </div>
         </footer>

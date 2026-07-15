@@ -61,7 +61,7 @@ export function SiteNav() {
         <div className="mx-auto flex h-[68px] max-w-[1440px] items-center px-5 sm:px-7 lg:px-10">
           <div className="flex shrink-0 items-center gap-3">
             <Link aria-label={isZh ? "SlideX 首頁" : "SlideX home"} className="inline-flex items-center opacity-95 transition-opacity hover:opacity-70" href={localePath("/")}>
-              <Image alt="SlideX" className="h-auto w-[92px] object-contain" height={72} priority src="/logo.png" width={260} />
+              <Image alt="SlideX" className="h-auto w-[92px] object-contain" height={72} loading="eager" priority src="/logo.png" width={260} />
             </Link>
             <span className="whitespace-nowrap rounded-md border border-white/[0.14] px-2 py-1 text-[11px] font-semibold text-white/62">Pitch Beta</span>
           </div>

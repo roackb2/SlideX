@@ -10,7 +10,7 @@
     "build": "next build --webpack",
     "build:clean": "npm run clean && npm run build",
     "start": "next start",
-    "test": "tsx --test core/motion-doc/application/*.test.ts core/motion-doc/infrastructure/export/*.test.ts features/pitch/application/*.test.ts features/workspace/application/*.test.ts",
+    "test": "tsx --test core/motion-doc/application/*.test.ts core/motion-doc/infrastructure/export/*.test.ts features/pitch/application/*.test.ts features/pitch/infrastructure/*.test.ts features/workspace/application/*.test.ts features/workspace/infrastructure/*.test.ts",
     "lint": "eslint .",
     "mcp": "tsx mcp/server.ts",
     "mcp:build": "node scripts/build-mcp-server.mjs",

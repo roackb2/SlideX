@@ -59,6 +59,24 @@ export function resolveSlideComment(
   }));
 }
 
+export function removeSlideComment(
+  comments: SlideComments,
+  slideIndex: number,
+  commentId: string
+): SlideComments {
+  const currentComments = comments[slideIndex] ?? [];
+  const nextComments = currentComments.filter((comment) => comment.id !== commentId);
+  if (nextComments.length === currentComments.length) return comments;
+
+  if (nextComments.length === 0) {
+    const remainingComments = { ...comments };
+    delete remainingComments[slideIndex];
+    return remainingComments;
+  }
+
+  return { ...comments, [slideIndex]: nextComments };
+}
+
 function updateSlideComment(
   comments: SlideComments,
   slideIndex: number,

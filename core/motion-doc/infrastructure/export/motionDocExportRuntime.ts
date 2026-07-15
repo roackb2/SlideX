@@ -71,6 +71,92 @@ export function makeMotionDocExportRuntime() {
         const DESIGN_WIDTH = ${MOTION_DOC_CANVAS_WIDTH};
         const DESIGN_HEIGHT = ${MOTION_DOC_CANVAS_HEIGHT};
 
+        function croppedImageDimensions(fit, frameAspectRatio, imageAspectRatio) {
+          if (!imageAspectRatio || fit === "fill") return { height: 100, width: 100 };
+          const useContain = fit === "contain" || fit === "scale-down";
+          const imageIsWider = imageAspectRatio > frameAspectRatio;
+          const widthFromFullHeight = imageAspectRatio / frameAspectRatio * 100;
+          const heightFromFullWidth = frameAspectRatio / imageAspectRatio * 100;
+
+          if (useContain) {
+            return imageIsWider
+              ? { height: heightFromFullWidth, width: 100 }
+              : { height: 100, width: widthFromFullHeight };
+          }
+
+          return imageIsWider
+            ? { height: 100, width: widthFromFullHeight }
+            : { height: heightFromFullWidth, width: 100 };
+        }
+
+        function croppedImageNumber(value, fallback, minimum, maximum) {
+          const parsed = Number(value);
+          if (!Number.isFinite(parsed)) return fallback;
+          return Math.min(Math.max(parsed, minimum), maximum);
+        }
+
+        function clampCroppedImagePosition(value, scaledImageSize) {
+          const minimum = 50 - scaledImageSize / 2;
+          const maximum = -50 + scaledImageSize / 2;
+          if (minimum <= maximum) return Math.min(Math.max(value, minimum), maximum);
+          return (minimum + maximum) / 2;
+        }
+
+        function layoutCroppedImageMedia(media, restartFilter) {
+          const image = media.querySelector(".block-image__crop-image");
+          const frame = media.parentElement;
+          if (!image || !frame || image.naturalWidth <= 0 || image.naturalHeight <= 0) return false;
+
+          const rect = frame.getBoundingClientRect();
+          if (rect.width <= 0 || rect.height <= 0) return false;
+
+          const fit = media.dataset.imageFit || "cover";
+          const scaleX = croppedImageNumber(media.dataset.imageScaleX, 1, 0.1, 8);
+          const scaleY = croppedImageNumber(media.dataset.imageScaleY, 1, 0.1, 8);
+          const dimensions = croppedImageDimensions(
+            fit,
+            rect.width / rect.height,
+            image.naturalWidth / image.naturalHeight
+          );
+          let cropX = croppedImageNumber(media.dataset.imageCropX, 0, -350, 350);
+          let cropY = croppedImageNumber(media.dataset.imageCropY, 0, -350, 350);
+
+          if (fit === "cover") {
+            cropX = clampCroppedImagePosition(cropX, dimensions.width * scaleX);
+            cropY = clampCroppedImagePosition(cropY, dimensions.height * scaleY);
+          }
+
+          media.querySelectorAll(".block-image__crop-image, .block-image__crop-filter").forEach((surface) => {
+            surface.style.width = dimensions.width + "%";
+            surface.style.height = dimensions.height + "%";
+          });
+          media.style.transform = "translate(" + cropX + "%, " + cropY + "%) scale(" + scaleX + ", " + scaleY + ")";
+          media.dataset.imageLayoutReady = "true";
+
+          if (restartFilter) {
+            const canvas = media.querySelector("canvas.image-filter-canvas");
+            if (canvas) {
+              stopShader(canvas);
+              startShader(canvas);
+            }
+          }
+
+          return true;
+        }
+
+        function layoutCroppedImages(root, restartFilters = false) {
+          root.querySelectorAll(".block-image__crop-media").forEach((media) => {
+            if (layoutCroppedImageMedia(media, restartFilters)) return;
+            const image = media.querySelector(".block-image__crop-image");
+            if (!image || media.dataset.imageLayoutPending === "true") return;
+            media.dataset.imageLayoutPending = "true";
+            image.addEventListener("load", () => {
+              delete media.dataset.imageLayoutPending;
+              layoutCroppedImageMedia(media, true);
+            }, { once: true });
+          });
+        }
+
         function updateFrameScale() {
           if (!viewport) return;
           const host = stage || viewport.parentElement || document.body;
@@ -99,6 +185,7 @@ export function makeMotionDocExportRuntime() {
           }
 
           activeSlide.classList.add("is-active");
+          layoutCroppedImages(activeSlide);
           if (current) current.textContent = String(index + 1);
           if (progress) progress.style.setProperty("--progress", slides.length <= 1 ? "100%" : ((index + 1) / slides.length * 100).toFixed(2) + "%");
         }
@@ -618,6 +705,7 @@ export function makeMotionDocExportRuntime() {
             positionBuffer,
             prog,
             raf: 0,
+            renderedFrames: 0,
             renderScale: 1,
             rotation: activeRotation,
             scale: activeScale,
@@ -1021,6 +1109,7 @@ export function makeMotionDocExportRuntime() {
               }
             }
             gl.drawArrays(gl.TRIANGLES, 0, 6);
+            state.renderedFrames += 1;
 
             if (state.speed !== 0) {
               state.raf = requestAnimationFrame(state.tick);
@@ -1035,15 +1124,30 @@ export function makeMotionDocExportRuntime() {
           state.raf = requestAnimationFrame(state.tick);
         }
 
-        function waitForFrames(count) {
+        function requestFreshShaderFrame(state) {
+          if (state.raf) {
+            cancelAnimationFrame(state.raf);
+            state.raf = 0;
+          }
+          state.renderedFrames = 0;
+          state.lastRenderTime = performance.now() - 34;
+          requestShaderFrame(state);
+        }
+
+        function waitForRenderedShaders(canvases) {
           return new Promise((resolve) => {
-            let remaining = Math.max(1, count);
+            let remaining = 12;
             const step = () => {
-              remaining -= 1;
-              if (remaining <= 0) {
+              const pending = canvases.some((canvas) => {
+                const state = shaderStates.get(canvas);
+                return state && state.renderedFrames < 1;
+              });
+
+              if (!pending || remaining <= 0) {
                 resolve();
                 return;
               }
+              remaining -= 1;
               requestAnimationFrame(step);
             };
             requestAnimationFrame(step);
@@ -1061,7 +1165,7 @@ export function makeMotionDocExportRuntime() {
           }));
         }
 
-        function freezeCanvas(canvas) {
+        async function freezeCanvas(canvas) {
           if (!(canvas instanceof HTMLCanvasElement)) return;
 
           let dataUrl = '';
@@ -1097,6 +1201,19 @@ export function makeMotionDocExportRuntime() {
           image.src = dataUrl;
           stopShader(canvas);
           canvas.replaceWith(image);
+
+          if (typeof image.decode === 'function') {
+            try {
+              await image.decode();
+            } catch {
+              // The source image remains underneath image filters if decoding fails.
+            }
+          } else if (!image.complete) {
+            await new Promise((resolve) => {
+              image.addEventListener('load', resolve, { once: true });
+              image.addEventListener('error', resolve, { once: true });
+            });
+          }
         }
 
         async function prepareStaticExport() {
@@ -1107,23 +1224,27 @@ export function makeMotionDocExportRuntime() {
           updateFrameScale();
 
           await waitForImages(document);
+          layoutCroppedImages(document);
 
           const canvases = Array.from(document.querySelectorAll('.shader-bg, .image-filter-canvas'))
             .filter((canvas) => canvas instanceof HTMLCanvasElement);
 
-          canvases.forEach(startShader);
+          canvases.forEach((canvas) => {
+            stopShader(canvas);
+            startShader(canvas);
+          });
           await Promise.all(canvases.map((canvas) => {
             const state = shaderStates.get(canvas);
             return state ? state.imageReady : Promise.resolve();
           }));
           canvases.forEach((canvas) => {
             const state = shaderStates.get(canvas);
-            if (state) requestShaderFrame(state);
+            if (state) requestFreshShaderFrame(state);
           });
           if (canvases.length > 0) {
-            await waitForFrames(2);
+            await waitForRenderedShaders(canvases);
           }
-          canvases.forEach(freezeCanvas);
+          await Promise.all(canvases.map(freezeCanvas));
           shaderStates.forEach((_, canvas) => stopShader(canvas));
           document.body.dataset.motionExportPrepared = 'true';
 

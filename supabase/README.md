@@ -4,7 +4,8 @@ Supabase only owns the remote data required by the current product:
 
 - `auth.users`: sign-in identity, managed by Supabase Auth.
 - `official_templates`: read-only catalog entries for bundled official templates.
-- `presentations`: one user's editable MotionDoc source.
+- `presentations`: one user's editable MotionDoc source, including protected
+  starter rows identified by `kind = 'template'`.
 - `agent_sessions`: Heddle conversation metadata owned by one user and presentation.
 - `slide_comments`: comments attached to a zero-based slide index, including resolved state.
 - `presentation-images`: private Storage bucket for uploaded images.
@@ -14,7 +15,9 @@ AI message mirrors, asset metadata, quota functions, or custom enums. Add those 
 when a shipped feature needs them.
 
 The complete MVP schema is intentionally kept in one canonical migration:
-`migrations/20260713000000_initial_slidex_schema.sql`.
+`migrations/20260713000000_initial_slidex_schema.sql`, with later catalog
+cleanup migrations preserving only the official templates currently shipped in
+the workspace.
 
 ## Local development
 
@@ -103,9 +106,21 @@ npx supabase functions deploy delete-presentation
 The function first verifies the caller and presentation ownership with the
 caller's JWT-scoped client. Only after that check does its server-only client use
 `SUPABASE_SERVICE_ROLE_KEY` to remove Storage objects and the presentation row.
+Rows with `kind = 'template'` are rejected before any Storage or database
+deletion, so official workspace starters cannot be removed through the client.
 Authenticated clients have no direct `DELETE` grant on `presentations`, so they
 cannot bypass this cleanup order. The service-role key is supplied by the
 Supabase Edge Function runtime and is never exposed to browser code.
+
+The workspace removes a confirmed presentation from local state immediately,
+then runs the Storage-first Edge Function cleanup in the background. If the
+request fails, it reloads the RLS-filtered presentation list and shows an error.
+An RLS-authorized private Realtime Broadcast topic is scoped to
+`workspace-presentations:<user-id>`. A database trigger emits presentation
+changes only to that owner's topic, and the workspace listens for `DELETE` to
+reload other open tabs after the row is removed. Realtime synchronizes clients,
+while the optimistic state update is what prevents Storage cleanup from
+blocking the UI.
 
 Storage RLS also requires exactly two folders, a UUID filename, an approved
 extension, and a still-existing presentation owned by the caller. This means
@@ -116,7 +131,17 @@ maintenance job; the normal deletion flow intentionally removes images first.
 
 The database stores catalog metadata only. MotionDoc template source remains in
 `core/motion-doc/presets/`, avoiding a second copy of large template documents.
-The migration registers the built-in `welcome-to-slidex` and `launch-deck`
-templates, and the local seed keeps those rows current after resets.
+The hosted catalog intentionally keeps only `welcome-to-slidex` and
+`launch-deck`. Other bundled MotionDoc presets remain available inside Pitch,
+but they are not seeded as workspace presentations. The browser validates
+`template_id` against this catalog before writing it to a presentation, so
+stale application IDs do not violate the foreign key.
 Authenticated and anonymous clients can read active templates; only trusted
 server code can change the catalog.
+
+When an authenticated Workspace loads, the browser checks for the two
+`kind = 'template'` starter rows and inserts either missing row with the bundled
+MotionDoc source. A partial unique index on `(user_id, template_id)` makes this
+idempotent across reloads and concurrent tabs. These starter rows appear under
+`Your presentations`; choosing a catalog card separately creates a normal,
+deletable `kind = 'presentation'` copy.

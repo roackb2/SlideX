@@ -97,6 +97,7 @@ export type PitchWorkspaceCommands = {
   openPresentationPreview: () => void;
   pasteCopiedBlock: () => void;
   pushUndoSnapshot: () => void;
+  removeImageForBlock: (blockIndex: number) => void;
   renameBlock: (blockIndex: number, name: string) => void;
   reorderBlock: (fromIndex: number, toIndex: number) => void;
   reorderSlide: (fromIndex: number, toIndex: number) => void;
@@ -111,7 +112,6 @@ export type PitchWorkspaceCommands = {
   updatePositionedBlockFrames: (updates: BlockFramePatch[]) => void;
   updateSelectionMdx: (value: string) => void;
   uploadImageForBlock: (blockIndex: number, file: File | undefined) => void;
-  uploadVideoForBlock: (blockIndex: number, file: File | undefined) => void;
   useSelectedImageAsBackground: () => void;
 };
 

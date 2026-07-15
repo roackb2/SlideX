@@ -15,6 +15,11 @@ import {
   SlideXAgentClientError
 } from "@/features/pitch/infrastructure/slidexAgentClient";
 import { slideXAgentIdentity } from "@/features/pitch/infrastructure/slidexAgentIdentity";
+import { createSupabaseBrowserClient } from "@/common/lib/supabase/browserClient";
+import {
+  deleteSupabaseAgentSession,
+  syncSupabaseAgentSession
+} from "@/features/pitch/infrastructure/supabaseAgentSessions";
 import {
   clearAgentPresentationBinding,
   readAgentPresentationBinding,
@@ -55,6 +60,7 @@ export type PitchAgentRuntimeInput = {
   presentationTitle: string;
   source: string;
   onApplyMotionDoc: (motionDoc: string, summary: string) => void;
+  persistSessionMetadata?: boolean;
 };
 
 export function usePitchAgent(input: PitchAgentRuntimeInput) {
@@ -101,6 +107,20 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
   const updateActiveRunId = useCallback((value?: string) => {
     activeRunIdRef.current = value;
     setActiveRunId(value);
+  }, []);
+
+  const persistSessionMetadata = useCallback((session: AgentSession) => {
+    if (!inputRef.current.persistSessionMetadata) return;
+
+    void syncSupabaseAgentSession(
+      createSupabaseBrowserClient(),
+      inputRef.current.presentationId,
+      session
+    ).catch(() => {
+      if (mountedRef.current) {
+        setNotice("The Agent conversation is active, but its Supabase metadata could not be saved.");
+      }
+    });
   }, []);
 
   const persistBinding = useCallback((runId?: string, afterSequence?: number) => {
@@ -166,6 +186,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
     }
     if (event.kind === "result") {
       const result = event.result;
+      persistSessionMetadata(result.session);
       setMessages(toPitchMessages(result.session));
       const reconciliation = await reconcileMotionDoc({
         assistantMessage: result.assistantMessage,
@@ -190,7 +211,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
     setError(event.error.message);
     setErrorCode(event.error.code);
     settleRun("error");
-  }, [setAssistantMessage, settleRun]);
+  }, [persistSessionMetadata, setAssistantMessage, settleRun]);
 
   const subscribeWithReconnect = useCallback(async (
     runId: string,
@@ -252,13 +273,14 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
   }, [handleEvent, persistBinding]);
 
   const restoreSessionState = useCallback((state: AgentSessionState): void => {
+    persistSessionMetadata(state.session);
     updateSessionId(state.session.id);
     setMessages(toPitchMessages(state.session));
     setError(undefined);
     setErrorCode(undefined);
     setPendingMotionDoc(undefined);
     setTools([]);
-  }, [updateSessionId]);
+  }, [persistSessionMetadata, updateSessionId]);
 
   useEffect(() => {
     requestAbortRef.current?.abort();
@@ -403,6 +425,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
       acceptedRun = true;
       activeSourceRevisionRef.current = sourceRevision;
       updateSessionId(accepted.session.id);
+      persistSessionMetadata(accepted.session);
       updateActiveRunId(accepted.runId);
       setMessages(ensureAssistantPlaceholder(toPitchMessages(accepted.session)));
       persistBinding(accepted.runId, 0);
@@ -455,6 +478,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
     isDeleting,
     isCheckingStatus,
     persistBinding,
+    persistSessionMetadata,
     restoreSessionState,
     setAssistantMessage,
     subscribeWithReconnect,
@@ -492,6 +516,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
       if (!mountedRef.current) {
         return;
       }
+      persistSessionMetadata(state.session);
       if (state.activeRun) {
         if (activeRunIdRef.current !== state.activeRun.runId) {
           activeSequenceRef.current = undefined;
@@ -548,6 +573,7 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
   }, [
     isCheckingStatus,
     persistBinding,
+    persistSessionMetadata,
     resetRuntimeState,
     updateActiveRunId,
     updateSessionId
@@ -578,6 +604,13 @@ export function usePitchAgent(input: PitchAgentRuntimeInput) {
     setIsDeleting(true);
     try {
       await client.deleteSession(currentSessionId);
+      if (inputRef.current.persistSessionMetadata) {
+        await deleteSupabaseAgentSession(
+          createSupabaseBrowserClient(),
+          inputRef.current.presentationId,
+          currentSessionId
+        );
+      }
       clearAgentPresentationBinding(
         window.sessionStorage,
         inputRef.current.presentationId

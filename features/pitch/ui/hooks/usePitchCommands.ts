@@ -47,6 +47,7 @@ type UsePitchCommandsArgs = {
   activeSlideIndex: number;
   commitSource: (nextSource: string | ((current: string) => string)) => void;
   markProjectDirty: () => void;
+  presentationId?: string;
   pushUndoSnapshot: () => void;
   scenes: MotionDocScene[];
   selectBlock: (index: number, options?: { additive?: boolean; range?: boolean }) => void;
@@ -68,6 +69,7 @@ export function usePitchCommands({
   activeSlideIndex,
   commitSource,
   markProjectDirty,
+  presentationId,
   pushUndoSnapshot,
   scenes,
   selectBlock,
@@ -100,6 +102,8 @@ export function usePitchCommands({
     activeSlide,
     activeSlideIndex,
     commitSource,
+    presentationId,
+    scenes,
     selectedBlockIndex,
     selectSingleBlock,
     setNotice,

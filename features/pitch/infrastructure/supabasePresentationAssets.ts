@@ -20,6 +20,7 @@ export type UploadedSupabasePresentationImage = {
   id: string;
   mimeType: string;
   name: string;
+  optimized: boolean;
   path: string;
   size: number;
 };
@@ -48,6 +49,7 @@ export async function uploadSupabasePresentationImage(
     id,
     mimeType: preparedImage.file.type,
     name: preparedImage.file.name,
+    optimized: preparedImage.optimized,
     path,
     size: preparedImage.file.size
   };

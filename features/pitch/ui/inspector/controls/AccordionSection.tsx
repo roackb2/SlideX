@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 type AccordionSectionProps = {
   children: ReactNode;
@@ -13,6 +14,7 @@ type AccordionSectionProps = {
 
 export function AccordionSection({ children, defaultOpen = true, title, rightElement = null }: AccordionSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const { tx } = usePitchI18n();
 
   return (
     <div className="flex flex-col border-b border-white/[0.04] last:border-b-0">
@@ -26,7 +28,7 @@ export function AccordionSection({ children, defaultOpen = true, title, rightEle
             {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </div>
           <span className="text-[13px] font-medium text-neutral-300 group-hover:text-white transition-colors">
-            {title}
+            {tx(title)}
           </span>
         </button>
         {rightElement && (

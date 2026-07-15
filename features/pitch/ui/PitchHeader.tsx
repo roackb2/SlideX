@@ -5,6 +5,7 @@ import { useState, type RefObject } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { Bot, Check, ChevronDown, Download, Layers, PanelRight, Play, Undo2 } from "lucide-react";
 import { appRoutes } from "@/common/lib/appRoutes";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 export function PitchHeader({
   accessMode,
@@ -45,6 +46,7 @@ export function PitchHeader({
   onToggleSidebar: () => void;
   onToggleAgentPanel?: () => void;
 }) {
+  const { tx } = usePitchI18n();
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const zoomOptions = ["fit", 0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
@@ -91,7 +93,7 @@ export function PitchHeader({
             type="button"
           >
             <Bot aria-hidden="true" size={16} />
-            <span className="hidden lg:inline">Agent</span>
+            <span className="hidden lg:inline">{tx("Agent")}</span>
           </button>
         ) : null}
 
@@ -99,10 +101,10 @@ export function PitchHeader({
           <Popover.Trigger asChild>
             <button
               className="hidden sm:flex h-8.5 min-w-[76px] items-center justify-between gap-1 rounded-xl bg-white/[0.04] px-2.5 text-xs font-semibold text-neutral-300 transition-colors hover:bg-white/[0.08] hover:text-white outline-none focus-visible:ring-1 focus-visible:ring-white/50"
-              title="Zoom Level"
+              title={tx("Zoom Level")}
               type="button"
             >
-              <span>{zoomDisplayLabel(zoomLevel, actualScale)}</span>
+              <span>{zoomDisplayLabel(zoomLevel, actualScale, tx)}</span>
               <ChevronDown className="shrink-0 text-neutral-500" size={14} />
             </button>
           </Popover.Trigger>
@@ -125,7 +127,7 @@ export function PitchHeader({
                     }}
                     type="button"
                   >
-                    <span>{option === "fit" ? "Fit to Screen" : `${option * 100}%`}</span>
+                    <span>{option === "fit" ? tx("Fit to Screen") : `${option * 100}%`}</span>
                     {zoomLevel === option && <Check size={14} />}
                   </button>
                 ))}
@@ -139,10 +141,10 @@ export function PitchHeader({
           className="hidden h-8.5 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02] hover:bg-neutral-900/50 hover:text-neutral-200 active:scale-[0.96] sm:flex"
           onClick={onUndo}
           type="button"
-          title="Undo"
+          title={tx("Undo")}
         >
           <Undo2 size={14} />
-          <span className="hidden sm:inline">Undo</span>
+          <span className="hidden sm:inline">{tx("Undo")}</span>
         </button>
 
         {/* Presentation preview action button */}
@@ -150,22 +152,22 @@ export function PitchHeader({
           className="hidden h-8.5 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02] hover:bg-neutral-900/50 hover:text-neutral-200 active:scale-[0.96] sm:flex"
           onClick={onPlay}
           type="button"
-          title="Play presentation"
+          title={tx("Play presentation")}
         >
           <Play size={14} fill="currentColor" />
-          <span className="hidden sm:inline">Play</span>
+          <span className="hidden sm:inline">{tx("Play")}</span>
         </button>
 
         {/* Export visual white pill */}
         <div className="relative" ref={exportMenuRef}>
           <button
-            aria-label="Export presentation"
+            aria-label={tx("Export presentation")}
             className="flex h-8 items-center justify-center gap-1.5 rounded-xl bg-white px-3 text-sm font-bold text-black shadow-md shadow-white/[0.01] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02] hover:bg-neutral-100 active:scale-[0.96] sm:h-8.5 sm:px-4"
             onClick={onExport}
             type="button"
           >
             <Download size={14} className="text-black" />
-            <span className="hidden sm:inline">Export</span>
+            <span className="hidden sm:inline">{tx("Export")}</span>
           </button>
 
         </div>
@@ -184,9 +186,9 @@ export function PitchHeader({
   );
 }
 
-function zoomDisplayLabel(zoomLevel: number | "fit", actualScale: number) {
+function zoomDisplayLabel(zoomLevel: number | "fit", actualScale: number, tx: (text: string) => string) {
   if (zoomLevel === "fit") {
-    return `Fit ${formatZoomPercent(actualScale)}`;
+    return `${tx("Fit")} ${formatZoomPercent(actualScale)}`;
   }
 
   return formatZoomPercent(zoomLevel);

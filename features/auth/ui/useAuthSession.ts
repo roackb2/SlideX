@@ -18,6 +18,13 @@ function displayNameFromUser(user: User) {
   return user.email?.split("@")[0] || "SlideX user";
 }
 
+function avatarUrlFromUser(user: User) {
+  const metadataAvatar = user.user_metadata.avatar_url ?? user.user_metadata.picture;
+  return typeof metadataAvatar === "string" && metadataAvatar.trim()
+    ? metadataAvatar.trim()
+    : undefined;
+}
+
 function toAuthSession(session: Session | null): AuthSession | null {
   if (!session) return null;
 
@@ -25,6 +32,7 @@ function toAuthSession(session: Session | null): AuthSession | null {
     createdAt: session.user.created_at,
     provider: providerFromUser(session.user),
     user: {
+      avatarUrl: avatarUrlFromUser(session.user),
       displayName: displayNameFromUser(session.user),
       email: session.user.email ?? "",
       id: session.user.id
@@ -41,7 +49,7 @@ export function useAuthSession() {
     function syncSession(nextSession: Session | null) {
       const mappedSession = toAuthSession(nextSession);
       setSession((currentSession) => {
-        if (currentSession?.user.id === mappedSession?.user.id) return currentSession;
+        if (JSON.stringify(currentSession) === JSON.stringify(mappedSession)) return currentSession;
         return mappedSession;
       });
       setIsReady(true);

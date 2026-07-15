@@ -49,21 +49,23 @@ export function SlideXFeatureVisual({ variant }: { variant: SlideXFeatureVisualV
       {variant === "canvas" ? (
         <g>
           <motion.rect
-            animate={reduceMotion ? undefined : { width: [142, 166, 142] }}
+            animate={reduceMotion ? { scaleX: 1 } : { scaleX: [1, 166 / 142, 1] }}
             fill="#111315"
             height="26"
             rx="3"
+            style={{ transformBox: "fill-box", transformOrigin: "left center" }}
             transition={transition}
             width="142"
             x="218"
             y="162"
           />
           <motion.rect
-            animate={reduceMotion ? undefined : { width: [206, 178, 206] }}
+            animate={reduceMotion ? { scaleX: 1 } : { scaleX: [1, 178 / 206, 1] }}
             fill="#111315"
             height="8"
             opacity=".52"
             rx="4"
+            style={{ transformBox: "fill-box", transformOrigin: "left center" }}
             transition={transition}
             width="206"
             x="218"
@@ -71,13 +73,14 @@ export function SlideXFeatureVisual({ variant }: { variant: SlideXFeatureVisualV
           />
           <rect fill="#111315" height="8" opacity=".26" rx="4" width="156" x="218" y="221" />
           <motion.rect
-            animate={reduceMotion ? undefined : { width: [238, 264, 238] }}
+            animate={reduceMotion ? { scaleX: 1 } : { scaleX: [1, 264 / 238, 1] }}
             fill="none"
             height="86"
             rx="3"
             stroke="#8176ff"
             strokeDasharray="6 4"
             strokeWidth="2"
+            style={{ transformBox: "fill-box", transformOrigin: "left center" }}
             transition={transition}
             width="238"
             x="205"
@@ -86,7 +89,7 @@ export function SlideXFeatureVisual({ variant }: { variant: SlideXFeatureVisualV
           {[[205, 149], [205, 235]].map(([cx, cy]) => <circle cx={cx} cy={cy} fill="#fff" key={`${cx}-${cy}`} r="4" stroke="#8176ff" strokeWidth="2" />)}
           {[149, 235].map((cy) => (
             <motion.circle
-              animate={reduceMotion ? undefined : { cx: [443, 469, 443] }}
+              animate={reduceMotion ? { x: 0 } : { x: [0, 26, 0] }}
               cx="443"
               cy={cy}
               fill="#fff"
@@ -110,7 +113,16 @@ export function SlideXFeatureVisual({ variant }: { variant: SlideXFeatureVisualV
         </>
       ) : (
         <>
-          <motion.circle animate={reduceMotion ? undefined : { cx: [330, 450, 330], cy: [220, 260, 220], r: [76, 118, 76] }} cx="330" cy="220" fill="#fff" opacity=".24" r="76" transition={transition} />
+          <motion.circle
+            animate={reduceMotion ? { scale: 1, x: 0, y: 0 } : { scale: [1, 118 / 76, 1], x: [0, 120, 0], y: [0, 40, 0] }}
+            cx="330"
+            cy="220"
+            fill="#fff"
+            opacity=".24"
+            r="76"
+            style={{ transformBox: "fill-box", transformOrigin: "center" }}
+            transition={transition}
+          />
           <motion.path animate={reduceMotion ? undefined : { d: ["M190 292 C290 170 410 342 586 174", "M190 232 C306 354 432 142 586 250", "M190 292 C290 170 410 342 586 174"] }} fill="none" stroke="#fff" strokeLinecap="round" strokeOpacity=".7" strokeWidth="4" transition={transition} />
           <rect fill="#fff" height="22" opacity=".9" rx="3" width="164" x="214" y="148" />
           <rect fill="#fff" height="7" opacity=".5" rx="3.5" width="108" x="214" y="181" />
@@ -125,17 +137,18 @@ export function SlideXFeatureVisual({ variant }: { variant: SlideXFeatureVisualV
           <rect fill="#fff" height="6" opacity=".28" rx="3" width={52 + item * 5} x="658" y={168 + item * 54} />
           <rect fill="#fff" height="4" opacity=".1" rx="2" width="120" x="658" y={189 + item * 54} />
           <motion.rect
-            animate={reduceMotion ? undefined : { width: [36 + item * 8, 88 - item * 4, 36 + item * 8] }}
+            animate={reduceMotion ? { scaleX: 1 } : { scaleX: [1, (88 - item * 4) / (36 + item * 8), 1] }}
             fill={item === 1 ? "#c4ee87" : "#9ad7ff"}
             height="4"
             rx="2"
+            style={{ transformBox: "fill-box", transformOrigin: "left center" }}
             width={36 + item * 8}
             x="658"
             y={189 + item * 54}
             transition={{ ...transition, delay: item * .2 }}
           />
           <motion.circle
-            animate={reduceMotion ? undefined : { cx: [694 + item * 8, 746 - item * 4, 694 + item * 8] }}
+            animate={reduceMotion ? { x: 0 } : { x: [0, 52 - item * 12, 0] }}
             cx={694 + item * 8}
             cy={191 + item * 54}
             fill={item === 1 ? "#c4ee87" : "#9ad7ff"}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Download, FileUp, MessageSquareText, RotateCcw, Send, X } from "lucide-react";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
@@ -13,6 +14,7 @@ type MobilePitchViewerProps = {
   activeSlideIndex: number;
   comments: SlideComment[];
   documentTitle: string;
+  homeHref: string;
   onAddComment: (comment: string) => void;
   onExport: () => void;
   onImport: () => void;
@@ -29,6 +31,7 @@ export function MobilePitchViewer({
   activeSlideIndex,
   comments,
   documentTitle,
+  homeHref,
   onAddComment,
   onExport,
   onImport,
@@ -89,9 +92,18 @@ export function MobilePitchViewer({
   return (
     <main className="flex h-[100dvh] flex-col overflow-hidden bg-[#050505] text-white">
       <header className="flex h-12 shrink-0 items-center justify-between border-b border-white/[0.08] px-3 pt-[env(safe-area-inset-top)]">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{documentTitle || "Untitled"}</p>
-          <p className="mt-0.5 text-[10px] text-neutral-500">Preview only</p>
+        <div className="flex min-w-0 items-center gap-1">
+          <Link
+            aria-label="Back to home"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-neutral-300 transition active:scale-95 active:bg-white/[0.08]"
+            href={homeHref}
+          >
+            <ChevronLeft size={19} />
+          </Link>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">{documentTitle || "Untitled"}</p>
+            <p className="mt-0.5 text-[10px] text-neutral-500">Preview only</p>
+          </div>
         </div>
         <div className="flex items-center gap-1">
           <ViewerIconButton icon={<FileUp size={17} />} label="Import presentation" onClick={onImport} />

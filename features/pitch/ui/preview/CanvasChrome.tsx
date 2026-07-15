@@ -10,6 +10,7 @@ import { TableToolbox } from "@/features/pitch/ui/preview/TableToolbox";
 import { ShapeLibraryModal } from "@/features/pitch/ui/preview/ShapeLibraryModal";
 import { MobileCanvasDock } from "@/features/pitch/ui/preview/MobileCanvasChrome";
 import { toolGroups, type AddBlockType, type PitchBlockTool, type PitchToolGroup } from "@/features/pitch/ui/pitchOptions";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 export type CanvasZoomDirection = "in" | "out";
 
@@ -26,10 +27,11 @@ export function CanvasSlideNav({
   onPreviousSlide,
   sceneCount
 }: CanvasSlideNavProps) {
+  const { tx } = usePitchI18n();
   return (
     <div className="absolute left-1/2 top-3 z-10 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-white/[0.04] bg-neutral-950/60 p-1 shadow-lg shadow-black/40 backdrop-blur-xl sm:top-5 transition-all duration-300">
       <button
-        aria-label="Previous slide"
+        aria-label={tx("Previous slide")}
         className="rounded-lg p-1.5 text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-white/[0.04] hover:text-white hover:scale-[1.04] active:scale-[0.93] cursor-pointer"
         onClick={onPreviousSlide}
         type="button"
@@ -42,7 +44,7 @@ export function CanvasSlideNav({
         </span>
       </div>
       <button
-        aria-label="Next slide"
+        aria-label={tx("Next slide")}
         className="rounded-lg p-1.5 text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-white/[0.04] hover:text-white hover:scale-[1.04] active:scale-[0.93] cursor-pointer"
         onClick={onNextSlide}
         type="button"
@@ -74,6 +76,7 @@ export function CanvasBlockDock({
   onUndoMobile: () => void;
   zoomDirection: CanvasZoomDirection;
 }) {
+  const { tx } = usePitchI18n();
   const [openGroupId, setOpenGroupId] = useState<PitchToolGroup["id"] | null>(null);
   const [isCanvasToolMenuOpen, setIsCanvasToolMenuOpen] = useState(false);
   const activeGroup = toolGroups.find((group) => group.id === openGroupId) ?? null;
@@ -87,7 +90,7 @@ export function CanvasBlockDock({
     <>
       {activeGroup || isCanvasToolMenuOpen ? (
         <button
-          aria-label="Close tool menu"
+          aria-label={tx("Close tool menu")}
           className="fixed inset-0 z-[55] cursor-default bg-transparent"
           onClick={() => {
             setOpenGroupId(null);
@@ -137,13 +140,13 @@ export function CanvasBlockDock({
             setOpenGroupId(null);
             setIsCanvasToolMenuOpen((current) => !current);
           }}
-          title={`${canvasToolLabel(activeCanvasTool, zoomDirection)} (${canvasToolShortcut(activeCanvasTool)})`}
+          title={`${tx(canvasToolLabel(activeCanvasTool, zoomDirection))} (${canvasToolShortcut(activeCanvasTool)})`}
           type="button"
         >
           <span className="scale-80 sm:scale-95 md:scale-105">{canvasToolIcon(activeCanvasTool, 17, zoomDirection)}</span>
           <ChevronDown className="ml-0.5 text-neutral-500" size={12} />
           <span className="pointer-events-none absolute -top-9 origin-bottom scale-90 whitespace-nowrap rounded-lg border border-white/[0.08] bg-[#111113] px-2.5 py-1 text-xs font-bold text-white opacity-0 shadow-xl transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 sm:-top-10">
-            {canvasToolLabel(activeCanvasTool, zoomDirection)}
+            {tx(canvasToolLabel(activeCanvasTool, zoomDirection))}
           </span>
         </button>
         {toolGroups.map((group) => {
@@ -151,7 +154,7 @@ export function CanvasBlockDock({
           const isSingleTool = !group.modal && group.tools.length === 1 && group.id !== "icon" && group.id !== "table";
           return (
             <button
-              aria-label={isSingleTool ? `Add ${group.label}` : `Open ${group.label} tools`}
+              aria-label={isSingleTool ? `${tx("Add")} ${tx(group.label)}` : `${tx("Open")} ${tx(group.label)} ${tx("tools")}`}
               className={`group relative flex h-11 w-11 shrink-0 cursor-pointer flex-col items-center justify-center overflow-visible rounded-lg transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.06] active:scale-[0.93] sm:h-9.5 sm:w-9.5 md:h-10.5 md:w-10.5 ${
                 isOpen ? "bg-white/[0.12] text-white border border-white/[0.1]" : "text-neutral-300 hover:bg-white/[0.06] hover:text-white"
               }`}
@@ -168,7 +171,7 @@ export function CanvasBlockDock({
             >
               <span className="scale-80 sm:scale-95 md:scale-105">{group.icon}</span>
               <span className="pointer-events-none absolute -top-9 origin-bottom scale-90 whitespace-nowrap rounded-lg border border-white/[0.08] bg-[#111113] px-2.5 py-1 text-xs font-bold text-white opacity-0 shadow-xl transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 sm:-top-10">
-                {group.label}
+                {tx(group.label)}
               </span>
             </button>
           );
@@ -205,10 +208,11 @@ function CanvasToolMenu({
   onSelectTool: (tool: CanvasTool) => void;
   zoomDirection: CanvasZoomDirection;
 }) {
+  const { tx } = usePitchI18n();
   return (
     <div className="absolute bottom-[4.25rem] left-1/2 z-[60] w-[220px] -translate-x-1/2 overflow-hidden rounded-xl border border-white/[0.04] bg-neutral-950/90 p-[6px] shadow-[0_20px_50px_rgba(0,0,0,0.75)] backdrop-blur-2xl sm:bottom-[5rem]">
       <div className="px-2.5 pb-1.5 pt-1 text-sm font-bold text-neutral-400">
-        Canvas tool
+        {tx("Canvas tool")}
       </div>
       {canvasToolOptions.map((tool) => {
         const isActive = tool.id === activeCanvasTool;
@@ -223,7 +227,7 @@ function CanvasToolMenu({
             type="button"
           >
             <span className="flex items-center justify-center text-neutral-300">{canvasToolIcon(tool.id, 16, zoomDirection)}</span>
-            <span className="truncate">{tool.id === "zoom" ? canvasToolLabel(tool.id, zoomDirection) : tool.label}</span>
+            <span className="truncate">{tx(tool.id === "zoom" ? canvasToolLabel(tool.id, zoomDirection) : tool.label)}</span>
             <span className="font-mono text-xs text-neutral-500">{tool.shortcut}</span>
           </button>
         );
@@ -262,12 +266,13 @@ function CanvasSlideAddButton({
   label: string;
   onClick: () => void;
 }) {
+  const { tx } = usePitchI18n();
   return (
     <button
-      aria-label={label}
+      aria-label={tx(label)}
       className={`absolute z-50 hidden h-8 w-8 items-center justify-center rounded-full border border-white/[0.12] bg-neutral-950/80 text-neutral-300 shadow-[0_10px_30px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-all duration-200 hover:scale-110 hover:border-white/25 hover:bg-white hover:text-black active:scale-95 sm:flex ${className}`}
       onClick={onClick}
-      title={label}
+      title={tx(label)}
       type="button"
     >
       <Plus size={16} strokeWidth={2.4} />
@@ -306,10 +311,11 @@ function CommandToolMenu({
   group: PitchToolGroup;
   onAddTool: (type: AddBlockType, options?: AddBlockOptions) => void;
 }) {
+  const { tx } = usePitchI18n();
   return (
     <div className="absolute bottom-[4.25rem] left-1/2 z-[60] w-[230px] -translate-x-1/2 overflow-hidden rounded-xl border border-white/[0.04] bg-neutral-950/90 p-[6px] shadow-[0_20px_50px_rgba(0,0,0,0.75)] backdrop-blur-2xl sm:bottom-[5rem]">
       <div className="px-2.5 pb-1.5 pt-1 text-sm font-bold text-neutral-400">
-        {group.label}
+        {tx(group.label)}
       </div>
       {group.tools.map((tool) => (
         <CommandToolButton key={tool.type} tool={tool} onAddTool={onAddTool} />
@@ -326,6 +332,7 @@ function CommandToolButton({
   onAddTool: (type: AddBlockType, options?: AddBlockOptions) => void;
   tool: PitchBlockTool;
 }) {
+  const { tx } = usePitchI18n();
   return (
     <button
       className="grid h-9.5 w-full grid-cols-[22px_1fr_auto] items-center gap-2 rounded-lg px-2.5 text-left text-sm font-semibold text-neutral-200 transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-white/[0.04] hover:text-white active:scale-[0.96]"
@@ -333,7 +340,7 @@ function CommandToolButton({
       type="button"
     >
       <span className="flex items-center justify-center text-neutral-300">{tool.icon}</span>
-      <span className="truncate">{tool.label}</span>
+      <span className="truncate">{tx(tool.label)}</span>
       {tool.shortcut ? <span className="font-mono text-xs text-neutral-500">{tool.shortcut}</span> : null}
     </button>
   );

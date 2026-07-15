@@ -6,6 +6,7 @@ import {
   deckTemplateItems,
   type TemplateChooserItem
 } from "@/core/motion-doc/presets/templateChooser";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 export function TemplateModal({
   onAddBlankSlide,
@@ -18,6 +19,7 @@ export function TemplateModal({
   onClose: () => void;
   selectedTemplateId: string;
 }) {
+  const { locale, tx } = usePitchI18n();
   const [searchQuery, setSearchQuery] = useState("");
   const visibleTemplates = useMemo(() => {
     if (!searchQuery.trim()) return deckTemplateItems;
@@ -37,10 +39,10 @@ export function TemplateModal({
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="relative flex h-14 items-center justify-center px-6">
-          <span className="text-[14px] font-medium text-white">Template Gallery</span>
+          <span className="text-[14px] font-medium text-white">{tx("Template Gallery")}</span>
           <div className="absolute right-4 flex items-center gap-3">
             <button
-              aria-label="Close templates"
+              aria-label={tx("Close templates")}
               className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/[0.06] hover:text-white active:scale-95"
               onClick={onClose}
               type="button"
@@ -55,7 +57,7 @@ export function TemplateModal({
             <Search size={16} className="absolute left-3 text-neutral-500" />
             <input
               type="text"
-              placeholder="Search templates..."
+              placeholder={tx("Search templates...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] py-2.5 pl-10 pr-4 text-[13px] text-white placeholder-neutral-500 outline-none transition-all focus:border-white/20 focus:bg-white/[0.04] focus:ring-1 focus:ring-white/10"
@@ -76,8 +78,8 @@ export function TemplateModal({
               </div>
             </div>
             <div className="flex flex-col gap-1.5 mt-4 w-full px-1">
-              <span className="truncate text-[13px] font-semibold text-neutral-200 transition-colors group-hover:text-white">Blank Slide</span>
-              <span className="text-[12px] leading-relaxed text-neutral-500">Add a completely empty slide using the current theme.</span>
+              <span className="truncate text-[13px] font-semibold text-neutral-200 transition-colors group-hover:text-white">{tx("Blank Slide")}</span>
+              <span className="text-[12px] leading-relaxed text-neutral-500">{locale === "zh-TW" ? "使用目前主題新增一張完全空白的投影片。" : "Add a completely empty slide using the current theme."}</span>
             </div>
           </button>
 
@@ -225,4 +227,3 @@ function TemplatePreview({ item }: { item: Extract<TemplateChooserItem, { kind: 
     </div>
   );
 }
-

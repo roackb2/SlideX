@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent, type PointerEvent } from "react";
+import { InteractiveDotField } from "@/common/ui/InteractiveDotField";
+import { applyImageCropRect, fullImageCropRect, type ImageCropRect } from "@/core/motion-doc/application/imageCrop";
 import type { MotionDocFrame } from "@/core/motion-doc/domain/frame";
 import type { MotionDocProps, MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import type { CanvasTool } from "@/features/pitch/application/canvasTools";
@@ -131,19 +133,24 @@ export function PreviewCanvas({
   const { syncSelection } = canvasInteraction;
   const [canvasViewportOffset, setCanvasViewportOffset] = useState({ x: 0, y: 0 });
   const [isMouseOverCanvas, setIsMouseOverCanvas] = useState(false);
+  const [imageCropTarget, setImageCropTarget] = useState<{ blockIndex: number; cropRect: ImageCropRect; slideIndex: number } | null>(null);
   const { closeContextMenu, contextMenu, openContextMenu } = useCanvasContextMenu();
-  const { actualScale, canvasFrameStyle, canvasStripSidePadding, workspaceGridStyle } = useCanvasViewportMetrics({
+  const { actualScale, canvasFrameStyle, canvasStripSidePadding } = useCanvasViewportMetrics({
     activeSlideIndex,
     canvasRef,
-    canvasViewportOffset,
     onFitScaleChange,
     sceneCount,
     scrollAreaRef,
     zoomLevel
   });
+  const imageCropBlockIndex = imageCropTarget?.slideIndex === activeSlideIndex && imageCropTarget.blockIndex === selectedBlockIndex && activeSlide?.blocks[imageCropTarget.blockIndex]?.type === "ImageBlock"
+    ? imageCropTarget.blockIndex
+    : null;
+  const imageCropRect = imageCropBlockIndex === null ? null : imageCropTarget?.cropRect ?? null;
   const canvasPanZoom = useCanvasPanZoom({
     activeCanvasTool,
     actualScale,
+    canvasRef,
     canvasViewportOffset,
     clearCanvasInteraction: canvasInteraction.clearInteraction,
     closeContextMenu,
@@ -156,7 +163,6 @@ export function PreviewCanvas({
     endCanvasPan,
     fitCanvasToViewport,
     handleCanvasToolPointerDown,
-    handleCanvasToolWheel,
     isPanActive,
     isPanningCanvas,
     setZoomDirection,
@@ -363,6 +369,25 @@ export function PreviewCanvas({
     }
   }
 
+  function toggleImageCrop(blockIndex: number) {
+    if (imageCropBlockIndex === blockIndex) {
+      const block = activeSlide?.blocks[blockIndex];
+      if (block?.type === "ImageBlock" && imageCropRect) {
+        onBeginBlockTransform();
+        onUpdateBlock(blockIndex, applyImageCropRect(block.props, imageCropRect));
+      }
+      setImageCropTarget(null);
+      return;
+    }
+
+    onSelectBlock(blockIndex);
+    setImageCropTarget({ blockIndex, cropRect: fullImageCropRect, slideIndex: activeSlideIndex });
+  }
+
+  function updateImageCropRect(cropRect: ImageCropRect) {
+    setImageCropTarget((current) => current ? { ...current, cropRect } : current);
+  }
+
   function updateInteraction(event: PointerEvent<HTMLDivElement>, commit = false) {
     const updates = canvasInteraction.frameUpdatesForPointer(getCanvasPosition(event));
 
@@ -531,10 +556,11 @@ export function PreviewCanvas({
 
   return (
     <div
-      className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-[#000000]"
+      className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-[#090909]"
       id="canvas-v4"
       onContextMenuCapture={handleCanvasContextMenu}
     >
+      <InteractiveDotField className="z-0 opacity-65" />
       <CanvasSlideNav
         activeSlideIndex={activeSlideIndex}
         onNextSlide={onNextSlide}
@@ -544,7 +570,7 @@ export function PreviewCanvas({
       <MobileEdgePanelHandles onOpenInspector={onOpenMobileInspector} onOpenLayers={onOpenMobileLayers} />
 
       <div
-        className={`custom-scrollbar relative z-0 flex min-h-0 flex-1 touch-none items-center justify-center overflow-auto bg-[#000000] px-3 pb-24 pt-12 sm:touch-auto sm:items-start sm:justify-start sm:p-4 sm:pb-20 sm:pt-12 md:p-8 md:pb-24 md:pt-16 ${viewportCursorClass}`}
+        className={`custom-scrollbar relative z-0 flex min-h-0 flex-1 touch-none items-center justify-center overflow-auto bg-transparent px-3 pb-24 pt-12 sm:touch-auto sm:items-start sm:justify-start sm:p-4 sm:pb-20 sm:pt-12 md:p-8 md:pb-24 md:pt-16 ${viewportCursorClass}`}
         onPointerCancelCapture={endCanvasPan}
         onPointerDownCapture={handleCanvasToolPointerDown}
         onPointerDown={(event) => {
@@ -555,9 +581,8 @@ export function PreviewCanvas({
         }}
         onPointerMoveCapture={updateCanvasPan}
         onPointerUpCapture={endCanvasPan}
-        onWheelCapture={handleCanvasToolWheel}
         ref={scrollAreaRef}
-        style={workspaceGridStyle}
+        style={{ overflowAnchor: "none" }}
       >
         <div
           className="relative flex min-h-full min-w-full shrink-0 items-center justify-start gap-12 sm:min-h-0 sm:items-start sm:gap-14 md:gap-16"
@@ -588,7 +613,7 @@ export function PreviewCanvas({
                   <div
                     aria-current={isActiveSlideFrame ? "true" : undefined}
                     aria-label={`Slide ${slide.index + 1} canvas, 16:9 ${CANVAS_WIDTH} by ${CANVAS_HEIGHT}`}
-                    className={`group relative shrink-0 overflow-hidden bg-black shadow-xl ring-1 transition-all duration-200 ${
+                    className={`group relative shrink-0 overflow-hidden bg-black shadow-xl ring-1 transition-shadow duration-200 ${
                       isActiveSlideFrame
                         ? "ring-[#8ea5ff]/70 shadow-[0_24px_80px_rgba(0,0,0,0.62),0_0_0_1px_rgba(142,165,255,0.2)]"
                         : "ring-neutral-800/80 hover:ring-white/20"
@@ -639,6 +664,8 @@ export function PreviewCanvas({
                         frameOverrides={transientFramePreview.frameOverrides}
                         interactionBlockIndex={canvasInteraction.transform?.blockIndex ?? null}
                         interactionMode={canvasInteraction.mode}
+                        imageCropBlockIndex={imageCropBlockIndex}
+                        imageCropRect={imageCropRect}
                         marqueeSelection={canvasInteraction.marqueeSelection}
                         onCancelMarquee={cancelMarquee}
                         onEndInteraction={endInteraction}
@@ -648,9 +675,12 @@ export function PreviewCanvas({
                           canvasInteraction.beginEditingText(blockIndex);
                           onBeginBlockTransform();
                         }}
+                        onBeginBlockTransform={onBeginBlockTransform}
+                        onImageCropRectChange={updateImageCropRect}
                         onStartMarquee={startMarquee}
                         onStartMove={startMove}
                         onStartResize={startResize}
+                        onToggleImageCrop={toggleImageCrop}
                         onUpdateBlock={onUpdateBlock}
                         onUpdateInteraction={updateInteraction}
                         onUpdateMarquee={updateMarquee}

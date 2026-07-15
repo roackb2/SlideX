@@ -7,6 +7,7 @@ import { LayerRow } from "@/features/pitch/ui/LayerRow";
 import type { MotionDocBlock, MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import { SlideThumbnailPreview } from "@/features/pitch/ui/preview/SlideThumbnailPreview";
 import type { SlideRow } from "@/features/pitch/application/slideRows";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 export function LayerSidebar({
   activeSlideIndex,
@@ -55,6 +56,7 @@ export function LayerSidebar({
   source: string;
   toggleBlockPositionLock: (index: number) => void;
 }) {
+  const { tx, locale } = usePitchI18n();
   const [activeTab, setActiveTab] = useState<"slides" | "layers">("slides");
   const [draggedSlideIndex, setDraggedSlideIndex] = useState<number | null>(null);
   const [dragOverSlideIndex, setDragOverSlideIndex] = useState<number | null>(null);
@@ -71,7 +73,7 @@ export function LayerSidebar({
           }`}
           onClick={() => setActiveTab("slides")}
         >
-          Slides
+          {tx("Slides")}
         </button>
         <button
           className={`flex-1 rounded-xl py-2 text-xs font-semibold capitalize transition-all duration-300 ${
@@ -81,7 +83,7 @@ export function LayerSidebar({
           }`}
           onClick={() => setActiveTab("layers")}
         >
-          Layers
+          {tx("Layers")}
         </button>
       </div>
 
@@ -99,15 +101,15 @@ export function LayerSidebar({
                 <Plus size={14} className="stroke-[2]" />
               </span>
               <span className="flex flex-col gap-1">
-                <span className="text-xs font-bold text-white leading-none">New Slide</span>
-                <span className="text-[10px] text-neutral-500 leading-none">Blank slide</span>
+                <span className="text-xs font-bold text-white leading-none">{tx("New Slide")}</span>
+                <span className="text-[10px] text-neutral-500 leading-none">{tx("Blank slide")}</span>
               </span>
             </span>
           </button>
 
           {/* Section Indicator */}
           <div className="mb-2 flex items-center justify-between px-1.5">
-            <span className="text-xs font-semibold text-neutral-400">Scenes</span>
+            <span className="text-xs font-semibold text-neutral-400">{tx("Scenes")}</span>
             <span className="font-mono text-xs font-medium text-neutral-500">{scenes.length}</span>
           </div>
 
@@ -132,7 +134,7 @@ export function LayerSidebar({
                       <div className="flex items-center gap-2.5 overflow-hidden">
                         <Layers size={13} className={isActive ? "text-[#8ea5ff]" : "text-neutral-500 group-hover:text-neutral-300 transition-colors"} />
                         <span className={`truncate text-sm font-medium ${isActive ? "text-white" : "text-neutral-400 group-hover:text-neutral-200"}`}>
-                          Slide {slide.index + 1}
+                          {tx("Slide")} {slide.index + 1}
                         </span>
                       </div>
                       <div className="flex items-center gap-2.5">
@@ -141,7 +143,7 @@ export function LayerSidebar({
                         </span>
                         {scenes.length > 1 && (
                           <button
-                            aria-label={`Delete slide ${slide.index + 1}`}
+                            aria-label={locale === "zh-TW" ? `刪除第 ${slide.index + 1} 張投影片` : `Delete slide ${slide.index + 1}`}
                             className="flex h-9 w-9 items-center justify-center rounded-xl text-red-300/80 transition active:scale-95 active:bg-red-500/15 sm:h-auto sm:w-auto sm:rounded-none sm:text-neutral-500 sm:opacity-0 sm:hover:text-red-400 sm:group-hover/item:opacity-100"
                             onClick={(event) => {
                               event.stopPropagation();
@@ -205,7 +207,7 @@ export function LayerSidebar({
                       </span>
                       {scenes.length > 1 && (
                         <button
-                          aria-label={`Delete slide ${slide.index + 1}`}
+                          aria-label={locale === "zh-TW" ? `刪除第 ${slide.index + 1} 張投影片` : `Delete slide ${slide.index + 1}`}
                           className="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.1] bg-black/70 text-red-300 shadow-lg backdrop-blur transition active:scale-95 active:bg-red-500/20 sm:right-2 sm:top-auto sm:bottom-1.5 sm:h-auto sm:w-auto sm:rounded-none sm:border-0 sm:bg-transparent sm:text-black/40 sm:opacity-0 sm:shadow-none sm:backdrop-blur-none sm:hover:text-white sm:group-hover:opacity-100"
                           onClick={(event) => {
                             event.stopPropagation();
@@ -286,8 +288,8 @@ export function LayerSidebar({
                   )}
                   {activeTab === "layers" && isActive && currentSlide && currentSlide.blocks.length === 0 ? (
                     <div className="ml-4 mt-2 rounded-xl border border-dashed border-white/[0.1] bg-white/[0.025] px-4 py-5 text-center">
-                      <p className="text-xs font-semibold text-neutral-300">No layers yet</p>
-                      <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">Use the center + button to add text, images, or other content.</p>
+                      <p className="text-xs font-semibold text-neutral-300">{locale === "zh-TW" ? "尚無圖層" : "No layers yet"}</p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">{locale === "zh-TW" ? "使用中央的＋按鈕加入文字、圖片或其他內容。" : "Use the center + button to add text, images, or other content."}</p>
                     </div>
                   ) : null}
                 </div>

@@ -55,7 +55,7 @@ export async function renderPptxRasterAssets(
       if (options.captureFilteredImagesBySlide[sourceSlideIndex]) {
         filteredImagesBySlide[sourceSlideIndex] = await captureMotionBlocks(
           slide,
-          ".block-image .image-filter-canvas",
+          ".block-image[data-exact-image-raster]",
           html2canvas
         );
       }

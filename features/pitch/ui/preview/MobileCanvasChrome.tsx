@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import type { AddBlockOptions } from "@/features/pitch/application/motionDocCommands";
 import type { AddBlockType, PitchToolGroupId } from "@/features/pitch/ui/pitchOptions";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 type MobileCanvasDockProps = {
   onAddBlock: (type: AddBlockType, options?: AddBlockOptions) => void;
@@ -41,6 +42,7 @@ export function MobileCanvasDock({
   onOpenToolGroup,
   onUndo
 }: MobileCanvasDockProps) {
+  const { tx } = usePitchI18n();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
 
   function addBlock(type: AddBlockType) {
@@ -62,7 +64,7 @@ export function MobileCanvasDock({
     <>
       {isMoreOpen ? (
         <button
-          aria-label="Close insert menu"
+          aria-label={tx("Close insert menu")}
           className="fixed inset-0 z-[55] bg-black/45 backdrop-blur-sm sm:hidden"
           onClick={() => setIsMoreOpen(false)}
           type="button"
@@ -73,11 +75,11 @@ export function MobileCanvasDock({
         <div className="absolute bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-3 right-3 z-[60] rounded-2xl border border-white/[0.1] bg-[#111113]/95 p-3 shadow-[0_24px_70px_rgba(0,0,0,0.82)] backdrop-blur-2xl sm:hidden">
           <div className="mb-2 flex items-center justify-between px-1">
             <div>
-              <p className="text-sm font-semibold text-white">Add to slide</p>
-              <p className="mt-0.5 text-[11px] text-neutral-500">Choose only what you need.</p>
+              <p className="text-sm font-semibold text-white">{tx("Add to slide")}</p>
+              <p className="mt-0.5 text-[11px] text-neutral-500">{tx("Choose only what you need.")}</p>
             </div>
             <button
-              aria-label="Close insert menu"
+              aria-label={tx("Close insert menu")}
               className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400 active:bg-white/[0.08] active:text-white"
               onClick={() => setIsMoreOpen(false)}
               type="button"
@@ -86,23 +88,23 @@ export function MobileCanvasDock({
             </button>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            <MobileInsertButton icon={<Type size={18} />} label="Text" onClick={() => addBlock("Text")} />
-            <MobileInsertButton icon={<ImageIcon size={18} />} label="Image" onClick={() => addBlock("Image")} />
-            <MobileInsertButton icon={<Presentation size={18} />} label="New slide" onClick={insertSlide} />
-            <MobileInsertButton icon={<Video size={18} />} label="Video" onClick={() => addBlock("Video")} />
-            <MobileInsertButton icon={<Shapes size={18} />} label="Shape" onClick={() => openGroup("shape")} />
-            <MobileInsertButton icon={<Table2 size={18} />} label="Table" onClick={() => addBlock("Table")} />
-            <MobileInsertButton icon={<Sparkles size={18} />} label="Icon" onClick={() => openGroup("icon")} />
-            <MobileInsertButton icon={<LayoutGrid size={18} />} label="Media" onClick={() => openGroup("media")} />
+            <MobileInsertButton icon={<Type size={18} />} label={tx("Text")} onClick={() => addBlock("Text")} />
+            <MobileInsertButton icon={<ImageIcon size={18} />} label={tx("Image")} onClick={() => addBlock("Image")} />
+            <MobileInsertButton icon={<Presentation size={18} />} label={tx("New slide")} onClick={insertSlide} />
+            <MobileInsertButton icon={<Video size={18} />} label={tx("Video")} onClick={() => addBlock("Video")} />
+            <MobileInsertButton icon={<Shapes size={18} />} label={tx("Shape")} onClick={() => openGroup("shape")} />
+            <MobileInsertButton icon={<Table2 size={18} />} label={tx("Table")} onClick={() => addBlock("Table")} />
+            <MobileInsertButton icon={<Sparkles size={18} />} label={tx("Icon")} onClick={() => openGroup("icon")} />
+            <MobileInsertButton icon={<LayoutGrid size={18} />} label={tx("Media")} onClick={() => openGroup("media")} />
           </div>
         </div>
       ) : null}
 
       <div className="absolute bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-1/2 z-50 flex -translate-x-1/2 items-end gap-0.5 rounded-[1.35rem] border border-white/[0.12] bg-neutral-900/94 px-2 py-1.5 shadow-[0_14px_44px_rgba(0,0,0,0.84)] backdrop-blur-xl sm:hidden">
-        <MobileDockButton icon={<Layers size={18} />} label="Slides" onClick={onOpenLayers} />
-        <MobileDockButton icon={<Undo2 size={18} />} label="Undo" onClick={onUndo} />
+        <MobileDockButton icon={<Layers size={18} />} label={tx("Slides")} onClick={onOpenLayers} />
+        <MobileDockButton icon={<Undo2 size={18} />} label={tx("Undo")} onClick={onUndo} />
         <button
-          aria-label="Add content"
+          aria-label={tx("Add content")}
           className={`mx-1 flex h-14 w-14 -translate-y-2 items-center justify-center rounded-full border text-black shadow-[0_10px_30px_rgba(0,0,0,0.6)] transition active:scale-95 ${
             isMoreOpen ? "border-white bg-neutral-200" : "border-white/80 bg-white"
           }`}
@@ -111,8 +113,8 @@ export function MobileCanvasDock({
         >
           <Plus className={`transition-transform ${isMoreOpen ? "rotate-45" : ""}`} size={24} strokeWidth={2.4} />
         </button>
-        <MobileDockButton icon={<Maximize2 size={18} />} label="Fit" onClick={onFit} />
-        <MobileDockButton icon={<PanelRight size={18} />} label="Options" onClick={onOpenInspector} />
+        <MobileDockButton icon={<Maximize2 size={18} />} label={tx("Fit")} onClick={onFit} />
+        <MobileDockButton icon={<PanelRight size={18} />} label={tx("Options")} onClick={onOpenInspector} />
       </div>
     </>
   );
