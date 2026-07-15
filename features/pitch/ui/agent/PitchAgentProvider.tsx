@@ -10,9 +10,10 @@ import {
   type SetStateAction
 } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createSupabaseBrowserClient } from "@/common/lib/supabase/browserClient";
 import type { AgentSessionSummary } from "@/features/pitch/domain/agentRun";
 import { SlideXAgentClient } from "@/features/pitch/infrastructure/slidexAgentClient";
-import { slideXAgentIdentity } from "@/features/pitch/infrastructure/slidexAgentIdentity";
+import { SlideXAgentIdentityService } from "@/features/pitch/infrastructure/slidexAgentIdentity";
 import {
   usePitchAgent,
   type PitchAgentRuntime,
@@ -58,9 +59,12 @@ export function PitchAgentProvider({
       queries: { refetchOnWindowFocus: false }
     }
   }));
-  const client = useMemo(() => new SlideXAgentClient({
-    getHeaders: () => slideXAgentIdentity.authorizationHeaders()
+  const identity = useMemo(() => new SlideXAgentIdentityService({
+    createClient: createSupabaseBrowserClient
   }), []);
+  const client = useMemo(() => new SlideXAgentClient({
+    getHeaders: () => identity.authorizationHeaders()
+  }), [identity]);
 
   return (
     <QueryClientProvider client={queryClient}>

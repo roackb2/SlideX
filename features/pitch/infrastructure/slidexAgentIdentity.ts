@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  createClient as createSupabaseClient,
-  type SupabaseClient
-} from "@supabase/supabase-js";
-
 type AgentIdentitySession = {
   access_token: string;
 };
@@ -17,39 +12,34 @@ type AgentIdentityResponse = Promise<{
 export type SlideXAgentIdentityClient = {
   auth: {
     getSession(): AgentIdentityResponse;
-    signInAnonymously(): AgentIdentityResponse;
   };
 };
 
 export type SlideXAgentIdentityServiceOptions = {
-  supabaseUrl?: string;
-  supabasePublishableKey?: string;
-  createClient?: (
-    url: string,
-    publishableKey: string
-  ) => SlideXAgentIdentityClient;
+  createClient: () => SlideXAgentIdentityClient;
 };
 
 const IDENTITY_CONFIGURATION_ERROR =
   "SlideX agent sign-in is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
 const IDENTITY_SESSION_ERROR =
-  "SlideX could not create an anonymous session. Try again.";
+  "SlideX could not restore your signed-in session. Sign in again.";
 
 /**
- * Owns the editor's anonymous product identity.
+ * Supplies the editor's signed-in product identity to the agent service.
  *
- * The Supabase session may persist in browser storage so a deck conversation
- * remains owned across refresh. This service never receives or stores the
- * user's model API key; product identity and model credentials are separate
- * boundaries.
+ * The application-wide Supabase browser client owns session persistence and
+ * refresh. Reusing it prevents a second auth client from disagreeing about the
+ * current user or creating conversations under another identity. This service
+ * never receives or stores the user's model API key; product identity and
+ * model credentials are separate boundaries.
  */
 export class SlideXAgentIdentityService {
   private client?: SlideXAgentIdentityClient;
   private accessTokenPromise?: Promise<string>;
   private readonly createClient: NonNullable<SlideXAgentIdentityServiceOptions["createClient"]>;
 
-  constructor(private readonly options: SlideXAgentIdentityServiceOptions) {
-    this.createClient = options.createClient ?? createBrowserClient;
+  constructor(options: SlideXAgentIdentityServiceOptions) {
+    this.createClient = options.createClient;
   }
 
   async authorizationHeaders(): Promise<HeadersInit> {
@@ -79,16 +69,8 @@ export class SlideXAgentIdentityService {
   private async resolveAccessToken(): Promise<string> {
     const client = this.resolveClient();
     const current = await client.auth.getSession();
-    if (current.error) {
-      throw new SlideXAgentIdentityError(IDENTITY_SESSION_ERROR);
-    }
-    if (current.data.session?.access_token) {
-      return current.data.session.access_token;
-    }
-
-    const created = await client.auth.signInAnonymously();
-    const accessToken = created.data.session?.access_token;
-    if (created.error || !accessToken) {
+    const accessToken = current.data.session?.access_token;
+    if (current.error || !accessToken) {
       throw new SlideXAgentIdentityError(IDENTITY_SESSION_ERROR);
     }
     return accessToken;
@@ -98,14 +80,12 @@ export class SlideXAgentIdentityService {
     if (this.client) {
       return this.client;
     }
-    if (!this.options.supabaseUrl || !this.options.supabasePublishableKey) {
+    try {
+      this.client = this.createClient();
+      return this.client;
+    } catch {
       throw new SlideXAgentIdentityError(IDENTITY_CONFIGURATION_ERROR);
     }
-    this.client = this.createClient(
-      this.options.supabaseUrl,
-      this.options.supabasePublishableKey
-    );
-    return this.client;
   }
 }
 
@@ -114,22 +94,4 @@ export class SlideXAgentIdentityError extends Error {
     super(message);
     this.name = "SlideXAgentIdentityError";
   }
-}
-
-export const slideXAgentIdentity = new SlideXAgentIdentityService({
-  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  supabasePublishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-});
-
-function createBrowserClient(
-  url: string,
-  publishableKey: string
-): SupabaseClient {
-  return createSupabaseClient(url, publishableKey, {
-    auth: {
-      autoRefreshToken: true,
-      detectSessionInUrl: false,
-      persistSession: true
-    }
-  });
 }
