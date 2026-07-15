@@ -1,11 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GuestDemoImportInput } from "@/features/workspace/application/guestDemoImport";
+import { normalizePresentationEditorTemplateId } from "@/features/workspace/application/presentationRealtimeSync";
 import type { WorkspacePresentation } from "@/features/workspace/domain/presentation";
 
 type SlideXSupabaseClient = SupabaseClient;
 
 type PresentationRow = {
   created_at: string;
+  editor_template_id: string | null;
   id: string;
   kind: WorkspacePresentation["kind"];
   last_opened_at: string;
@@ -20,6 +22,7 @@ type PresentationRow = {
 function toWorkspacePresentation(row: PresentationRow): WorkspacePresentation {
   return {
     createdAt: row.created_at,
+    editorTemplateId: row.editor_template_id ?? undefined,
     id: row.id,
     kind: row.kind,
     lastOpenedAt: row.last_opened_at,
@@ -32,7 +35,7 @@ function toWorkspacePresentation(row: PresentationRow): WorkspacePresentation {
   };
 }
 
-const presentationColumns = "id,user_id,title,kind,source,source_revision,template_id,created_at,updated_at,last_opened_at" as const;
+const presentationColumns = "id,user_id,title,kind,source,source_revision,template_id,editor_template_id,created_at,updated_at,last_opened_at" as const;
 
 export const workspacePresentationPageSize = 12;
 
@@ -74,6 +77,7 @@ export async function listSupabasePresentations(
 export async function createSupabasePresentation(
   client: SlideXSupabaseClient,
   input: Pick<WorkspacePresentation, "source" | "title"> & {
+    editorTemplateId?: string;
     importId?: string;
     kind?: WorkspacePresentation["kind"];
     templateId?: string;
@@ -84,6 +88,7 @@ export async function createSupabasePresentation(
     .from("presentations")
     .insert({
       guest_import_id: input.importId ?? null,
+      editor_template_id: normalizePresentationEditorTemplateId(input.editorTemplateId) ?? null,
       kind: input.kind ?? "presentation",
       source: input.source,
       template_id: templateId,
@@ -118,6 +123,7 @@ export async function duplicateSupabasePresentation(
   return createSupabasePresentation(client, {
     kind: "presentation",
     source: presentation.source,
+    editorTemplateId: presentation.editorTemplateId,
     templateId: presentation.templateId,
     title
   });
@@ -132,7 +138,11 @@ export async function renameSupabasePresentation(
     client,
     presentation.id,
     presentation.sourceRevision,
-    { source: presentation.source, title }
+    {
+      editorTemplateId: presentation.editorTemplateId,
+      source: presentation.source,
+      title
+    }
   );
 
   return {
@@ -147,6 +157,7 @@ function isPresentationRow(value: unknown): value is PresentationRow {
   if (typeof value !== "object" || value === null) return false;
   return (
     "created_at" in value && typeof value.created_at === "string" &&
+    "editor_template_id" in value && (value.editor_template_id === null || typeof value.editor_template_id === "string") &&
     "id" in value && typeof value.id === "string" &&
     "kind" in value && (value.kind === "presentation" || value.kind === "template") &&
     "last_opened_at" in value && typeof value.last_opened_at === "string" &&
@@ -271,11 +282,12 @@ export async function updateSupabasePresentation(
   client: SlideXSupabaseClient,
   presentationId: string,
   expectedSourceRevision: number,
-  updates: Pick<WorkspacePresentation, "source" | "title">
+  updates: Pick<WorkspacePresentation, "editorTemplateId" | "source" | "title">
 ) {
-  const { data, error } = await client.rpc("compare_and_swap_presentation_source", {
+  const { data, error } = await client.rpc("compare_and_swap_presentation_document", {
     expected_source_revision: expectedSourceRevision,
     next_source: updates.source,
+    next_editor_template_id: normalizePresentationEditorTemplateId(updates.editorTemplateId) ?? null,
     next_title: updates.title.trim(),
     target_presentation_id: presentationId
   });
@@ -292,23 +304,9 @@ export async function updateSupabasePresentation(
 
   return {
     sourceRevision: result.source_revision,
+    editorTemplateId: typeof result.editor_template_id === "string" ? result.editor_template_id : undefined,
     updatedAt: typeof result.updated_at === "string" ? result.updated_at : new Date().toISOString()
   };
-}
-
-export async function updateSupabasePresentationTemplate(
-  client: SlideXSupabaseClient,
-  presentationId: string,
-  templateId?: string
-) {
-  const resolvedTemplateId = await resolveOfficialTemplateId(client, templateId);
-  const { error } = await client
-    .from("presentations")
-    .update({ template_id: resolvedTemplateId })
-    .eq("id", presentationId);
-
-  if (error) throw error;
-  return resolvedTemplateId ?? undefined;
 }
 
 async function resolveOfficialTemplateId(

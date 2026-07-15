@@ -37,7 +37,6 @@ type UsePitchAssetCommandsArgs = {
   selectedBlockIndex: number | null;
   selectSingleBlock: (index: number | null) => void;
   setNotice: Dispatch<SetStateAction<string>>;
-  setReplayNonce: Dispatch<SetStateAction<number>>;
   updateBlock: BlockUpdater;
 };
 
@@ -52,7 +51,6 @@ export function usePitchAssetCommands({
   selectedBlockIndex,
   selectSingleBlock,
   setNotice,
-  setReplayNonce,
   updateBlock
 }: UsePitchAssetCommandsArgs) {
   function requestImageUpload() {
@@ -98,7 +96,6 @@ export function usePitchAssetCommands({
         });
         if (!slide) return;
         commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
-        setReplayNonce((value) => value + 1);
         setNotice(preparedAsset.optimized ? "Image optimized, uploaded, and pasted into selected layer" : "Image uploaded and pasted into selected layer");
         return;
       }
@@ -108,7 +105,6 @@ export function usePitchAssetCommands({
       });
       commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
       selectSingleBlock(blockIndex);
-      setReplayNonce((value) => value + 1);
       setNotice(preparedAsset.optimized ? "Image optimized, uploaded, and pasted" : "Image uploaded and pasted");
     } catch (error) {
       if (error instanceof PresentationImageAuthenticationRequiredError) {

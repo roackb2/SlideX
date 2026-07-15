@@ -21,6 +21,7 @@ export async function migrateLocalPresentationsToSupabase(
     if (existing) continue;
 
     await createSupabasePresentation(client, {
+      editorTemplateId: presentation.editorTemplateId,
       importId,
       kind: presentation.kind,
       source: presentation.source,

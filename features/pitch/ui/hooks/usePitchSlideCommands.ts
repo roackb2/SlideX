@@ -25,7 +25,6 @@ type UsePitchSlideCommandsArgs = {
   setActiveSlideIndex: Dispatch<SetStateAction<number>>;
   setIsTemplateModalOpen: Dispatch<SetStateAction<boolean>>;
   setNotice: Dispatch<SetStateAction<string>>;
-  setReplayNonce: Dispatch<SetStateAction<number>>;
   setSelectedTemplateId: Dispatch<SetStateAction<string>>;
 };
 
@@ -38,13 +37,11 @@ export function usePitchSlideCommands({
   setActiveSlideIndex,
   setIsTemplateModalOpen,
   setNotice,
-  setReplayNonce,
   setSelectedTemplateId
 }: UsePitchSlideCommandsArgs) {
   function updateAllSlidesStyle(updates: MotionDocProps) {
     if (scenes.length === 0) return;
     commitSource((current) => applyAllSlidesStyleSource(current, scenes, updates));
-    setReplayNonce((value) => value + 1);
     setNotice("Theme applied to all slides");
   }
 
@@ -78,7 +75,6 @@ export function usePitchSlideCommands({
     commitSource((current) => appendBlankSlideSource(current, activeSlideIndex));
     setActiveSlideIndex(scenes.length);
     selectSingleBlock(null);
-    setReplayNonce((value) => value + 1);
     setNotice("Blank slide added");
   }
 
@@ -86,7 +82,6 @@ export function usePitchSlideCommands({
     commitSource((current) => insertBlankSlideSource(current, activeSlideIndex, placement));
     setActiveSlideIndex(placement === "before" ? activeSlideIndex : activeSlideIndex + 1);
     selectSingleBlock(null);
-    setReplayNonce((value) => value + 1);
     setNotice(placement === "before" ? "Slide inserted before" : "Slide inserted after");
   }
 
@@ -94,7 +89,6 @@ export function usePitchSlideCommands({
     commitSource((current) => appendLayoutSlideSource(current, activeSlideIndex, layoutSource));
     setActiveSlideIndex(scenes.length);
     selectSingleBlock(null);
-    setReplayNonce((value) => value + 1);
     setNotice("Slide added with layout");
   }
 
@@ -103,7 +97,6 @@ export function usePitchSlideCommands({
     const nextSlide = applyLayoutToSlide(activeSlide, layoutSource, layoutId);
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
     selectSingleBlock(null);
-    setReplayNonce((value) => value + 1);
     setNotice("Layout applied");
   }
 
@@ -114,7 +107,6 @@ export function usePitchSlideCommands({
     }
     commitSource((current) => deleteSlideSource(current, slideIndex));
     setActiveSlideIndex((current) => Math.min(current, scenes.length - 2));
-    setReplayNonce((value) => value + 1);
     setNotice("Slide deleted");
   }
 
@@ -137,12 +129,10 @@ export function usePitchSlideCommands({
 
   function goToPreviousSlide() {
     setActiveSlideIndex((current) => Math.max(current - 1, 0));
-    setReplayNonce((value) => value + 1);
   }
 
   function goToNextSlide() {
     setActiveSlideIndex((current) => Math.min(current + 1, Math.max(scenes.length - 1, 0)));
-    setReplayNonce((value) => value + 1);
   }
 
   return {

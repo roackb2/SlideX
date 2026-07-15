@@ -1,5 +1,12 @@
 import type { MotionDocBlock, MotionDocProps, MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import {
+  createMotionDocBlockId,
+  ensureMotionDocBlockIds,
+  ensureMotionDocSceneBlockIds,
+  motionDocBlockId
+} from "@/core/motion-doc/application/motionDocBlockIdentity";
+import {
+  motionDocSlideSourceRanges,
   replaceMotionDocSlideOpeningTag
 } from "@/core/motion-doc/application/motionDocSourceEditor";
 
@@ -19,11 +26,12 @@ export function cloneBlock(block: MotionDocBlock): MotionDocBlock {
 }
 
 export function generateSlideString(slide: MotionDocScene) {
-  const tag = formatSlideTag(slide.props);
+  const identifiedSlide = ensureMotionDocSceneBlockIds(slide);
+  const tag = formatSlideTag(identifiedSlide.props);
   const blockStrings: string[] = [];
 
-  for (let index = 0; index < slide.blocks.length;) {
-    const block = slide.blocks[index];
+  for (let index = 0; index < identifiedSlide.blocks.length;) {
+    const block = identifiedSlide.blocks[index];
     const groupId = groupIdOf(block);
     if (!groupId) {
       blockStrings.push(`  ${generateBlockString(block)}`);
@@ -32,8 +40,8 @@ export function generateSlideString(slide: MotionDocScene) {
     }
 
     const groupedBlocks: MotionDocBlock[] = [];
-    while (index < slide.blocks.length && groupIdOf(slide.blocks[index]) === groupId) {
-      groupedBlocks.push(slide.blocks[index]);
+    while (index < identifiedSlide.blocks.length && groupIdOf(identifiedSlide.blocks[index]) === groupId) {
+      groupedBlocks.push(identifiedSlide.blocks[index]);
       index += 1;
     }
     blockStrings.push(indentGroupString(generateGroupString(groupedBlocks, groupId)));
@@ -42,12 +50,13 @@ export function generateSlideString(slide: MotionDocScene) {
 }
 
 export function generateGroupString(blocks: MotionDocBlock[], groupId: string) {
-  const namedBlock = blocks.find((block): block is Extract<MotionDocBlock, { props: MotionDocProps }> => (
+  const identifiedBlocks = ensureMotionDocBlockIds(blocks);
+  const namedBlock = identifiedBlocks.find((block): block is Extract<MotionDocBlock, { props: MotionDocProps }> => (
     "props" in block && typeof block.props.groupName === "string"
   ));
   const groupName = namedBlock?.props.groupName;
   const nameAttr = typeof groupName === "string" && groupName.trim() ? ` name="${escapeMdxAttribute(groupName)}"` : "";
-  const children = blocks.map((block) => `  ${generateBlockStringWithProps(block, withoutGroupProps("props" in block ? block.props : undefined))}`);
+  const children = identifiedBlocks.map((block) => `  ${generateBlockStringWithProps(block, withoutGroupProps("props" in block ? block.props : undefined))}`);
   return `<Group id="${escapeMdxAttribute(groupId)}"${nameAttr}>\n${children.join("\n")}\n</Group>`;
 }
 
@@ -68,7 +77,36 @@ function withoutGroupProps(props: MotionDocProps | undefined) {
 }
 
 export function generateBlockString(block: MotionDocBlock) {
-  return generateBlockStringWithProps(block, "props" in block ? block.props : undefined);
+  const identifiedBlock = ensureMotionDocBlockIds([block])[0] ?? block;
+  return generateBlockStringWithProps(identifiedBlock, "props" in identifiedBlock ? identifiedBlock.props : undefined);
+}
+
+export function ensureMotionDocSourceBlockIds(source: string) {
+  const candidates = motionDocSlideSourceRanges(source)
+    .flatMap((range) => sourceBlockIdentityCandidates(range.source, range.start))
+    .sort((left, right) => left.start - right.start);
+  const seenIds = new Set<string>();
+  const replacements: SourceReplacement[] = [];
+
+  for (const candidate of candidates) {
+    const currentId = candidate.id.trim();
+    if (currentId && !seenIds.has(currentId)) {
+      seenIds.add(currentId);
+      continue;
+    }
+
+    let nextId = createMotionDocBlockId();
+    while (seenIds.has(nextId)) nextId = createMotionDocBlockId();
+    seenIds.add(nextId);
+    replacements.push(candidate.replacement(nextId));
+  }
+
+  return replacements
+    .sort((left, right) => right.start - left.start)
+    .reduce(
+      (nextSource, replacement) => `${nextSource.slice(0, replacement.start)}${replacement.value}${nextSource.slice(replacement.end)}`,
+      source
+    );
 }
 
 function generateBlockStringWithProps(block: MotionDocBlock, overrideProps: MotionDocProps | undefined) {
@@ -78,7 +116,9 @@ function generateBlockStringWithProps(block: MotionDocBlock, overrideProps: Moti
   }
 
   if (block.type === "heading") {
-    return `## ${block.text}`;
+    const id = motionDocBlockId(block);
+    const marker = id ? ` <!-- slidex-block-id:${id} -->` : "";
+    return `## ${block.text}${marker}`;
   }
 
   if ("props" in block) {
@@ -87,6 +127,172 @@ function generateBlockStringWithProps(block: MotionDocBlock, overrideProps: Moti
   }
 
   return "";
+}
+
+type SourceReplacement = {
+  end: number;
+  start: number;
+  value: string;
+};
+
+type SourceBlockIdentityCandidate = {
+  id: string;
+  replacement: (id: string) => SourceReplacement;
+  start: number;
+};
+
+const sourceBlockTagNames = new Set([
+  "Card",
+  "Icon",
+  "ImageBlock",
+  "Metric",
+  "Shape",
+  "Stack",
+  "Table",
+  "Text",
+  "Title",
+  "VideoBlock"
+]);
+
+function sourceBlockIdentityCandidates(slideSource: string, sourceOffset: number) {
+  const candidates = sourceTagIdentityCandidates(slideSource, sourceOffset);
+  const protectedRanges = protectedSourceBlockRanges(slideSource);
+  const openingTagEnd = slideSource.indexOf(">");
+  const closingTagStart = slideSource.lastIndexOf("</");
+  const bodyStart = openingTagEnd >= 0 ? openingTagEnd + 1 : 0;
+  const bodyEnd = closingTagStart >= bodyStart ? closingTagStart : slideSource.length;
+  const body = slideSource.slice(bodyStart, bodyEnd);
+
+  for (const match of body.matchAll(/[^\r\n]+/g)) {
+    const localStart = bodyStart + (match.index ?? 0);
+    const localEnd = localStart + match[0].length;
+    if (protectedRanges.some((range) => localStart >= range.start && localEnd <= range.end)) continue;
+
+    const line = match[0];
+    const trimmed = line.trim();
+    if (
+      !trimmed ||
+      trimmed.startsWith("import ") ||
+      trimmed.startsWith("export ") ||
+      trimmed.startsWith("<") ||
+      trimmed.startsWith("{")
+    ) {
+      continue;
+    }
+
+    const marker = line.match(/\s*<!--\s*slidex-block-id\s*:\s*([A-Za-z0-9._:-]+)\s*-->\s*$/);
+    const markerStart = marker?.index;
+    const markerLength = marker?.[0].length ?? 0;
+    candidates.push({
+      id: marker?.[1]?.trim() ?? "",
+      replacement: (id) => markerStart === undefined
+        ? {
+            end: sourceOffset + localEnd,
+            start: sourceOffset + localEnd,
+            value: ` <!-- slidex-block-id:${id} -->`
+          }
+        : {
+            end: sourceOffset + localStart + markerStart + markerLength,
+            start: sourceOffset + localStart + markerStart,
+            value: ` <!-- slidex-block-id:${id} -->`
+          },
+      start: sourceOffset + localStart
+    });
+  }
+
+  return candidates;
+}
+
+function sourceTagIdentityCandidates(slideSource: string, sourceOffset: number) {
+  const candidates: SourceBlockIdentityCandidate[] = [];
+  const openingPattern = /<([A-Z][A-Za-z0-9]*)\b/g;
+
+  for (const match of slideSource.matchAll(openingPattern)) {
+    const tagName = match[1];
+    if (!sourceBlockTagNames.has(tagName)) continue;
+    const localStart = match.index ?? 0;
+    const localEnd = sourceOpeningTagEnd(slideSource, localStart);
+    if (localEnd <= localStart) continue;
+    const openingTag = slideSource.slice(localStart, localEnd);
+    const idMatch = openingTag.match(/\bid\s*=\s*(?:"([^"]*)"|'([^']*)'|\{([^}]*)\})/);
+    const currentId = idMatch?.[1] ?? idMatch?.[2] ?? idMatch?.[3] ?? "";
+
+    candidates.push({
+      id: currentId,
+      replacement: (id) => {
+        if (idMatch?.index !== undefined) {
+          const idStart = sourceOffset + localStart + idMatch.index;
+          return {
+            end: idStart + idMatch[0].length,
+            start: idStart,
+            value: `id="${id}"`
+          };
+        }
+
+        const closeLength = openingTag.endsWith("/>") ? 2 : 1;
+        const insertionEnd = openingTag.length - closeLength;
+        const beforeClose = openingTag.slice(0, insertionEnd);
+        const trailingWhitespace = beforeClose.match(/\s*$/)?.[0] ?? "";
+        const base = beforeClose.slice(0, beforeClose.length - trailingWhitespace.length);
+        const close = openingTag.slice(insertionEnd);
+        const spacingBeforeClose = trailingWhitespace || (close === "/>" ? " " : "");
+        return {
+          end: sourceOffset + localEnd,
+          start: sourceOffset + localStart,
+          value: `${base} id="${id}"${spacingBeforeClose}${close}`
+        };
+      },
+      start: sourceOffset + localStart
+    });
+  }
+
+  return candidates;
+}
+
+function sourceOpeningTagEnd(source: string, start: number) {
+  let quote: "\"" | "'" | null = null;
+  let braceDepth = 0;
+
+  for (let index = start + 1; index < source.length; index += 1) {
+    const character = source[index];
+    if (quote) {
+      if (character === quote && source[index - 1] !== "\\") quote = null;
+      continue;
+    }
+    if (character === "\"" || character === "'") {
+      quote = character;
+      continue;
+    }
+    if (character === "{") {
+      braceDepth += 1;
+      continue;
+    }
+    if (character === "}" && braceDepth > 0) {
+      braceDepth -= 1;
+      continue;
+    }
+    if (character === ">" && braceDepth === 0) return index + 1;
+  }
+
+  return -1;
+}
+
+function protectedSourceBlockRanges(slideSource: string) {
+  const ranges: Array<{ end: number; start: number }> = [];
+  const pairedBlockPattern = /<((?!Slide\b|Scene\b|Group\b)[A-Z][A-Za-z0-9]*)\b[^>]*>[\s\S]*?<\/\1>/g;
+  for (const match of slideSource.matchAll(pairedBlockPattern)) {
+    const start = match.index ?? 0;
+    ranges.push({ end: start + match[0].length, start });
+  }
+
+  for (const match of slideSource.matchAll(/<([A-Z][A-Za-z0-9]*)\b/g)) {
+    const start = match.index ?? 0;
+    const end = sourceOpeningTagEnd(slideSource, start);
+    if (end > start && slideSource.slice(start, end).endsWith("/>")) {
+      ranges.push({ end, start });
+    }
+  }
+  return ranges;
 }
 
 export function getSelectionMdx(slide: MotionDocScene | undefined, selectedBlockIndex: number | null, activeSlideIndex: number, selectedBlockIndices: number[] = []) {

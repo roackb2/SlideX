@@ -58,8 +58,9 @@ https://<your-app-origin>/auth/callback
 ```
 
 Guest Live Demo edits remain in browser storage until OAuth succeeds. The
-authenticated import endpoint validates only `importId`, `title`, `source`, and
-`templateId`, verifies the template, and inserts through the caller's JWT/RLS.
+authenticated import endpoint validates `importId`, `title`, `source`, the
+official origin `templateId`, and the optional `editorTemplateId`. It verifies
+only the official origin before inserting through the caller's JWT/RLS.
 `guest_import_id` is unique per user, so retries return the original row instead
 of creating duplicates. No service-role key is used by this flow.
 
@@ -69,11 +70,14 @@ table and is never used for authorization.
 
 ## Agent integration
 
-`presentations.source_revision` starts at zero. Browser and Agent document
-writes must call `compare_and_swap_presentation_source` with the revision they
-last read. A successful write atomically increments the revision; a stale write
-fails with PostgreSQL code `40001` and `source_revision_conflict`. Direct
-authenticated updates to `title` and `source` are revoked.
+`presentations.source_revision` starts at zero. Browser document writes call
+`compare_and_swap_presentation_document`, which atomically updates source,
+title, and `editor_template_id`. `template_id` remains the official workspace
+template lineage and is not changed by Pitch styling. Agent and compatible
+server integrations may continue to call `compare_and_swap_presentation_source`.
+Both functions increment the revision, and a stale write fails with PostgreSQL
+code `40001` and `source_revision_conflict`. Direct authenticated updates to
+source and title are revoked; editor template changes use the document CAS.
 
 `agent_sessions.id` is the Heddle conversation ID. Each row belongs to one user
 and one presentation and stores only session metadata: title, message count,
@@ -139,7 +143,9 @@ The hosted catalog intentionally keeps only `welcome-to-slidex` and
 `launch-deck`. Other bundled MotionDoc presets remain available inside Pitch,
 but they are not seeded as workspace presentations. The browser validates
 `template_id` against this catalog before writing it to a presentation, so
-stale application IDs do not violate the foreign key.
+stale application IDs do not violate the foreign key. Pitch's independent
+visual preset is stored in `editor_template_id`; values such as
+`blank:basic-white` never overwrite official workspace lineage.
 Authenticated and anonymous clients can read active templates; only trusted
 server code can change the catalog.
 

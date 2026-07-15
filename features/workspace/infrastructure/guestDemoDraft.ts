@@ -1,8 +1,13 @@
-const guestDemoDraftStorageKey = "slidex_guest_demo_draft_v3";
-const legacyGuestDemoDraftStorageKey = "slidex_guest_demo_draft_v2";
+const guestDemoDraftStorageKey = "slidex_guest_demo_draft_v4";
+const legacyGuestDemoDraftStorageKeys = [
+  "slidex_guest_demo_draft_v3",
+  "slidex_guest_demo_draft_v2"
+] as const;
+const liveDemoOriginTemplateId = "launch-deck";
 
 export type GuestDemoDraft = {
   createdAt: string;
+  editorTemplateId?: string;
   id: string;
   importId: string;
   source: string;
@@ -16,6 +21,7 @@ function isGuestDemoDraft(value: unknown): value is GuestDemoDraft {
 
   return (
     "createdAt" in value && typeof value.createdAt === "string" &&
+    (!("editorTemplateId" in value) || value.editorTemplateId === undefined || typeof value.editorTemplateId === "string") &&
     "id" in value && typeof value.id === "string" &&
     "importId" in value && typeof value.importId === "string" &&
     "source" in value && typeof value.source === "string" &&
@@ -25,12 +31,17 @@ function isGuestDemoDraft(value: unknown): value is GuestDemoDraft {
   );
 }
 
-function isLegacyGuestDemoDraft(value: unknown): value is Omit<GuestDemoDraft, "importId"> {
+type LegacyGuestDemoDraft = Omit<GuestDemoDraft, "editorTemplateId" | "importId"> & {
+  importId?: string;
+};
+
+function isLegacyGuestDemoDraft(value: unknown): value is LegacyGuestDemoDraft {
   if (typeof value !== "object" || value === null) return false;
 
   return (
     "createdAt" in value && typeof value.createdAt === "string" &&
     "id" in value && typeof value.id === "string" &&
+    (!("importId" in value) || typeof value.importId === "string") &&
     "source" in value && typeof value.source === "string" &&
     "templateId" in value && typeof value.templateId === "string" &&
     "title" in value && typeof value.title === "string" &&
@@ -46,17 +57,25 @@ export function readGuestDemoDraft() {
       return isGuestDemoDraft(parsedValue) ? parsedValue : null;
     }
 
-    const legacyValue = window.localStorage.getItem(legacyGuestDemoDraftStorageKey);
+    const legacyStorageKey = legacyGuestDemoDraftStorageKeys.find(
+      (key) => window.localStorage.getItem(key) !== null
+    );
+    if (!legacyStorageKey) return null;
+    const legacyValue = window.localStorage.getItem(legacyStorageKey);
     if (!legacyValue) return null;
     const legacyDraft: unknown = JSON.parse(legacyValue);
     if (!isLegacyGuestDemoDraft(legacyDraft)) return null;
 
     const migratedDraft = {
       ...legacyDraft,
-      importId: crypto.randomUUID()
+      editorTemplateId: legacyDraft.templateId === liveDemoOriginTemplateId
+        ? undefined
+        : legacyDraft.templateId,
+      importId: legacyDraft.importId ?? crypto.randomUUID(),
+      templateId: liveDemoOriginTemplateId
     } satisfies GuestDemoDraft;
     window.localStorage.setItem(guestDemoDraftStorageKey, JSON.stringify(migratedDraft));
-    window.localStorage.removeItem(legacyGuestDemoDraftStorageKey);
+    legacyGuestDemoDraftStorageKeys.forEach((key) => window.localStorage.removeItem(key));
     return migratedDraft;
   } catch {
     return null;
@@ -73,7 +92,7 @@ export function ensureGuestDemoDraft({
   if (existingDraft?.id === id) return existingDraft;
 
   const timestamp = new Date().toISOString();
-  const draft = {
+  const draft: GuestDemoDraft = {
     createdAt: timestamp,
     id,
     importId: crypto.randomUUID(),
@@ -81,7 +100,7 @@ export function ensureGuestDemoDraft({
     templateId,
     title,
     updatedAt: timestamp
-  } satisfies GuestDemoDraft;
+  };
   try {
     window.localStorage.setItem(guestDemoDraftStorageKey, JSON.stringify(draft));
   } catch {
@@ -96,8 +115,8 @@ export function updateGuestDemoDraft(source: string, title: string, templateId?:
 
   const updatedDraft = {
     ...draft,
+    editorTemplateId: templateId ?? draft.editorTemplateId,
     source,
-    templateId: templateId ?? draft.templateId,
     title: title.trim() || draft.title,
     updatedAt: new Date().toISOString()
   } satisfies GuestDemoDraft;

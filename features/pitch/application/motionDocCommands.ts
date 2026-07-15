@@ -1,4 +1,5 @@
 import { createMotionDocBlock, type AddBlockType } from "@/core/motion-doc/application/motionDocBlockFactory";
+import { withNewMotionDocBlockId } from "@/core/motion-doc/application/motionDocBlockIdentity";
 import { cloneBlock, generateBlockString, generateSlideString, replaceSlideOpeningTag } from "@/core/motion-doc/application/motionDocSerialize";
 import {
   appendMotionDocSlideSource,
@@ -169,7 +170,7 @@ export function duplicateBlockAt(slide: MotionDocScene, blockIndex: number) {
   }
 
   const blocks = [...slide.blocks];
-  const duplicate = offsetDuplicatedBlock(cloneBlock(block));
+  const duplicate = offsetDuplicatedBlock(withNewMotionDocBlockId(cloneBlock(block)));
   const insertIndex = Math.min(blockIndex + 1, blocks.length);
 
   blocks.splice(insertIndex, 0, duplicate);
@@ -199,7 +200,7 @@ export function pasteBlockIntoSlide(slide: MotionDocScene, copiedBlock: MotionDo
   const blocks = [...slide.blocks];
   const insertIndex = selectedBlockIndex === null ? blocks.length : Math.min(selectedBlockIndex + 1, blocks.length);
 
-  blocks.splice(insertIndex, 0, cloneBlock(copiedBlock));
+  blocks.splice(insertIndex, 0, withNewMotionDocBlockId(cloneBlock(copiedBlock)));
 
   return {
     blockIndex: insertIndex,
@@ -212,7 +213,8 @@ export function pasteBlocksIntoSlide(slide: MotionDocScene, copiedBlocks: Motion
   const insertIndex = selectedBlockIndex === null ? blocks.length : Math.min(selectedBlockIndex + 1, blocks.length);
   const groupIds = new Map<string, string>();
   const pastedBlocks = copiedBlocks.map((block) => {
-    const clone = options.offset ? offsetDuplicatedBlock(cloneBlock(block)) : cloneBlock(block);
+    const identifiedClone = withNewMotionDocBlockId(cloneBlock(block));
+    const clone = options.offset ? offsetDuplicatedBlock(identifiedClone) : identifiedClone;
     if (!("props" in clone) || typeof clone.props.groupId !== "string") return clone;
     const nextGroupId = groupIds.get(clone.props.groupId) ?? `group-${Date.now().toString(36)}-${groupIds.size}`;
     groupIds.set(clone.props.groupId, nextGroupId);

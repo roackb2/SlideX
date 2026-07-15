@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type Dispatch, type PointerEvent, type RefObject, type SetStateAction } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type Dispatch, type PointerEvent, type RefObject, type SetStateAction } from "react";
 import type { CanvasTool } from "@/features/pitch/application/canvasTools";
 import {
   canvasZoomAnchorFromPoint,
@@ -47,6 +47,8 @@ export function useCanvasPanZoom({
   setCanvasViewportOffset
 }: UseCanvasPanZoomArgs) {
   const panStateRef = useRef<CanvasPanState | null>(null);
+  const panAnimationFrameRef = useRef<number | null>(null);
+  const pendingPanOffsetRef = useRef<CanvasViewportOffset | null>(null);
   const touchPanCandidateRef = useRef<CanvasPanState | null>(null);
   const zoomAnchorRef = useRef<{ anchor: CanvasZoomAnchor; correctionCount: number } | null>(null);
   const zoomAnimationFrameRef = useRef<number | null>(null);
@@ -96,7 +98,12 @@ export function useCanvasPanZoom({
     return () => scrollArea.removeEventListener("wheel", handleWheel);
   }, [scrollAreaRef]);
 
-  useEffect(() => () => stopBufferedZoomAnimation(), []);
+  useEffect(() => () => {
+    stopBufferedZoomAnimation();
+    if (panAnimationFrameRef.current !== null) {
+      window.cancelAnimationFrame(panAnimationFrameRef.current);
+    }
+  }, []);
 
   useLayoutEffect(() => {
     const pendingAnchor = zoomAnchorRef.current;
@@ -218,10 +225,18 @@ export function useCanvasPanZoom({
     if (!panState || panState.pointerId !== event.pointerId) return;
     event.preventDefault();
     event.stopPropagation();
-    setCanvasViewportOffset(clampCanvasViewportOffset({
+    pendingPanOffsetRef.current = clampCanvasViewportOffset({
       x: panState.x + event.clientX - panState.startX,
       y: panState.y + event.clientY - panState.startY
-    }));
+    });
+    if (panAnimationFrameRef.current === null) {
+      panAnimationFrameRef.current = window.requestAnimationFrame(() => {
+        panAnimationFrameRef.current = null;
+        const nextOffset = pendingPanOffsetRef.current;
+        pendingPanOffsetRef.current = null;
+        if (nextOffset) setCanvasViewportOffset(nextOffset);
+      });
+    }
   }
 
   function endCanvasPan(event: PointerEvent<HTMLDivElement>) {
@@ -236,6 +251,16 @@ export function useCanvasPanZoom({
     if (!panState || panState.pointerId !== event.pointerId) return;
     event.preventDefault();
     event.stopPropagation();
+    const finalOffset = clampCanvasViewportOffset({
+      x: panState.x + event.clientX - panState.startX,
+      y: panState.y + event.clientY - panState.startY
+    });
+    if (panAnimationFrameRef.current !== null) {
+      window.cancelAnimationFrame(panAnimationFrameRef.current);
+      panAnimationFrameRef.current = null;
+    }
+    pendingPanOffsetRef.current = null;
+    setCanvasViewportOffset(finalOffset);
     event.currentTarget.releasePointerCapture(event.pointerId);
     panStateRef.current = null;
     setIsPanningCanvas(false);
@@ -360,11 +385,13 @@ export function useCanvasPanZoom({
     onSetZoomLevel("fit");
   }
 
+  const isPanActive = useCallback(() => panStateRef.current !== null, []);
+
   return {
     endCanvasPan,
     fitCanvasToViewport,
     handleCanvasToolPointerDown,
-    isPanActive: () => panStateRef.current !== null,
+    isPanActive,
     isPanningCanvas,
     setZoomDirection,
     updateCanvasPan,

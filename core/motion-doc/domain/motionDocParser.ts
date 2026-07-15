@@ -78,7 +78,8 @@ function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
   markdownSource = markdownSource.replace(/<[A-Z][A-Za-z0-9]*\b[\s\S]*?\/>/g, "\n");
 
   for (const line of markdownSource.split("\n")) {
-    const trimmedLine = line.trim();
+    const { blockId, content } = parseMarkdownBlockLine(line.trim());
+    const trimmedLine = content;
 
     if (!trimmedLine || trimmedLine.startsWith("import ") || trimmedLine.startsWith("export ")) {
       continue;
@@ -87,7 +88,7 @@ function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
     if (trimmedLine.startsWith("# ")) {
       blocks.push({
         type: "Title",
-        props: {},
+        props: blockId ? { id: blockId } : {},
         text: trimmedLine.replace(/^#\s+/, "")
       });
       continue;
@@ -95,6 +96,7 @@ function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
 
     if (trimmedLine.startsWith("## ")) {
       blocks.push({
+        ...(blockId ? { id: blockId } : {}),
         type: "heading",
         text: trimmedLine.replace(/^##\s+/, "")
       });
@@ -103,12 +105,21 @@ function parseSceneBlocks(sceneSource: string): MotionDocBlock[] {
 
     blocks.push({
       type: "Text",
-      props: {},
+      props: blockId ? { id: blockId } : {},
       text: trimmedLine
     });
   }
 
   return blocks;
+}
+
+function parseMarkdownBlockLine(line: string) {
+  const marker = line.match(/\s*<!--\s*slidex-block-id\s*:\s*([A-Za-z0-9._:-]+)\s*-->\s*$/);
+
+  return {
+    blockId: marker?.[1]?.trim() ?? "",
+    content: marker && marker.index !== undefined ? line.slice(0, marker.index).trimEnd() : line
+  };
 }
 
 function expandGroupMarkup(sceneSource: string) {

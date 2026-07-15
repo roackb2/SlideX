@@ -1,9 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseSupabasePresentationRealtimeChange } from "@/features/workspace/infrastructure/supabasePresentationRepository";
+import {
+  parseSupabasePresentationRealtimeChange,
+  PresentationRevisionConflictError,
+  updateSupabasePresentation
+} from "@/features/workspace/infrastructure/supabasePresentationRepository";
 
 const presentationRow = {
   created_at: "2026-07-15T05:00:00.000Z",
+  editor_template_id: "black-commercial",
   id: "f98fc7be-38cf-4233-81b0-b2e731557092",
   kind: "presentation",
   last_opened_at: "2026-07-15T05:10:00.000Z",
@@ -34,6 +39,7 @@ test("parses a validated Supabase presentation UPDATE broadcast", () => {
     event: "UPDATE",
     presentation: {
       createdAt: presentationRow.created_at,
+      editorTemplateId: "black-commercial",
       id: presentationRow.id,
       kind: "presentation",
       lastOpenedAt: presentationRow.last_opened_at,
@@ -72,6 +78,7 @@ test("parses INSERT and DELETE broadcasts from their matching records", () => {
     event: "DELETE",
     presentation: {
       createdAt: presentationRow.created_at,
+      editorTemplateId: "black-commercial",
       id: presentationRow.id,
       kind: "presentation",
       lastOpenedAt: presentationRow.last_opened_at,
@@ -115,4 +122,61 @@ test("rejects broadcasts for another owner, schema, or table", () => {
     ...message,
     payload: { ...message.payload, table: "slide_comments" }
   }, ownerId), null);
+});
+
+test("saves source, title, and template through one atomic document RPC", async () => {
+  const calls: Array<{ args: unknown; name: string }> = [];
+  const client = {
+    rpc: async (name: string, args: unknown) => {
+      calls.push({ args, name });
+      return {
+        data: [{
+          editor_template_id: "blank:basic-white",
+          presentation_id: presentationRow.id,
+          source_revision: 8,
+          updated_at: "2026-07-15T05:13:00.000Z"
+        }],
+        error: null
+      };
+    }
+  } as unknown as Parameters<typeof updateSupabasePresentation>[0];
+
+  const result = await updateSupabasePresentation(client, presentationRow.id, 7, {
+    editorTemplateId: "blank:basic-white",
+    source: "next-source",
+    title: " Next title "
+  });
+
+  assert.deepEqual(calls, [{
+    args: {
+      expected_source_revision: 7,
+      next_editor_template_id: "blank:basic-white",
+      next_source: "next-source",
+      next_title: "Next title",
+      target_presentation_id: presentationRow.id
+    },
+    name: "compare_and_swap_presentation_document"
+  }]);
+  assert.deepEqual(result, {
+    editorTemplateId: "blank:basic-white",
+    sourceRevision: 8,
+    updatedAt: "2026-07-15T05:13:00.000Z"
+  });
+});
+
+test("maps an atomic save revision conflict to the domain error", async () => {
+  const client = {
+    rpc: async () => ({
+      data: null,
+      error: { code: "40001", message: "source_revision_conflict" }
+    })
+  } as unknown as Parameters<typeof updateSupabasePresentation>[0];
+
+  await assert.rejects(
+    updateSupabasePresentation(client, presentationRow.id, 6, {
+      source: "stale-source",
+      title: presentationRow.title
+    }),
+    PresentationRevisionConflictError
+  );
 });

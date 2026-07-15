@@ -179,9 +179,7 @@ export function TableFields({ block, selectedBlockIndex, updateBlock }: BlockFie
         onChange={(rowIndex, columnIndex, value) => {
           updateBlock(
             selectedBlockIndex,
-            updateTableCell(block.props, rowIndex, columnIndex, value),
-            undefined,
-            { skipReplay: true }
+            updateTableCell(block.props, rowIndex, columnIndex, value)
           );
         }}
         rows={size.rows}

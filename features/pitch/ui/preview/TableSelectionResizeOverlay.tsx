@@ -47,6 +47,7 @@ export function TableSelectionResizeOverlay({
         <button
           aria-label={isColumn ? `Resize column ${selection.index + 1}` : `Resize row ${selection.index + 1}`}
           className="appearance-none p-0"
+          data-dot-field-pause
           onPointerDown={(event) => onResizeStart(selection, event)}
           style={handleStyle}
           type="button"

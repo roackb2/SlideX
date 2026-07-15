@@ -4,6 +4,7 @@ export type WorkspacePresentationKind = (typeof workspacePresentationKinds)[numb
 
 export type WorkspacePresentation = {
   createdAt: string;
+  editorTemplateId?: string;
   id: string;
   kind: WorkspacePresentationKind;
   lastOpenedAt: string;
@@ -48,6 +49,7 @@ export function parseWorkspacePresentations(value: unknown): WorkspacePresentati
 
     return [{
       ...item,
+      editorTemplateId: typeof item.editorTemplateId === "string" ? item.editorTemplateId : undefined,
       kind: isWorkspacePresentationKind(item.kind) ? item.kind : "presentation",
       sourceRevision: typeof item.sourceRevision === "number" &&
         Number.isSafeInteger(item.sourceRevision) && item.sourceRevision >= 0

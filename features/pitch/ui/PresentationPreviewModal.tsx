@@ -36,7 +36,6 @@ export function PresentationPreviewModal({
 
   const goToSlide = useCallback((nextIndex: number) => {
     setSlideIndex(Math.min(Math.max(nextIndex, 0), Math.max(slideCount - 1, 0)));
-    setReplayNonce((value) => value + 1);
   }, [slideCount]);
 
   const goToPreviousSlide = useCallback(() => goToSlide(slideIndex - 1), [goToSlide, slideIndex]);
@@ -71,7 +70,6 @@ export function PresentationPreviewModal({
   useEffect(() => {
     if (!isOpen) return;
     setSlideIndex(Math.min(Math.max(activeSlideIndex, 0), Math.max(slideCount - 1, 0)));
-    setReplayNonce((value) => value + 1);
   }, [activeSlideIndex, isOpen, slideCount]);
 
   useEffect(() => {

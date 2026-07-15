@@ -60,7 +60,6 @@ type UsePitchCommandsArgs = {
   setActiveSlideIndex: Dispatch<SetStateAction<number>>;
   setIsTemplateModalOpen: Dispatch<SetStateAction<boolean>>;
   setNotice: Dispatch<SetStateAction<string>>;
-  setReplayNonce: Dispatch<SetStateAction<number>>;
   setSelectedTemplateId: Dispatch<SetStateAction<string>>;
   setSource: Dispatch<SetStateAction<string>>;
   source: string;
@@ -84,7 +83,6 @@ export function usePitchCommands({
   setActiveSlideIndex,
   setIsTemplateModalOpen,
   setNotice,
-  setReplayNonce,
   setSelectedTemplateId,
   setSource,
   source
@@ -99,7 +97,6 @@ export function usePitchCommands({
     setActiveSlideIndex,
     setIsTemplateModalOpen,
     setNotice,
-    setReplayNonce,
     setSelectedTemplateId
   });
   const assetCommands = usePitchAssetCommands({
@@ -113,7 +110,6 @@ export function usePitchCommands({
     selectedBlockIndex,
     selectSingleBlock,
     setNotice,
-    setReplayNonce,
     updateBlock
   });
 
@@ -134,7 +130,6 @@ export function usePitchCommands({
     const nextSlide = deleteBlockAt(activeSlide, blockIndex);
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
     selectSingleBlock(null);
-    setReplayNonce((value) => value + 1);
     setNotice("Layer deleted");
   }
 
@@ -154,7 +149,6 @@ export function usePitchCommands({
     const nextSlide = deleteBlocks(activeSlide, indices);
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
     selectSingleBlock(null);
-    setReplayNonce((value) => value + 1);
     setNotice(indices.length > 1 ? "Layers deleted" : "Layer deleted");
   }
 
@@ -220,7 +214,6 @@ export function usePitchCommands({
     const nextSlide = deleteBlocks(activeSlide, indices);
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
     selectSingleBlock(null);
-    setReplayNonce((value) => value + 1);
     setNotice(indices.length > 1 ? "Layers cut" : "Layer cut");
   }
 
@@ -235,7 +228,6 @@ export function usePitchCommands({
       const result = pasteBlocksIntoSlide(activeSlide, blocks, indices[indices.length - 1], { offset: true });
       commitSource((current) => replaceSlideSource(current, activeSlideIndex, result.slide));
       selectBlocks(result.blockIndices);
-      setReplayNonce((value) => value + 1);
       setNotice("Layers duplicated");
       return;
     }
@@ -248,7 +240,6 @@ export function usePitchCommands({
 
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, result.slide));
     selectSingleBlock(result.blockIndex);
-    setReplayNonce((value) => value + 1);
     setNotice("Layer duplicated");
   }
 
@@ -258,7 +249,6 @@ export function usePitchCommands({
     if (!nextSlide) return;
 
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
-    setReplayNonce((value) => value + 1);
     setNotice("Layer reordered");
   }
 
@@ -285,7 +275,6 @@ export function usePitchCommands({
     const { blockIndices, slide } = pasteBlocksIntoSlide(activeSlide, copiedBlocks, selectedBlockIndex);
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
     selectBlocks(blockIndices);
-    setReplayNonce((value) => value + 1);
     setNotice(blockIndices.length > 1 ? `${blockIndices.length} layers pasted` : "Layer pasted");
   }
 
@@ -296,7 +285,6 @@ export function usePitchCommands({
     const result = moveBlocksToEdge(activeSlide, indices, edge);
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, result.slide));
     selectBlocks(result.blockIndices);
-    setReplayNonce((value) => value + 1);
     setNotice(edge === "front" ? "Moved to front" : "Moved to back");
   }
 
@@ -305,7 +293,6 @@ export function usePitchCommands({
     const result = moveBlocksToEdge(activeSlide, [blockIndex], edge);
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, result.slide));
     selectSingleBlock(result.blockIndices[0]);
-    setReplayNonce((value) => value + 1);
     setNotice(edge === "front" ? "Moved to front" : "Moved to back");
   }
 
@@ -339,7 +326,6 @@ export function usePitchCommands({
     if (!nextSlide) return;
 
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
-    setReplayNonce((value) => value + 1);
     setNotice("Layer reordered");
   }
 
@@ -361,7 +347,6 @@ export function usePitchCommands({
     }
 
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
-    setReplayNonce((value) => value + 1);
     setNotice(locked ? "Layer position locked" : "Layer position unlocked");
   }
 
@@ -387,7 +372,6 @@ export function usePitchCommands({
 
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, result.slide));
     selectSingleBlock(null);
-    setReplayNonce((value) => value + 1);
     setNotice("Image used as background");
   }
 
@@ -397,7 +381,6 @@ export function usePitchCommands({
 
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
     selectSingleBlock(blockIndex);
-    setReplayNonce((value) => value + 1);
     setNotice(`${type} added`);
   }
 
@@ -407,7 +390,6 @@ export function usePitchCommands({
     const { blockIndex, slide } = appendTextBlockAtPosition(activeSlide, position);
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, slide));
     selectSingleBlock(blockIndex);
-    setReplayNonce((value) => value + 1);
     setNotice("Text added");
   }
 
@@ -451,9 +433,6 @@ export function usePitchCommands({
     }
 
     commitSource((current) => replaceSlideSource(current, activeSlideIndex, nextSlide));
-    if (!options?.skipReplay) {
-      setReplayNonce((value) => value + 1);
-    }
     setNotice("Block updated");
   }
 
@@ -477,7 +456,6 @@ export function usePitchCommands({
     }
 
     commitSource(result.source);
-    setReplayNonce((current) => current + 1);
     setNotice(result.notice);
   }
 

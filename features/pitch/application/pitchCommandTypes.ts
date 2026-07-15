@@ -1,7 +1,6 @@
 import type { MotionDocProps } from "@/core/motion-doc/domain/motionDocTypes";
 
 export type BlockUpdateOptions = {
-  skipReplay?: boolean;
   transient?: boolean;
 };
 

@@ -2,9 +2,10 @@
 
 import { memo, useMemo } from "react";
 import type { CSSProperties } from "react";
-import type { MotionDocFrame } from "@/core/motion-doc/domain/frame";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import { parseMotionDoc } from "@/core/motion-doc/domain/motionDocParser";
+import { motionDocBlockKey } from "@/core/motion-doc/application/motionDocBlockIdentity";
+import type { BlockFrameOverrides } from "@/features/pitch/application/pitchGeometry";
 import {
   alignXProp,
   alignYProp,
@@ -20,7 +21,7 @@ import { Scene, Text } from "@/features/pitch/ui/preview/motion-blocks";
 type PreviewPaneProps = {
   activeSlideIndex?: number;
   autoHeight?: boolean;
-  frameOverrides?: ReadonlyMap<number, MotionDocFrame>;
+  frameOverrides?: BlockFrameOverrides;
   hiddenBlockIndices?: number[];
   imageFetchPriority?: "auto" | "high" | "low";
   imageLoading?: "eager" | "lazy";
@@ -54,7 +55,11 @@ export const PreviewPane = memo(function PreviewPane({
   }
 
   const layout = layoutProp(activeSlide.props.layout);
-  const blockItems = activeSlide.blocks.map((block, originalIndex) => ({ block, originalIndex }));
+  const blockItems = activeSlide.blocks.map((block, originalIndex) => ({
+    block,
+    blockKey: motionDocBlockKey(block, originalIndex),
+    originalIndex
+  }));
   const imageItems = blockItems.filter(({ block }) => block.type === "ImageBlock");
   const contentItems = blockItems.filter(({ block }) => block.type !== "ImageBlock");
   const hasPositionedBlocks = activeSlide.blocks.some(isPositionedBlock);
@@ -74,7 +79,7 @@ export const PreviewPane = memo(function PreviewPane({
         backgroundImage={stringProp(activeSlide.props.backgroundImage)}
         duration={activeSlide.duration}
         freeform={hasPositionedBlocks}
-        key={`${replayNonce}-${activeSlideIndex}-${activeSlide.duration}`}
+        key={activeSlideIndex}
         layout={shouldSplit ? layout : "default"}
         mutedColor={stringProp(activeSlide.props.mutedColor)}
         shader={stringProp(activeSlide.props.shader)}
@@ -116,8 +121,8 @@ export const PreviewPane = memo(function PreviewPane({
             <div style={{ ...splitImageStyle, order: imageOrder }}>
               {imageItems
                 .filter(({ originalIndex }) => !hiddenBlockIndexSet.has(originalIndex))
-                .map(({ block, originalIndex }) => (
-                  <div key={`${block.type}-image-${originalIndex}`} style={{ width: "100%" }}>
+                .map(({ block, blockKey }) => (
+                  <div key={blockKey} style={{ width: "100%" }}>
                     <PreviewBlock
                       block={block}
                       imageFetchPriority={imageFetchPriority}

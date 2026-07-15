@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import {
   clampImageMediaPosition,
   imageMediaDimensions,
@@ -8,7 +8,7 @@ import {
 } from "@/core/motion-doc/application/imageCrop";
 import type { MotionDocBlockOf } from "@/core/motion-doc/domain/motionDocTypes";
 import type { BlockUpdater } from "@/features/pitch/application/pitchCommandTypes";
-import type { ResizeHandle } from "@/features/pitch/application/previewCanvas";
+import { blockFrame, type ResizeHandle } from "@/features/pitch/application/previewCanvas";
 
 type CropPan = {
   cropRect: ImageCropRect;
@@ -59,29 +59,11 @@ export function ImageCropEditor({
   const imageSource = String(block.props.src ?? "").trim();
   const panRef = useRef<CropPan | null>(null);
   const resizeRef = useRef<CropResize | null>(null);
-  const editorRef = useRef<HTMLDivElement | null>(null);
-  const [imageAspectRatio, setImageAspectRatio] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!imageSource) return;
-
-    function handlePointerMove(event: PointerEvent) {
-      updatePanAt(event.pointerId, event.clientX, event.clientY);
-    }
-
-    function handlePointerEnd(event: PointerEvent) {
-      finishPan(event.pointerId, event.clientX, event.clientY);
-    }
-
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerEnd);
-    window.addEventListener("pointercancel", handlePointerEnd);
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerEnd);
-      window.removeEventListener("pointercancel", handlePointerEnd);
-    };
+  const [loadedImage, setLoadedImage] = useState<{ aspectRatio: number | null; src: string }>({
+    aspectRatio: null,
+    src: ""
   });
+  const imageAspectRatio = loadedImage.src === imageSource ? loadedImage.aspectRatio : null;
 
   if (!imageSource) return null;
 
@@ -141,7 +123,7 @@ export function ImageCropEditor({
       cropY,
       scaleX: pan.scaleX,
       scaleY: pan.scaleY
-    }, undefined, { transient: true, skipReplay: true });
+    }, undefined, { transient: true });
   }
 
   function finishPan(pointerId: number, clientX: number, clientY: number) {
@@ -194,23 +176,29 @@ export function ImageCropEditor({
     top: `${cropRect.y}%`,
     width: `${cropRect.w}%`
   };
+  const frame = blockFrame(block);
   const imagePreviewStyles = cropPreviewStyles({
     cropX: numberProp(block.props.cropX, 0),
     cropY: numberProp(block.props.cropY, 0),
     fit: "cover",
-    frameAspectRatio: editorFrameAspectRatio(editorRef.current),
+    frameAspectRatio: frame.h > 0 ? frame.w / frame.h * (16 / 9) : 16 / 9,
     imageAspectRatio,
     scaleX: numberProp(block.props.scaleX, 1),
     scaleY: numberProp(block.props.scaleY, 1)
   });
 
   return (
-    <div className="absolute inset-0 z-30 touch-none overflow-visible" data-image-crop-editor ref={editorRef}>
+    <div className="absolute inset-0 z-30 touch-none overflow-visible" data-image-crop-editor>
       <FullImageCropPreview
         alt={String(block.props.alt ?? "")}
         cropRect={cropRect}
         onImageLoad={(naturalWidth, naturalHeight) => {
-          if (naturalWidth > 0 && naturalHeight > 0) setImageAspectRatio(naturalWidth / naturalHeight);
+          if (naturalWidth > 0 && naturalHeight > 0) {
+            setLoadedImage({
+              aspectRatio: naturalWidth / naturalHeight,
+              src: imageSource
+            });
+          }
         }}
         src={imageSource}
         imageStyle={imagePreviewStyles.image}
@@ -220,7 +208,10 @@ export function ImageCropEditor({
       <div
         aria-label="Crop image. Drag the image to reposition it and drag the crop handles to change the crop area."
         className="absolute cursor-grab border border-sky-400 shadow-[0_0_0_1px_rgba(2,132,199,0.34),0_0_20px_rgba(14,165,233,0.14)] active:cursor-grabbing"
+        onPointerCancel={(event) => finishPan(event.pointerId, event.clientX, event.clientY)}
         onPointerDown={startPan}
+        onPointerMove={(event) => updatePanAt(event.pointerId, event.clientX, event.clientY)}
+        onPointerUp={(event) => finishPan(event.pointerId, event.clientX, event.clientY)}
         role="application"
         style={cropStyle}
       >
@@ -336,12 +327,6 @@ function cropPreviewStyles({
       transformOrigin: "center"
     }
   };
-}
-
-function editorFrameAspectRatio(editor: HTMLDivElement | null) {
-  const rect = editor?.getBoundingClientRect();
-  if (!rect || rect.height <= 0) return 16 / 9;
-  return rect.width / rect.height;
 }
 
 function resizedCropRect(rect: ImageCropRect, handle: ResizeHandle, dx: number, dy: number): ImageCropRect {

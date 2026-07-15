@@ -3,6 +3,7 @@ import { z } from "zod";
 export const presentationSourceByteLimit = 2_097_152;
 
 const guestDemoImportSchema = z.object({
+  editorTemplateId: z.string().trim().min(1).max(160).regex(/^[a-z0-9]+(?:[:.-][a-z0-9]+)*$/).optional(),
   importId: z.string().uuid(),
   source: z.string().min(1).refine(
     (value) => new TextEncoder().encode(value).byteLength <= presentationSourceByteLimit,

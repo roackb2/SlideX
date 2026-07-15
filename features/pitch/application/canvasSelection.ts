@@ -1,6 +1,7 @@
-import type { MotionDocFrame } from "@/core/motion-doc/domain/frame";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
+import { motionDocBlockKey } from "@/core/motion-doc/application/motionDocBlockIdentity";
 import { blockFrame, isEditableTextBlock, isMovableBlock } from "@/features/pitch/application/previewCanvas";
+import type { BlockFrameOverrides } from "@/features/pitch/application/pitchGeometry";
 
 export function selectedCanvasIndices(
   slide: MotionDocScene | undefined,
@@ -19,9 +20,14 @@ export function selectedCanvasIndices(
 export function combinedSelectionFrame(
   slide: MotionDocScene | undefined,
   indices: readonly number[],
-  frameOverrides: ReadonlyMap<number, MotionDocFrame>
+  frameOverrides: BlockFrameOverrides
 ) {
-  const frames = indices.map((index) => frameOverrides.get(index) ?? blockFrame(slide?.blocks[index]));
+  const frames = indices.map((index) => {
+    const block = slide?.blocks[index];
+    return block
+      ? frameOverrides.get(motionDocBlockKey(block, index)) ?? blockFrame(block)
+      : blockFrame(undefined);
+  });
   if (frames.length === 0) return null;
 
   const left = Math.min(...frames.map((frame) => frame.x));

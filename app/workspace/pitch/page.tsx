@@ -9,7 +9,15 @@ import { useLocalPitchPresentation } from "@/features/workspace";
 function LocalPitchWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { accessMode, error, isReady, presentation, save, trackLocalSource } = useLocalPitchPresentation();
+  const {
+    accessMode,
+    error,
+    isReady,
+    presentation,
+    save,
+    syncWarning,
+    trackLocalProject
+  } = useLocalPitchPresentation();
   const resumeIntent = searchParams.get("intent") === "export"
     ? "export"
     : searchParams.get("view") === "preview"
@@ -44,11 +52,11 @@ function LocalPitchWorkspace() {
         initialProject={{
           name: presentation.title,
           source: presentation.source,
-          templateId: presentation.templateId
+          templateId: presentation.editorTemplateId
         }}
         initialResumeIntent={resumeIntent}
         key={presentation.id}
-        onLocalProjectSourceChange={trackLocalSource}
+        onLocalProjectChange={trackLocalProject}
         onSignInRequested={(intent) => {
           const nextPath = `${appRoutes.liveDemo}&intent=${intent}`;
           router.push(loginPath(nextPath));
@@ -56,6 +64,7 @@ function LocalPitchWorkspace() {
         onProjectSourceChange={save}
         presentationId={presentation.id}
         projectVersion={presentation.sourceRevision}
+        syncWarning={syncWarning}
       />
     </PitchLocaleOverride>
   );

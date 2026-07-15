@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+import { ensureMotionDocSourceBlockIds } from "@/core/motion-doc/application/motionDocSerialize";
 
 type UsePitchUndoArgs = {
   clearBlockSelection: () => void;
   markProjectDirty: () => void;
   setNotice: Dispatch<SetStateAction<string>>;
-  setReplayNonce: Dispatch<SetStateAction<number>>;
   setSource: Dispatch<SetStateAction<string>>;
   source: string;
   undoStackRef: MutableRefObject<string[]>;
@@ -16,7 +16,6 @@ export function usePitchUndo({
   clearBlockSelection,
   markProjectDirty,
   setNotice,
-  setReplayNonce,
   setSource,
   source,
   undoStackRef
@@ -37,7 +36,9 @@ export function usePitchUndo({
   const commitSource = useCallback(
     (nextSource: string | ((current: string) => string)) => {
       setSource((current) => {
-        const resolvedSource = typeof nextSource === "function" ? nextSource(current) : nextSource;
+        const resolvedSource = ensureMotionDocSourceBlockIds(
+          typeof nextSource === "function" ? nextSource(current) : nextSource
+        );
 
         if (resolvedSource !== current) {
           pushUndoSnapshot(current);
@@ -60,10 +61,9 @@ export function usePitchUndo({
 
     setSource(previousSource);
     markProjectDirty();
-    setReplayNonce((value) => value + 1);
     clearBlockSelection();
     setNotice("Undo");
-  }, [clearBlockSelection, markProjectDirty, setNotice, setReplayNonce, setSource, undoStackRef]);
+  }, [clearBlockSelection, markProjectDirty, setNotice, setSource, undoStackRef]);
 
   return {
     commitSource,
