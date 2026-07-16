@@ -154,7 +154,7 @@ test("applies injected auth headers and preserves stable server error codes", as
   );
 });
 
-test("lists and attaches presentation conversations through product routes", async () => {
+test("lists, attaches, and deletes presentation conversations through product routes", async () => {
   const calls: Array<{ body?: unknown; method: string; url: string }> = [];
   const client = new SlideXAgentClient({
     baseUrl: "https://agent.example.test",
@@ -179,6 +179,9 @@ test("lists and attaches presentation conversations through product routes", asy
           nextCursor: "next-page"
         });
       }
+      if (method === "DELETE") {
+        return Response.json({ reset: true });
+      }
       return Response.json({
         session: {
           ...createSession(),
@@ -194,6 +197,7 @@ test("lists and attaches presentation conversations through product routes", asy
     presentationId: "presentation-1",
     presentationTitle: "Deck"
   });
+  await client.deleteSession("session-1");
 
   assert.equal(page.items[0]?.presentation.id, "presentation-1");
   assert.equal(page.nextCursor, "next-page");
@@ -210,6 +214,10 @@ test("lists and attaches presentation conversations through product routes", asy
         presentationId: "presentation-1",
         presentationTitle: "Deck"
       }
+    },
+    {
+      method: "DELETE",
+      url: "https://agent.example.test/api/agent/sessions/session-1"
     }
   ]);
 });
