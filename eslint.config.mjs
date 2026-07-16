@@ -27,12 +27,12 @@ const eslintConfig = [
     }
   },
   {
-    files: ["app/**/*.{ts,tsx}", "common/**/*.{ts,tsx}", "core/**/*.{ts,tsx}", "features/**/*.{ts,tsx}"],
+    files: ["app/**/*.{ts,tsx}", "common/**/*.{ts,tsx}", "core/**/*.{ts,tsx}", "features/**/*.{ts,tsx}", "mcp/**/*.{ts,tsx}"],
     plugins: {
       boundaries
     },
     settings: {
-      "boundaries/include": ["app/**/*", "common/**/*", "core/**/*", "features/**/*"],
+      "boundaries/include": ["app/**/*", "common/**/*", "core/**/*", "features/**/*", "mcp/**/*"],
       "boundaries/elements": [
         { type: "app", pattern: "app/**/*", mode: "full" },
         { type: "common-lib", pattern: "common/lib/**/*", mode: "full" },
@@ -42,6 +42,7 @@ const eslintConfig = [
         { type: "core-application", pattern: "core/*/application/**/*", mode: "full" },
         { type: "core-infrastructure", pattern: "core/*/infrastructure/**/*", mode: "full" },
         { type: "core-presets", pattern: "core/*/presets/**/*", mode: "full" },
+        { type: "mcp-infrastructure", pattern: "mcp/**/*", mode: "full" },
         { type: "feature-public", pattern: "features/*/index.ts", mode: "full" },
         { type: "feature-domain", pattern: "features/*/domain/**/*", mode: "full" },
         { type: "feature-application", pattern: "features/*/application/**/*", mode: "full" },
@@ -59,7 +60,7 @@ const eslintConfig = [
           rules: [
             {
               from: { type: "app" },
-              allow: { to: { type: ["app", "common-lib", "common-ui", "common-util", "core-presets", "feature-public"] } }
+              allow: { to: { type: ["app", "common-lib", "common-ui", "common-util", "core-presets", "feature-public", "mcp-infrastructure"] } }
             },
             {
               from: { type: "common-ui" },
@@ -88,6 +89,10 @@ const eslintConfig = [
             {
               from: { type: "core-presets" },
               allow: { to: { type: ["core-domain", "core-application", "core-presets", "common-util"] } }
+            },
+            {
+              from: { type: "mcp-infrastructure" },
+              allow: { to: { type: ["common-lib", "common-util", "core-domain", "core-application", "core-infrastructure", "core-presets", "feature-application", "feature-domain", "feature-infrastructure", "mcp-infrastructure"] } }
             },
             {
               from: { type: "feature-public" },

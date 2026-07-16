@@ -20,26 +20,12 @@ import type {
 } from "@/core/motion-doc/domain/motionDocTypes";
 
 export const motionDocAddBlockTypes = [
-  "Title",
   "Text",
-  "Text96",
-  "Text60",
-  "Text48",
-  "Text36",
-  "Text32",
-  "Text24",
-  "Card",
   "Image",
   "Video",
-  "Metric",
   "Icon",
   "Table",
-  "ShapeRectangle",
-  "ShapeCircle",
-  "ShapeTriangle",
-  "ShapeLine",
-  "ShapeArrow",
-  "ShapeStar"
+  "ShapeRectangle"
 ] as const satisfies readonly AddBlockType[];
 
 export type MotionDocSupportedAddBlockType = (typeof motionDocAddBlockTypes)[number];

@@ -4,59 +4,97 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod/v4";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   addMotionDocBlock,
   applyMotionDocTextReplacements,
   applyMotionDocTitle,
   createMotionDocFromOutline,
+  deleteMotionDocBlock,
   deleteMotionDocSlide,
+  duplicateMotionDocBlock,
   motionDocAddBlockTypes,
   reorderMotionDocSlide,
+  reorderMotionDocBlock,
   replaceMotionDocSlide,
   summarizeMotionDoc,
+  updateMotionDocBlock,
   updateMotionDocSlideProps
 } from "@/core/motion-doc/application/motionDocAutomation";
 import { buildMotionDocHtml } from "@/core/motion-doc/infrastructure/export/motionDocExport";
 import { defaultMdx } from "@/core/motion-doc/presets/defaultMdx";
 import { defaultTemplate, motionTemplates } from "@/core/motion-doc/presets/templates";
 import type { MotionTemplate } from "@/core/motion-doc/presets/templates/templateTypes";
+import {
+  getMotionDocMcpSchema,
+  motionDocBlockUpdateSchema,
+  motionDocFrameSchema,
+  motionDocPropsSchema
+} from "./motionDocMcpSchema";
+import { exportMotionDocPptx } from "./pptxExport";
+import type { McpPresentationStore } from "./presentationStore";
+import { registerRemotePresentationMcp } from "./remotePresentationMcp";
+import { registerShaderMcp } from "./shaderMcp";
 import { registerSlideLayoutMcp } from "./slideLayoutMcp";
 
-const server = new McpServer({
-  name: "slidex-motion-doc",
-  version: "2.0.4"
-});
+export type SlideXMcpServerOptions = {
+  enablePptxExport?: boolean;
+  enablePresentationWrites?: boolean;
+  enableWorkspaceSkills?: boolean;
+  profile?: "local" | "remote";
+  presentationStore?: McpPresentationStore;
+};
 
 const textReplacementSchema = z.record(z.string(), z.string());
-const propRecordSchema = z.record(
-  z.string(),
-  z.union([z.string(), z.number(), z.boolean()])
-);
-const positionSchema = z.object({
-  h: z.number().optional(),
-  w: z.number().optional(),
-  x: z.number().optional(),
-  y: z.number().optional()
-});
+const slideIndexSchema = z.number().int().min(0);
+const blockIndexSchema = z.number().int().min(0);
 
-registerResources();
-registerPrompts();
-registerTools();
-registerSlideLayoutMcp(server);
-registerWorkspaceSkills();
+export function createSlideXMcpServer(options: SlideXMcpServerOptions = {}) {
+  const server = new McpServer({
+    name: "slidex-motion-doc",
+    version: "0.2.0"
+  });
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.stack ?? error.message : String(error));
-  process.exitCode = 1;
-});
+  if (options.profile === "remote") {
+    if (!options.presentationStore) {
+      throw new Error("Remote MCP requires a presentation store.");
+    }
+
+    registerRemotePresentationMcp(server, {
+      enableWrites: options.enablePresentationWrites !== false,
+      presentationStore: options.presentationStore
+    });
+    return server;
+  }
+
+  registerResources(server);
+  registerPrompts(server);
+  registerTools(server, options);
+  registerSlideLayoutMcp(server);
+  registerShaderMcp(server);
+
+  if (options.enableWorkspaceSkills) {
+    registerWorkspaceSkills(server);
+  }
+
+  return server;
+}
+
+if (isDirectExecution()) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+    process.exitCode = 1;
+  });
+}
 
 async function main() {
+  const server = createSlideXMcpServer({ enableWorkspaceSkills: true });
   await server.connect(new StdioServerTransport());
   console.error("SlideX MCP server is running on stdio.");
 }
 
-function registerTools() {
+function registerTools(server: McpServer, options: SlideXMcpServerOptions) {
   server.registerTool(
     "slidex_parse_motion_doc",
     {
@@ -167,8 +205,8 @@ function registerTools() {
       title: "Update Slide Props",
       description: "Merge props into one slide and return updated SlideX MDX.",
       inputSchema: {
-        props: propRecordSchema,
-        slideIndex: z.number().int().min(0),
+        props: motionDocPropsSchema,
+        slideIndex: slideIndexSchema,
         source: z.string()
       }
     },
@@ -182,7 +220,7 @@ function registerTools() {
       title: "Replace Slide",
       description: "Replace one slide with a complete <Slide>...</Slide> source block.",
       inputSchema: {
-        slideIndex: z.number().int().min(0),
+        slideIndex: slideIndexSchema,
         slideSource: z.string(),
         source: z.string()
       }
@@ -197,16 +235,85 @@ function registerTools() {
       title: "Add Block",
       description: "Append a default block to a slide, with optional text, props, and frame position overrides.",
       inputSchema: {
-        position: positionSchema.optional(),
-        props: propRecordSchema.optional(),
-        slideIndex: z.number().int().min(0),
+        afterBlockIndex: blockIndexSchema
+          .optional()
+          .describe("Insert after this block index. Omit to append."),
+        position: motionDocFrameSchema.optional(),
+        props: motionDocPropsSchema.optional(),
+        slideIndex: slideIndexSchema,
         source: z.string(),
         text: z.string().optional(),
         type: z.enum(motionDocAddBlockTypes)
       }
     },
-    ({ position, props, slideIndex, source, text, type }) =>
-      runTool(() => addMotionDocBlock(source, slideIndex, type, { position, props, text }))
+    ({ afterBlockIndex, position, props, slideIndex, source, text, type }) =>
+      runTool(() =>
+        addMotionDocBlock(source, slideIndex, type, { afterBlockIndex, position, props, text })
+      )
+  );
+
+  server.registerTool(
+    "slidex_update_block",
+    {
+      title: "Update Block",
+      description:
+        "Update a current MotionDoc block. Use text for text blocks and props for frame, media, shape, table, and icon fields.",
+      inputSchema: {
+        blockIndex: blockIndexSchema,
+        ...motionDocBlockUpdateSchema.shape,
+        slideIndex: slideIndexSchema,
+        source: z.string()
+      }
+    },
+    ({ blockIndex, props, slideIndex, source, text }) =>
+      runTool(() => updateMotionDocBlock(source, slideIndex, blockIndex, { props, text }))
+  );
+
+  server.registerTool(
+    "slidex_delete_block",
+    {
+      title: "Delete Block",
+      description: "Delete one block from a slide and return updated SlideX MDX.",
+      inputSchema: {
+        blockIndex: blockIndexSchema,
+        slideIndex: slideIndexSchema,
+        source: z.string()
+      }
+    },
+    ({ blockIndex, slideIndex, source }) =>
+      runTool(() => deleteMotionDocBlock(source, slideIndex, blockIndex))
+  );
+
+  server.registerTool(
+    "slidex_duplicate_block",
+    {
+      title: "Duplicate Block",
+      description: "Duplicate one block immediately after itself, optionally offsetting its x/y frame position.",
+      inputSchema: {
+        blockIndex: blockIndexSchema,
+        offset: z.number().default(2).describe("Percentage offset applied to x and y."),
+        slideIndex: slideIndexSchema,
+        source: z.string()
+      }
+    },
+    ({ blockIndex, offset, slideIndex, source }) =>
+      runTool(() => duplicateMotionDocBlock(source, slideIndex, blockIndex, offset))
+  );
+
+  server.registerTool(
+    "slidex_reorder_block",
+    {
+      title: "Reorder Block",
+      description: "Move a block to another index within the same slide.",
+      inputSchema: {
+        fromIndex: blockIndexSchema,
+        slideIndex: slideIndexSchema,
+        source: z.string(),
+        toIndex: blockIndexSchema
+      }
+    },
+    ({ fromIndex, slideIndex, source, toIndex }) =>
+      runTool(() => reorderMotionDocBlock(source, slideIndex, fromIndex, toIndex))
   );
 
   server.registerTool(
@@ -215,7 +322,7 @@ function registerTools() {
       title: "Delete Slide",
       description: "Delete one slide by index and return updated SlideX MDX.",
       inputSchema: {
-        slideIndex: z.number().int().min(0),
+        slideIndex: slideIndexSchema,
         source: z.string()
       }
     },
@@ -228,9 +335,9 @@ function registerTools() {
       title: "Reorder Slide",
       description: "Move a slide from one index to another and return updated SlideX MDX.",
       inputSchema: {
-        fromIndex: z.number().int().min(0),
+        fromIndex: slideIndexSchema,
         source: z.string(),
-        toIndex: z.number().int().min(0)
+        toIndex: slideIndexSchema
       }
     },
     ({ fromIndex, source, toIndex }) =>
@@ -254,6 +361,24 @@ function registerTools() {
       }))
   );
 
+  if (options.enablePptxExport !== false) {
+    server.registerTool(
+      "slidex_export_pptx",
+      {
+        title: "Export Editable PowerPoint",
+        description:
+          "Export SlideX MDX to an editable local .pptx file. Shader and non-native effects are rasterized as slide backgrounds.",
+        inputSchema: {
+          outputPath: z.string().describe("Absolute .pptx output path."),
+          overwrite: z.boolean().default(false),
+          source: z.string(),
+          title: z.string().optional()
+        }
+      },
+      (input) => runAsyncTool(() => exportMotionDocPptx(input))
+    );
+  }
+
   server.registerTool(
     "slidex_list_block_types",
     {
@@ -262,9 +387,39 @@ function registerTools() {
     },
     () => runTool(() => ({ blockTypes: motionDocAddBlockTypes }))
   );
+
+  server.registerTool(
+    "slidex_get_motion_doc_schema",
+    {
+      title: "Get Current MotionDoc Schema",
+      description:
+        "Return the current SlideX MotionDoc slide fields plus every MCP add-block type, its generated MotionDoc type, supported default fields, and default props. Call this before editing unfamiliar blocks."
+    },
+    () => runTool(getMotionDocMcpSchema)
+  );
+
 }
 
-function registerResources() {
+function registerResources(server: McpServer) {
+  server.registerResource(
+    "slidex-motion-doc-schema",
+    "slidex://schema/motion-doc",
+    {
+      description: "Current MotionDoc slide and block field schema used by the SlideX MCP tools.",
+      mimeType: "application/json",
+      title: "SlideX MotionDoc Schema"
+    },
+    (uri) => ({
+      contents: [
+        {
+          mimeType: "application/json",
+          text: toJson(getMotionDocMcpSchema()),
+          uri: uri.href
+        }
+      ]
+    })
+  );
+
   server.registerResource(
     "slidex-template-index",
     "slidex://templates",
@@ -346,7 +501,7 @@ function registerResources() {
   );
 }
 
-function registerPrompts() {
+function registerPrompts(server: McpServer) {
   server.registerPrompt(
     "slidex_deck_builder",
     {
@@ -381,7 +536,7 @@ function registerPrompts() {
   );
 }
 
-function registerWorkspaceSkills() {
+function registerWorkspaceSkills(server: McpServer) {
   const skillsDir = path.join(process.cwd(), ".agents", "skills");
   if (!fs.existsSync(skillsDir)) return;
 
@@ -480,6 +635,22 @@ function runTool<T>(callback: () => T): CallToolResult {
   }
 }
 
+async function runAsyncTool<T>(callback: () => Promise<T>): Promise<CallToolResult> {
+  try {
+    return jsonResult(await callback());
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: error instanceof Error ? error.message : String(error)
+        }
+      ],
+      isError: true
+    };
+  }
+}
+
 function jsonResult(data: unknown): CallToolResult {
   return {
     content: [
@@ -541,4 +712,15 @@ function formatTemplate(template: MotionTemplate, includeSource: boolean) {
 
 function toJson(value: unknown) {
   return JSON.stringify(value, null, 2);
+}
+
+function isDirectExecution() {
+  const entryPath = process.argv[1];
+  if (!entryPath) return false;
+
+  try {
+    return fs.realpathSync(entryPath) === fs.realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return path.resolve(entryPath) === path.resolve(fileURLToPath(import.meta.url));
+  }
 }
