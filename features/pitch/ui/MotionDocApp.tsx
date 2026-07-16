@@ -659,7 +659,6 @@ export function MotionDocApp({
       onApplyMotionDoc={applyAgentMotionDoc}
       onOpenSession={openAgentSession}
       onSelectedSessionChange={onSelectedAgentSessionChange}
-      persistSessionMetadata={accessMode === "authenticated"}
       presentationId={presentationId}
       presentationTitle={projectName}
       source={source}
