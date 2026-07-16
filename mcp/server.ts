@@ -53,7 +53,7 @@ const blockIndexSchema = z.number().int().min(0);
 export function createSlideXMcpServer(options: SlideXMcpServerOptions = {}) {
   const server = new McpServer({
     name: "slidex-motion-doc",
-    version: "0.2.0"
+    version: "0.3.0"
   });
 
   if (options.profile === "remote") {

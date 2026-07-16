@@ -1,4 +1,4 @@
-# SlideX MCP Server v0.2
+# SlideX MCP Server v0.3
 
 Local MCP server for SlideX MotionDoc decks. It lets MCP clients create and validate decks, edit slides and blocks, apply Paper Shader presets, export standalone HTML, and write editable PowerPoint files.
 
@@ -112,13 +112,18 @@ Animark also exposes an authenticated Streamable HTTP endpoint at `/mcp/`. Remot
 
 The Remote profile exposes only presentation-scoped tools:
 
-- presentation source: `slidex_get_presentation`, `slidex_save_presentation`
+- presentation discovery and source: `slidex_list_presentations`, `slidex_get_presentation`, `slidex_save_presentation`
+- precise canvas nodes: `slidex_get_canvas_nodes`, `slidex_update_canvas_node`
 - block source: `slidex_add_block`, `slidex_update_block`, `slidex_delete_block`, `slidex_duplicate_block`, `slidex_reorder_block`
 - layout source: `slidex_list_slide_layouts`, `slidex_get_slide_layout`, `slidex_add_slide_from_layout`, `slidex_replace_slide_with_layout`
 - shader source: `slidex_list_shaders`, `slidex_get_shader`, `slidex_apply_shader_preset`
 - current schema: `slidex_list_block_types`, `slidex_get_motion_doc_schema`
 
-Every Remote tool requires `presentationId` and validates ownership. Every write additionally requires `expectedRevision`, performs a compare-and-swap save, and triggers Animark's existing private presentation Realtime broadcast so an open Pitch page receives the new revision. Revision conflicts reject the save and require the client to read again.
+Remote read tools automatically select the authenticated user's most recently opened SlideX presentation when `presentationId` is omitted, and always return the selected presentation ID. `slidex_list_presentations` can also discover recent decks. MCP clients should perform this discovery themselves and reuse the returned ID instead of asking the user to copy it.
+
+`slidex_get_canvas_nodes` returns each block's stable `nodeId`, type, text preview, percentage frame, and equivalent frame on SlideX's 1024 x 576 canvas. `slidex_update_canvas_node` moves or resizes a node by stable ID with percentage coordinates rounded to three decimal places and rejects frames outside the slide.
+
+Every Remote write requires the automatically discovered `presentationId` plus `expectedRevision`, performs a compare-and-swap save, and triggers Animark's existing private presentation Realtime broadcast so an open Pitch page receives the new revision. Revision conflicts reject the save and require the client to read again. Ownership validation applies to both discovery and mutation.
 
 Remote MCP deliberately does not expose deck creation, template cloning, local HTML/PPTX export, workspace CRUD, presentation deletion, or remote media upload. The Animark server must configure `SUPABASE_SERVICE_ROLE_KEY`; this value is server-only and must never be placed in a browser, MCP client configuration, or any `NEXT_PUBLIC_*` variable.
 

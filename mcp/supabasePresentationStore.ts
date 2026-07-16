@@ -7,7 +7,8 @@ import type {
   SaveMcpPresentationInput
 } from "@/mcp/presentationStore";
 
-const presentationColumns = "id,title,source,source_revision,updated_at";
+const presentationColumns = "id,title,source,source_revision,updated_at,last_opened_at";
+const presentationSummaryColumns = "id,title,source_revision,updated_at,last_opened_at";
 
 export class SupabaseMcpPresentationStore implements McpPresentationStore {
   constructor(
@@ -15,17 +16,46 @@ export class SupabaseMcpPresentationStore implements McpPresentationStore {
     private readonly userId: string
   ) {}
 
-  async getPresentation(presentationId: string) {
-    const { data, error } = await this.client
+  async getPresentation(presentationId?: string) {
+    let query = this.client
       .from("presentations")
       .select(presentationColumns)
-      .eq("id", presentationId)
-      .eq("user_id", this.userId)
-      .maybeSingle();
+      .eq("user_id", this.userId);
+
+    query = presentationId
+      ? query.eq("id", presentationId)
+      : query.order("last_opened_at", { ascending: false }).limit(1);
+
+    const { data, error } = await query.maybeSingle();
 
     if (error) throw error;
-    if (!data) throw new Error("Presentation not found or not accessible.");
+    if (!data) {
+      throw new Error(
+        presentationId
+          ? "Presentation not found or not accessible."
+          : "No presentation is available. Open or create a presentation in SlideX first."
+      );
+    }
     return toMcpPresentation(data);
+  }
+
+  async listPresentations(limit = 20) {
+    const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 50);
+    const { data, error } = await this.client
+      .from("presentations")
+      .select(presentationSummaryColumns)
+      .eq("user_id", this.userId)
+      .order("last_opened_at", { ascending: false })
+      .limit(safeLimit);
+
+    if (error) throw error;
+    return data.map((row) => ({
+      id: row.id,
+      lastOpenedAt: row.last_opened_at,
+      sourceRevision: row.source_revision,
+      title: row.title,
+      updatedAt: row.updated_at
+    }));
   }
 
   async savePresentation(input: SaveMcpPresentationInput) {
@@ -75,6 +105,7 @@ export class SupabaseMcpPresentationStore implements McpPresentationStore {
 
 function toMcpPresentation(row: {
   id: string;
+  last_opened_at: string;
   source: string;
   source_revision: number;
   title: string;
@@ -82,6 +113,7 @@ function toMcpPresentation(row: {
 }) {
   return {
     id: row.id,
+    lastOpenedAt: row.last_opened_at,
     source: row.source,
     sourceRevision: row.source_revision,
     title: row.title,

@@ -59,26 +59,47 @@ test("remote MCP keeps reads available but gates saves and local PPTX export", a
   });
 
   try {
-    const names = (await readOnly.client.listTools()).tools.map((tool) => tool.name);
+    const readOnlyTools = (await readOnly.client.listTools()).tools;
+    const names = readOnlyTools.map((tool) => tool.name);
+    assert.ok(names.includes("slidex_list_presentations"));
     assert.ok(names.includes("slidex_get_presentation"));
+    assert.ok(names.includes("slidex_get_canvas_nodes"));
     assert.ok(!names.includes("slidex_save_presentation"));
     assert.ok(!names.includes("slidex_export_pptx"));
     assert.ok(!names.includes("slidex_create_deck"));
     assert.ok(!names.includes("slidex_export_html"));
 
-    for (const tool of (await readOnly.client.listTools()).tools) {
-      assert.ok(tool.inputSchema.properties?.presentationId, `${tool.name} requires presentationId`);
-      assert.ok(tool.inputSchema.required?.includes("presentationId"));
+    for (const tool of readOnlyTools.filter((tool) => tool.name !== "slidex_list_presentations")) {
+      assert.ok(tool.inputSchema.properties?.presentationId, `${tool.name} accepts presentationId`);
+      assert.ok(!tool.inputSchema.required?.includes("presentationId"));
     }
 
     const result = await readOnly.client.callTool({
       name: "slidex_get_presentation",
-      arguments: { presentationId }
+      arguments: {}
     });
     assert.equal(result.isError, undefined);
     assert.equal(
-      (result.structuredContent as { result: { sourceRevision: number } }).result.sourceRevision,
+      (result.structuredContent as {
+        result: { autoSelected: boolean; presentation: { sourceRevision: number } };
+      }).result.presentation.sourceRevision,
       4
+    );
+    assert.equal(
+      (result.structuredContent as { result: { autoSelected: boolean } }).result.autoSelected,
+      true
+    );
+
+    const canvasResult = await readOnly.client.callTool({
+      name: "slidex_get_canvas_nodes",
+      arguments: { slideIndex: 0 }
+    });
+    assert.equal(canvasResult.isError, undefined);
+    assert.equal(
+      (canvasResult.structuredContent as {
+        result: { presentation: { id: string }; result: { slides: Array<{ nodes: unknown[] }> } };
+      }).result.result.slides[0]?.nodes.length,
+      1
     );
   } finally {
     await readOnly.close();
@@ -95,23 +116,23 @@ test("remote MCP keeps reads available but gates saves and local PPTX export", a
     const names = writableTools.map((tool) => tool.name);
     assert.ok(names.includes("slidex_get_presentation"));
     assert.ok(names.includes("slidex_save_presentation"));
+    assert.ok(names.includes("slidex_update_canvas_node"));
 
-    for (const tool of writableTools) {
-      assert.ok(tool.inputSchema.properties?.presentationId, `${tool.name} requires presentationId`);
-      assert.ok(tool.inputSchema.required?.includes("presentationId"));
-    }
-    for (const name of [
+    const writeToolNames = [
       "slidex_save_presentation",
       "slidex_add_block",
       "slidex_update_block",
+      "slidex_update_canvas_node",
       "slidex_delete_block",
       "slidex_duplicate_block",
       "slidex_reorder_block",
       "slidex_apply_shader_preset",
       "slidex_add_slide_from_layout",
       "slidex_replace_slide_with_layout"
-    ]) {
+    ];
+    for (const name of writeToolNames) {
       const tool = writableTools.find((candidate) => candidate.name === name);
+      assert.ok(tool?.inputSchema.required?.includes("presentationId"));
       assert.ok(tool?.inputSchema.required?.includes("expectedRevision"));
     }
 
@@ -121,8 +142,28 @@ test("remote MCP keeps reads available but gates saves and local PPTX export", a
     });
     assert.equal(result.isError, undefined);
     assert.equal(
-      (result.structuredContent as { result: { sourceRevision: number } }).result.sourceRevision,
+      (result.structuredContent as {
+        result: { presentation: { sourceRevision: number } };
+      }).result.presentation.sourceRevision,
       5
+    );
+
+    const canvasUpdateResult = await writable.client.callTool({
+      name: "slidex_update_canvas_node",
+      arguments: {
+        expectedRevision: 4,
+        frame: { x: 11.125, y: 12.25 },
+        nodeId: "Text-legacy-0",
+        presentationId,
+        slideIndex: 0
+      }
+    });
+    assert.equal(canvasUpdateResult.isError, undefined);
+    assert.deepEqual(
+      (canvasUpdateResult.structuredContent as {
+        result: { node: { framePercent: { x: number; y: number } } };
+      }).result.node.framePercent,
+      { h: 20, w: 80, x: 11.125, y: 12.25 }
     );
 
     const shaderResult = await writable.client.callTool({
@@ -149,12 +190,22 @@ function createPresentationStore(): McpPresentationStore {
   return {
     async getPresentation(id) {
       return {
-        id,
+        id: id ?? presentationId,
+        lastOpenedAt: "2026-07-16T00:00:02.000Z",
         source,
         sourceRevision: 4,
         title: "MCP contract",
         updatedAt: "2026-07-16T00:00:00.000Z"
       };
+    },
+    async listPresentations() {
+      return [{
+        id: presentationId,
+        lastOpenedAt: "2026-07-16T00:00:02.000Z",
+        sourceRevision: 4,
+        title: "MCP contract",
+        updatedAt: "2026-07-16T00:00:00.000Z"
+      }];
     },
     async savePresentation(input) {
       assert.equal(input.presentationId, presentationId);
@@ -172,7 +223,7 @@ function createPresentationStore(): McpPresentationStore {
 
 async function connectMcp(options: Parameters<typeof createSlideXMcpServer>[0]) {
   const server = createSlideXMcpServer(options);
-  const client = new Client({ name: "slidex-contract-test", version: "0.2.0" });
+  const client = new Client({ name: "slidex-contract-test", version: "0.3.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);

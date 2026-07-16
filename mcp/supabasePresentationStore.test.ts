@@ -7,6 +7,7 @@ const presentationId = "f98fc7be-38cf-4233-81b0-b2e731557092";
 const ownerId = "a04a2db0-f114-49a9-ae9a-f357a815af17";
 const row = {
   id: presentationId,
+  last_opened_at: "2026-07-16T00:00:02.000Z",
   source: "# Remote\n\n<Slide duration={5}></Slide>",
   source_revision: 7,
   title: "Remote",
@@ -32,8 +33,75 @@ test("remote presentation reads always filter by presentation id and OAuth owner
 
   assert.equal((await store.getPresentation(presentationId)).sourceRevision, 7);
   assert.deepEqual(filters, [
-    ["id", presentationId],
-    ["user_id", ownerId]
+    ["user_id", ownerId],
+    ["id", presentationId]
+  ]);
+});
+
+test("remote presentation reads auto-select the owner's most recently opened deck", async () => {
+  const calls: string[] = [];
+  const query = {
+    eq(field: string, value: string) {
+      calls.push(`eq:${field}:${value}`);
+      return this;
+    },
+    limit(value: number) {
+      calls.push(`limit:${value}`);
+      return this;
+    },
+    async maybeSingle() {
+      return { data: row, error: null };
+    },
+    order(field: string, options: { ascending: boolean }) {
+      calls.push(`order:${field}:${options.ascending}`);
+      return this;
+    },
+    select() {
+      return this;
+    }
+  };
+  const store = new SupabaseMcpPresentationStore({ from: () => query } as never, ownerId);
+
+  assert.equal((await store.getPresentation()).id, presentationId);
+  assert.deepEqual(calls, [
+    `eq:user_id:${ownerId}`,
+    "order:last_opened_at:false",
+    "limit:1"
+  ]);
+});
+
+test("remote presentation listing stays owner-scoped and ordered by recent use", async () => {
+  const calls: string[] = [];
+  const query = {
+    eq(field: string, value: string) {
+      calls.push(`eq:${field}:${value}`);
+      return this;
+    },
+    async limit(value: number) {
+      calls.push(`limit:${value}`);
+      return { data: [row], error: null };
+    },
+    order(field: string, options: { ascending: boolean }) {
+      calls.push(`order:${field}:${options.ascending}`);
+      return this;
+    },
+    select() {
+      return this;
+    }
+  };
+  const store = new SupabaseMcpPresentationStore({ from: () => query } as never, ownerId);
+
+  assert.deepEqual(await store.listPresentations(5), [{
+    id: presentationId,
+    lastOpenedAt: row.last_opened_at,
+    sourceRevision: row.source_revision,
+    title: row.title,
+    updatedAt: row.updated_at
+  }]);
+  assert.deepEqual(calls, [
+    `eq:user_id:${ownerId}`,
+    "order:last_opened_at:false",
+    "limit:5"
   ]);
 });
 

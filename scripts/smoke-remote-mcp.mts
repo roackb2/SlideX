@@ -99,8 +99,11 @@ try {
   const ownerStore = new SupabaseMcpPresentationStore(admin, createdUser.user.id);
   const otherOwnerStore = new SupabaseMcpPresentationStore(admin, crypto.randomUUID());
   assertEqual((await ownerStore.getPresentation(presentationId)).sourceRevision, 0);
+  assertEqual((await ownerStore.getPresentation()).id, presentationId);
+  assertEqual((await ownerStore.listPresentations(5))[0]?.id, presentationId);
   await assertRejects(() => otherOwnerStore.getPresentation(presentationId));
-  checkpoint("ownership verified");
+  await assertRejects(() => otherOwnerStore.getPresentation());
+  checkpoint("ownership and automatic discovery verified");
 
   await realtimeClient.realtime.setAuth(session.session.access_token);
   realtimeChannel = realtimeClient.channel(`workspace-presentations:${createdUser.user.id}`, {
@@ -128,6 +131,7 @@ try {
 
   process.stdout.write(`${JSON.stringify({
     audienceValidation: "valid",
+    automaticPresentationDiscovery: "valid",
     oauthPkceAndRevocation: "valid",
     ownership: "valid",
     realtimeRevision: 1,
