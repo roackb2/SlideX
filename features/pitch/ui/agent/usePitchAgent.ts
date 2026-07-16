@@ -19,6 +19,7 @@ import {
   readAgentPresentationBinding,
   writeAgentPresentationBinding
 } from "@/features/pitch/infrastructure/slidexAgentPersistence";
+import { embedPitchLocalImagesForPersistence } from "@/features/pitch/infrastructure/pitchLocalAssets";
 import type {
   AgentRunEvent,
   AgentSession,
@@ -52,6 +53,7 @@ const MOTION_DOC_APPLY_ERROR =
 export type PitchAgentRuntimeInput = {
   initialSessionId?: string;
   presentationId: string;
+  presentationSourceRevision: number;
   presentationTitle: string;
   source: string;
   onApplyMotionDoc: (
@@ -470,10 +472,12 @@ export function usePitchAgent(
     let acceptedRun = false;
 
     try {
-      const motionDoc = sourceRef.current;
-      const sourceRevision = await hashSource(motionDoc);
+      const editorMotionDoc = sourceRef.current;
+      const sourceRevision = await hashSource(editorMotionDoc);
+      const motionDoc = await embedPitchLocalImagesForPersistence(editorMotionDoc);
       const request = {
         presentationId: inputRef.current.presentationId,
+        presentationSourceRevision: inputRef.current.presentationSourceRevision,
         presentationTitle: inputRef.current.presentationTitle,
         message: trimmedMessage,
         motionDoc,

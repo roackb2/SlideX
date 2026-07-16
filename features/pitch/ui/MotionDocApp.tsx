@@ -653,13 +653,14 @@ export function MotionDocApp({
     />
     </>
   );
-  return isAgentAvailable && presentationId ? (
+  return isAgentAvailable && presentationId && projectVersion !== undefined ? (
     <PitchAgentProvider
       initialSessionId={initialAgentSessionId}
       onApplyMotionDoc={applyAgentMotionDoc}
       onOpenSession={openAgentSession}
       onSelectedSessionChange={onSelectedAgentSessionChange}
       presentationId={presentationId}
+      presentationSourceRevision={projectVersion}
       presentationTitle={projectName}
       source={source}
     >

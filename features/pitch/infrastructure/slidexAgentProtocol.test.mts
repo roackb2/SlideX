@@ -33,12 +33,14 @@ test("validates the product payload carried by Heddle's run protocol", () => {
       session: createSession(),
       motionDoc: "# Updated deck",
       assistantMessage: "Updated the deck",
-      baseSourceRevision: "revision-1"
+      baseSourceRevision: "revision-1",
+      presentationSourceRevision: 8
     }
   });
 
   assert.equal(event.kind, "result");
   assert.equal(event.result.motionDoc, "# Updated deck");
+  assert.equal(event.result.presentationSourceRevision, 8);
   assert.deepEqual(
     SlideXAgentRunProtocol.parseEvent(JSON.parse(SlideXAgentRunProtocol.stringifyEvent(event))),
     event
@@ -223,7 +225,12 @@ test("lists, attaches, and deletes presentation conversations through product ro
 });
 
 test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async () => {
-  const calls: Array<{ url: string; method: string; authorization: string | null }> = [];
+  const calls: Array<{
+    url: string;
+    method: string;
+    authorization: string | null;
+    body?: unknown;
+  }> = [];
   const resultEvent = SlideXAgentRunProtocol.parseEvent({
     kind: "result",
     runId: "run-1",
@@ -233,7 +240,8 @@ test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async ()
       session: createSession(),
       motionDoc: "# Updated deck",
       assistantMessage: "Updated the deck",
-      baseSourceRevision: "revision-1"
+      baseSourceRevision: "revision-1",
+      presentationSourceRevision: 8
     }
   });
   const fetch: typeof globalThis.fetch = async (input, init) => {
@@ -242,7 +250,10 @@ test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async ()
     calls.push({
       url,
       method,
-      authorization: new Headers(init?.headers).get("Authorization")
+      authorization: new Headers(init?.headers).get("Authorization"),
+      ...(typeof init?.body === "string"
+        ? { body: JSON.parse(init.body) }
+        : {})
     });
 
     if (method === "POST" && url.endsWith("/api/agent/runs")) {
@@ -281,6 +292,7 @@ test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async ()
     message: "Make it clearer",
     motionDoc: "# Deck",
     sourceRevision: "revision-1",
+    presentationSourceRevision: 7,
     llmApiKey: "test-key"
   });
   const events: unknown[] = [];
@@ -297,7 +309,16 @@ test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async ()
     {
       url: "https://agent.example.test/api/agent/runs",
       method: "POST",
-      authorization: "Bearer test-token"
+      authorization: "Bearer test-token",
+      body: {
+        presentationId: "presentation-1",
+        presentationTitle: "Deck",
+        message: "Make it clearer",
+        motionDoc: "# Deck",
+        sourceRevision: "revision-1",
+        presentationSourceRevision: 7,
+        llmApiKey: "test-key"
+      }
     },
     {
       url: "https://agent.example.test/api/agent/runs/run-1/events?after=0",
