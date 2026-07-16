@@ -1,10 +1,7 @@
 import {
   clampFramePosition,
   clampPercent,
-  defaultBlockHeight,
-  defaultBlockWidth,
-  defaultBlockY,
-  percentFrameValue,
+  motionDocBlockFrame,
   type MotionDocFrame
 } from "@/core/motion-doc/domain/frame";
 import type {
@@ -124,16 +121,7 @@ export function isEditableTableBlock(block: MotionDocScene["blocks"][number]): b
 }
 
 export function blockFrame(block: MotionDocScene["blocks"][number] | undefined): MotionDocFrame {
-  if (!block || !("props" in block)) {
-    return { h: 18, w: 42, x: 8, y: 12 };
-  }
-
-  return {
-    h: percentFrameValue(block.props.h, defaultBlockHeight(block.type)),
-    w: percentFrameValue(block.props.w, defaultBlockWidth(block.type)),
-    x: percentFrameValue(block.props.x, 9),
-    y: percentFrameValue(block.props.y, defaultBlockY(block.type))
-  };
+  return motionDocBlockFrame(block);
 }
 
 export function interactionFrameUpdates(interaction: CanvasInteraction, pointer: CanvasPoint): ResolvedBlockFrameUpdate[] {

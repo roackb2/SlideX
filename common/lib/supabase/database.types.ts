@@ -42,6 +42,76 @@ export type Database = {
           }
         ];
       };
+      mcp_oauth_clients: {
+        Row: {
+          client_id: string;
+          client_name: string;
+          created_at: string;
+          grant_types: string[];
+          redirect_uris: string[];
+          response_types: string[];
+          token_endpoint_auth_method: string;
+        };
+        Insert: {
+          client_id: string;
+          client_name: string;
+          created_at?: string;
+          grant_types?: string[];
+          redirect_uris: string[];
+          response_types?: string[];
+          token_endpoint_auth_method?: string;
+        };
+        Update: {
+          client_name?: string;
+          grant_types?: string[];
+          redirect_uris?: string[];
+          response_types?: string[];
+          token_endpoint_auth_method?: string;
+        };
+        Relationships: [];
+      };
+      mcp_oauth_credentials: {
+        Row: {
+          client_id: string;
+          code_challenge: string | null;
+          created_at: string;
+          credential_hash: string;
+          credential_type: "authorization_code" | "access_token" | "refresh_token";
+          expires_at: string;
+          id: string;
+          redirect_uri: string | null;
+          resource: string;
+          revoked_at: string | null;
+          scopes: string[];
+          user_id: string;
+        };
+        Insert: {
+          client_id: string;
+          code_challenge?: string | null;
+          created_at?: string;
+          credential_hash: string;
+          credential_type: "authorization_code" | "access_token" | "refresh_token";
+          expires_at: string;
+          id?: string;
+          redirect_uri?: string | null;
+          resource: string;
+          revoked_at?: string | null;
+          scopes?: string[];
+          user_id: string;
+        };
+        Update: {
+          revoked_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mcp_oauth_credentials_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "mcp_oauth_clients";
+            referencedColumns: ["client_id"];
+          }
+        ];
+      };
       official_templates: {
         Row: {
           created_at: string;
@@ -183,6 +253,21 @@ export type Database = {
           presentation_id: string;
           source_revision: number;
           updated_at: string;
+        }>;
+      };
+      mcp_compare_and_swap_presentation_document: {
+        Args: {
+          actor_user_id: string;
+          expected_source_revision: number;
+          next_source: string;
+          target_presentation_id: string;
+        };
+        Returns: Array<{
+          presentation_id: string;
+          result_status: "conflict" | "inaccessible" | "saved";
+          source_revision: number | null;
+          title: string | null;
+          updated_at: string | null;
         }>;
       };
       touch_presentation_opened: {
