@@ -25,11 +25,13 @@ export function DocsPage() {
     ? [
         { label: "開始使用", links: [{ href: "#overview", label: "Pitch 總覽" }, { href: "#workspace", label: "工作區" }, { href: "#canvas", label: "畫布" }] },
         { label: "核心概念", links: [{ href: "#slides", label: "投影片與圖層" }, { href: "#fill", label: "單色 Fill" }, { href: "#shader", label: "動態 shader" }, { href: "#motion", label: "文字與動態" }] },
+        { label: "MCP 與自動化", links: [{ href: "#mcp", label: "MCP Server" }, { href: "#mcp-local", label: "本機 MCP" }, { href: "#mcp-remote", label: "Remote MCP" }] },
         { label: "輸出", links: [{ href: "#powerpoint", label: "PowerPoint" }, { href: "#html", label: "互動 HTML" }] }
       ]
     : [
         { label: "Getting started", links: [{ href: "#overview", label: "Pitch overview" }, { href: "#workspace", label: "Workspace" }, { href: "#canvas", label: "Canvas" }] },
         { label: "Core concepts", links: [{ href: "#slides", label: "Slides and layers" }, { href: "#fill", label: "Solid fill" }, { href: "#shader", label: "Dynamic shader" }, { href: "#motion", label: "Text and motion" }] },
+        { label: "MCP and automation", links: [{ href: "#mcp", label: "MCP Server" }, { href: "#mcp-local", label: "Local MCP" }, { href: "#mcp-remote", label: "Remote MCP" }] },
         { label: "Export", links: [{ href: "#powerpoint", label: "PowerPoint" }, { href: "#html", label: "Interactive HTML" }] }
       ];
 
@@ -46,8 +48,17 @@ export function DocsPage() {
   })();
 
   const pageLinks = isZh
-    ? [{ href: "#overview", label: "Pitch 是什麼" }, { href: "#workspace", label: "工作區" }, { href: "#fill", label: "背景模式" }, { href: "#powerpoint", label: "輸出" }]
-    : [{ href: "#overview", label: "What is Pitch" }, { href: "#workspace", label: "Workspace" }, { href: "#fill", label: "Background modes" }, { href: "#powerpoint", label: "Export" }];
+    ? [{ href: "#overview", label: "Pitch 是什麼" }, { href: "#workspace", label: "工作區" }, { href: "#fill", label: "背景模式" }, { href: "#mcp", label: "MCP Server" }, { href: "#powerpoint", label: "輸出" }]
+    : [{ href: "#overview", label: "What is Pitch" }, { href: "#workspace", label: "Workspace" }, { href: "#fill", label: "Background modes" }, { href: "#mcp", label: "MCP Server" }, { href: "#powerpoint", label: "Export" }];
+
+  const localMcpConfig = `{
+  "mcpServers": {
+    "slidex": {
+      "command": "npx",
+      "args": ["-y", "@z7589xxz758/slidex-mcp-server"]
+    }
+  }
+}`;
 
   return (
     <main className="min-h-[100dvh] bg-[#0b0c0f] pt-24 text-[#f4f4f1]">
@@ -143,6 +154,82 @@ export function DocsPage() {
           <section className="mt-12 scroll-mt-40" id="motion">
             <h3 className="text-[20px] font-semibold tracking-[-0.03em]">{isZh ? "文字與動態" : "Text and motion"}</h3>
             <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/52">{isZh ? "文字可調整字級、對齊、顏色與框架。元素進場與投影片轉場會在 Pitch 播放與互動 HTML 中保留。" : "Text supports size, alignment, color, and frame controls. Element entrances and slide transitions remain available in Pitch playback and interactive HTML."}</p>
+          </section>
+
+          <section className="mt-16 border-t border-white/[0.09] pt-12 scroll-mt-40" id="mcp">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-[30px] font-semibold tracking-[-0.045em]">SlideX MCP Server</h2>
+              <a
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#9ad7ff]/20 bg-[#9ad7ff]/[0.08] px-2.5 py-1 text-[11px] font-semibold text-[#9ad7ff] transition-colors hover:border-[#9ad7ff]/40 hover:bg-[#9ad7ff]/[0.12]"
+                href="https://www.npmjs.com/package/@z7589xxz758/slidex-mcp-server/v/0.4.0"
+                rel="noreferrer"
+                target="_blank"
+              >
+                v0.4.0 on npm
+                <ArrowUpRight className="h-3 w-3" />
+              </a>
+            </div>
+            <p className="mt-4 max-w-2xl text-[15px] leading-7 text-white/52">
+              {isZh
+                ? "透過 Model Context Protocol，讓相容的 AI 客戶端建立、檢查與編輯 MotionDoc 簡報。你可以選擇在電腦執行本機 MCP，或連接 SlideX 的受保護 Remote MCP。"
+                : "Use the Model Context Protocol to let compatible AI clients create, validate, and edit MotionDoc presentations. Run the local MCP on your computer or connect to SlideX through the protected Remote MCP."}
+            </p>
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-lg border border-white/[0.09] bg-white/[0.02] p-5">
+                <p className="text-[12px] font-semibold text-[#9ad7ff]">{isZh ? "本機能力" : "Local capabilities"}</p>
+                <p className="mt-2 text-[14px] leading-6 text-white/52">
+                  {isZh
+                    ? "建立與驗證 deck、編輯投影片與區塊、套用 Paper Shader、使用內建版型，並輸出互動 HTML 與可編輯 PPTX。"
+                    : "Create and validate decks, edit slides and blocks, apply Paper Shaders, use built-in layouts, and export interactive HTML or editable PPTX files."}
+                </p>
+              </div>
+              <div className="rounded-lg border border-white/[0.09] bg-white/[0.02] p-5">
+                <p className="text-[12px] font-semibold text-[#9ad7ff]">{isZh ? "可新增區塊" : "Insertable blocks"}</p>
+                <p className="mt-2 text-[14px] leading-6 text-white/52">
+                  {isZh ? (
+                    <><code className="text-white/75">Text</code>、<code className="text-white/75">Image</code>、<code className="text-white/75">Video</code>、<code className="text-white/75">Icon</code>、<code className="text-white/75">Table</code>、<code className="text-white/75">ShapeRectangle</code></>
+                  ) : (
+                    <><code className="text-white/75">Text</code>, <code className="text-white/75">Image</code>, <code className="text-white/75">Video</code>, <code className="text-white/75">Icon</code>, <code className="text-white/75">Table</code>, and <code className="text-white/75">ShapeRectangle</code></>
+                  )}
+                </p>
+                <p className="mt-2 text-[12px] leading-5 text-white/35">
+                  {isZh ? "Metric、Card 與 Chart 不開放透過 MCP 新增。" : "Metric, Card, and Chart are not available as MCP insertion types."}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-10 scroll-mt-40" id="mcp-local">
+              <h3 className="text-[20px] font-semibold tracking-[-0.03em]">{isZh ? "本機 MCP：直接執行" : "Local MCP: run directly"}</h3>
+              <p className="mt-3 max-w-2xl text-[14px] leading-7 text-white/50">
+                {isZh ? "不需要先安裝套件，使用 npx 即可啟動：" : "Start the server with npx without installing the package first:"}
+              </p>
+              <pre className="mt-4 overflow-x-auto rounded-lg border border-white/[0.09] bg-black/30 p-4 text-[13px] leading-6 text-white/70"><code>npx -y @z7589xxz758/slidex-mcp-server</code></pre>
+              <p className="mt-6 max-w-2xl text-[14px] leading-7 text-white/50">
+                {isZh ? "在支援 stdio 的 MCP 客戶端加入以下設定：" : "Add this configuration to an MCP client that supports stdio:"}
+              </p>
+              <pre className="mt-4 overflow-x-auto rounded-lg border border-white/[0.09] bg-black/30 p-4 text-[13px] leading-6 text-white/70"><code>{localMcpConfig}</code></pre>
+              <p className="mt-4 text-[12px] leading-5 text-white/35">
+                {isZh
+                  ? "第一次處理不熟悉的區塊前，先呼叫 slidex_get_motion_doc_schema 取得目前欄位、型別與預設值。"
+                  : "Before editing an unfamiliar block, call slidex_get_motion_doc_schema to get the current fields, types, and default values."}
+              </p>
+            </div>
+
+            <div className="mt-10 scroll-mt-40" id="mcp-remote">
+              <h3 className="text-[20px] font-semibold tracking-[-0.03em]">Remote MCP</h3>
+              <p className="mt-3 max-w-2xl text-[14px] leading-7 text-white/50">
+                {isZh
+                  ? "Remote MCP 使用 OAuth 與 PKCE 驗證，讓支援 Streamable HTTP 的客戶端安全讀取或編輯你已登入的 SlideX 簡報。"
+                  : "Remote MCP uses OAuth and PKCE so Streamable HTTP clients can securely read or edit presentations in your signed-in SlideX account."}
+              </p>
+              <pre className="mt-4 overflow-x-auto rounded-lg border border-white/[0.09] bg-black/30 p-4 text-[13px] leading-6 text-white/70"><code>https://slidexdeck.com/mcp/</code></pre>
+              <div className="mt-5 rounded-lg border border-amber-200/15 bg-amber-100/[0.04] p-4 text-[13px] leading-6 text-white/48">
+                {isZh
+                  ? "Remote MCP 僅開放目前簡報的讀取與編輯，不提供建立 deck、本機 HTML／PPTX 輸出、工作區管理或刪除簡報。每次寫入都會檢查簡報版本，遇到版本衝突時需重新讀取後再提交。"
+                  : "Remote MCP is limited to reading and editing presentations. It does not expose deck creation, local HTML/PPTX export, workspace management, or presentation deletion. Every write checks the presentation revision; clients must read again after a revision conflict."}
+              </div>
+            </div>
           </section>
 
           <section className="mt-16 border-t border-white/[0.09] pt-12 scroll-mt-40" id="powerpoint">

@@ -43,7 +43,7 @@ const pageMetadata = {
     },
     docs: {
       title: "SlideX Pitch 文件",
-      description: "快速了解 Pitch 的畫布、單色 Fill 與動態背景。"
+      description: "快速了解 Pitch 的畫布、單色 Fill、動態背景與 SlideX MCP Server。"
     },
     blog: {
       title: "SlideX Journal",
@@ -77,7 +77,7 @@ const pageMetadata = {
     },
     docs: {
       title: "SlideX Pitch Documentation",
-      description: "Learn the Pitch canvas, solid fill, and motion background workflow."
+      description: "Learn the Pitch canvas, solid fill, motion background, and SlideX MCP Server workflow."
     },
     blog: {
       title: "SlideX Journal",
