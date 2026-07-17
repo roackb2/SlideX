@@ -7,6 +7,10 @@ Supabase only owns the remote data required by the current product:
 - `presentations`: one user's editable MotionDoc source, including protected
   starter rows identified by `kind = 'template'`.
 - `agent_sessions`: Heddle conversation metadata owned by one user and presentation.
+- `agent_session_records` and `agent_session_messages`: service-only Heddle
+  session state and completed user-visible turns.
+- `agent_session_archives` and `agent_session_archive_heads`: service-only,
+  append-only compaction content and its current Heddle manifest.
 - `slide_comments`: comments attached to a zero-based slide index, including resolved state.
 - `presentation-images`: private Storage bucket for uploaded images.
 
@@ -80,10 +84,19 @@ code `40001` and `source_revision_conflict`. Direct authenticated updates to
 source and title are revoked; editor template changes use the document CAS.
 
 `agent_sessions.id` is the Heddle conversation ID. Each row belongs to one user
-and one presentation and stores only session metadata: title, message count,
-and timestamps. Heddle message content/state is not duplicated into Supabase.
-The Agent backend should forward the signed-in user's JWT so CAS and session RLS
-run as that user; the browser never receives a service-role key.
+and one presentation and exposes only browser-safe metadata: title, message
+count, and timestamps. The complete Heddle session record, completed
+user-visible turns, and compaction archives are separate service-only tables.
+The browser never receives their contents or the service-role key.
+
+`append_agent_session_archive` locks the exact `(session_id, user_id)` parent,
+inserts immutable archived messages and summary content, and advances the
+manifest head in one transaction. Archive rows cannot be updated or deleted by
+the service role; parent-session deletion still cascades through the foreign
+key. The Agent backend must bind both session and archive repositories to the
+same verified user ID and Supabase project. It should use the caller's JWT for
+presentation CAS, while only trusted backend code uses the service role for
+the server-only Heddle tables.
 
 ## Image paths
 
