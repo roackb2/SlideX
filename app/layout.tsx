@@ -15,6 +15,11 @@ const geistSans = localFont({
 });
 
 const defaultMetadata = dictionaries[defaultLocale].metadata;
+const defaultTitle = defaultLocale === "zh-TW"
+  ? "SlideX Pitch - 專注的簡報工作區"
+  : "SlideX Pitch - Focused presentations";
+const defaultOpenGraphLocale = defaultLocale === "zh-TW" ? "zh_TW" : "en_US";
+const alternateOpenGraphLocale = defaultLocale === "zh-TW" ? "en_US" : "zh_TW";
 const siteUrl = new URL(resolveSiteOrigin());
 const ogImage = {
   alt: "SlideX motion deck editor preview",
@@ -26,7 +31,7 @@ const ogImage = {
 
 export const metadata: Metadata = {
   title: {
-    default: "SlideX Pitch - Focused presentations",
+    default: defaultTitle,
     template: "%s | SlideX",
   },
   description: defaultMetadata.description,
@@ -36,18 +41,18 @@ export const metadata: Metadata = {
     canonical: "/"
   },
   openGraph: {
-    title: "SlideX Pitch - Focused presentations",
+    title: defaultTitle,
     description: defaultMetadata.description,
     url: "/",
     siteName: "SlideX",
     images: [ogImage],
-    locale: "en_US",
-    alternateLocale: ["zh_TW"],
+    locale: defaultOpenGraphLocale,
+    alternateLocale: [alternateOpenGraphLocale],
     type: "website"
   },
   twitter: {
     card: "summary_large_image",
-    title: "SlideX Pitch - Focused presentations",
+    title: defaultTitle,
     description: defaultMetadata.description,
     images: [
       {
@@ -67,7 +72,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning translate="no" className={geistSans.variable}>
+    <html lang={defaultLocale} suppressHydrationWarning translate="no" className={geistSans.variable}>
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>

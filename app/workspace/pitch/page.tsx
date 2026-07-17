@@ -49,7 +49,7 @@ function LocalPitchWorkspace() {
   }
 
   return (
-    <PitchLocaleOverride locale={accessMode === "guest" ? "en" : undefined}>
+    <PitchLocaleOverride>
       <MotionDocApp
         accessMode={accessMode}
         initialProject={{

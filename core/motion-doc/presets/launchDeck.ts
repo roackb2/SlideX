@@ -77,3 +77,55 @@ export const launchDeckPresentationSource = `# Launch Deck
   <Title fontSize={77} fontWeight={760} lineHeight={0.9} x={4} y={20} w={73} h={38} color="#15120f" enter="reveal" delay={0.08}>Move the work. Keep the context.</Title>
   <Text fontSize={20} lineHeight={1.42} x={4.2} y={69} w={48} h={11} color="#653226" enter="fadeUp" delay={0.3}>Replace this closing statement with the one decision you want the audience to make.</Text>
 </Slide>`;
+
+const launchDeckZhTwCopy = [
+  ["# Launch Deck", "# 產品發布簡報"],
+  ["LAUNCH DECK", "產品發布簡報"],
+  ["Make every launch feel inevitable.", "讓每次發布都勢在必行。"],
+  ["A complete story for introducing a product, aligning the team, and taking it to market.", "一套完整敘事，用來介紹產品、凝聚團隊，並推向市場。"],
+  ["PRODUCT LAUNCH / 2026", "產品發布 / 2026"],
+  ["THE OPENING", "問題開場"],
+  ["The old way asks people to work around the product.", "舊方法總要人們繞著產品限制工作。"],
+  ["Teams lose time moving between disconnected tools, repeating decisions, and rebuilding the same context.", "團隊在分散工具間切換、重複決策，還得一再重建脈絡，時間因此流失。"],
+  ["Team coordinating work across a shared product workspace", "團隊在共享產品工作區協作"],
+  ["DISCONNECTED WORK ADDS UP.", "分散作業的成本不斷累積。"],
+  ["INTRODUCING MORROW", "MORROW 正式登場"],
+  ["One clear place to move work forward.", "一個清楚集中的地方，讓工作持續向前。"],
+  ["Morrow keeps the brief, decisions, and next actions together so the team can work with shared context.", "Morrow 將需求、決策與下一步集中在一起，讓團隊在共享脈絡中協作。"],
+  ["Editorial product visualization for the Morrow launch", "Morrow 產品發布的視覺示意"],
+  ["WHAT CHANGES", "改變從這裡開始"],
+  ["A focused system for the work that matters.", "一套聚焦真正重要工作的系統。"],
+  ["Three connected capabilities replace a scattered workflow.", "三項相互連結的能力，取代零散工作流程。"],
+  ["Team reviewing a shared product brief", "團隊檢視共享的產品需求"],
+  ["One brief", "一份共同需求"],
+  ["Keep the source of truth visible.", "讓唯一可信資訊始終清楚可見。"],
+  ["Colleagues making decisions together", "同事共同做出決策"],
+  ["One thread", "一條完整脈絡"],
+  ["Make decisions with context attached.", "讓每項決策都保留完整脈絡。"],
+  ["Workshop turning plans into visible action", "團隊將計畫轉化為可見行動"],
+  ["One next step", "一個明確下一步"],
+  ["Turn decisions into visible action.", "把決策轉化成看得見的行動。"],
+  ["THE EARLY SIGNAL", "初步成效"],
+  ["Less coordination. More forward motion.", "少一點協調，多一點前進。"],
+  ["Pilot teams complete the weekly planning loop with fewer handoffs and clearer ownership.", "試點團隊用更少交接與更清楚的責任分工，完成每週規劃循環。"],
+  ["WEEKLY LOOP COMPLETION", "每週循環完成率"],
+  ["HANDOFFS PER CYCLE", "每次循環交接次數"],
+  ["EXAMPLE PILOT DATA. REPLACE WITH YOUR RESULTS.", "試點示例資料，請替換成你的成果。"],
+  ["GO TO MARKET", "市場推進"],
+  ["Launch in three focused moves.", "用三個聚焦步驟完成發布。"],
+  ["Prove the workflow, publish the result, then expand with evidence.", "先驗證流程、公布成果，再以證據擴展。"],
+  ["Start with five teams", "從五個團隊開始"],
+  ["Publish the result", "公布成果"],
+  ["Grow from evidence", "依據成效擴展"],
+  ["PILOT. LAUNCH. EXPAND.", "試點・發布・擴展"],
+  ["PILOT", "試點"],
+  ["LAUNCH", "發布"],
+  ["EXPAND", "擴展"],
+  ["Move the work. Keep the context.", "推動工作，保留脈絡。"],
+  ["Replace this closing statement with the one decision you want the audience to make.", "將這段結語替換成你希望觀眾做出的那項決定。"]
+] as const;
+
+export const launchDeckPresentationSourceZhTw = launchDeckZhTwCopy.reduce(
+  (source, [english, traditionalChinese]) => source.replaceAll(english, traditionalChinese),
+  launchDeckPresentationSource
+);

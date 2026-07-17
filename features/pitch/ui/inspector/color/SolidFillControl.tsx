@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { hexColorValue } from "@/features/pitch/application/colorPalettes";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 const templateColors = [
   "#000000",
@@ -25,6 +26,7 @@ type SolidFillControlProps = {
 };
 
 export function SolidFillControl({ value, onChange }: SolidFillControlProps) {
+  const { locale, tx } = usePitchI18n();
   const [isOpen, setIsOpen] = useState(true);
   const color = hexColorValue(value) ?? "#000000";
 
@@ -39,7 +41,7 @@ export function SolidFillControl({ value, onChange }: SolidFillControlProps) {
         <span className="flex items-center gap-2.5">
           <span className="h-5 w-5 rounded-md border border-white/20 shadow-inner" style={{ backgroundColor: color }} />
           <span>
-            <span className="block text-[12px] font-medium text-neutral-200">Solid fill</span>
+            <span className="block text-[12px] font-medium text-neutral-200">{tx("Solid fill")}</span>
             <span className="block font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-500">{color}</span>
           </span>
         </span>
@@ -50,21 +52,21 @@ export function SolidFillControl({ value, onChange }: SolidFillControlProps) {
         <div className="px-2 pb-2 pt-3">
           <div className="flex items-center gap-2 rounded-lg border border-white/[0.07] bg-[#151515] px-2 py-1.5">
             <input
-              aria-label="Choose solid fill"
+              aria-label={tx("Choose solid fill")}
               className="h-7 w-9 cursor-pointer rounded border border-white/15 bg-transparent p-0"
               onChange={(event) => onChange(event.target.value)}
               type="color"
               value={color}
             />
             <span className="font-mono text-xs text-neutral-200">{color.toUpperCase()}</span>
-            <span className="ml-auto text-[10px] text-neutral-500">Current slide</span>
+            <span className="ml-auto text-[10px] text-neutral-500">{tx("Current slide")}</span>
           </div>
 
-          <p className="mt-4 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-500">Template colors</p>
+          <p className="mt-4 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-500">{tx("Template colors")}</p>
           <div className="mt-2 grid grid-cols-6 gap-1.5">
             {templateColors.map((templateColor) => (
               <button
-                aria-label={`Use ${templateColor}`}
+                aria-label={locale === "zh-TW" ? `使用 ${templateColor}` : `Use ${templateColor}`}
                 className={`aspect-square rounded-md border transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-white ${
                   color.toLowerCase() === templateColor.toLowerCase() ? "border-white" : "border-white/15"
                 }`}

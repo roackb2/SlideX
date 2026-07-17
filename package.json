@@ -10,7 +10,7 @@
     "build": "next build --webpack",
     "build:clean": "npm run clean && npm run build",
     "start": "next start",
-    "test": "tsx --test app/mcp/authorize/*.test.ts common/lib/*.test.ts core/motion-doc/application/*.test.ts core/motion-doc/infrastructure/export/*.test.ts features/auth/application/*.test.ts features/pitch/application/*.test.ts features/pitch/infrastructure/*.test.ts features/workspace/application/*.test.ts features/workspace/infrastructure/*.test.ts mcp/*.test.ts",
+    "test": "tsx --test app/mcp/authorize/*.test.ts common/lib/*.test.ts core/motion-doc/application/*.test.ts core/motion-doc/infrastructure/export/*.test.ts core/motion-doc/presets/*.test.ts features/auth/application/*.test.ts features/pitch/application/*.test.ts features/pitch/infrastructure/*.test.ts features/workspace/application/*.test.ts features/workspace/infrastructure/*.test.ts mcp/*.test.ts",
     "lint": "eslint .",
     "mcp": "npm run mcp:build --silent && node packages/slidex-mcp-server/dist/server.mjs",
     "mcp:build": "node scripts/build-mcp-server.mjs",

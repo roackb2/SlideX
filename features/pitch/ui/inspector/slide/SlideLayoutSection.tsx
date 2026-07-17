@@ -3,6 +3,7 @@
 import { Grid3X3 } from "lucide-react";
 import { Field } from "@/features/pitch/ui/inspector/InspectorControls";
 import { AccordionSection } from "@/features/pitch/ui/inspector/controls/AccordionSection";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 type SlideLayoutSectionProps = {
   isGridVisible: boolean;
@@ -13,9 +14,11 @@ export function SlideLayoutSection({
   isGridVisible,
   setIsGridVisible
 }: SlideLayoutSectionProps) {
+  const { tx } = usePitchI18n();
+
   return (
-    <AccordionSection title="Canvas Grid & Layout" defaultOpen>
-      <Field label="Canvas grid">
+    <AccordionSection title={tx("Canvas Grid & Layout")} defaultOpen>
+      <Field label={tx("Canvas grid")}>
         <button
           aria-pressed={isGridVisible}
           className={`flex items-center justify-between rounded-md border px-3 py-2 text-[11px] transition-colors cursor-pointer ${
@@ -28,7 +31,7 @@ export function SlideLayoutSection({
         >
           <span className="flex items-center gap-2">
             <Grid3X3 size={13} />
-            Grid Overlay
+            {tx("Grid Overlay")}
           </span>
           <span className={`flex h-4 w-7 items-center rounded-full p-0.5 transition-colors ${isGridVisible ? "bg-[#8ea5ff]" : "bg-neutral-800"}`}>
             <span className={`h-3 w-3 rounded-full transition-transform ${isGridVisible ? "translate-x-3 bg-black" : "translate-x-0 bg-neutral-500"}`} />

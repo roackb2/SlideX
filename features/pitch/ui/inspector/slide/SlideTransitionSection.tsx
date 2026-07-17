@@ -9,6 +9,7 @@ import { applySlideTransitionProps, normalizeSlideMotion } from "@/features/pitc
 import { Field, NumberInput } from "@/features/pitch/ui/inspector/InspectorControls";
 import { AccordionSection } from "@/features/pitch/ui/inspector/controls/AccordionSection";
 import { MotionThumbnailGrid } from "@/features/pitch/ui/inspector/controls/MotionThumbnailGrid";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 type SlideTransitionSectionProps = {
   duration: number;
@@ -23,15 +24,21 @@ export function SlideTransitionSection({
   transitionDuration,
   updateActiveSlideStyle
 }: SlideTransitionSectionProps) {
+  const { tx } = usePitchI18n();
   const selectedTransition = normalizeSlideMotion({ slideTransition, transitionDuration }).slideTransition;
+  const localizedTransitionPresets = slideTransitionPresets.map((preset) => ({
+    ...preset,
+    description: tx(preset.description),
+    label: tx(preset.label)
+  }));
 
   function updateTransition(value: SlideTransition) {
     updateActiveSlideStyle(applySlideTransitionProps({ transitionDuration: transitionDuration ?? "" }, value));
   }
 
   return (
-    <AccordionSection title="Slide Animation & Timing" defaultOpen>
-      <Field label="Slide Duration">
+    <AccordionSection title={tx("Slide Animation & Timing")} defaultOpen>
+      <Field label={tx("Slide Duration")}>
         <NumberInput
           min="0.5"
           onChange={(value) => updateActiveSlideStyle({ duration: value || 5 })}
@@ -41,14 +48,14 @@ export function SlideTransitionSection({
         />
       </Field>
       <MotionThumbnailGrid
-        label="Transition style"
+        label={tx("Transition style")}
         onChange={updateTransition}
-        options={slideTransitionPresets}
+        options={localizedTransitionPresets}
         value={selectedTransition}
         variant="slide"
       />
       {selectedTransition !== "none" ? (
-        <Field label="Transition duration">
+        <Field label={tx("Transition duration")}>
           <NumberInput
             min="0.1"
             onChange={(value) => updateActiveSlideStyle({ transitionDuration: value === "" ? "" : value })}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { appRoutes } from "@/common/lib/appRoutes";
+import { useI18n } from "@/common/lib/I18nProvider";
 import { createSupabaseBrowserClient } from "@/common/lib/supabase/browserClient";
 import { resolveSafeAuthNextPath } from "@/features/auth/application/authRedirect";
 import type { AuthProvider } from "@/features/auth/domain/authSession";
@@ -25,6 +26,7 @@ function GoogleMark() {
 export function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { locale, localePath } = useI18n();
   const { isReady, session } = useAuthSession();
   const [isStartingOAuth, setIsStartingOAuth] = useState(false);
   const [oauthError, setOAuthError] = useState<string | null>(null);
@@ -32,6 +34,35 @@ export function LoginPage() {
   const nextPath = resolveSafeAuthNextPath(requestedNextPath, appRoutes.workspace);
   const isDemoContinuation = nextPath.startsWith(appRoutes.pitch) && nextPath.includes("demo=1");
   const callbackFailed = searchParams.get("error") === "oauth_callback_failed";
+  const copy = locale === "zh-TW"
+    ? {
+        callbackError: "Google 登入未完成，請再試一次。",
+        demoBody: "登入後，你在 Live Demo 的修改會加入工作區。",
+        demoTitle: "保留你的 Live Demo",
+        googleButton: "使用 Google 繼續",
+        homeLabel: "SlideX 首頁",
+        oauthError: "無法啟動 Google 登入，請再試一次。",
+        openingGoogle: "正在開啟 Google…",
+        privacy: "隱私權政策",
+        signInBody: "繼續前往你的簡報工作區。",
+        signInTitle: "登入 SlideX",
+        terms: "使用條款",
+        termsPrefix: "繼續即表示你同意"
+      }
+    : {
+        callbackError: "Google sign-in did not complete. Please try again.",
+        demoBody: "Your edits will be added to your workspace after sign in.",
+        demoTitle: "Keep your Live Demo",
+        googleButton: "Continue with Google",
+        homeLabel: "SlideX home",
+        oauthError: "Google sign-in could not start. Please try again.",
+        openingGoogle: "Opening Google…",
+        privacy: "Privacy Policy",
+        signInBody: "Continue to your presentation workspace.",
+        signInTitle: "Sign in to SlideX",
+        terms: "Terms",
+        termsPrefix: "By continuing, you agree to the"
+      };
 
   useEffect(() => {
     if (isReady && session) {
@@ -54,7 +85,7 @@ export function LoginPage() {
     });
 
     if (error) {
-      setOAuthError("Google sign-in could not start. Please try again.");
+      setOAuthError(copy.oauthError);
       setIsStartingOAuth(false);
     }
   }
@@ -66,32 +97,32 @@ export function LoginPage() {
   return (
     <main className="flex min-h-[100dvh] items-center justify-center bg-[#111111] px-5 py-12 text-[#f3f3f0]">
       <section className="w-full max-w-[460px]">
-        <Link aria-label="SlideX home" className="mx-auto flex w-fit items-center justify-center" href="/">
+        <Link aria-label={copy.homeLabel} className="mx-auto flex w-fit items-center justify-center" href={localePath("/")}>
           <Image alt="SlideX" className="h-auto w-[112px] object-contain" height={72} loading="eager" priority src="/logo.png" width={260} />
         </Link>
 
         <div className="mt-9 rounded-[12px] border border-white/[0.11] bg-[#1a1a1a] px-7 py-8 shadow-[0_24px_70px_rgba(0,0,0,0.24)] sm:px-9 sm:py-10">
           <div className="text-center">
-            <h1 className="text-[29px] font-medium tracking-[-0.035em] text-white/92">{isDemoContinuation ? "Keep your Live Demo" : "Sign in to SlideX"}</h1>
-            <p className="mt-3 text-[15px] leading-6 text-white/44">{isDemoContinuation ? "Your edits will be added to your workspace after sign in." : "Continue to your presentation workspace."}</p>
+            <h1 className="text-[29px] font-medium tracking-[-0.035em] text-white/92">{isDemoContinuation ? copy.demoTitle : copy.signInTitle}</h1>
+            <p className="mt-3 text-[15px] leading-6 text-white/44">{isDemoContinuation ? copy.demoBody : copy.signInBody}</p>
           </div>
 
           <div className="mt-8 space-y-3">
             <button className="relative flex h-12 w-full items-center justify-center rounded-[7px] bg-[#f1f0eb] px-4 text-[15px] font-medium text-[#171717] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/16 disabled:cursor-wait disabled:opacity-60" disabled={isStartingOAuth} onClick={() => void continueWith("google")} type="button">
               <span className="absolute left-4"><GoogleMark /></span>
-              {isStartingOAuth ? "Opening Google…" : "Continue with Google"}
+              {isStartingOAuth ? copy.openingGoogle : copy.googleButton}
             </button>
           </div>
 
           {oauthError || callbackFailed ? (
             <p className="mt-5 text-center text-[13px] leading-5 text-red-300/80">
-              {oauthError ?? "Google sign-in did not complete. Please try again."}
+              {oauthError ?? copy.callbackError}
             </p>
           ) : null}
         </div>
 
         <p className="mt-6 text-center text-[12px] leading-5 text-white/34">
-          By continuing, you agree to the <Link className="text-white/46 hover:text-white" href="/en/terms/">Terms</Link> and <Link className="text-white/46 hover:text-white" href="/en/privacy/">Privacy Policy</Link>.
+          {copy.termsPrefix} <Link className="text-white/46 hover:text-white" href={localePath("/terms")}>{copy.terms}</Link>{locale === "zh-TW" ? "與" : " and "}<Link className="text-white/46 hover:text-white" href={localePath("/privacy")}>{copy.privacy}</Link>{locale === "zh-TW" ? "。" : "."}
         </p>
       </section>
     </main>

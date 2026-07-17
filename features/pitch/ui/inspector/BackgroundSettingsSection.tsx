@@ -7,6 +7,7 @@ import { AccordionSection } from "@/features/pitch/ui/inspector/controls/Accordi
 import { IconSegmentedControl } from "@/features/pitch/ui/inspector/InspectorControls";
 import { SlideThemeSectionContent } from "@/features/pitch/ui/inspector/slide/SlideThemeSection";
 import { ShaderBackgroundSectionContent } from "@/features/pitch/ui/inspector/shader/ShaderBackgroundSection";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 type BackgroundSettingsSectionProps = {
   accent: string;
@@ -57,17 +58,18 @@ export function BackgroundSettingsSection({
   updateActiveSlideStyle,
   updateAllSlidesStyle
 }: BackgroundSettingsSectionProps) {
+  const { tx } = usePitchI18n();
   const [activeTab, setActiveTab] = useState<"standard" | "dynamic">(shader ? "dynamic" : "standard");
 
   return (
-    <AccordionSection title="Background" defaultOpen>
+    <AccordionSection title={tx("Background")} defaultOpen>
       <div className="mb-2">
         <IconSegmentedControl
-          label="Background Type"
+          label={tx("Background Type")}
           onChange={(value) => setActiveTab(value as "standard" | "dynamic")}
           options={[
-            { icon: <Palette size={14} />, label: "Static", value: "standard" },
-            { icon: <Sparkles size={14} />, label: "Dynamic", value: "dynamic" }
+            { icon: <Palette size={14} />, label: tx("Static"), value: "standard" },
+            { icon: <Sparkles size={14} />, label: tx("Dynamic"), value: "dynamic" }
           ]}
           value={activeTab}
         />

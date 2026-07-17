@@ -48,44 +48,10 @@ export function SlideXFeatureVisual({ variant }: { variant: SlideXFeatureVisualV
       <rect fill={`url(#feature-bg-${variant})`} height="252" rx="4" width="414" x="182" y="113" />
       {variant === "canvas" ? (
         <g>
-          <motion.rect
-            animate={reduceMotion ? { scaleX: 1 } : { scaleX: [1, 166 / 142, 1] }}
-            fill="#111315"
-            height="26"
-            rx="3"
-            style={{ transformBox: "fill-box", transformOrigin: "left center" }}
-            transition={transition}
-            width="142"
-            x="218"
-            y="162"
-          />
-          <motion.rect
-            animate={reduceMotion ? { scaleX: 1 } : { scaleX: [1, 178 / 206, 1] }}
-            fill="#111315"
-            height="8"
-            opacity=".52"
-            rx="4"
-            style={{ transformBox: "fill-box", transformOrigin: "left center" }}
-            transition={transition}
-            width="206"
-            x="218"
-            y="203"
-          />
+          <rect fill="#111315" height="26" rx="3" width="142" x="218" y="162" />
+          <rect fill="#111315" height="8" opacity=".52" rx="4" width="206" x="218" y="203" />
           <rect fill="#111315" height="8" opacity=".26" rx="4" width="156" x="218" y="221" />
-          <motion.rect
-            animate={reduceMotion ? { scaleX: 1 } : { scaleX: [1, 264 / 238, 1] }}
-            fill="none"
-            height="86"
-            rx="3"
-            stroke="#8176ff"
-            strokeDasharray="6 4"
-            strokeWidth="2"
-            style={{ transformBox: "fill-box", transformOrigin: "left center" }}
-            transition={transition}
-            width="238"
-            x="205"
-            y="149"
-          />
+          <rect fill="none" height="86" rx="3" stroke="#8176ff" strokeDasharray="6 4" strokeWidth="2" width="238" x="205" y="149" />
           {[[205, 149], [205, 235]].map(([cx, cy]) => <circle cx={cx} cy={cy} fill="#fff" key={`${cx}-${cy}`} r="4" stroke="#8176ff" strokeWidth="2" />)}
           {[149, 235].map((cy) => (
             <motion.circle
@@ -136,16 +102,13 @@ export function SlideXFeatureVisual({ variant }: { variant: SlideXFeatureVisualV
         <g key={item}>
           <rect fill="#fff" height="6" opacity=".28" rx="3" width={52 + item * 5} x="658" y={168 + item * 54} />
           <rect fill="#fff" height="4" opacity=".1" rx="2" width="120" x="658" y={189 + item * 54} />
-          <motion.rect
-            animate={reduceMotion ? { scaleX: 1 } : { scaleX: [1, (88 - item * 4) / (36 + item * 8), 1] }}
+          <rect
             fill={item === 1 ? "#c4ee87" : "#9ad7ff"}
             height="4"
             rx="2"
-            style={{ transformBox: "fill-box", transformOrigin: "left center" }}
             width={36 + item * 8}
             x="658"
             y={189 + item * 54}
-            transition={{ ...transition, delay: item * .2 }}
           />
           <motion.circle
             animate={reduceMotion ? { x: 0 } : { x: [0, 52 - item * 12, 0] }}

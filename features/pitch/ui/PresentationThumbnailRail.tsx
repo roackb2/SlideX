@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { MotionDocScene } from "@/core/motion-doc/domain/motionDocTypes";
 import { SlideThumbnailPreview } from "@/features/pitch/ui/preview/SlideThumbnailPreview";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 type PresentationThumbnailRailProps = {
   activeSlideIndex: number;
@@ -17,6 +18,7 @@ export function PresentationThumbnailRail({
   scenes,
   source
 }: PresentationThumbnailRailProps) {
+  const { locale, tx } = usePitchI18n();
   const railRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -25,9 +27,9 @@ export function PresentationThumbnailRail({
   }, [activeSlideIndex]);
 
   return (
-    <aside className="hidden w-[154px] shrink-0 flex-col border-r border-white/[0.08] bg-black/40 sm:flex lg:w-[184px]" aria-label="Presentation slides">
+    <aside className="hidden w-[154px] shrink-0 flex-col border-r border-white/[0.08] bg-black/40 sm:flex lg:w-[184px]" aria-label={tx("Presentation slides")}>
       <div className="flex h-10 shrink-0 items-center justify-between border-b border-white/[0.06] px-3 lg:px-4">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">Slides</span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">{tx("Slides")}</span>
         <span className="font-mono text-[10px] text-neutral-600">{scenes.length}</span>
       </div>
       <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-2.5 py-3 [scrollbar-color:rgba(255,255,255,0.18)_transparent] [scrollbar-width:thin] lg:px-3">
@@ -37,7 +39,7 @@ export function PresentationThumbnailRail({
           return (
             <button
               aria-current={isActive ? "true" : undefined}
-              aria-label={`Go to slide ${sceneIndex + 1}`}
+              aria-label={locale === "zh-TW" ? `前往第 ${sceneIndex + 1} 張投影片` : `Go to slide ${sceneIndex + 1}`}
               className="group block w-full text-left"
               data-preview-thumbnail={sceneIndex}
               key={sceneIndex}

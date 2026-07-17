@@ -3,13 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { appRoutes } from "@/common/lib/appRoutes";
+import { useI18n } from "@/common/lib/I18nProvider";
 import { createSupabaseBrowserClient } from "@/common/lib/supabase/browserClient";
-import {
-  liveDemoPresentationId,
-  liveDemoPresentationSource,
-  liveDemoPresentationTemplateId,
-  liveDemoPresentationTitle
-} from "@/core/motion-doc/presets/liveDemo";
+import { liveDemoPresentation } from "@/core/motion-doc/presets/liveDemo";
 import { useAuthSession } from "@/features/auth/ui/useAuthSession";
 import {
   decidePresentationRealtimeUpdate,
@@ -50,6 +46,7 @@ export type PitchAccessMode = "authenticated" | "guest";
 export function useLocalPitchPresentation() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { locale } = useI18n();
   const { isReady: isAuthReady, session } = useAuthSession();
   const [presentation, setPresentation] = useState<WorkspacePresentation | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -97,11 +94,12 @@ export function useLocalPitchPresentation() {
       setConflictWarning(null);
 
       if (isDemoEntry) {
+        const demoPresentation = liveDemoPresentation(locale);
         const guestDraft = ensureGuestDemoDraft({
-          id: liveDemoPresentationId,
-          source: liveDemoPresentationSource,
-          templateId: liveDemoPresentationTemplateId,
-          title: liveDemoPresentationTitle
+          id: demoPresentation.id,
+          source: demoPresentation.source,
+          templateId: demoPresentation.templateId,
+          title: demoPresentation.title
         });
 
         if (userId) {
@@ -221,7 +219,7 @@ export function useLocalPitchPresentation() {
     return () => {
       isCancelled = true;
     };
-  }, [isAuthReady, isDemoEntry, presentationId, router, userId]);
+  }, [isAuthReady, isDemoEntry, locale, presentationId, router, userId]);
 
   useEffect(() => {
     if (!isAuthReady || !userId || !presentationId || isDemoEntry) return;

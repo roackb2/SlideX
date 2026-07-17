@@ -4,7 +4,7 @@ import { zhTwDictionary } from "@/common/lib/i18n/zh-TW";
 export type Locale = "zh-TW" | "en";
 
 export const locales: Locale[] = ["en", "zh-TW"];
-export const defaultLocale: Locale = "en";
+export const defaultLocale: Locale = "zh-TW";
 export const localeStorageKey = "slidex-locale";
 
 export const dictionaries = {

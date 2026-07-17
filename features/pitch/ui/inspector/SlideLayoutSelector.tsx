@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type R
 import { ChevronDown } from "lucide-react";
 import { slideLayouts } from "@/core/motion-doc/presets/templates/slideLayouts";
 import { createPortal } from "react-dom";
+import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 
 type SlideLayoutSelectorProps = {
   currentLayoutId: string | null;
@@ -11,6 +12,7 @@ type SlideLayoutSelectorProps = {
 };
 
 export function SlideLayoutSelector({ currentLayoutId, onSelectLayout }: SlideLayoutSelectorProps) {
+  const { tx } = usePitchI18n();
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -29,8 +31,8 @@ export function SlideLayoutSelector({ currentLayoutId, onSelectLayout }: SlideLa
             <LayoutThumbnail layoutId={currentLayout.id} />
           </div>
           <div className="flex flex-col items-start">
-            <span className="text-[10px] font-bold text-neutral-500 mb-0.5">Apply Layout</span>
-            <span className="text-sm font-semibold text-neutral-200">{currentLayout.name}</span>
+            <span className="text-[10px] font-bold text-neutral-500 mb-0.5">{tx("Apply Layout")}</span>
+            <span className="text-sm font-semibold text-neutral-200">{tx(currentLayout.name)}</span>
           </div>
         </div>
         <ChevronDown size={14} className="text-neutral-400" />
@@ -50,6 +52,7 @@ function SlideLayoutsPopover({
   onSelectLayout: (source: string, id: string) => void;
   buttonRef: RefObject<HTMLButtonElement | null>;
 }) {
+  const { locale, tx } = usePitchI18n();
   const popoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -71,8 +74,8 @@ function SlideLayoutsPopover({
         className="relative flex flex-col w-full max-w-[800px] max-h-[80vh] overflow-hidden rounded-[24px] border border-white/[0.1] bg-[#1a1a1a]/95 backdrop-blur-3xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.8),inset_0_1px_1px_0_rgba(255,255,255,0.15)]"
       >
         <div className="flex items-center justify-center px-6 py-4 border-b border-white/[0.05]">
-          <h2 className="text-[13px] font-semibold text-neutral-200">Apply Layout</h2>
-          <button onClick={onClose} className="absolute right-4 top-4 text-neutral-400 hover:text-white transition">
+          <h2 className="text-[13px] font-semibold text-neutral-200">{tx("Apply Layout")}</h2>
+          <button aria-label={locale === "zh-TW" ? "關閉版面選擇器" : "Close layout selector"} onClick={onClose} className="absolute right-4 top-4 text-neutral-400 hover:text-white transition" type="button">
             ✕
           </button>
         </div>
@@ -91,7 +94,7 @@ function SlideLayoutsPopover({
                 <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-white/[0.1] bg-white shadow-md group-hover:border-[#0ea5e9]/50 group-hover:shadow-[0_0_20px_-5px_rgba(14,165,233,0.5)]">
                   <LayoutThumbnail layoutId={layout.id} />
                 </div>
-                <span className="text-xs font-semibold text-neutral-300 group-hover:text-white transition-colors">{layout.name}</span>
+                <span className="text-xs font-semibold text-neutral-300 group-hover:text-white transition-colors">{tx(layout.name)}</span>
               </button>
             ))}
           </div>
