@@ -36,6 +36,9 @@ npm run supabase:stop
 
 ## Hosted deployment
 
+For the Heddle compacted-history migration and server rollout order, see the
+[Traditional Chinese deployment checklist](../docs/heddle-agent-archive-deployment-zh-TW.md).
+
 ```bash
 npx supabase login
 npx supabase link --project-ref <project-ref>
