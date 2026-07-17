@@ -56,7 +56,8 @@ const AgentRunResultSchema: z.ZodType<AgentRunResult> = z.object({
   session: AgentSessionSchema,
   motionDoc: z.string(),
   assistantMessage: z.string(),
-  baseSourceRevision: z.string().min(1)
+  baseSourceRevision: z.string().min(1),
+  presentationSourceRevision: z.number().int().nonnegative().optional()
 });
 
 export const StartAgentRunResultSchema: z.ZodType<StartAgentRunResult> = z.object({

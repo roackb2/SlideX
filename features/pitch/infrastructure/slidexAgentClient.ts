@@ -29,6 +29,7 @@ export type StartAgentRunInput = {
   message: string;
   motionDoc: string;
   sourceRevision: string;
+  presentationSourceRevision: number;
   llmApiKey: string;
   model?: string;
 };

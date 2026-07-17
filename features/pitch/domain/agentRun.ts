@@ -75,6 +75,7 @@ export type AgentRunResult = {
   motionDoc: string;
   assistantMessage: string;
   baseSourceRevision: string;
+  presentationSourceRevision?: number;
 };
 
 export type AgentRunEvent = ConversationRunProtocolEvent<AgentActivity, AgentRunResult>;

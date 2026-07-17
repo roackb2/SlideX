@@ -46,10 +46,12 @@ This file remains authoritative for the editor-local boundary.
   sheet, or FAB-triggered surface without changing lifecycle behavior.
 - `ui/agent/PitchAgentPanel.tsx` renders the current surface and delegates
   MotionDoc application back to the editor's existing undo-aware `commitSource`
-  path. An automatically accepted result is persisted through the workspace
-  source callback before its terminal assistant message is rendered; therefore
-  a visible completed turn is safe to reload immediately. Persistence failures
-  keep the result pending instead of presenting an unsaved deck as complete.
+  path. The run request carries the numeric canonical Presentation revision and
+  a persistence-safe MotionDoc with registered blob images embedded. In
+  Supabase product mode, the agent server commits a changed source before
+  terminal success; the existing workspace save coordinator then acknowledges
+  that already committed remote source while preserving local undo behavior.
+  A manual-edit conflict remains pending/error instead of being overwritten.
 
 Execution, event replay, run-consumer policy, and cancellation semantics belong
 to Heddle. Product
@@ -57,8 +59,9 @@ session persistence and MotionDoc artifact finalization belong to the SlideX
 agent server. Do not duplicate either concern in this feature.
 
 The workspace route must pass its durable presentation ID into `MotionDocApp`.
-Without that identity the agent is not mounted, because SlideX cannot safely
-relate a conversation to the artifact. `sessionStorage` remembers only the
+It must also provide the loaded numeric source revision. Without both values
+the agent is not mounted, because SlideX cannot safely relate or commit a
+conversation result to the artifact. `sessionStorage` remembers only the
 active session ID and replay cursor for each presentation in the current tab;
 the agent server stores the durable catalog and safe transcript through its
 selected product repository while Heddle owns model-facing conversation state
