@@ -5,6 +5,10 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 
 import { createSlideXMcpServer } from "@/mcp/server";
+import type {
+  McpPresentationImageUploadStore,
+  PreparedMcpPresentationImageUpload
+} from "@/mcp/presentationImageUploadStore";
 import type { McpPresentationStore } from "@/mcp/presentationStore";
 
 const presentationId = "89e45398-5fd4-4b7b-b9cf-0954dd2ac364";
@@ -14,7 +18,7 @@ const source = `# MCP contract
   <Text x={10} y={10} w={80} h={20}>Hello</Text>
 </Slide>`;
 
-test("local MCP v0.2 exposes the bounded block, shader, schema, and PPTX tools", async () => {
+test("local MCP exposes the bounded block, shader, schema, and PPTX tools", async () => {
   const connection = await connectMcp({ enableWorkspaceSkills: false });
 
   try {
@@ -68,6 +72,8 @@ test("remote MCP keeps reads available but gates saves and local PPTX export", a
     assert.ok(!names.includes("slidex_export_pptx"));
     assert.ok(!names.includes("slidex_create_deck"));
     assert.ok(!names.includes("slidex_export_html"));
+    assert.ok(!names.includes("slidex_prepare_presentation_image_upload"));
+    assert.ok(!names.includes("slidex_finalize_presentation_image_upload"));
 
     for (const tool of readOnlyTools.filter((tool) => tool.name !== "slidex_list_presentations")) {
       assert.ok(tool.inputSchema.properties?.presentationId, `${tool.name} accepts presentationId`);
@@ -117,6 +123,7 @@ test("remote MCP keeps reads available but gates saves and local PPTX export", a
     assert.ok(names.includes("slidex_get_presentation"));
     assert.ok(names.includes("slidex_save_presentation"));
     assert.ok(names.includes("slidex_update_canvas_node"));
+    assert.ok(!names.includes("slidex_prepare_presentation_image_upload"));
 
     const writeToolNames = [
       "slidex_save_presentation",
@@ -186,6 +193,58 @@ test("remote MCP keeps reads available but gates saves and local PPTX export", a
   }
 });
 
+test("remote MCP exposes private image tools only when the asset scope is configured", async () => {
+  const imageStore = createImageUploadStore();
+  const connection = await connectMcp({
+    enablePresentationWrites: false,
+    imageUploads: {
+      origin: "https://slidex.example",
+      store: imageStore,
+      userId: "893301ee-2be1-4c01-8827-c13788233c24"
+    },
+    profile: "remote",
+    presentationStore: createPresentationStore()
+  });
+
+  try {
+    const tools = (await connection.client.listTools()).tools;
+    const names = tools.map((tool) => tool.name);
+    assert.ok(names.includes("slidex_prepare_presentation_image_upload"));
+    assert.ok(names.includes("slidex_finalize_presentation_image_upload"));
+    assert.ok(!names.includes("slidex_save_presentation"));
+
+    const prepared = await connection.client.callTool({
+      arguments: {
+        byteLength: 1234,
+        contentType: "image/png",
+        presentationId
+      },
+      name: "slidex_prepare_presentation_image_upload"
+    });
+    assert.equal(prepared.isError, undefined);
+    assert.equal(
+      (prepared.structuredContent as { result: PreparedMcpPresentationImageUpload })
+        .result.status,
+      "prepared"
+    );
+
+    const finalized = await connection.client.callTool({
+      arguments: {
+        presentationId,
+        uploadId: "f0448734-e07c-4c85-a20a-7f059709fe65"
+      },
+      name: "slidex_finalize_presentation_image_upload"
+    });
+    assert.equal(finalized.isError, undefined);
+    assert.match(
+      (finalized.structuredContent as { result: { src: string } }).result.src,
+      /^\/api\/presentation-images\//
+    );
+  } finally {
+    await connection.close();
+  }
+});
+
 function createPresentationStore(): McpPresentationStore {
   return {
     async getPresentation(id) {
@@ -221,9 +280,54 @@ function createPresentationStore(): McpPresentationStore {
   };
 }
 
+function createImageUploadStore(): McpPresentationImageUploadStore {
+  return {
+    async claimUpload() {
+      throw new Error("Not used by MCP tools.");
+    },
+    async completeUpload() {
+      throw new Error("Not used by MCP tools.");
+    },
+    async finalizeUpload(input) {
+      return {
+        id: input.uploadId,
+        mimeType: "image/webp",
+        path: `${input.userId}/${input.presentationId}/${input.uploadId}.webp`,
+        size: 987,
+        src: `/api/presentation-images/${input.userId}/${input.presentationId}/${input.uploadId}.webp`
+      };
+    },
+    async prepareUpload(input) {
+      return {
+        expiresAt: "2026-07-17T03:10:00.000Z",
+        request: {
+          headers: {
+            Authorization: "Upload test-token",
+            "Content-Type": input.contentType
+          },
+          method: "PUT",
+          url: `${input.origin}/api/mcp/presentation-image-uploads/f0448734-e07c-4c85-a20a-7f059709fe65/`
+        },
+        status: "prepared",
+        tokensRemaining: 19,
+        uploadId: "f0448734-e07c-4c85-a20a-7f059709fe65"
+      };
+    },
+    async rejectUpload() {
+      throw new Error("Not used by MCP tools.");
+    },
+    async removeStoredImage() {
+      throw new Error("Not used by MCP tools.");
+    },
+    async storeImage() {
+      throw new Error("Not used by MCP tools.");
+    }
+  };
+}
+
 async function connectMcp(options: Parameters<typeof createSlideXMcpServer>[0]) {
   const server = createSlideXMcpServer(options);
-  const client = new Client({ name: "slidex-contract-test", version: "0.3.0" });
+  const client = new Client({ name: "slidex-contract-test", version: "0.4.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);

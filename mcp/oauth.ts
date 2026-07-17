@@ -1,8 +1,17 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { z } from "zod/v4";
 
-export const mcpOAuthScopes = ["presentations:read", "presentations:write"] as const;
+export const mcpOAuthScopes = [
+  "presentations:read",
+  "presentations:write",
+  "presentation-assets:write"
+] as const;
 export type McpOAuthScope = (typeof mcpOAuthScopes)[number];
+
+const defaultMcpOAuthScopes: McpOAuthScope[] = [
+  "presentations:read",
+  "presentations:write"
+];
 
 export const mcpClientRegistrationSchema = z.object({
   client_name: z.string().trim().min(1).max(160).default("MCP client"),
@@ -47,13 +56,20 @@ export function verifyPkceChallenge(verifier: string, expectedChallenge: string)
 export function normalizeMcpScopes(value: string | undefined): McpOAuthScope[] {
   const requested = value?.trim()
     ? [...new Set(value.trim().split(/\s+/))]
-    : [...mcpOAuthScopes];
+    : [...defaultMcpOAuthScopes];
 
   if (requested.some((scope) => !mcpOAuthScopes.includes(scope as McpOAuthScope))) {
     throw new Error("invalid_scope");
   }
 
   if (requested.includes("presentations:write") && !requested.includes("presentations:read")) {
+    throw new Error("invalid_scope");
+  }
+
+  if (
+    requested.includes("presentation-assets:write") &&
+    !requested.includes("presentations:read")
+  ) {
     throw new Error("invalid_scope");
   }
 

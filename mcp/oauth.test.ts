@@ -20,7 +20,16 @@ test("MCP OAuth limits scopes and verifies S256 PKCE", () => {
   const challenge = createHash("sha256").update(verifier).digest("base64url");
 
   assert.equal(verifyPkceChallenge(verifier, challenge), true);
+  assert.deepEqual(normalizeMcpScopes(undefined), [
+    "presentations:read",
+    "presentations:write"
+  ]);
   assert.deepEqual(normalizeMcpScopes("presentations:read"), ["presentations:read"]);
+  assert.deepEqual(
+    normalizeMcpScopes("presentations:read presentation-assets:write"),
+    ["presentations:read", "presentation-assets:write"]
+  );
   assert.throws(() => normalizeMcpScopes("presentations:write"), /invalid_scope/);
+  assert.throws(() => normalizeMcpScopes("presentation-assets:write"), /invalid_scope/);
   assert.throws(() => normalizeMcpScopes("workspace:delete"), /invalid_scope/);
 });

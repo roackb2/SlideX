@@ -1,4 +1,4 @@
-# SlideX MCP Server v0.3
+# SlideX MCP Server v0.4
 
 Local MCP server for SlideX MotionDoc decks. It lets MCP clients create and validate decks, edit slides and blocks, apply Paper Shader presets, export standalone HTML, and write editable PowerPoint files.
 
@@ -108,7 +108,7 @@ Use `slidex_list_shaders` to read the current Paper Shader catalog, `slidex_get_
 
 ## Remote MCP
 
-Animark also exposes an authenticated Streamable HTTP endpoint at `/mcp/`. Remote clients discover OAuth metadata through `/.well-known/oauth-authorization-server` and `/.well-known/oauth-protected-resource/mcp`, register as public PKCE clients, and request `presentations:read` and optionally `presentations:write`.
+Animark also exposes an authenticated Streamable HTTP endpoint at `/mcp/`. Remote clients discover OAuth metadata through `/.well-known/oauth-authorization-server` and `/.well-known/oauth-protected-resource/mcp`, register as public PKCE clients, and request `presentations:read`, optionally `presentations:write`, and separately `presentation-assets:write` for private image uploads.
 
 The Remote profile exposes only presentation-scoped tools:
 
@@ -118,6 +118,7 @@ The Remote profile exposes only presentation-scoped tools:
 - layout source: `slidex_list_slide_layouts`, `slidex_get_slide_layout`, `slidex_add_slide_from_layout`, `slidex_replace_slide_with_layout`
 - shader source: `slidex_list_shaders`, `slidex_get_shader`, `slidex_apply_shader_preset`
 - current schema: `slidex_list_block_types`, `slidex_get_motion_doc_schema`
+- private image upload: `slidex_prepare_presentation_image_upload`, `slidex_finalize_presentation_image_upload`
 
 Remote read tools automatically select the authenticated user's most recently opened SlideX presentation when `presentationId` is omitted, and always return the selected presentation ID. `slidex_list_presentations` can also discover recent decks. MCP clients should perform this discovery themselves and reuse the returned ID instead of asking the user to copy it.
 
@@ -125,7 +126,7 @@ Remote read tools automatically select the authenticated user's most recently op
 
 Every Remote write requires the automatically discovered `presentationId` plus `expectedRevision`, performs a compare-and-swap save, and triggers Animark's existing private presentation Realtime broadcast so an open Pitch page receives the new revision. Revision conflicts reject the save and require the client to read again. Ownership validation applies to both discovery and mutation.
 
-Remote MCP deliberately does not expose deck creation, template cloning, local HTML/PPTX export, workspace CRUD, presentation deletion, or remote media upload. The Animark server must configure `SUPABASE_SERVICE_ROLE_KEY`; this value is server-only and must never be placed in a browser, MCP client configuration, or any `NEXT_PUBLIC_*` variable.
+Remote MCP deliberately does not expose deck creation, template cloning, local HTML/PPTX export, workspace CRUD, presentation deletion, video/SVG upload, or public media URLs. Image upload requires a ten-minute single-use upload request, writes only normalized static WebP files to the private `presentation-images` bucket, and never exposes the service-role credential. The Animark server must configure `SUPABASE_SERVICE_ROLE_KEY`; this value is server-only and must never be placed in a browser, MCP client configuration, or any `NEXT_PUBLIC_*` variable.
 
 ## Built-in Slide Layouts
 

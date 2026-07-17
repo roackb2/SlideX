@@ -34,6 +34,7 @@ import {
 } from "./motionDocMcpSchema";
 import { exportMotionDocPptx } from "./pptxExport";
 import type { McpPresentationStore } from "./presentationStore";
+import type { RemotePresentationImageUploadOptions } from "./remotePresentationImageUploadMcp";
 import { registerRemotePresentationMcp } from "./remotePresentationMcp";
 import { registerShaderMcp } from "./shaderMcp";
 import { registerSlideLayoutMcp } from "./slideLayoutMcp";
@@ -42,6 +43,7 @@ export type SlideXMcpServerOptions = {
   enablePptxExport?: boolean;
   enablePresentationWrites?: boolean;
   enableWorkspaceSkills?: boolean;
+  imageUploads?: RemotePresentationImageUploadOptions;
   profile?: "local" | "remote";
   presentationStore?: McpPresentationStore;
 };
@@ -53,7 +55,7 @@ const blockIndexSchema = z.number().int().min(0);
 export function createSlideXMcpServer(options: SlideXMcpServerOptions = {}) {
   const server = new McpServer({
     name: "slidex-motion-doc",
-    version: "0.3.0"
+    version: "0.4.0"
   });
 
   if (options.profile === "remote") {
@@ -63,6 +65,7 @@ export function createSlideXMcpServer(options: SlideXMcpServerOptions = {}) {
 
     registerRemotePresentationMcp(server, {
       enableWrites: options.enablePresentationWrites !== false,
+      imageUploads: options.imageUploads,
       presentationStore: options.presentationStore
     });
     return server;

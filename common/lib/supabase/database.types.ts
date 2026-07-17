@@ -42,6 +42,76 @@ export type Database = {
           }
         ];
       };
+      mcp_image_upload_intents: {
+        Row: {
+          actual_size: number | null;
+          claimed_at: string | null;
+          completed_at: string | null;
+          created_at: string;
+          expected_mime_type: "image/jpeg" | "image/png" | "image/webp";
+          expected_size: number;
+          expires_at: string;
+          id: string;
+          presentation_id: string;
+          status: "prepared" | "claimed" | "completed" | "rejected" | "expired";
+          storage_path: string;
+          token_hash: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          actual_size?: number | null;
+          claimed_at?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          expected_mime_type: "image/jpeg" | "image/png" | "image/webp";
+          expected_size: number;
+          expires_at: string;
+          id?: string;
+          presentation_id: string;
+          status?: "prepared" | "claimed" | "completed" | "rejected" | "expired";
+          storage_path: string;
+          token_hash: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          actual_size?: number | null;
+          claimed_at?: string | null;
+          completed_at?: string | null;
+          status?: "prepared" | "claimed" | "completed" | "rejected" | "expired";
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mcp_image_upload_intents_presentation_id_fkey";
+            columns: ["presentation_id"];
+            isOneToOne: false;
+            referencedRelation: "presentations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      mcp_image_upload_rate_limits: {
+        Row: {
+          last_refilled_at: string;
+          tokens: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          last_refilled_at?: string;
+          tokens?: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          last_refilled_at?: string;
+          tokens?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       mcp_oauth_clients: {
         Row: {
           client_id: string;
@@ -269,6 +339,49 @@ export type Database = {
           title: string | null;
           updated_at: string | null;
         }>;
+      };
+      mcp_claim_presentation_image_upload: {
+        Args: {
+          credential_hash: string;
+          target_upload_id: string;
+        };
+        Returns: Array<{
+          expected_mime_type: string | null;
+          expected_size: number | null;
+          presentation_id: string | null;
+          result_status: "claimed" | "invalid";
+          storage_path: string | null;
+          upload_id: string | null;
+          user_id: string | null;
+        }>;
+      };
+      mcp_complete_presentation_image_upload: {
+        Args: {
+          stored_size: number;
+          target_upload_id: string;
+        };
+        Returns: boolean;
+      };
+      mcp_prepare_presentation_image_upload: {
+        Args: {
+          actor_user_id: string;
+          credential_hash: string;
+          requested_mime_type: string;
+          requested_size: number;
+          target_presentation_id: string;
+        };
+        Returns: Array<{
+          expires_at: string | null;
+          result_status: "inaccessible" | "prepared" | "quota_exceeded" | "rate_limited";
+          retry_after_seconds: number | null;
+          storage_path: string | null;
+          tokens_remaining: number | null;
+          upload_id: string | null;
+        }>;
+      };
+      mcp_reject_presentation_image_upload: {
+        Args: { target_upload_id: string };
+        Returns: boolean;
       };
       touch_presentation_opened: {
         Args: { target_presentation_id: string };

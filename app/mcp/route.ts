@@ -6,6 +6,7 @@ import { resolveRequestOrigin } from "@/common/lib/siteUrl";
 import { createSlideXMcpServer } from "@/mcp/server";
 import { mcpResourceUrl } from "@/mcp/oauthMetadata";
 import { SupabaseMcpOAuthStore } from "@/mcp/supabaseOAuthStore";
+import { SupabaseMcpPresentationImageUploadStore } from "@/mcp/supabasePresentationImageUploadStore";
 import { SupabaseMcpPresentationStore } from "@/mcp/supabasePresentationStore";
 
 export const runtime = "nodejs";
@@ -36,6 +37,13 @@ async function handleMcpRequest(request: NextRequest) {
 
   const server = createSlideXMcpServer({
     enablePresentationWrites: auth.scopes.includes("presentations:write"),
+    imageUploads: auth.scopes.includes("presentation-assets:write")
+      ? {
+          origin,
+          store: new SupabaseMcpPresentationImageUploadStore(admin),
+          userId: auth.userId
+        }
+      : undefined,
     profile: "remote",
     presentationStore: new SupabaseMcpPresentationStore(admin, auth.userId)
   });
