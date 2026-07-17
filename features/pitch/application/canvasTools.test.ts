@@ -8,4 +8,3 @@ test("Z switches to zoom and V switches back to select", () => {
   assert.equal(canvasToolFromShortcut("v"), "select");
   assert.equal(canvasToolFromShortcut("V"), "select");
 });
-

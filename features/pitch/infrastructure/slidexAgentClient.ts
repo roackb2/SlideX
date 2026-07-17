@@ -4,12 +4,16 @@ import type {
   AgentActivity,
   AgentApiErrorCode,
   AgentRunResult,
+  AgentSessionPage,
   AgentSessionState,
+  AttachAgentSessionResult,
   StartAgentRunResult
 } from "@/features/pitch/domain/agentRun";
 import {
   AgentApiErrorResponseSchema,
+  AgentSessionPageSchema,
   AgentSessionStateSchema,
+  AttachAgentSessionResultSchema,
   CancelAgentRunResultSchema,
   ResetAgentSessionResultSchema,
   SlideXAgentRunProtocol,
@@ -20,10 +24,12 @@ const DEFAULT_AGENT_SERVER_URL = "http://localhost:3000";
 
 export type StartAgentRunInput = {
   sessionId?: string;
-  title: string;
+  presentationId: string;
+  presentationTitle: string;
   message: string;
   motionDoc: string;
   sourceRevision: string;
+  presentationSourceRevision: number;
   llmApiKey: string;
   model?: string;
 };
@@ -79,6 +85,41 @@ export class SlideXAgentClient {
       `/api/agent/sessions/${encodeURIComponent(sessionId)}`,
       AgentSessionStateSchema,
       { method: "GET", signal }
+    );
+  }
+
+  sessions(input: {
+    limit?: number;
+    cursor?: string;
+  } = {}, signal?: AbortSignal): Promise<AgentSessionPage> {
+    const search = new URLSearchParams();
+    if (input.limit !== undefined) {
+      search.set("limit", String(input.limit));
+    }
+    if (input.cursor) {
+      search.set("cursor", input.cursor);
+    }
+    const query = search.size > 0 ? `?${search.toString()}` : "";
+    return this.request(
+      `/api/agent/sessions${query}`,
+      AgentSessionPageSchema,
+      { method: "GET", signal }
+    );
+  }
+
+  attachSession(
+    sessionId: string,
+    input: { presentationId: string; presentationTitle: string },
+    signal?: AbortSignal
+  ): Promise<AttachAgentSessionResult> {
+    return this.request(
+      `/api/agent/sessions/${encodeURIComponent(sessionId)}/presentation`,
+      AttachAgentSessionResultSchema,
+      {
+        method: "PUT",
+        body: JSON.stringify(input),
+        signal
+      }
     );
   }
 

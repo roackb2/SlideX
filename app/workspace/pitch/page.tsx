@@ -11,10 +11,13 @@ function LocalPitchWorkspace() {
   const searchParams = useSearchParams();
   const {
     accessMode,
+    agentSessionId,
     error,
     isReady,
+    openAgentSession,
     presentation,
     save,
+    selectAgentSession,
     syncWarning,
     trackLocalProject
   } = useLocalPitchPresentation();
@@ -54,14 +57,17 @@ function LocalPitchWorkspace() {
           source: presentation.source,
           templateId: presentation.editorTemplateId
         }}
+        initialAgentSessionId={agentSessionId}
         initialResumeIntent={resumeIntent}
         key={presentation.id}
         onLocalProjectChange={trackLocalProject}
+        onOpenAgentSession={openAgentSession}
         onSignInRequested={(intent) => {
           const nextPath = `${appRoutes.liveDemo}&intent=${intent}`;
           router.push(loginPath(nextPath));
         }}
         onProjectSourceChange={save}
+        onSelectedAgentSessionChange={selectAgentSession}
         presentationId={presentation.id}
         projectVersion={presentation.sourceRevision}
         syncWarning={syncWarning}

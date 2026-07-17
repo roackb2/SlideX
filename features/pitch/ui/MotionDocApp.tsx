@@ -32,6 +32,7 @@ import {
   GuestSignInDialog,
   type GuestSignInIntent
 } from "@/features/pitch/ui/GuestSignInDialog";
+import type { AgentSessionSummary } from "@/features/pitch/domain/agentRun";
 
 const isSlideXAgentEnabled = process.env.NEXT_PUBLIC_SLIDEX_AGENT_ENABLED === "true";
 
@@ -43,9 +44,11 @@ export type MotionDocInitialProject = {
 
 type MotionDocAppProps = {
   accessMode?: "authenticated" | "guest";
+  initialAgentSessionId?: string;
   initialProject?: MotionDocInitialProject;
   initialResumeIntent?: "export" | "preview";
   onLocalProjectChange?: (source: string, title: string, templateId?: string) => void;
+  onOpenAgentSession?: (presentationId: string, sessionId: string) => void;
   onSignInRequested?: (intent: GuestSignInIntent) => void;
   onProjectSourceChange?: (
     source: string,
@@ -53,6 +56,7 @@ type MotionDocAppProps = {
     templateId?: string,
     editorSource?: string
   ) => Promise<void> | void;
+  onSelectedAgentSessionChange?: (sessionId?: string) => void;
   presentationId?: string;
   projectVersion?: number;
   syncWarning?: string | null;
@@ -62,11 +66,14 @@ const guestLockedExportFormats = ["html", "mdx"] as const satisfies readonly Exp
 
 export function MotionDocApp({
   accessMode = "authenticated",
+  initialAgentSessionId,
   initialProject,
   initialResumeIntent,
   onLocalProjectChange,
+  onOpenAgentSession,
   onProjectSourceChange,
   onSignInRequested,
+  onSelectedAgentSessionChange,
   presentationId,
   projectVersion,
   syncWarning
@@ -223,11 +230,43 @@ export function MotionDocApp({
     documentTitle: sliderDocument.title,
     setNotice
   });
-  const applyAgentMotionDoc = useCallback((motionDoc: string, summary: string) => {
+  const applyAgentMotionDoc = useCallback(async (
+    motionDoc: string,
+    summary: string
+  ) => {
+    if (onProjectSourceChange) {
+      const persistedSource = await embedPitchLocalImagesForPersistence(motionDoc);
+      await onProjectSourceChange(
+        persistedSource,
+        projectName,
+        selectedTemplateId || undefined,
+        motionDoc
+      );
+    }
     commitSource(motionDoc);
     clearBlockSelection();
     setNotice(summary || "Agent changes applied");
-  }, [clearBlockSelection, commitSource, setNotice]);
+  }, [
+    clearBlockSelection,
+    commitSource,
+    onProjectSourceChange,
+    projectName,
+    selectedTemplateId,
+    setNotice,
+  ]);
+
+  const openAgentSession = useCallback(async (session: AgentSessionSummary) => {
+    if (onProjectSourceChange) {
+      const persistedSource = await embedPitchLocalImagesForPersistence(source);
+      await onProjectSourceChange(
+        persistedSource,
+        projectName,
+        selectedTemplateId || undefined,
+        source
+      );
+    }
+    onOpenAgentSession?.(session.presentation.id, session.id);
+  }, [onOpenAgentSession, onProjectSourceChange, projectName, selectedTemplateId, source]);
 
   const openExport = useCallback(() => {
     setFileModalMode("export");
@@ -614,11 +653,14 @@ export function MotionDocApp({
     />
     </>
   );
-  return isAgentAvailable && presentationId ? (
+  return isAgentAvailable && presentationId && projectVersion !== undefined ? (
     <PitchAgentProvider
+      initialSessionId={initialAgentSessionId}
       onApplyMotionDoc={applyAgentMotionDoc}
-      persistSessionMetadata={accessMode === "authenticated"}
+      onOpenSession={openAgentSession}
+      onSelectedSessionChange={onSelectedAgentSessionChange}
       presentationId={presentationId}
+      presentationSourceRevision={projectVersion}
       presentationTitle={projectName}
       source={source}
     >

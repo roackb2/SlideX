@@ -67,6 +67,104 @@ test("keeps one conversational deck across turns, refresh, detach, and explicit 
   expect(consoleErrors).toEqual([]);
 });
 
+test("lists saved conversations and restores one without rolling back the deck", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await submitAgentMessage(page, "First conversation");
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  await panel.getByRole("button", { name: "New conversation" }).click();
+  await page.getByRole("alertdialog", { name: "Start a new conversation?" })
+    .getByRole("button", { name: "New conversation" })
+    .click();
+  await submitAgentMessage(page, "Second conversation");
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+
+  await panel.getByRole("button", { name: "Conversation history" }).click();
+  await expect(panel.getByRole("heading", { name: "Conversations" })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Back to conversation" })).toBeVisible();
+  await expect(panel.getByRole("button", { name: /^First conversation/ })).toBeVisible();
+  const currentConversation = panel.getByRole("button", { name: /^Second conversation/ });
+  await expect(currentConversation).toBeEnabled();
+  await expect(currentConversation).toHaveAttribute("aria-current", "page");
+  await expect(currentConversation).toContainText("Current");
+
+  await currentConversation.click();
+  await expect(panel.getByRole("heading", { name: "Conversations" })).toBeHidden();
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+
+  await panel.getByRole("button", { name: "Conversation history" }).click();
+  await panel.getByRole("button", { name: /^First conversation/ }).click();
+  await expect(page).toHaveURL(/agentSession=session-1/);
+  await expect(panel.getByRole("heading", { name: "Conversations" })).toBeHidden();
+  await expect(panel.getByText("First conversation", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Second conversation", { exact: true })).toBeHidden();
+
+  await submitAgentMessage(page, "Continue the first conversation");
+  await expect(panel.getByText("Turn 3 complete", { exact: true })).toBeVisible();
+  expect(agent.startRequests[2]?.sessionId).toBe("session-1");
+  expect(agent.startRequests[2]?.motionDoc).toBe(agent.producedMotionDocs[1]);
+
+  await panel.getByRole("button", { name: "Conversation history" }).click();
+  await panel.getByRole("button", { name: "Delete Second conversation" }).click();
+  await page.getByRole("alertdialog", { name: "Delete “Second conversation”?" })
+    .getByRole("button", { name: "Delete conversation" })
+    .click();
+  await expect(panel.getByRole("button", { name: /^Second conversation/ })).toBeHidden();
+  expect(agent.resets).toBe(1);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("opens a saved conversation with its presentation", async ({ page }) => {
+  const otherPresentationId = "other-presentation";
+  const agent = new DeterministicAgentApi();
+  agent.seedSession({
+    id: "other-session",
+    presentationId: otherPresentationId,
+    presentationTitle: "Other deck",
+    title: "Other deck conversation"
+  });
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+  await page.evaluate(({ createdAt, ownerId, presentationId, source }) => {
+    const key = `slidex_local_presentations_v1:${ownerId}`;
+    const presentations = JSON.parse(localStorage.getItem(key) ?? "[]") as Array<Record<string, unknown>>;
+    localStorage.setItem(key, JSON.stringify([
+      ...presentations,
+      {
+        createdAt,
+        id: presentationId,
+        kind: "presentation",
+        lastOpenedAt: createdAt,
+        ownerId,
+        source,
+        title: "Other deck",
+        updatedAt: createdAt
+      }
+    ]));
+  }, {
+    createdAt: timestamp,
+    ownerId: workspaceOwnerId,
+    presentationId: otherPresentationId,
+    source: defaultMdx
+  });
+
+  await panel.getByRole("button", { name: "Conversation history" }).click();
+  await panel.getByRole("button", { name: /^Other deck conversation/ }).click();
+  await expect(page).toHaveURL(new RegExp(
+    `presentation=${otherPresentationId}.*agentSession=other-session`
+  ));
+  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await expect(panel.getByText("Seeded request", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Seeded response", { exact: true })).toBeVisible();
+  await panel.getByRole("button", { name: "Agent settings" }).click();
+  await panel.getByRole("button", { name: "New conversation" }).click();
+  await page.getByRole("alertdialog", { name: "Start a new conversation?" })
+    .getByRole("button", { name: "New conversation" })
+    .click();
+  await expect(page).not.toHaveURL(/agentSession=/);
+  expect(consoleErrors).toEqual([]);
+});
+
 test("keeps the agent runtime and current-tab composer state when the panel remounts", async ({ page }) => {
   const agent = new DeterministicAgentApi();
   agent.holdNextRun();
@@ -243,7 +341,7 @@ test("keeps the selected conversation when content is imported into the same pre
   await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
 
   expect(agent.startRequests).toHaveLength(2);
-  expect(agent.startRequests.map(({ title }) => title)).toEqual([
+  expect(agent.startRequests.map(({ presentationTitle }) => presentationTitle)).toEqual([
     "Untitled",
     "Untitled"
   ]);
@@ -471,7 +569,8 @@ async function setAgentApiKey(panel: Locator, modelKey: string): Promise<void> {
 
 type StartRequest = {
   sessionId?: string;
-  title: string;
+  presentationId: string;
+  presentationTitle: string;
   message: string;
   motionDoc: string;
   sourceRevision: string;
@@ -488,6 +587,10 @@ type SessionMessage = {
 type Session = {
   id: string;
   title: string;
+  presentationId: string;
+  presentationTitle: string;
+  createdAt: string;
+  updatedAt: string;
   latestMotionDoc: string;
   messages: SessionMessage[];
 };
@@ -544,14 +647,15 @@ class DeterministicAgentApi {
 
   private nextSession = 1;
   private nextTurn = 1;
-  private activeRun?: { runId: string; acceptedAt: string };
+  private activeRun?: { runId: string; acceptedAt: string; sessionId: string };
   private detachUpcomingRun = false;
   private holdUpcomingRun = false;
   private rejectUpcomingCredential = false;
   private nextStartFailure?: StartFailure;
   private nextSubscriptionFailure?: SubscriptionFailure;
-  private session?: Session;
+  private latestSessionId?: string;
   private readonly runs = new Map<string, AcceptedRun>();
+  private readonly sessions = new Map<string, Session>();
 
   detachNextRun(): void {
     this.detachUpcomingRun = true;
@@ -559,7 +663,10 @@ class DeterministicAgentApi {
 
   expireSession(): void {
     this.activeRun = undefined;
-    this.session = undefined;
+    if (this.latestSessionId) {
+      this.sessions.delete(this.latestSessionId);
+    }
+    this.latestSessionId = undefined;
   }
 
   failNextStart(failure: StartFailure): void {
@@ -574,15 +681,47 @@ class DeterministicAgentApi {
     this.rejectUpcomingCredential = true;
   }
 
+  seedSession(input: {
+    id: string;
+    presentationId: string;
+    presentationTitle: string;
+    title: string;
+  }): void {
+    this.sessions.set(input.id, {
+      ...input,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      latestMotionDoc: defaultMdx,
+      messages: [
+        {
+          id: `${input.id}-user`,
+          role: "user",
+          content: "Seeded request",
+          createdAt: timestamp
+        },
+        {
+          id: `${input.id}-assistant`,
+          role: "assistant",
+          content: "Seeded response",
+          createdAt: timestamp
+        }
+      ]
+    });
+  }
+
   startBackgroundRun(message: string): string {
-    if (!this.session || this.activeRun) {
+    const session = this.latestSessionId
+      ? this.sessions.get(this.latestSessionId)
+      : undefined;
+    if (!session || this.activeRun) {
       throw new Error("A settled conversation is required before starting a background run");
     }
     return this.createRun({
-      sessionId: this.session.id,
-      title: this.session.title,
+      sessionId: session.id,
+      presentationId: session.presentationId,
+      presentationTitle: session.presentationTitle,
       message,
-      motionDoc: this.session.latestMotionDoc,
+      motionDoc: session.latestMotionDoc,
       sourceRevision: "background-source-revision"
     }).runId;
   }
@@ -624,6 +763,14 @@ class DeterministicAgentApi {
       await this.start(route);
       return;
     }
+    if (request.method() === "GET" && url.pathname === "/api/agent/sessions") {
+      await this.listSessions(route);
+      return;
+    }
+    if (request.method() === "PUT" && /\/api\/agent\/sessions\/[^/]+\/presentation$/.test(url.pathname)) {
+      await this.attachSession(route, url);
+      return;
+    }
     if (request.method() === "POST" && /\/api\/agent\/runs\/[^/]+\/cancel$/.test(url.pathname)) {
       await this.cancel(route, url);
       return;
@@ -637,8 +784,14 @@ class DeterministicAgentApi {
       return;
     }
     if (request.method() === "DELETE" && /\/api\/agent\/sessions\/[^/]+$/.test(url.pathname)) {
-      this.session = undefined;
-      this.activeRun = undefined;
+      const sessionId = decodeURIComponent(url.pathname.split("/").at(-1) ?? "");
+      this.sessions.delete(sessionId);
+      if (this.latestSessionId === sessionId) {
+        this.latestSessionId = undefined;
+      }
+      if (this.activeRun?.sessionId === sessionId) {
+        this.activeRun = undefined;
+      }
       this.resets += 1;
       await route.fulfill({ json: { reset: true }, status: 200 });
       return;
@@ -690,7 +843,7 @@ class DeterministicAgentApi {
         accepted: true,
         runId: run.runId,
         acceptedAt: timestamp,
-        session: this.session
+        session: this.requireSession(run.sessionId)
       },
       status: 202
     });
@@ -707,20 +860,28 @@ class DeterministicAgentApi {
   ): AcceptedRun {
     const turn = this.nextTurn++;
     const sessionId = request.sessionId ?? `session-${this.nextSession++}`;
-    if (!this.session || this.session.id !== sessionId) {
-      this.session = {
+    let session = this.sessions.get(sessionId);
+    if (!session) {
+      session = {
         id: sessionId,
-        title: request.title,
+        title: request.message.slice(0, 48),
+        presentationId: request.presentationId,
+        presentationTitle: request.presentationTitle,
+        createdAt: timestamp,
+        updatedAt: timestamp,
         latestMotionDoc: request.motionDoc,
         messages: []
       };
+      this.sessions.set(sessionId, session);
     }
-    this.session.messages.push({
+    session.messages.push({
       id: `message-user-${turn}`,
       role: "user",
       content: request.message,
       createdAt: timestamp
     });
+    session.updatedAt = timestamp;
+    this.latestSessionId = sessionId;
     const runId = `run-${turn}`;
     const run = {
       credentialRejected: options.credentialRejected ?? false,
@@ -732,7 +893,7 @@ class DeterministicAgentApi {
       turn
     } satisfies AcceptedRun;
     this.runs.set(runId, run);
-    this.activeRun = { runId, acceptedAt: timestamp };
+    this.activeRun = { runId, acceptedAt: timestamp, sessionId };
     if (options.recordRequest) {
       this.startRequests.push(request);
     }
@@ -754,7 +915,7 @@ class DeterministicAgentApi {
   private async subscribe(route: Route, url: URL): Promise<void> {
     const runId = url.pathname.split("/").at(-2) ?? "";
     const run = this.runs.get(runId);
-    if (!run || !this.session || this.session.id !== run.sessionId) {
+    if (!run || !this.sessions.has(run.sessionId)) {
       await route.fulfill({
         json: { error: { code: "run_not_found", message: "Agent run not found" } },
         status: 404
@@ -820,10 +981,8 @@ class DeterministicAgentApi {
     if (run.events) {
       return run.events;
     }
-    if (!this.session || this.session.id !== run.sessionId) {
-      throw new Error("Agent run session is unavailable");
-    }
-    this.session.messages.push({
+    const session = this.requireSession(run.sessionId);
+    session.messages.push({
       id: `message-assistant-${run.turn}`,
       role: "assistant",
       content: "Run cancelled.",
@@ -846,11 +1005,9 @@ class DeterministicAgentApi {
     if (run.events) {
       return run.events;
     }
-    if (!this.session || this.session.id !== run.sessionId) {
-      throw new Error("Agent run session is unavailable");
-    }
+    const session = this.requireSession(run.sessionId);
     const message = "OpenAI rejected this API key. Check the key and try again.";
-    this.session.messages.push({
+    session.messages.push({
       id: `message-assistant-${run.turn}`,
       role: "assistant",
       content: message,
@@ -876,13 +1033,12 @@ class DeterministicAgentApi {
     if (run.events) {
       return run.events;
     }
-    if (!this.session || this.session.id !== run.sessionId) {
-      throw new Error("Agent run session is unavailable");
-    }
+    const session = this.requireSession(run.sessionId);
     const motionDoc = run.request.motionDoc.replace(/^# .+$/m, `# Agent Turn ${run.turn}`);
     const assistantMessage = `Turn ${run.turn} complete`;
-    this.session.latestMotionDoc = motionDoc;
-    this.session.messages.push({
+    session.latestMotionDoc = motionDoc;
+    session.updatedAt = timestamp;
+    session.messages.push({
       id: `message-assistant-${run.turn}`,
       role: "assistant",
       content: assistantMessage,
@@ -915,7 +1071,7 @@ class DeterministicAgentApi {
         sequence: 3,
         timestamp,
         result: {
-          session: structuredClone(this.session),
+          session: structuredClone(session),
           motionDoc,
           assistantMessage,
           baseSourceRevision: run.request.sourceRevision
@@ -932,17 +1088,80 @@ class DeterministicAgentApi {
   private async readSession(route: Route, url: URL): Promise<void> {
     this.sessionReads += 1;
     const sessionId = decodeURIComponent(url.pathname.split("/").at(-1) ?? "");
-    if (!this.session || this.session.id !== sessionId) {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
       await route.fulfill({
         json: { error: { code: "session_not_found", message: "Conversation not found" } },
         status: 404
       });
       return;
     }
+    const activeRun = this.activeRun?.sessionId === sessionId
+      ? {
+          runId: this.activeRun.runId,
+          acceptedAt: this.activeRun.acceptedAt
+        }
+      : null;
     await route.fulfill({
-      json: { session: this.session, activeRun: this.activeRun ?? null },
+      json: { session, activeRun },
       status: 200
     });
+  }
+
+  private async listSessions(route: Route): Promise<void> {
+    const items = Array.from(this.sessions.values())
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)
+        || right.id.localeCompare(left.id))
+      .map((session) => ({
+        id: session.id,
+        title: session.title,
+        presentation: {
+          id: session.presentationId,
+          title: session.presentationTitle
+        },
+        createdAt: session.createdAt,
+        lastActivityAt: session.updatedAt,
+        messageCount: session.messages.length
+      }));
+    await route.fulfill({ json: { items }, status: 200 });
+  }
+
+  private async attachSession(route: Route, url: URL): Promise<void> {
+    const sessionId = decodeURIComponent(url.pathname.split("/").at(-2) ?? "");
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      await route.fulfill({
+        json: { error: { code: "session_not_found", message: "Conversation not found" } },
+        status: 404
+      });
+      return;
+    }
+    const input = route.request().postDataJSON() as {
+      presentationId: string;
+      presentationTitle: string;
+    };
+    if (session.presentationId !== input.presentationId) {
+      await route.fulfill({
+        json: {
+          error: {
+            code: "invalid_request",
+            message: "Conversation belongs to a different presentation"
+          }
+        },
+        status: 400
+      });
+      return;
+    }
+    session.presentationTitle = input.presentationTitle;
+    await route.fulfill({ json: { session }, status: 200 });
+  }
+
+  private requireSession(sessionId: string): Session {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      throw new Error("Agent run session is unavailable");
+    }
+    return session;
   }
 }
 

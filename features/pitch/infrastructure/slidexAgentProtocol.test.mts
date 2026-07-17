@@ -33,12 +33,14 @@ test("validates the product payload carried by Heddle's run protocol", () => {
       session: createSession(),
       motionDoc: "# Updated deck",
       assistantMessage: "Updated the deck",
-      baseSourceRevision: "revision-1"
+      baseSourceRevision: "revision-1",
+      presentationSourceRevision: 8
     }
   });
 
   assert.equal(event.kind, "result");
   assert.equal(event.result.motionDoc, "# Updated deck");
+  assert.equal(event.result.presentationSourceRevision, 8);
   assert.deepEqual(
     SlideXAgentRunProtocol.parseEvent(JSON.parse(SlideXAgentRunProtocol.stringifyEvent(event))),
     event
@@ -154,8 +156,81 @@ test("applies injected auth headers and preserves stable server error codes", as
   );
 });
 
+test("lists, attaches, and deletes presentation conversations through product routes", async () => {
+  const calls: Array<{ body?: unknown; method: string; url: string }> = [];
+  const client = new SlideXAgentClient({
+    baseUrl: "https://agent.example.test",
+    fetch: async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+      calls.push({
+        ...(typeof init?.body === "string" ? { body: JSON.parse(init.body) } : {}),
+        method,
+        url
+      });
+      if (method === "GET") {
+        return Response.json({
+          items: [{
+            id: "session-1",
+            title: "Clarify the opening",
+            presentation: { id: "presentation-1", title: "Deck" },
+            createdAt: timestamp,
+            lastActivityAt: timestamp,
+            messageCount: 2
+          }],
+          nextCursor: "next-page"
+        });
+      }
+      if (method === "DELETE") {
+        return Response.json({ reset: true });
+      }
+      return Response.json({
+        session: {
+          ...createSession(),
+          presentationId: "presentation-1",
+          presentationTitle: "Deck"
+        }
+      });
+    }
+  });
+
+  const page = await client.sessions({ limit: 20, cursor: "cursor-1" });
+  const attached = await client.attachSession("session-1", {
+    presentationId: "presentation-1",
+    presentationTitle: "Deck"
+  });
+  await client.deleteSession("session-1");
+
+  assert.equal(page.items[0]?.presentation.id, "presentation-1");
+  assert.equal(page.nextCursor, "next-page");
+  assert.equal(attached.session.presentationId, "presentation-1");
+  assert.deepEqual(calls, [
+    {
+      method: "GET",
+      url: "https://agent.example.test/api/agent/sessions?limit=20&cursor=cursor-1"
+    },
+    {
+      method: "PUT",
+      url: "https://agent.example.test/api/agent/sessions/session-1/presentation",
+      body: {
+        presentationId: "presentation-1",
+        presentationTitle: "Deck"
+      }
+    },
+    {
+      method: "DELETE",
+      url: "https://agent.example.test/api/agent/sessions/session-1"
+    }
+  ]);
+});
+
 test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async () => {
-  const calls: Array<{ url: string; method: string; authorization: string | null }> = [];
+  const calls: Array<{
+    url: string;
+    method: string;
+    authorization: string | null;
+    body?: unknown;
+  }> = [];
   const resultEvent = SlideXAgentRunProtocol.parseEvent({
     kind: "result",
     runId: "run-1",
@@ -165,7 +240,8 @@ test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async ()
       session: createSession(),
       motionDoc: "# Updated deck",
       assistantMessage: "Updated the deck",
-      baseSourceRevision: "revision-1"
+      baseSourceRevision: "revision-1",
+      presentationSourceRevision: 8
     }
   });
   const fetch: typeof globalThis.fetch = async (input, init) => {
@@ -174,7 +250,10 @@ test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async ()
     calls.push({
       url,
       method,
-      authorization: new Headers(init?.headers).get("Authorization")
+      authorization: new Headers(init?.headers).get("Authorization"),
+      ...(typeof init?.body === "string"
+        ? { body: JSON.parse(init.body) }
+        : {})
     });
 
     if (method === "POST" && url.endsWith("/api/agent/runs")) {
@@ -208,10 +287,12 @@ test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async ()
   });
 
   const accepted = await client.runs.start({
-    title: "Deck",
+    presentationId: "presentation-1",
+    presentationTitle: "Deck",
     message: "Make it clearer",
     motionDoc: "# Deck",
     sourceRevision: "revision-1",
+    presentationSourceRevision: 7,
     llmApiKey: "test-key"
   });
   const events: unknown[] = [];
@@ -228,7 +309,16 @@ test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async ()
     {
       url: "https://agent.example.test/api/agent/runs",
       method: "POST",
-      authorization: "Bearer test-token"
+      authorization: "Bearer test-token",
+      body: {
+        presentationId: "presentation-1",
+        presentationTitle: "Deck",
+        message: "Make it clearer",
+        motionDoc: "# Deck",
+        sourceRevision: "revision-1",
+        presentationSourceRevision: 7,
+        llmApiKey: "test-key"
+      }
     },
     {
       url: "https://agent.example.test/api/agent/runs/run-1/events?after=0",
@@ -243,21 +333,13 @@ test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async ()
   ]);
 });
 
-test("reuses an existing anonymous product session for agent authorization", async () => {
-  let anonymousSignIns = 0;
+test("reuses the signed-in product session for agent authorization", async () => {
   const client: SlideXAgentIdentityClient = {
     auth: {
       getSession: async () => ({
         data: { session: { access_token: "existing-access-token" } },
         error: null
-      }),
-      signInAnonymously: async () => {
-        anonymousSignIns += 1;
-        return {
-          data: { session: { access_token: "new-access-token" } },
-          error: null
-        };
-      }
+      })
     }
   };
   const identity = createIdentity(client);
@@ -265,24 +347,18 @@ test("reuses an existing anonymous product session for agent authorization", asy
   const headers = new Headers(await identity.authorizationHeaders());
 
   assert.equal(headers.get("Authorization"), "Bearer existing-access-token");
-  assert.equal(anonymousSignIns, 0);
 });
 
-test("deduplicates concurrent anonymous sign-in and returns only the bearer token", async () => {
+test("deduplicates concurrent signed-in session reads", async () => {
   const sessionRead = deferred<void>();
   let sessionReads = 0;
-  let anonymousSignIns = 0;
   const client: SlideXAgentIdentityClient = {
     auth: {
       getSession: async () => {
         sessionReads += 1;
         await sessionRead.promise;
-        return { data: { session: null }, error: null };
-      },
-      signInAnonymously: async () => {
-        anonymousSignIns += 1;
         return {
-          data: { session: { access_token: "anonymous-access-token" } },
+          data: { session: { access_token: "signed-in-access-token" } },
           error: null
         };
       }
@@ -296,15 +372,32 @@ test("deduplicates concurrent anonymous sign-in and returns only the bearer toke
   const headers = await Promise.all([first, second]);
 
   assert.equal(sessionReads, 1);
-  assert.equal(anonymousSignIns, 1);
   assert.deepEqual(
     headers.map((value) => new Headers(value).get("Authorization")),
-    ["Bearer anonymous-access-token", "Bearer anonymous-access-token"]
+    ["Bearer signed-in-access-token", "Bearer signed-in-access-token"]
   );
 });
 
-test("fails safely when anonymous identity is not configured", async () => {
-  const identity = new SlideXAgentIdentityService({});
+test("fails safely when the signed-in product session is missing", async () => {
+  const identity = createIdentity({
+    auth: {
+      getSession: async () => ({ data: { session: null }, error: null })
+    }
+  });
+
+  await assert.rejects(
+    identity.authorizationHeaders(),
+    (error: unknown) => error instanceof SlideXAgentIdentityError
+      && error.message.includes("signed-in session")
+  );
+});
+
+test("fails safely when agent identity is not configured", async () => {
+  const identity = new SlideXAgentIdentityService({
+    createClient: () => {
+      throw new Error("Missing public Supabase configuration");
+    }
+  });
 
   await assert.rejects(
     identity.authorizationHeaders(),
@@ -367,8 +460,6 @@ function createStorage(): SlideXSessionStorage {
 
 function createIdentity(client: SlideXAgentIdentityClient): SlideXAgentIdentityService {
   return new SlideXAgentIdentityService({
-    supabaseUrl: "https://identity.example.test",
-    supabasePublishableKey: "test-publishable-key",
     createClient: () => client
   });
 }

@@ -14,19 +14,17 @@ This file remains authoritative for the editor-local boundary.
   product-session routes with Heddle Remote's HTTP/SSE run client. Heddle owns
   run start/subscribe/cancel requests, framing, validation, abort cleanup, and
   transport errors. SlideX injects sync/async auth headers and retains its
-  session/delete API, but does not acquire tokens or choose model credentials.
-- `infrastructure/slidexAgentIdentity.ts` lazily restores or creates the
-  Supabase anonymous product identity and supplies its bearer token to the
-  client. Concurrent requests share one sign-in attempt. This identity may
-  persist across refresh; it never receives the user's model key.
+  bounded catalog, detail, immutable Presentation association, and deletion
+  APIs, but does not acquire tokens or choose model credentials.
+- `infrastructure/slidexAgentIdentity.ts` restores the signed-in Supabase
+  product identity from the application's shared browser client and supplies
+  its bearer token to the agent client. Concurrent requests share one session
+  read. It never creates a second auth client, falls back to another identity,
+  or receives the user's model key.
 - `infrastructure/slidexAgentPersistence.ts` owns the tab-scoped active
   conversation selection for each canonical presentation ID. It preserves
   independent bindings when the user moves between presentations; it is not a
   session catalog and does not invent editor-only project identity.
-- `infrastructure/supabaseAgentSessions.ts` mirrors only Heddle conversation
-  metadata (`id`, title, message count, and presentation ownership) into the
-  RLS-protected `agent_sessions` catalog. Heddle remains authoritative for
-  message content, run state, and the latest MotionDoc artifact.
 - `ui/agent/usePitchAgent.ts` coordinates editor-facing state, retry timers, tool
   progress, history hydration, detach/delete semantics, stale-session recovery,
   cancellation, and stale-source conflict handling. Heddle's
@@ -34,10 +32,26 @@ This file remains authoritative for the editor-local boundary.
   detection, terminal state, and bounded retry attempts.
 - `ui/agent/PitchAgentProvider.tsx` owns the live run and current-tab composer
   state independently from the visual surface. A panel, sheet, or FAB may
-  unmount without cancelling the run or forgetting the in-memory model key.
+  unmount without cancelling the run or forgetting the in-memory model key. It
+  also injects the application-wide Supabase browser client into the agent
+  identity service, then creates one authenticated agent client and TanStack
+  Query cache shared by the runtime and catalog.
+- `ui/agent/useAgentSessionCatalog.ts` owns bounded catalog loading, pagination,
+  cache invalidation, and retry state through the authenticated agent-server
+  API. The browser never inserts, updates, or deletes `agent_sessions`
+  directly; the server-selected product repository is the single writer. This
+  hook does not own selection or deck state.
+- `ui/agent/PitchAgentSessionList.tsx` renders the portable catalog surface.
+  Keep it independent from the editor chrome so it can move into a panel,
+  sheet, or FAB-triggered surface without changing lifecycle behavior.
 - `ui/agent/PitchAgentPanel.tsx` renders the current surface and delegates
   MotionDoc application back to the editor's existing undo-aware `commitSource`
-  path.
+  path. The run request carries the numeric canonical Presentation revision and
+  a persistence-safe MotionDoc with registered blob images embedded. In
+  Supabase product mode, the agent server commits a changed source before
+  terminal success; the existing workspace save coordinator then acknowledges
+  that already committed remote source while preserving local undo behavior.
+  A manual-edit conflict remains pending/error instead of being overwritten.
 
 Execution, event replay, run-consumer policy, and cancellation semantics belong
 to Heddle. Product
@@ -45,13 +59,21 @@ session persistence and MotionDoc artifact finalization belong to the SlideX
 agent server. Do not duplicate either concern in this feature.
 
 The workspace route must pass its durable presentation ID into `MotionDocApp`.
-Without that identity the agent is not mounted, because SlideX cannot safely
-relate a conversation to the artifact. `sessionStorage` remembers only the
+It must also provide the loaded numeric source revision. Without both values
+the agent is not mounted, because SlideX cannot safely relate or commit a
+conversation result to the artifact. `sessionStorage` remembers only the
 active session ID and replay cursor for each presentation in the current tab;
-Supabase stores the durable session index while the Heddle server remains
-authoritative for conversation content and run state. Hydration restores
-chat/run state but never replaces the canonical presentation with a session
-snapshot.
+the agent server stores the durable catalog and safe transcript through its
+selected product repository while Heddle owns model-facing conversation state
+and run behavior. Hydration restores chat/run state but never replaces the
+canonical presentation with a session snapshot.
+
+Selecting a conversation for the current Presentation hydrates its chat and
+retained run only; the current Presentation source remains the base for the
+next turn. Selecting a conversation for another Presentation synchronously
+saves the current local source, navigates with canonical `presentation` and
+`agentSession` query parameters, then hydrates the target chat. Switching is
+disabled while a run, hydration, status check, or deletion is active.
 
 **New conversation** only detaches the current selection and keeps the old
 server session for the session list. **Delete conversation** is the separate,
@@ -81,10 +103,11 @@ Agent button and panel. Next.js inlines public environment variables into the
 client bundle, so changing the flag requires a rebuild and redeploy.
 
 The enabled editor also requires `NEXT_PUBLIC_SUPABASE_URL` and
-`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, with anonymous sign-ins enabled for that
-Supabase project. These values establish product identity only. The user's
-OpenAI key is entered at runtime and must not be placed in an environment
-variable or deployment secret.
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, plus a supported OAuth provider for
+SlideX login. Agent requests reuse that signed-in product session; anonymous
+sign-in is neither required nor used. These values establish product identity
+only. The user's OpenAI key is entered at runtime and must not be placed in an
+environment variable or deployment secret.
 
 The editor flag only controls presentation. A deployment must also set
 `SLIDEX_AGENT_ENABLED=true` on the SlideX agent server to register the
