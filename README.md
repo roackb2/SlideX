@@ -1,48 +1,157 @@
 # SlideX Pitch
 
-SlideX Pitch is a focused presentation workspace for arranging content on a precise canvas, establishing each slide's visual direction with monochrome fills, and creating editable motion for playback and export.
+SlideX Pitch is a focused presentation workspace for arranging content on a precise canvas, establishing the visual direction of each slide with solid fills and motion backgrounds, and creating editable presentations for playback and export.
+
+SlideX MCP extends this workflow by allowing compatible AI clients to create, inspect, edit, and export presentations through the Model Context Protocol.
 
 ## Code Repository
 
-Public repository: [https://github.com/zz41354899/Animark](https://github.com/zz41354899/Animark)
+Public repository:
+
+https://github.com/zz41354899/SlideX
+
+## Built with Codex and GPT-5.6
+
+SlideX was meaningfully extended during OpenAI Build Week using OpenAI Codex with GPT-5.6.
+
+Codex was the main development interface used to inspect the existing repository, edit files, run commands, execute tests, and report validation results.
+
+GPT-5.6 was used within Codex sessions to understand product requirements, reason across multiple files, evaluate architecture and security tradeoffs, review implementation details, and help debug issues.
+
+I communicated with Codex primarily in Traditional Chinese using natural-language instructions. I did not maintain separate conversations with Codex and GPT-5.6. Codex was the interface interacting with the repository, while GPT-5.6 was the model used within those development sessions.
 
 ## How Codex and GPT-5.6 Were Used
 
-OpenAI Codex was used throughout the development of this project, with GPT-5.6 selected in supported Codex sessions as a development partner for programming, cross-file reasoning, security review, and verification. Codex worked directly with the local repository by reading the existing code, editing files, running commands, and reporting validation results. GPT-5.6 helped interpret requirements, analyze relationships between components, evaluate design tradeoffs, and generate or review implementation details.
+### Repository Analysis and Architecture
 
-The main areas of use included:
+Codex inspected the existing Next.js application structure, routing, feature boundaries, MotionDoc presentation engine, Supabase integration, MCP modules, and shared utilities before changes were implemented.
 
-- **Repository analysis and architecture:** Inspecting Next.js routes, feature boundaries, the MotionDoc core, Supabase adapters, and shared modules before deciding where each change should live.
-- **Feature implementation and refactoring:** Assisting with the presentation workspace, guest demo persistence, authentication callbacks, the Next.js proxy, first-login onboarding, image uploads, and presentation persistence.
-- **Database design:** Refining the single-user MVP Supabase schema, column-level grants, RLS policies, the private Storage bucket, `agent_sessions`, and atomic compare-and-swap writes using `source_revision` so the Editor and Agent cannot silently overwrite each other.
-- **Security review:** Checking the Service Role Key boundary, rejecting SVG uploads, enforcing UUID image paths, validating Storage ownership, ordering image cleanup before presentation deletion, filtering MotionDoc URLs, escaping exported HTML, and applying Content Security Policy protections.
-- **Testing and verification:** Adding or running automated tests and using linting, TypeScript and production builds, diff inspection, and targeted assertions to check for regressions.
-- **Documentation:** Maintaining the README, Supabase specification, security report, and pre-deployment acceptance criteria so the implementation, permission model, and documented limitations remain aligned.
+GPT-5.6 helped reason about where new functionality should be placed and how changes would affect the editor, presentation storage, MCP server, authentication flow, and export system.
 
-### How I Usually Work with Codex
+### MCP Implementation
 
-I normally communicate with Codex directly in Traditional Chinese. I do not rewrite every request into a special prompt format, and I do not hold separate conversations with Codex and GPT-5.6. Codex is the interface that works with the repository, edits files, and runs validation. GPT-5.6 is the model used within the Codex session to understand context and reason through the task.
+Codex and GPT-5.6 helped design and implement SlideX MCP, including:
 
-I usually do not provide a complete technical specification in a single message. I begin with the clearest current problem and narrow the scope through several rounds of discussion:
+- Local and remote MCP server support
+- Presentation discovery and selection
+- Slide and block inspection
+- Canvas node discovery
+- Position and size updates using stable node IDs
+- Slide layout creation and replacement
+- Presentation revision checking
+- Conflict-safe presentation updates
+- Secure private image uploads
+- MCP installation and testing documentation
 
-1. **Describe the product problem first.** For example, I may explain that the Supabase SQL has become too complex, the login flow is incorrect, a UI element is too small, or deleting a presentation could leave Storage images behind.
-2. **Add non-negotiable constraints.** I explicitly state requirements such as never exposing the Service Role Key to the frontend, temporarily disabling SVG uploads, using UUID-based image paths, or limiting the current release to a single-user MVP.
-3. **Ask Codex to inspect the current implementation.** I expect Codex to review the existing schema, repositories, UI, and data flow before editing the project instead of returning a generic example designed for an empty codebase.
-4. **Refine the scope through follow-up messages.** If an initial proposal is too broad, I narrow it further. For example, workspace membership and collaboration can be postponed while Agent support must still retain `source_revision`, atomic compare-and-swap writes, and `agent_sessions`.
-5. **Request implementation and verification.** Once the requirements are clear, I ask Codex to update the actual files, merge SQL, review RLS, and run the tests, lint, build, or other checks appropriate to the change.
-6. **Review and iterate.** I inspect the diff, UI, or report and continue the discussion when something needs to be removed, reduced in scope, or strengthened with an additional security condition.
+### Presentation Workflow
 
-The recent Supabase work followed this exact process. I began with the single-user MVP direction and gradually added requirements for image security, column-level permissions, guest demo persistence, the login proxy, first-login onboarding, and protection against Agent and Editor write conflicts. Codex and GPT-5.6 repeatedly checked those requirements against the same repository and consolidated them into one migration, a CAS function, Agent session RLS, an Edge Function deletion flow, and a system report.
+Codex assisted with the implementation and refinement of:
 
-The typical collaboration workflow is:
+- Presentation creation and editing
+- Slide structure and layout tools
+- MotionDoc parsing and validation
+- Presentation preview
+- Editable PowerPoint export
+- Interactive HTML export
+- Guest demonstration persistence
+- Agent conversation and presentation synchronization
 
-1. I provide the goal, current problem, constraints, and completion criteria in natural language.
-2. Codex inspects the relevant repository files and gathers the current implementation context.
-3. GPT-5.6 helps reason about cross-file effects, data flow, authorization boundaries, and regression risks.
-4. Codex implements the agreed approach in the workspace and runs the relevant tests, lint checks, and production build.
-5. I review the diff, visual result, and validation output and retain final control over product decisions, merging, and deployment.
+### Database and Persistence
 
-Codex and GPT-5.6 are development tools for this project, not current runtime dependencies of the SlideX browser application. The repository does not expose an OpenAI API key to the frontend, and user presentations are not automatically sent to OpenAI. If a production model API is added in the future, it will require a separate server-side API boundary, user consent, data-processing documentation, usage limits, and corresponding security policies.
+Codex and GPT-5.6 were used to review and improve:
+
+- Supabase schema design
+- Row Level Security policies
+- Private Storage buckets
+- Presentation ownership rules
+- Agent session records
+- Atomic compare-and-swap updates using `source_revision`
+- Protection against silent conflicts between the editor and an AI agent
+
+### Security Review
+
+The development process included reviews of:
+
+- Service Role Key boundaries
+- OAuth and PKCE authorization
+- Storage ownership validation
+- UUID-based image paths
+- SVG upload restrictions
+- Image cleanup before presentation deletion
+- MotionDoc URL filtering
+- Exported HTML escaping
+- Content Security Policy protections
+- Sanitized PPTX logs and error messages
+
+### Testing and Validation
+
+Codex was used to run and review:
+
+- Automated tests
+- TypeScript validation
+- ESLint
+- Production builds
+- Targeted assertions
+- Diff inspection
+- Regression checks
+
+I reviewed the resulting code, interface changes, validation output, and product behavior before deciding what to merge or deploy.
+
+## Work Completed During OpenAI Build Week
+
+SlideX existed before the hackathon. The following features were newly added or meaningfully extended after July 13, 2026:
+
+- SlideX local and remote MCP server integration
+- MCP presentation discovery and editing tools
+- Canvas node discovery and precise position updates
+- Secure MCP image upload workflow
+- Presentation revision and conflict handling
+- Agent and editor synchronization
+- PPTX log redaction and error sanitization
+- Traditional Chinese localization for the demo experience
+- MCP installation, configuration, and testing documentation
+
+## Relevant Commits
+
+- [`884ff9b`](https://github.com/zz41354899/SlideX/commit/884ff9bdb868dda784b0ada21733e0fb0574110c)  
+  Release MCP 0.3.0 with canvas discovery tools.
+
+- [`0b8f6e8`](https://github.com/zz41354899/SlideX/commit/0b8f6e8b8289704fd602434300839562ad52d1bd)  
+  Add secure MCP image uploads and improve MCP authorization.
+
+- [`61fbe65`](https://github.com/zz41354899/SlideX/commit/61fbe65fbcf1729e6191d34cb7592c300aa26b56)  
+  Send presentation revisions to the agent.
+
+- [`497e593`](https://github.com/zz41354899/SlideX/commit/497e59348d4dd6fb587b77594dff89a257f34a09)  
+  Improve presentation synchronization, persistent block identity, recovery drafts, and atomic updates.
+
+- [`f2b6698`](https://github.com/zz41354899/SlideX/commit/f2b6698f209c45555bb1a6b3e5a13f7c714ede45)  
+  Add PPTX console redaction and error sanitization.
+
+- [`9d47a86`](https://github.com/zz41354899/SlideX/commit/9d47a86974f5f14b46349bded6d03ee420e570b2)  
+  Add SlideX MCP installation, configuration, local MCP, and remote MCP documentation.
+
+The primary Codex `/feedback` Session ID has been provided separately through the Devpost submission form.
+
+## Demo Environment
+
+The demonstration video uses Antigravity as the MCP client.
+
+Antigravity is only the client used to connect to and demonstrate SlideX MCP. SlideX MCP is the project being submitted.
+
+The relationship is:
+
+- SlideX MCP provides the presentation tools and workflow.
+- Antigravity calls those tools as an MCP-compatible client.
+- Codex with GPT-5.6 was used to develop and extend the project.
+
+## Runtime and Data Usage
+
+Codex and GPT-5.6 were development tools for this project. They are not required runtime dependencies of the current SlideX browser application.
+
+The repository does not expose an OpenAI API key to the frontend, and user presentations are not automatically sent to OpenAI.
+
+If a production model API is added in the future, it will require a separate server-side API boundary, user consent, data-processing documentation, usage limits, and corresponding security policies.
 
 ## Development
 
@@ -51,7 +160,46 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. The home page and Pitch redirect to `/en` or `/zh-TW` according to the selected locale. The presentation workspace is available at `/workspace/pitch`.
+Open:
+
+```text
+http://localhost:3000
+```
+
+The presentation workspace is available at:
+
+```text
+http://localhost:3000/workspace/pitch
+```
+
+The application redirects to `/en` or `/zh-TW` according to the selected locale.
+
+## MCP
+
+Run the local MCP server:
+
+```bash
+npx -y @z7589xxz758/slidex-mcp-server
+```
+
+Example MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "slidex": {
+      "command": "npx",
+      "args": ["-y", "@z7589xxz758/slidex-mcp-server"]
+    }
+  }
+}
+```
+
+Remote MCP endpoint:
+
+```text
+https://slidexdeck.com/mcp/
+```
 
 ## Validation
 
