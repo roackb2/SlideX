@@ -22,15 +22,26 @@ import { SupabaseMcpOAuthStore } from "@/mcp/supabaseOAuthStore";
 
 export async function POST(request: NextRequest) {
   const form = await request.formData().catch(() => null);
-  if (!form) return oauthJsonError("invalid_request", 400);
+  if (!form) {
+    logInvalidAuthorizationRequest(request, "form_unreadable");
+    return oauthJsonError("invalid_request", 400);
+  }
   const input = Object.fromEntries(
     [...form.entries()].filter((entry): entry is [string, string] => typeof entry[1] === "string")
   );
   const parsed = mcpAuthorizationRequestSchema.safeParse(input);
-  if (!parsed.success) return oauthJsonError("invalid_request", 400);
+  if (!parsed.success) {
+    logInvalidAuthorizationRequest(request, "schema_invalid", {
+      invalidFields: [...new Set(parsed.error.issues.map((issue) => String(issue.path[0] ?? "form")))]
+    });
+    return oauthJsonError("invalid_request", 400);
+  }
 
   const origin = resolveRequestOrigin(request);
   if (!isSameOriginMcpConsentPost(request.headers.get("origin"), origin)) {
+    logInvalidAuthorizationRequest(request, "origin_mismatch", {
+      originPresent: request.headers.has("origin")
+    });
     return oauthJsonError("invalid_request", 400);
   }
 
@@ -118,15 +129,20 @@ export async function POST(request: NextRequest) {
   }
 
   const consentNonce = input.consent_nonce;
-  if (
-    !consentNonce ||
-    !await store.consumeConsentRequest({
+  const consentResult = consentNonce
+    ? await store.consumeConsentRequest({
       clientId: parsed.data.client_id,
       nonce: consentNonce,
       requestHash: hashMcpAuthorizationRequest(parsed.data),
       userId: data.user.id
-    }).catch(() => false)
-  ) {
+    }).then((consumed) => ({ consumed, storeError: false }))
+      .catch(() => ({ consumed: false, storeError: true }))
+    : { consumed: false, storeError: false };
+  if (!consentResult.consumed) {
+    logInvalidAuthorizationRequest(request, "consent_rejected", {
+      noncePresent: Boolean(consentNonce),
+      storeError: consentResult.storeError
+    });
     return oauthJsonError("invalid_request", 400);
   }
 
@@ -151,6 +167,18 @@ export async function POST(request: NextRequest) {
     }),
     303
   ));
+}
+
+function logInvalidAuthorizationRequest(
+  request: NextRequest,
+  stage: "consent_rejected" | "form_unreadable" | "origin_mismatch" | "schema_invalid",
+  details: Record<string, boolean | string[]> = {}
+) {
+  console.warn("[mcp-oauth] authorization request rejected", {
+    ...details,
+    requestId: request.headers.get("x-request-id") ?? undefined,
+    stage
+  });
 }
 
 function oauthRedirect(redirectUri: string, error: string, state?: string) {
