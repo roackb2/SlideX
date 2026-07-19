@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import type { McpPresentationStore } from "@/mcp/presentationStore";
+import type { McpOperationActivityStore } from "@/mcp/operationActivity";
 import {
   registerRemotePresentationImageUploadTools,
   type RemotePresentationImageUploadOptions
@@ -11,20 +12,21 @@ import { registerRemotePresentationWriteTools } from "@/mcp/remotePresentationWr
 type RemotePresentationMcpOptions = {
   enableWrites: boolean;
   imageUploads?: RemotePresentationImageUploadOptions;
+  operationActivity?: McpOperationActivityStore;
   presentationStore: McpPresentationStore;
 };
 
 export function registerRemotePresentationMcp(
   server: McpServer,
-  { enableWrites, imageUploads, presentationStore }: RemotePresentationMcpOptions
+  { enableWrites, imageUploads, operationActivity, presentationStore }: RemotePresentationMcpOptions
 ) {
   registerRemotePresentationReadTools(server, presentationStore);
 
   if (enableWrites) {
-    registerRemotePresentationWriteTools(server, presentationStore);
+    registerRemotePresentationWriteTools(server, presentationStore, operationActivity);
   }
 
   if (imageUploads) {
-    registerRemotePresentationImageUploadTools(server, imageUploads);
+    registerRemotePresentationImageUploadTools(server, imageUploads, operationActivity);
   }
 }

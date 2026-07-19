@@ -182,6 +182,61 @@ export type Database = {
           }
         ];
       };
+      mcp_operation_events: {
+        Row: {
+          client_id: string;
+          client_name: string;
+          completed_at: string | null;
+          completed_revision: number | null;
+          created_at: string;
+          error_code: string | null;
+          expires_at: string;
+          id: string;
+          node_id: string | null;
+          presentation_id: string;
+          slide_index: number | null;
+          status: "running" | "completed" | "failed";
+          target_kind: "presentation" | "slide" | "block";
+          tool_name: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          client_id: string;
+          client_name: string;
+          completed_at?: string | null;
+          completed_revision?: number | null;
+          created_at?: string;
+          error_code?: string | null;
+          id?: string;
+          node_id?: string | null;
+          presentation_id: string;
+          slide_index?: number | null;
+          status?: "running" | "completed" | "failed";
+          target_kind: "presentation" | "slide" | "block";
+          tool_name: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          completed_at?: string | null;
+          completed_revision?: number | null;
+          error_code?: string | null;
+          node_id?: string | null;
+          slide_index?: number | null;
+          status?: "running" | "completed" | "failed";
+          target_kind?: "presentation" | "slide" | "block";
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mcp_operation_events_presentation_id_fkey";
+            columns: ["presentation_id"];
+            isOneToOne: false;
+            referencedRelation: "presentations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       official_templates: {
         Row: {
           created_at: string;

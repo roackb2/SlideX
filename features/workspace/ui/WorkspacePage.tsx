@@ -28,6 +28,7 @@ import { useWorkspaceOnboarding } from "@/features/workspace/ui/hooks/useWorkspa
 import { useWorkspacePrivacyMode } from "@/features/workspace/ui/hooks/useWorkspacePrivacyMode";
 import { useSupabaseOfficialTemplates } from "@/features/workspace/ui/hooks/useSupabaseOfficialTemplates";
 import { useSupabaseWorkspacePresentations } from "@/features/workspace/ui/hooks/useSupabaseWorkspacePresentations";
+import { useMcpOperationActivities } from "@/features/workspace/ui/hooks/useMcpOperationActivities";
 import { useWorkspaceLazyLoad } from "@/features/workspace/ui/hooks/useWorkspaceLazyLoad";
 import { WorkspaceOnboardingDialog } from "@/features/workspace/ui/onboarding/WorkspaceOnboardingDialog";
 import { useWorkspaceI18n } from "@/features/workspace/ui/workspaceI18n";
@@ -104,6 +105,7 @@ export function WorkspacePage() {
     renamePresentation: renameRemotePresentation,
     totalCount: presentationCount
   } = useSupabaseWorkspacePresentations(session?.user.id, deferredSearchQuery);
+  const { activities: mcpActivities } = useMcpOperationActivities(session?.user.id);
   const lazyLoadMoreRef = useWorkspaceLazyLoad({
     enabled: activeView === "presentations" && hasMorePresentations && !presentationsError,
     isLoading: areMorePresentationsLoading,
@@ -218,6 +220,7 @@ export function WorkspacePage() {
             onOpen={() => openPresentation(presentation.id)}
             onRename={(title) => void renamePresentation(presentation.id, title)}
             onToggleMenu={() => setMenuPresentationId((current) => current === presentation.id ? null : presentation.id)}
+            mcpActivities={mcpActivities.filter((activity) => activity.presentationId === presentation.id)}
             presentation={presentation}
             textSize={options?.textSize}
           />

@@ -3,7 +3,8 @@ import { z } from "zod/v4";
 
 import type { McpPresentationImageUploadStore } from "@/mcp/presentationImageUploadStore";
 import { mcpPresentationImageMimeTypes } from "@/mcp/presentationImageUploadStore";
-import { runAsyncMcpTool } from "@/mcp/remotePresentationHelpers";
+import type { McpOperationActivityStore } from "@/mcp/operationActivity";
+import { runTrackedMcpTool } from "@/mcp/remotePresentationHelpers";
 import { requiredPresentationIdSchema } from "@/mcp/remotePresentationSchemas";
 
 const maximumImageBytes = 10 * 1024 * 1024;
@@ -16,7 +17,8 @@ export type RemotePresentationImageUploadOptions = {
 
 export function registerRemotePresentationImageUploadTools(
   server: McpServer,
-  options: RemotePresentationImageUploadOptions
+  options: RemotePresentationImageUploadOptions,
+  activity?: McpOperationActivityStore
 ) {
   server.registerTool(
     "slidex_prepare_presentation_image_upload",
@@ -31,13 +33,21 @@ export function registerRemotePresentationImageUploadTools(
       }
     },
     ({ byteLength, contentType, presentationId }) =>
-      runAsyncMcpTool(() => options.store.prepareUpload({
-        byteLength,
-        contentType,
-        origin: options.origin,
-        presentationId,
-        userId: options.userId
-      }))
+      runTrackedMcpTool(
+        activity,
+        {
+          presentationId,
+          target: { kind: "presentation" },
+          toolName: "slidex_prepare_presentation_image_upload"
+        },
+        () => options.store.prepareUpload({
+          byteLength,
+          contentType,
+          origin: options.origin,
+          presentationId,
+          userId: options.userId
+        })
+      )
   );
 
   server.registerTool(
@@ -52,10 +62,18 @@ export function registerRemotePresentationImageUploadTools(
       }
     },
     ({ presentationId, uploadId }) =>
-      runAsyncMcpTool(() => options.store.finalizeUpload({
-        presentationId,
-        uploadId,
-        userId: options.userId
-      }))
+      runTrackedMcpTool(
+        activity,
+        {
+          presentationId,
+          target: { kind: "presentation" },
+          toolName: "slidex_finalize_presentation_image_upload"
+        },
+        () => options.store.finalizeUpload({
+          presentationId,
+          uploadId,
+          userId: options.userId
+        })
+      )
   );
 }

@@ -14,6 +14,8 @@ function LocalPitchWorkspace() {
     agentSessionId,
     error,
     isReady,
+    mcpActivities,
+    mcpActivityWarning,
     openAgentSession,
     presentation,
     save,
@@ -70,6 +72,8 @@ function LocalPitchWorkspace() {
         onSelectedAgentSessionChange={selectAgentSession}
         presentationId={presentation.id}
         projectVersion={presentation.sourceRevision}
+        remoteMcpActivityWarning={mcpActivityWarning}
+        remoteMcpOperations={mcpActivities}
         syncWarning={syncWarning}
       />
     </PitchLocaleOverride>

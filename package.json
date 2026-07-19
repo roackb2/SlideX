@@ -20,6 +20,7 @@
     "mcp:test:tarball": "node scripts/smoke-mcp-tarball.mjs",
     "test:agent": "esbuild features/pitch/infrastructure/slidexAgentProtocol.test.mts --bundle --platform=node --format=esm --outfile=.next/agent-protocol-test.mjs && node --test .next/agent-protocol-test.mjs",
     "test:agent:e2e": "playwright test",
+    "test:mcp-activity:e2e": "playwright test --config=playwright.mcp-activity.config.ts",
     "test:agent:e2e:install": "playwright install chromium",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",

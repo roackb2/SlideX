@@ -9,6 +9,12 @@ import type {
   McpPresentationImageUploadStore,
   PreparedMcpPresentationImageUpload
 } from "@/mcp/presentationImageUploadStore";
+import type {
+  CompleteMcpOperationInput,
+  FailMcpOperationInput,
+  McpOperationActivityStore,
+  StartMcpOperationInput
+} from "@/mcp/operationActivity";
 import type { McpPresentationStore } from "@/mcp/presentationStore";
 
 const presentationId = "89e45398-5fd4-4b7b-b9cf-0954dd2ac364";
@@ -22,6 +28,7 @@ test("local MCP exposes the bounded block, shader, schema, and PPTX tools", asyn
   const connection = await connectMcp({ enableWorkspaceSkills: false });
 
   try {
+    assert.equal(connection.client.getServerVersion()?.version, "0.5.0");
     const tools = await connection.client.listTools();
     const names = tools.tools.map((tool) => tool.name);
 
@@ -111,8 +118,10 @@ test("remote MCP keeps reads available but gates saves and local PPTX export", a
     await readOnly.close();
   }
 
+  const operationActivity = createOperationActivityStore();
   const writable = await connectMcp({
     enablePresentationWrites: true,
+    operationActivity,
     profile: "remote",
     presentationStore: store
   });
@@ -188,6 +197,23 @@ test("remote MCP keeps reads available but gates saves and local PPTX export", a
         .result.presentation.source,
       /shader="mesh-gradient"/
     );
+
+    assert.deepEqual(
+      operationActivity.started.map(({ target, toolName }) => ({ target, toolName })),
+      [
+        { target: { kind: "presentation" }, toolName: "slidex_save_presentation" },
+        { target: { kind: "block", nodeId: "Text-legacy-0", slideIndex: 0 }, toolName: "slidex_update_canvas_node" },
+        { target: { kind: "slide", slideIndex: 0 }, toolName: "slidex_apply_shader_preset" }
+      ]
+    );
+    assert.deepEqual(
+      operationActivity.completed.map(({ completedRevision, target }) => ({ completedRevision, target })),
+      [
+        { completedRevision: 5, target: { kind: "presentation" } },
+        { completedRevision: 5, target: { kind: "block", nodeId: "Text-legacy-0", slideIndex: 0 } },
+        { completedRevision: 5, target: { kind: "slide", slideIndex: 0 } }
+      ]
+    );
   } finally {
     await writable.close();
   }
@@ -195,6 +221,7 @@ test("remote MCP keeps reads available but gates saves and local PPTX export", a
 
 test("remote MCP exposes private image tools only when the asset scope is configured", async () => {
   const imageStore = createImageUploadStore();
+  const operationActivity = createOperationActivityStore();
   const connection = await connectMcp({
     enablePresentationWrites: false,
     imageUploads: {
@@ -202,6 +229,7 @@ test("remote MCP exposes private image tools only when the asset scope is config
       store: imageStore,
       userId: "893301ee-2be1-4c01-8827-c13788233c24"
     },
+    operationActivity,
     profile: "remote",
     presentationStore: createPresentationStore()
   });
@@ -240,6 +268,124 @@ test("remote MCP exposes private image tools only when the asset scope is config
       (finalized.structuredContent as { result: { src: string } }).result.src,
       /^\/api\/presentation-images\//
     );
+    assert.deepEqual(
+      operationActivity.started.map(({ target, toolName }) => ({ target, toolName })),
+      [
+        { target: { kind: "presentation" }, toolName: "slidex_prepare_presentation_image_upload" },
+        { target: { kind: "presentation" }, toolName: "slidex_finalize_presentation_image_upload" }
+      ]
+    );
+    assert.equal(operationActivity.completed.every((item) => item.completedRevision === undefined), true);
+  } finally {
+    await connection.close();
+  }
+});
+
+test("remote writes map every mutation to a safe visual target and sanitize conflicts", async () => {
+  const operationActivity = createOperationActivityStore();
+  const connection = await connectMcp({
+    enablePresentationWrites: true,
+    operationActivity,
+    profile: "remote",
+    presentationStore: createPresentationStore()
+  });
+
+  try {
+    const calls = [
+      {
+        arguments: { expectedRevision: 4, presentationId, slideIndex: 0, type: "ShapeRectangle" },
+        name: "slidex_add_block"
+      },
+      {
+        arguments: { blockIndex: 0, expectedRevision: 4, presentationId, slideIndex: 0, text: "Updated" },
+        name: "slidex_update_block"
+      },
+      {
+        arguments: { blockIndex: 0, expectedRevision: 4, presentationId, slideIndex: 0 },
+        name: "slidex_delete_block"
+      },
+      {
+        arguments: { blockIndex: 0, expectedRevision: 4, offset: 2, presentationId, slideIndex: 0 },
+        name: "slidex_duplicate_block"
+      },
+      {
+        arguments: { expectedRevision: 4, fromIndex: 0, presentationId, slideIndex: 0, toIndex: 0 },
+        name: "slidex_reorder_block"
+      },
+      {
+        arguments: { expectedRevision: 4, layoutId: "title", presentationId },
+        name: "slidex_add_slide_from_layout"
+      },
+      {
+        arguments: { expectedRevision: 4, layoutId: "title", presentationId, slideIndex: 0 },
+        name: "slidex_replace_slide_with_layout"
+      }
+    ];
+
+    for (const call of calls) {
+      const result = await connection.client.callTool(call);
+      assert.equal(result.isError, undefined, `${call.name} succeeds`);
+    }
+
+    assert.deepEqual(
+      operationActivity.started.map(({ target, toolName }) => ({ kind: target.kind, toolName })),
+      [
+        { kind: "slide", toolName: "slidex_add_block" },
+        { kind: "block", toolName: "slidex_update_block" },
+        { kind: "block", toolName: "slidex_delete_block" },
+        { kind: "block", toolName: "slidex_duplicate_block" },
+        { kind: "block", toolName: "slidex_reorder_block" },
+        { kind: "presentation", toolName: "slidex_add_slide_from_layout" },
+        { kind: "slide", toolName: "slidex_replace_slide_with_layout" }
+      ]
+    );
+    assert.deepEqual(
+      operationActivity.completed.map(({ target }) => target?.kind),
+      ["block", "block", "slide", "block", "block", "slide", "slide"]
+    );
+
+    const conflict = await connection.client.callTool({
+      arguments: { expectedRevision: 3, presentationId, source },
+      name: "slidex_save_presentation"
+    });
+    assert.equal(conflict.isError, true);
+    assert.equal(operationActivity.failed.at(-1)?.errorCode, "revision_conflict");
+    assert.ok(!JSON.stringify(operationActivity.failed).includes("Current revision"));
+  } finally {
+    await connection.close();
+  }
+});
+
+test("activity recording failures never fail an authorized revision-safe write", async () => {
+  const unavailableActivity: McpOperationActivityStore = {
+    async completeOperation() {
+      throw new Error("activity database unavailable");
+    },
+    async failOperation() {
+      throw new Error("activity database unavailable");
+    },
+    async startOperation() {
+      throw new Error("activity database unavailable");
+    }
+  };
+  const connection = await connectMcp({
+    enablePresentationWrites: true,
+    operationActivity: unavailableActivity,
+    profile: "remote",
+    presentationStore: createPresentationStore()
+  });
+
+  try {
+    const result = await connection.client.callTool({
+      arguments: { expectedRevision: 4, presentationId, source },
+      name: "slidex_save_presentation"
+    });
+    assert.equal(result.isError, undefined);
+    assert.equal(
+      (result.structuredContent as { result: { presentation: { sourceRevision: number } } })
+        .result.presentation.sourceRevision,
+      5
+    );
   } finally {
     await connection.close();
   }
@@ -276,6 +422,31 @@ function createPresentationStore(): McpPresentationStore {
         title: "MCP contract",
         updatedAt: "2026-07-16T00:00:01.000Z"
       };
+    }
+  };
+}
+
+function createOperationActivityStore(): McpOperationActivityStore & {
+  completed: CompleteMcpOperationInput[];
+  failed: FailMcpOperationInput[];
+  started: StartMcpOperationInput[];
+} {
+  const completed: CompleteMcpOperationInput[] = [];
+  const failed: FailMcpOperationInput[] = [];
+  const started: StartMcpOperationInput[] = [];
+  return {
+    completed,
+    failed,
+    started,
+    async completeOperation(input) {
+      completed.push(input);
+    },
+    async failOperation(input) {
+      failed.push(input);
+    },
+    async startOperation(input) {
+      started.push(input);
+      return `operation-${started.length}`;
     }
   };
 }
@@ -327,7 +498,7 @@ function createImageUploadStore(): McpPresentationImageUploadStore {
 
 async function connectMcp(options: Parameters<typeof createSlideXMcpServer>[0]) {
   const server = createSlideXMcpServer(options);
-  const client = new Client({ name: "slidex-contract-test", version: "0.4.0" });
+  const client = new Client({ name: "slidex-contract-test", version: "0.5.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);

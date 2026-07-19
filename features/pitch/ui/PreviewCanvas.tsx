@@ -26,6 +26,9 @@ import { CanvasBlockDock, CanvasSlideAddControls, CanvasSlideNav } from "@/featu
 import { MobileEdgePanelHandles } from "@/features/pitch/ui/preview/MobileCanvasChrome";
 import { CanvasContextMenu } from "@/features/pitch/ui/preview/CanvasContextMenu";
 import { CanvasSelectionLayer } from "@/features/pitch/ui/preview/CanvasSelectionLayer";
+import { RemoteMcpActivityOverlay } from "@/features/pitch/ui/preview/RemoteMcpActivityOverlay";
+import { RemoteMcpActivityRail } from "@/features/pitch/ui/preview/RemoteMcpActivityRail";
+import type { RemoteMcpOperation } from "@/features/pitch/domain/remoteMcpOperation";
 import { PreviewPane } from "@/features/pitch/ui/preview/PreviewPane";
 import { useCanvasContextMenu } from "@/features/pitch/ui/preview/interaction/useCanvasContextMenu";
 import { useCanvasInteractionEngine } from "@/features/pitch/ui/preview/interaction/useCanvasInteractionEngine";
@@ -70,6 +73,8 @@ type PreviewCanvasProps = {
   onUpdateBlockFrames: (updates: BlockFramePatch[]) => void;
   onUseSelectedImageAsBackground: () => void;
   replayNonce: number;
+  remoteMcpActivityWarning?: string | null;
+  remoteMcpOperations: readonly RemoteMcpOperation[];
   sceneCount: number;
   scenes: MotionDocScene[];
   selectedBlockIndex: number | null;
@@ -114,6 +119,8 @@ export function PreviewCanvas({
   onInsertSlideNearActive,
   onCanvasToolChange,
   replayNonce,
+  remoteMcpActivityWarning,
+  remoteMcpOperations,
   sceneCount,
   scenes,
   selectedBlockIndex,
@@ -596,6 +603,12 @@ export function PreviewCanvas({
         onPreviousSlide={onPreviousSlide}
         sceneCount={sceneCount}
       />
+      <RemoteMcpActivityRail activities={remoteMcpOperations} />
+      {remoteMcpActivityWarning ? (
+        <div className="pointer-events-none absolute bottom-4 right-4 z-[60] max-w-[320px] rounded-[7px] border border-dashed border-[#8b5cf6]/55 bg-[#24133f]/92 px-2.5 py-1.5 text-[10px] leading-4 text-[#ddd6fe]/78">
+          {remoteMcpActivityWarning}
+        </div>
+      ) : null}
       <MobileEdgePanelHandles onOpenInspector={onOpenMobileInspector} onOpenLayers={onOpenMobileLayers} />
 
       <div
@@ -718,6 +731,12 @@ export function PreviewCanvas({
                         selectedBlockIndices={selectedBlockIndices}
                       />
                     ) : null}
+                    <RemoteMcpActivityOverlay
+                      activeSlideIndex={activeSlideIndex}
+                      activities={remoteMcpOperations}
+                      scene={slideScene}
+                      slideIndex={slide.index}
+                    />
                     {isActiveSlideFrame && contextMenu ? (
                       <CanvasContextMenu
                         canGroup={selectedBlockIndices.length > 1}
