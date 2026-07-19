@@ -25,6 +25,15 @@ test("purple MCP frames stay visual-only while selection and dragging remain int
   await expect(completedFrame).toBeVisible();
   await expect(completedFrame).toHaveAttribute("data-mcp-completed-revision", "5");
 
+  const activityRail = page.locator("[data-mcp-activity-rail]");
+  await expect(activityRail).toBeVisible();
+  expect(await activityRail.evaluate((element) => getComputedStyle(element).pointerEvents)).toBe("none");
+  const [railBox, canvasBox] = await Promise.all([activityRail.boundingBox(), page.locator("#canvas-v4").boundingBox()]);
+  expect(railBox).not.toBeNull();
+  expect(canvasBox).not.toBeNull();
+  expect(Math.abs((railBox!.x + railBox!.width / 2) - (canvasBox!.x + canvasBox!.width / 2))).toBeLessThan(2);
+  expect(Math.abs((railBox!.y + railBox!.height / 2) - (canvasBox!.y + canvasBox!.height / 2))).toBeLessThan(2);
+
   const blockControl = page.locator('[data-frame-control][data-block-index="0"]');
   await blockControl.click({ position: { x: 20, y: 20 } });
   const beforeLeft = await blockControl.evaluate((element) => (element as HTMLElement).style.left);
