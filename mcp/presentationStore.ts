@@ -1,12 +1,3 @@
-export type McpPresentation = {
-  id: string;
-  lastOpenedAt?: string;
-  source: string;
-  sourceRevision: number;
-  title: string;
-  updatedAt: string;
-};
-
 export type McpPresentationSummary = {
   id: string;
   lastOpenedAt: string;
@@ -14,6 +5,12 @@ export type McpPresentationSummary = {
   title: string;
   updatedAt: string;
 };
+
+export type McpPresentation = McpPresentationSummary & {
+  source: string;
+};
+
+export type SavedMcpPresentation = Omit<McpPresentationSummary, "lastOpenedAt">;
 
 export type SaveMcpPresentationInput = {
   expectedRevision: number;
@@ -23,6 +20,7 @@ export type SaveMcpPresentationInput = {
 
 export interface McpPresentationStore {
   getPresentation(presentationId?: string): Promise<McpPresentation>;
+  getPresentationSummary(presentationId?: string): Promise<McpPresentationSummary>;
   listPresentations(limit?: number): Promise<McpPresentationSummary[]>;
-  savePresentation(input: SaveMcpPresentationInput): Promise<McpPresentation>;
+  savePresentation(input: SaveMcpPresentationInput): Promise<SavedMcpPresentation>;
 }

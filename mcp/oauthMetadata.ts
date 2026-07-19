@@ -1,7 +1,7 @@
 import { mcpOAuthScopes } from "@/mcp/oauth";
 
 export function mcpResourceUrl(origin: string) {
-  return new URL("/mcp/", origin).toString();
+  return new URL("/mcp", origin).toString();
 }
 
 export function mcpProtectedResourceMetadata(origin: string) {

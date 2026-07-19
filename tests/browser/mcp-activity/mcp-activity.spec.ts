@@ -1,9 +1,10 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 
 const ownerId = "729c3ccc-09e6-47d8-a49f-66a8395c041c";
 const presentationId = "3ffb8bd0-f055-415d-8ec5-29c7effdecd2";
 
-test("purple MCP frames stay visual-only while selection and dragging remain interactive", async ({ context, page }) => {
+test("purple MCP frames and Canvas cursor stay visual-only while editing remains interactive", async ({ context, page, request }) => {
+  await request.post("http://127.0.0.1:54329/__test/activity-mode?value=mixed");
   await context.addCookies([{
     domain: "127.0.0.1",
     name: "sb-127-auth-token",
@@ -14,16 +15,32 @@ test("purple MCP frames stay visual-only while selection and dragging remain int
 
   await page.goto(`/workspace/pitch/?presentation=${presentationId}`);
 
-  const runningFrame = page.locator('[data-mcp-node-id="block-target"][data-mcp-operation-status="running"]');
+  const runningFrame = page.locator('[data-mcp-operation-id="1d256aac-2138-4e55-8d95-eb879bc451dc"][data-mcp-operation-status="running"]:not([data-mcp-cursor-state])');
   await expect(runningFrame).toBeVisible();
   await expect(runningFrame).toContainText("AI · Codex");
   await expect(runningFrame).toHaveCSS("border-top-color", "rgb(139, 92, 246)");
   await expect(runningFrame).toHaveCSS("border-top-style", "solid");
   expect(await runningFrame.evaluate((element) => getComputedStyle(element.parentElement!).pointerEvents)).toBe("none");
 
-  const completedFrame = page.locator('[data-mcp-node-id="block-target"][data-mcp-operation-status="completed"]');
+  const completedFrame = page.locator('[data-mcp-operation-id="3c9adb49-b004-4421-b506-e067e87f453c"][data-mcp-operation-status="completed"]:not([data-mcp-cursor-state])');
   await expect(completedFrame).toBeVisible();
   await expect(completedFrame).toHaveAttribute("data-mcp-completed-revision", "5");
+
+  const cursorLayer = page.locator("[data-mcp-cursor-layer]");
+  const cursor = cursorLayer.locator('[data-mcp-operation-id="1d256aac-2138-4e55-8d95-eb879bc451dc"]');
+  const target = cursorLayer.locator("..").locator('[data-motion-doc-node-id="node.with[special]:cursor"]');
+  await expect(cursor).toHaveAttribute("data-mcp-cursor-position-source", "dom");
+  await expect(cursor).toHaveAttribute("data-mcp-cursor-state", "running");
+  await expect(target).toHaveCount(1);
+  await expect(cursorLayer.locator("[data-mcp-cursor-state]")).toHaveCount(1);
+  expect(await cursorLayer.evaluate((element) => getComputedStyle(element).pointerEvents)).toBe("none");
+  await expect.poll(async () => cursorPositionError(cursor, target, cursorLayer)).toBeLessThan(0.75);
+
+  await page.locator("[data-canvas-zoom-trigger]").click();
+  await page.locator('[data-canvas-zoom-option="1"]').click();
+  await expect.poll(async () => cursorPositionError(cursor, target, cursorLayer)).toBeLessThan(0.75);
+  await page.setViewportSize({ width: 1180, height: 760 });
+  await expect.poll(async () => cursorPositionError(cursor, target, cursorLayer)).toBeLessThan(0.75);
 
   const activityRail = page.locator("[data-mcp-activity-rail]");
   await expect(activityRail).toBeVisible();
@@ -48,7 +65,77 @@ test("purple MCP frames stay visual-only while selection and dragging remain int
     .not.toBe(beforeLeft);
   await page.keyboard.press("ArrowRight");
   await expect(runningFrame).toBeVisible();
+  await page.locator("[data-canvas-next-slide]").click();
+  await expect(page.locator("[data-mcp-cursor-layer] [data-mcp-cursor-state]")).toHaveCount(0);
 });
+
+test("Canvas cursor renders completed and failed terminal states", async ({ context, page, request }) => {
+  await context.addCookies([{
+    domain: "127.0.0.1",
+    name: "sb-127-auth-token",
+    path: "/",
+    sameSite: "Lax",
+    value: sessionCookieValue()
+  }]);
+
+  await request.post("http://127.0.0.1:54329/__test/activity-mode?value=success");
+  await page.goto(`/workspace/pitch/?presentation=${presentationId}`);
+  await expect(page.locator('[data-mcp-cursor-state="settled-success"]')).toBeVisible();
+
+  await request.post("http://127.0.0.1:54329/__test/activity-mode?value=failure");
+  await page.reload();
+  const failedCursor = page.locator('[data-mcp-cursor-state="settled-failure"]');
+  await expect(failedCursor).toBeVisible();
+  await expect(failedCursor).toHaveAttribute("data-mcp-operation-status", "failed");
+  await expect(page.locator('[data-mcp-operation-status="failed"]:not([data-mcp-cursor-state])')).toHaveCSS("border-top-style", "dashed");
+});
+
+test("Canvas cursor respects reduced motion and both non-DOM fallbacks", async ({ context, page, request }) => {
+  await context.addCookies([{
+    domain: "127.0.0.1",
+    name: "sb-127-auth-token",
+    path: "/",
+    sameSite: "Lax",
+    value: sessionCookieValue()
+  }]);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+
+  await request.post("http://127.0.0.1:54329/__test/activity-mode?value=running");
+  await page.goto(`/workspace/pitch/?presentation=${presentationId}`);
+  const reducedCursor = page.locator('[data-mcp-cursor-state="running"]');
+  await expect(reducedCursor).toBeVisible();
+  await expect(reducedCursor).toHaveCSS("transition-duration", "0s");
+
+  await request.post("http://127.0.0.1:54329/__test/activity-mode?value=motion-doc");
+  await page.reload();
+  await expect(page.locator('[data-mcp-cursor-position-source="motion-doc"]')).toBeVisible();
+
+  await request.post("http://127.0.0.1:54329/__test/activity-mode?value=center");
+  await page.reload();
+  await expect(page.locator('[data-mcp-cursor-position-source="slide-center"]')).toBeVisible();
+});
+
+async function cursorPositionError(
+  cursor: Locator,
+  target: Locator,
+  layer: Locator
+) {
+  const [cursorPosition, targetBox, layerBox] = await Promise.all([
+    cursor.evaluate((element) => ({
+      x: Number.parseFloat((element as HTMLElement).style.left),
+      y: Number.parseFloat((element as HTMLElement).style.top)
+    })),
+    target.boundingBox(),
+    layer.boundingBox()
+  ]);
+  if (!targetBox || !layerBox) return Number.POSITIVE_INFINITY;
+  const expectedX = ((targetBox.x - layerBox.x + targetBox.width / 2) / Math.max(layerBox.width, 1)) * 100;
+  const expectedY = ((targetBox.y - layerBox.y + targetBox.height / 2) / Math.max(layerBox.height, 1)) * 100;
+  return Math.max(
+    Math.abs(cursorPosition.x - expectedX),
+    Math.abs(cursorPosition.y - expectedY)
+  );
+}
 
 function sessionCookieValue() {
   const now = Math.floor(Date.now() / 1000);

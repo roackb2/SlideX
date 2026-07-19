@@ -3,7 +3,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/common/lib/supabase/database.types";
 import type {
   McpPresentation,
+  McpPresentationSummary,
   McpPresentationStore,
+  SavedMcpPresentation,
   SaveMcpPresentationInput
 } from "@/mcp/presentationStore";
 
@@ -13,7 +15,8 @@ const presentationSummaryColumns = "id,title,source_revision,updated_at,last_ope
 export class SupabaseMcpPresentationStore implements McpPresentationStore {
   constructor(
     private readonly client: SupabaseClient<Database>,
-    private readonly userId: string
+    private readonly userId: string,
+    private readonly observeQueryDuration?: (durationMs: number) => void
   ) {}
 
   async getPresentation(presentationId?: string) {
@@ -26,7 +29,7 @@ export class SupabaseMcpPresentationStore implements McpPresentationStore {
       ? query.eq("id", presentationId)
       : query.order("last_opened_at", { ascending: false }).limit(1);
 
-    const { data, error } = await query.maybeSingle();
+    const { data, error } = await this.measureQuery(() => query.maybeSingle());
 
     if (error) throw error;
     if (!data) {
@@ -39,34 +42,54 @@ export class SupabaseMcpPresentationStore implements McpPresentationStore {
     return toMcpPresentation(data);
   }
 
+  async getPresentationSummary(presentationId?: string) {
+    let query = this.client
+      .from("presentations")
+      .select(presentationSummaryColumns)
+      .eq("user_id", this.userId);
+
+    query = presentationId
+      ? query.eq("id", presentationId)
+      : query.order("last_opened_at", { ascending: false }).limit(1);
+
+    const { data, error } = await this.measureQuery(() => query.maybeSingle());
+
+    if (error) throw error;
+    if (!data) {
+      throw new Error(
+        presentationId
+          ? "Presentation not found or not accessible."
+          : "No presentation is available. Open or create a presentation in SlideX first."
+      );
+    }
+    return toMcpPresentationSummary(data);
+  }
+
   async listPresentations(limit = 20) {
     const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 50);
-    const { data, error } = await this.client
+    const query = this.client
       .from("presentations")
       .select(presentationSummaryColumns)
       .eq("user_id", this.userId)
       .order("last_opened_at", { ascending: false })
       .limit(safeLimit);
+    const { data, error } = await this.measureQuery(() => query);
 
     if (error) throw error;
-    return data.map((row) => ({
-      id: row.id,
-      lastOpenedAt: row.last_opened_at,
-      sourceRevision: row.source_revision,
-      title: row.title,
-      updatedAt: row.updated_at
-    }));
+    return data.map(toMcpPresentationSummary);
   }
 
   async savePresentation(input: SaveMcpPresentationInput) {
-    const { data, error } = await this.client.rpc(
-      "mcp_compare_and_swap_presentation_document",
-      {
-        actor_user_id: this.userId,
-        expected_source_revision: input.expectedRevision,
-        next_source: input.source,
-        target_presentation_id: input.presentationId
-      }
+    const { data, error } = await this.measureQuery(() =>
+      this.client.rpc(
+        "mcp_compare_and_swap_presentation_document",
+        {
+          actor_user_id: this.userId,
+          expected_source_revision: input.expectedRevision,
+          next_source: input.source,
+          target_presentation_id: input.presentationId
+        }
+      )
     );
 
     if (error?.code === "40001") {
@@ -95,11 +118,19 @@ export class SupabaseMcpPresentationStore implements McpPresentationStore {
 
     return {
       id: result.presentation_id,
-      source: input.source,
       sourceRevision: result.source_revision,
       title: result.title,
       updatedAt: result.updated_at
-    } satisfies McpPresentation;
+    } satisfies SavedMcpPresentation;
+  }
+
+  private async measureQuery<T>(callback: () => PromiseLike<T>) {
+    const startedAt = performance.now();
+    try {
+      return await callback();
+    } finally {
+      this.observeQueryDuration?.(performance.now() - startedAt);
+    }
   }
 }
 
@@ -119,4 +150,20 @@ function toMcpPresentation(row: {
     title: row.title,
     updatedAt: row.updated_at
   } satisfies McpPresentation;
+}
+
+function toMcpPresentationSummary(row: {
+  id: string;
+  last_opened_at: string;
+  source_revision: number;
+  title: string;
+  updated_at: string;
+}) {
+  return {
+    id: row.id,
+    lastOpenedAt: row.last_opened_at,
+    sourceRevision: row.source_revision,
+    title: row.title,
+    updatedAt: row.updated_at
+  } satisfies McpPresentationSummary;
 }

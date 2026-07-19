@@ -6,12 +6,12 @@ import {
   mcpProtectedResourceMetadata
 } from "@/mcp/oauthMetadata";
 
-test("MCP OAuth metadata publishes direct trailing-slash routes", () => {
+test("MCP OAuth metadata publishes a canonical resource and direct routes", () => {
   const origin = "https://slidexdeck.com";
   const authorization = mcpAuthorizationServerMetadata(origin);
   const resource = mcpProtectedResourceMetadata(origin);
 
-  assert.equal(resource.resource, "https://slidexdeck.com/mcp/");
+  assert.equal(resource.resource, "https://slidexdeck.com/mcp");
   assert.equal(authorization.authorization_endpoint, "https://slidexdeck.com/mcp/authorize/");
   assert.equal(
     authorization.registration_endpoint,

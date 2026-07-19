@@ -11,22 +11,26 @@ import type {
 
 type SupabaseOperationActivityContext = {
   clientId: string;
-  clientName: string;
+  clientName?: string;
+  resolveClientName?: () => Promise<string | null | undefined>;
   userId: string;
 };
 
 export class SupabaseMcpOperationActivityStore implements McpOperationActivityStore {
+  private clientNamePromise?: Promise<string>;
+
   constructor(
     private readonly client: SupabaseClient<Database>,
     private readonly context: SupabaseOperationActivityContext
   ) {}
 
   async startOperation(input: StartMcpOperationInput) {
+    const clientName = await this.resolveClientName();
     const { data, error } = await this.client
       .from("mcp_operation_events")
       .insert({
         client_id: this.context.clientId,
-        client_name: this.context.clientName,
+        client_name: clientName,
         presentation_id: input.presentationId,
         status: "running",
         tool_name: input.toolName,
@@ -38,6 +42,16 @@ export class SupabaseMcpOperationActivityStore implements McpOperationActivitySt
 
     if (error) throw error;
     return data.id;
+  }
+
+  private resolveClientName() {
+    if (!this.clientNamePromise) {
+      this.clientNamePromise = Promise.resolve(this.context.clientName)
+        .then((clientName) => clientName ?? this.context.resolveClientName?.())
+        .then((clientName) => clientName?.trim() || "MCP client")
+        .catch(() => "MCP client");
+    }
+    return this.clientNamePromise;
   }
 
   async completeOperation(input: CompleteMcpOperationInput) {

@@ -6,7 +6,9 @@ import { motionDocAddBlockTypes } from "@/core/motion-doc/application/motionDocA
 import { getMotionDocMcpSchema } from "@/mcp/motionDocMcpSchema";
 import type { McpPresentationStore } from "@/mcp/presentationStore";
 import {
+  presentationSummary,
   readWithPresentation,
+  readWithPresentationSummary,
   runAsyncMcpTool
 } from "@/mcp/remotePresentationHelpers";
 import {
@@ -47,17 +49,27 @@ export function registerRemotePresentationReadTools(
     {
       title: "Get SlideX Presentation",
       description:
-        "Read one authenticated SlideX presentation and its current source revision. Omit presentationId to select the presentation most recently opened in SlideX.",
-      inputSchema: { presentationId: presentationIdSchema }
+        "Read one authenticated SlideX presentation summary and its current source revision. Set includeSource to true only when the complete MotionDoc source is required. Omit presentationId to select the presentation most recently opened in SlideX.",
+      inputSchema: {
+        includeSource: z.boolean().default(false),
+        presentationId: presentationIdSchema
+      }
     },
-    ({ presentationId }) =>
+    ({ includeSource, presentationId }) =>
       runAsyncMcpTool(async () => {
-        const presentation = await store.getPresentation(presentationId);
+        const presentation = includeSource
+          ? await store.getPresentation(presentationId)
+          : await store.getPresentationSummary(presentationId);
         return {
           autoSelected: presentationId === undefined,
           presentation
         };
-      })
+      }, (result) => ({
+        autoSelected: result.autoSelected,
+        presentation: "source" in result.presentation
+          ? presentationSummary(result.presentation)
+          : result.presentation
+      }))
   );
 
   server.registerTool(
@@ -165,5 +177,5 @@ function readCatalog<T>(
   presentationId: string | undefined,
   read: () => T
 ) {
-  return readWithPresentation(store, presentationId, () => read());
+  return readWithPresentationSummary(store, presentationId, () => read());
 }

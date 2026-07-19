@@ -198,8 +198,16 @@ Example MCP client configuration:
 Remote MCP endpoint:
 
 ```text
-https://slidexdeck.com/mcp/
+https://slidexdeck.com/mcp
 ```
+
+Remote MCP OAuth requires separate server-only `MCP_OAUTH_RATE_LIMIT_SECRET` and
+`MCP_OAUTH_AUDIT_HMAC_SECRET` values with at least 32 random bytes each. Apply
+pending Supabase migrations before deploying code that uses atomic token
+families, one-time consent requests, and deidentified security events. OAuth
+registration, consent, and token endpoints are rate limited; the normal `/mcp`
+transport is not. Successful authenticated MCP responses expose only aggregate
+`auth`, `store`, `handler`, and `total` durations through `Server-Timing`.
 
 ## Validation
 
@@ -207,3 +215,13 @@ https://slidexdeck.com/mcp/
 npm run lint
 npm run build
 ```
+
+After the OAuth migration is applied to the target environment, run the real
+Next HTTP bearer chain with:
+
+```bash
+REMOTE_MCP_SMOKE_BASE_URL=https://slidexdeck.com npm run mcp:test:remote
+```
+
+Without `REMOTE_MCP_SMOKE_BASE_URL`, the smoke test keeps its store-level and
+in-memory MCP coverage and reports the HTTP bearer chain as skipped.

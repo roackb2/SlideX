@@ -101,6 +101,7 @@ export function PitchHeader({
           <Popover.Trigger asChild>
             <button
               className="hidden sm:flex h-8.5 min-w-[76px] items-center justify-between gap-1 rounded-xl bg-white/[0.04] px-2.5 text-xs font-semibold text-neutral-300 transition-colors hover:bg-white/[0.08] hover:text-white outline-none focus-visible:ring-1 focus-visible:ring-white/50"
+              data-canvas-zoom-trigger
               title={tx("Zoom Level")}
               type="button"
             >
@@ -125,6 +126,7 @@ export function PitchHeader({
                       setZoomLevel(option);
                       setIsZoomOpen(false);
                     }}
+                    data-canvas-zoom-option={option}
                     type="button"
                   >
                     <span>{option === "fit" ? tx("Fit to Screen") : `${option * 100}%`}</span>

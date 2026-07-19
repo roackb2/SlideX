@@ -9,7 +9,11 @@ import {
   type McpOperationActivityStore,
   type McpOperationTarget
 } from "@/mcp/operationActivity";
-import type { McpPresentation, McpPresentationStore } from "@/mcp/presentationStore";
+import type {
+  McpPresentation,
+  McpPresentationStore,
+  McpPresentationSummary
+} from "@/mcp/presentationStore";
 
 type MotionDocMutation = { source: string; [key: string]: unknown };
 
@@ -51,10 +55,14 @@ export async function mutatePresentation(
 
       const mutation = mutate(current.source);
       assertValidSource(mutation.source);
-      const presentation = await store.savePresentation({
+      const savedPresentation = await store.savePresentation({
         expectedRevision,
         presentationId: current.id,
         source: mutation.source
+      });
+      const presentation = presentationSummary({
+        ...savedPresentation,
+        lastOpenedAt: current.lastOpenedAt
       });
       const completedTarget = activityOptions?.completedTarget
         ? resolveCompletedActivityTarget(activityOptions.completedTarget, {
@@ -77,7 +85,7 @@ export async function mutatePresentation(
       return {
         ...details,
         autoSelected: presentationId === undefined,
-        presentation
+        presentation: presentationSummary(presentation)
       };
     } catch (error) {
       await safelyFailMcpOperation(activityOptions?.activity, operationId, error);
@@ -125,7 +133,24 @@ export function readWithPresentation<T>(
   });
 }
 
-export function presentationSummary(presentation: McpPresentation) {
+export function readWithPresentationSummary<T>(
+  store: McpPresentationStore,
+  presentationId: string | undefined,
+  read: (presentation: McpPresentationSummary) => T
+) {
+  return runAsyncMcpTool(async () => {
+    const presentation = await store.getPresentationSummary(presentationId);
+    return {
+      autoSelected: presentationId === undefined,
+      presentation,
+      result: read(presentation)
+    };
+  });
+}
+
+export function presentationSummary(
+  presentation: McpPresentationSummary
+): McpPresentationSummary {
   return {
     id: presentation.id,
     lastOpenedAt: presentation.lastOpenedAt,
@@ -141,11 +166,13 @@ export function assertValidSource(source: string) {
   }
 }
 
-export async function runAsyncMcpTool<T>(
-  callback: () => Promise<T>
+export async function runAsyncMcpTool<T, Structured = T>(
+  callback: () => Promise<T>,
+  toStructuredResult?: (result: T) => Structured
 ): Promise<CallToolResult> {
   try {
-    return jsonMcpResult(await callback());
+    const result = await callback();
+    return jsonMcpResult(result, toStructuredResult?.(result) ?? result);
   } catch (error) {
     return {
       content: [

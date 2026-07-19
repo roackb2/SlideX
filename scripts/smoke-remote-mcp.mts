@@ -1,14 +1,19 @@
 import { createHash } from "node:crypto";
 
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/common/lib/supabase/database.types";
-import { SupabaseMcpOAuthStore } from "@/mcp/supabaseOAuthStore";
+import { createSlideXMcpServer } from "@/mcp/server";
+import { SupabaseMcpOAuthStore, type McpTokenSet } from "@/mcp/supabaseOAuthStore";
 import { SupabaseMcpPresentationStore } from "@/mcp/supabasePresentationStore";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const httpBaseUrl = normalizeOptionalBaseUrl(process.env.REMOTE_MCP_SMOKE_BASE_URL);
 if (!supabaseUrl || !serviceRoleKey || !publishableKey) {
   throw new Error("Remote MCP smoke requires Supabase URL, publishable, and service-role variables.");
 }
@@ -57,30 +62,145 @@ try {
 
   const verifier = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~";
   const challenge = createHash("sha256").update(verifier).digest("base64url");
-  const resource = "https://slidexdeck.com/mcp/";
+  const resource = httpBaseUrl
+    ? new URL("/mcp", httpBaseUrl).toString()
+    : "https://slidexdeck.com/mcp";
+  const legacyResource = `${resource}/`;
   const code = await oauthStore.issueAuthorizationCode({
     client: oauthClient,
     codeChallenge: challenge,
     redirectUri: oauthClient.redirect_uris[0],
-    resource,
+    resource: legacyResource,
     scopes: ["presentations:read", "presentations:write"],
     userId: createdUser.user.id
   });
-  const tokens = await oauthStore.exchangeAuthorizationCode({
-    clientId: oauthClient.client_id,
-    code,
-    codeVerifier: verifier,
-    redirectUri: oauthClient.redirect_uris[0],
-    resource
-  });
+  const wrongVerifier = "~".repeat(43);
+  await assertRejectsWithMessage(
+    () => httpBaseUrl
+      ? exchangeAuthorizationCodeOverHttp({
+          baseUrl: httpBaseUrl,
+          clientId: oauthClient.client_id,
+          code,
+          codeVerifier: wrongVerifier,
+          redirectUri: oauthClient.redirect_uris[0],
+          resource: legacyResource
+        })
+      : oauthStore.exchangeAuthorizationCode({
+          clientId: oauthClient.client_id,
+          code,
+          codeChallenge: createHash("sha256").update(wrongVerifier).digest("base64url"),
+          redirectUri: oauthClient.redirect_uris[0],
+          resource: legacyResource
+        }),
+    "invalid_grant"
+  );
+  await assertRejectsWithMessage(
+    () => httpBaseUrl
+      ? exchangeAuthorizationCodeOverHttp({
+          baseUrl: httpBaseUrl,
+          clientId: oauthClient.client_id,
+          code,
+          codeVerifier: verifier,
+          redirectUri: `${oauthClient.redirect_uris[0]}?modified=1`,
+          resource: legacyResource
+        })
+      : oauthStore.exchangeAuthorizationCode({
+          clientId: oauthClient.client_id,
+          code,
+          codeChallenge: challenge,
+          redirectUri: `${oauthClient.redirect_uris[0]}?modified=1`,
+          resource: legacyResource
+        }),
+    "invalid_grant"
+  );
+  if (httpBaseUrl) {
+    await assertTokenError(httpBaseUrl, {
+      client_id: oauthClient.client_id,
+      code,
+      grant_type: "authorization_code",
+      redirect_uri: oauthClient.redirect_uris[0],
+      resource: legacyResource
+    }, "invalid_grant");
+  }
+  const tokens = httpBaseUrl
+    ? await exchangeAuthorizationCodeOverHttp({
+        baseUrl: httpBaseUrl,
+        clientId: oauthClient.client_id,
+        code,
+        codeVerifier: verifier,
+        redirectUri: oauthClient.redirect_uris[0],
+        resource: legacyResource
+      })
+    : await oauthStore.exchangeAuthorizationCode({
+        clientId: oauthClient.client_id,
+        code,
+        codeChallenge: challenge,
+        redirectUri: oauthClient.redirect_uris[0],
+        resource: legacyResource
+      });
   assertEqual(
     (await oauthStore.verifyAccessToken(tokens.access_token, resource)).userId,
     createdUser.user.id
   );
+  assertEqual(
+    (await oauthStore.verifyAccessToken(tokens.access_token, legacyResource)).resource,
+    resource
+  );
   await assertRejects(() => oauthStore.verifyAccessToken(tokens.access_token, `${resource}/wrong`));
-  await oauthStore.revokeToken(tokens.access_token);
-  await assertRejects(() => oauthStore.verifyAccessToken(tokens.access_token, resource));
-  checkpoint("oauth verified");
+
+  await assertRejectsWithMessage(
+    () => httpBaseUrl
+      ? refreshTokenOverHttp({
+          baseUrl: httpBaseUrl,
+          clientId: oauthClient.client_id,
+          refreshToken: tokens.refresh_token,
+          resource: `${resource}/wrong`
+        })
+      : oauthStore.exchangeRefreshToken({
+          clientId: oauthClient.client_id,
+          refreshToken: tokens.refresh_token,
+          resource: `${resource}/wrong`
+        }),
+    httpBaseUrl ? "invalid_target" : "invalid_grant"
+  );
+  await assertRejectsWithMessage(
+    () => httpBaseUrl
+      ? refreshTokenOverHttp({
+          baseUrl: httpBaseUrl,
+          clientId: oauthClient.client_id,
+          refreshToken: tokens.refresh_token,
+          resource,
+          scope: "presentations:read presentations:write presentation-assets:write"
+        })
+      : oauthStore.exchangeRefreshToken({
+          clientId: oauthClient.client_id,
+          refreshToken: tokens.refresh_token,
+          resource,
+          scopes: [
+            "presentations:read",
+            "presentations:write",
+            "presentation-assets:write"
+          ]
+        }),
+    "invalid_scope"
+  );
+
+  const firstRefresh = httpBaseUrl
+    ? await refreshTokenOverHttp({
+        baseUrl: httpBaseUrl,
+        clientId: oauthClient.client_id,
+        refreshToken: tokens.refresh_token,
+        resource: legacyResource
+      })
+    : await oauthStore.exchangeRefreshToken({
+        clientId: oauthClient.client_id,
+        refreshToken: tokens.refresh_token,
+        resource: legacyResource
+      });
+  assertEqual(
+    (await oauthStore.verifyAccessToken(firstRefresh.access_token, resource)).userId,
+    createdUser.user.id
+  );
 
   const initialSource = `# Remote MCP smoke
 
@@ -104,6 +224,159 @@ try {
   await assertRejects(() => otherOwnerStore.getPresentation(presentationId));
   await assertRejects(() => otherOwnerStore.getPresentation());
   checkpoint("ownership and automatic discovery verified");
+
+  const refreshedAuth = await oauthStore.verifyAccessToken(
+    firstRefresh.access_token,
+    resource
+  );
+  const mcpConnection = httpBaseUrl
+    ? await connectRemoteHttpMcp(httpBaseUrl, firstRefresh.access_token)
+    : await connectRemoteMcp(
+        new SupabaseMcpPresentationStore(admin, refreshedAuth.userId),
+        refreshedAuth.scopes.includes("presentations:write")
+      );
+  try {
+    const mcpResult = await mcpConnection.client.callTool({
+      arguments: { presentationId },
+      name: "slidex_get_presentation"
+    });
+    assertEqual(mcpResult.isError, undefined);
+    assertEqual(
+      "source" in (mcpResult.structuredContent as {
+        result: { presentation: Record<string, unknown> };
+      }).result.presentation,
+      false
+    );
+    if (httpBaseUrl) {
+      assertMatch(mcpConnection.serverTiming(), /auth;dur=[0-9.]+/);
+      assertMatch(mcpConnection.serverTiming(), /store;dur=[0-9.]+/);
+      assertMatch(mcpConnection.serverTiming(), /handler;dur=[0-9.]+/);
+      assertMatch(mcpConnection.serverTiming(), /total;dur=[0-9.]+/);
+    }
+  } finally {
+    await mcpConnection.close();
+  }
+
+  const secondRefresh = httpBaseUrl
+    ? await refreshTokenOverHttp({
+        baseUrl: httpBaseUrl,
+        clientId: oauthClient.client_id,
+        refreshToken: firstRefresh.refresh_token,
+        resource
+      })
+    : await oauthStore.exchangeRefreshToken({
+        clientId: oauthClient.client_id,
+        refreshToken: firstRefresh.refresh_token,
+        resource
+      });
+  assertEqual(
+    (await oauthStore.verifyAccessToken(secondRefresh.access_token, legacyResource)).resource,
+    resource
+  );
+  await assertRejectsWithMessage(
+    () => httpBaseUrl
+      ? refreshTokenOverHttp({
+          baseUrl: httpBaseUrl,
+          clientId: oauthClient.client_id,
+          refreshToken: tokens.refresh_token,
+          resource
+        })
+      : oauthStore.exchangeRefreshToken({
+          clientId: oauthClient.client_id,
+          refreshToken: tokens.refresh_token,
+          resource
+        }),
+    "invalid_grant"
+  );
+  await assertRejectsWithMessage(
+    () => httpBaseUrl
+      ? refreshTokenOverHttp({
+          baseUrl: httpBaseUrl,
+          clientId: oauthClient.client_id,
+          refreshToken: firstRefresh.refresh_token,
+          resource
+        })
+      : oauthStore.exchangeRefreshToken({
+          clientId: oauthClient.client_id,
+          refreshToken: firstRefresh.refresh_token,
+          resource
+        }),
+    "invalid_grant"
+  );
+  await oauthStore.revokeTokenFamily(secondRefresh.access_token);
+  await assertRejects(() => oauthStore.verifyAccessToken(secondRefresh.access_token, resource));
+  if (httpBaseUrl) await verifyInvalidBearerResponse(httpBaseUrl);
+  checkpoint("refreshed MCP call, second rotation, replay rejection, and revocation verified");
+
+  const concurrentCode = await oauthStore.issueAuthorizationCode({
+    client: oauthClient,
+    codeChallenge: challenge,
+    redirectUri: oauthClient.redirect_uris[0],
+    resource,
+    scopes: ["presentations:read", "presentations:write"],
+    userId: createdUser.user.id
+  });
+  const concurrentTokens = httpBaseUrl
+    ? await exchangeAuthorizationCodeOverHttp({
+        baseUrl: httpBaseUrl,
+        clientId: oauthClient.client_id,
+        code: concurrentCode,
+        codeVerifier: verifier,
+        redirectUri: oauthClient.redirect_uris[0],
+        resource
+      })
+    : await oauthStore.exchangeAuthorizationCode({
+        clientId: oauthClient.client_id,
+        code: concurrentCode,
+        codeChallenge: challenge,
+        redirectUri: oauthClient.redirect_uris[0],
+        resource
+      });
+  const concurrentRefresh = () => httpBaseUrl
+    ? refreshTokenOverHttp({
+        baseUrl: httpBaseUrl,
+        clientId: oauthClient.client_id,
+        refreshToken: concurrentTokens.refresh_token,
+        resource
+      })
+    : oauthStore.exchangeRefreshToken({
+        clientId: oauthClient.client_id,
+        refreshToken: concurrentTokens.refresh_token,
+        resource
+      });
+  const concurrentResults = await Promise.allSettled([
+    concurrentRefresh(),
+    concurrentRefresh()
+  ]);
+  const concurrentSuccesses = concurrentResults.filter(
+    (result): result is PromiseFulfilledResult<McpTokenSet> => result.status === "fulfilled"
+  );
+  const concurrentInvalidGrants = concurrentResults.filter((result) => (
+    result.status === "rejected" &&
+    result.reason instanceof Error &&
+    result.reason.message === "invalid_grant"
+  ));
+  assertEqual(concurrentSuccesses.length, 1);
+  assertEqual(concurrentInvalidGrants.length, 1);
+  const concurrentlyIssuedTokens = concurrentSuccesses[0].value;
+  await assertRejects(() => oauthStore.verifyAccessToken(
+    concurrentlyIssuedTokens.access_token,
+    resource
+  ));
+  await assertRejectsWithMessage(
+    () => oauthStore.exchangeRefreshToken({
+      clientId: oauthClient.client_id,
+      refreshToken: concurrentlyIssuedTokens.refresh_token,
+      resource
+    }),
+    "invalid_grant"
+  );
+  checkpoint("concurrent refresh replay revoked the newly issued token family");
+
+  if (httpBaseUrl) {
+    await verifyTokenEndpointRateLimit(httpBaseUrl, oauthClient.client_id, resource);
+    checkpoint("token endpoint rate limit verified");
+  }
 
   await realtimeClient.realtime.setAuth(session.session.access_token);
   realtimeChannel = realtimeClient.channel(`workspace-presentations:${createdUser.user.id}`, {
@@ -132,7 +405,10 @@ try {
   process.stdout.write(`${JSON.stringify({
     audienceValidation: "valid",
     automaticPresentationDiscovery: "valid",
-    oauthPkceAndRevocation: "valid",
+    httpBearerChain: httpBaseUrl ? "valid" : "skipped",
+    oauthPkceRefreshRotationMcpCallAndRevocation: "valid",
+    refreshReplayRevokedConcurrentWinner: "valid",
+    tokenEndpointRateLimit: httpBaseUrl ? "valid" : "skipped",
     ownership: "valid",
     realtimeRevision: 1,
     revisionConflict: "valid"
@@ -210,9 +486,174 @@ async function assertRejects(callback: () => Promise<unknown>) {
   if (!rejected) throw new Error("Expected the remote MCP operation to reject.");
 }
 
+async function assertRejectsWithMessage(callback: () => Promise<unknown>, expected: string) {
+  try {
+    await callback();
+  } catch (error) {
+    if (error instanceof Error && error.message === expected) return;
+    throw error;
+  }
+  throw new Error(`Expected the remote MCP operation to reject with ${expected}.`);
+}
+
+async function connectRemoteMcp(
+  presentationStore: SupabaseMcpPresentationStore,
+  enablePresentationWrites: boolean
+) {
+  const server = createSlideXMcpServer({
+    enablePresentationWrites,
+    profile: "remote",
+    presentationStore
+  });
+  const client = new Client({ name: "slidex-remote-smoke", version: "0.6.0" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+
+  return {
+    client,
+    serverTiming: () => undefined,
+    async close() {
+      await client.close();
+      await server.close();
+    }
+  };
+}
+
+async function connectRemoteHttpMcp(baseUrl: string, accessToken: string) {
+  let serverTiming: string | undefined;
+  const trackedFetch: typeof fetch = async (input, init) => {
+    const response = await fetch(input, init);
+    serverTiming = response.headers.get("server-timing") ?? serverTiming;
+    return response;
+  };
+  const transport = new StreamableHTTPClientTransport(new URL("/mcp", baseUrl), {
+    fetch: trackedFetch,
+    requestInit: {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    }
+  });
+  const client = new Client({ name: "slidex-remote-http-smoke", version: "0.6.0" });
+  await client.connect(transport);
+
+  return {
+    client,
+    async close() {
+      await client.close();
+    },
+    serverTiming: () => serverTiming
+  };
+}
+
+async function exchangeAuthorizationCodeOverHttp(input: {
+  baseUrl: string;
+  clientId: string;
+  code: string;
+  codeVerifier: string;
+  redirectUri: string;
+  resource: string;
+}) {
+  return postTokenRequest(input.baseUrl, {
+    client_id: input.clientId,
+    code: input.code,
+    code_verifier: input.codeVerifier,
+    grant_type: "authorization_code",
+    redirect_uri: input.redirectUri,
+    resource: input.resource
+  });
+}
+
+async function refreshTokenOverHttp(input: {
+  baseUrl: string;
+  clientId: string;
+  refreshToken: string;
+  resource: string;
+  scope?: string;
+}) {
+  return postTokenRequest(input.baseUrl, {
+    client_id: input.clientId,
+    grant_type: "refresh_token",
+    refresh_token: input.refreshToken,
+    resource: input.resource,
+    ...(input.scope ? { scope: input.scope } : {})
+  });
+}
+
+async function assertTokenError(
+  baseUrl: string,
+  values: Record<string, string>,
+  expectedError: string
+) {
+  const response = await fetch(new URL("/api/mcp/oauth/token/", baseUrl), {
+    body: new URLSearchParams(values),
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    method: "POST"
+  });
+  const payload = await response.json() as { error?: string };
+  assertEqual(payload.error, expectedError);
+}
+
+async function verifyTokenEndpointRateLimit(
+  baseUrl: string,
+  clientId: string,
+  resource: string
+) {
+  let rateLimited = false;
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const response = await fetch(new URL("/api/mcp/oauth/token/", baseUrl), {
+      body: new URLSearchParams({
+        client_id: clientId,
+        grant_type: "refresh_token",
+        resource
+      }),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      method: "POST"
+    });
+    if (response.status === 429) {
+      assertMatch(response.headers.get("retry-after"), /^[1-9][0-9]*$/);
+      rateLimited = true;
+      break;
+    }
+  }
+  assertEqual(rateLimited, true);
+}
+
+async function postTokenRequest(baseUrl: string, values: Record<string, string>) {
+  const response = await fetch(new URL("/api/mcp/oauth/token/", baseUrl), {
+    body: new URLSearchParams(values),
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    method: "POST"
+  });
+  const payload = await response.json() as McpTokenSet | { error?: string };
+  if (!response.ok || !("access_token" in payload)) {
+    throw new Error("error" in payload && payload.error ? payload.error : "token_request_failed");
+  }
+  assertEqual(response.headers.get("cache-control"), "no-store, private");
+  return payload;
+}
+
+async function verifyInvalidBearerResponse(baseUrl: string) {
+  const response = await fetch(new URL("/mcp", baseUrl), {
+    headers: { Authorization: "Bearer invalid-smoke-token" }
+  });
+  assertEqual(response.status, 401);
+  assertEqual(response.headers.get("cache-control"), "no-store, private");
+  assertMatch(response.headers.get("www-authenticate"), /error="invalid_token"/);
+}
+
+function normalizeOptionalBaseUrl(value: string | undefined) {
+  if (!value?.trim()) return undefined;
+  return new URL(value).toString();
+}
+
 function assertEqual<T>(actual: T, expected: T) {
   if (actual !== expected) {
     throw new Error(`Expected ${String(expected)}, received ${String(actual)}.`);
+  }
+}
+
+function assertMatch(actual: string | undefined | null, expected: RegExp) {
+  if (!actual || !expected.test(actual)) {
+    throw new Error(`Expected ${String(actual)} to match ${String(expected)}.`);
   }
 }
 

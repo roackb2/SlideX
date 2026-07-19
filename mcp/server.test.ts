@@ -28,7 +28,7 @@ test("local MCP exposes the bounded block, shader, schema, and PPTX tools", asyn
   const connection = await connectMcp({ enableWorkspaceSkills: false });
 
   try {
-    assert.equal(connection.client.getServerVersion()?.version, "0.5.0");
+    assert.equal(connection.client.getServerVersion()?.version, "0.6.0");
     const tools = await connection.client.listTools();
     const names = tools.tools.map((tool) => tool.name);
 
@@ -99,6 +99,12 @@ test("remote MCP keeps reads available but gates saves and local PPTX export", a
       4
     );
     assert.equal(
+      "source" in (result.structuredContent as {
+        result: { presentation: Record<string, unknown> };
+      }).result.presentation,
+      false
+    );
+    assert.equal(
       (result.structuredContent as { result: { autoSelected: boolean } }).result.autoSelected,
       true
     );
@@ -163,6 +169,18 @@ test("remote MCP keeps reads available but gates saves and local PPTX export", a
       }).result.presentation.sourceRevision,
       5
     );
+    assert.equal(
+      (result.structuredContent as {
+        result: { presentation: { lastOpenedAt: string } };
+      }).result.presentation.lastOpenedAt,
+      "2026-07-16T00:00:02.000Z"
+    );
+    assert.equal(
+      "source" in (result.structuredContent as {
+        result: { presentation: Record<string, unknown> };
+      }).result.presentation,
+      false
+    );
 
     const canvasUpdateResult = await writable.client.callTool({
       name: "slidex_update_canvas_node",
@@ -192,10 +210,11 @@ test("remote MCP keeps reads available but gates saves and local PPTX export", a
       }
     });
     assert.equal(shaderResult.isError, undefined);
-    assert.match(
-      (shaderResult.structuredContent as { result: { presentation: { source: string } } })
-        .result.presentation.source,
-      /shader="mesh-gradient"/
+    assert.equal(
+      "source" in (shaderResult.structuredContent as {
+        result: { presentation: Record<string, unknown> };
+      }).result.presentation,
+      false
     );
 
     assert.deepEqual(
@@ -216,6 +235,135 @@ test("remote MCP keeps reads available but gates saves and local PPTX export", a
     );
   } finally {
     await writable.close();
+  }
+});
+
+test("remote presentation reads keep large sources opt-in and out of structured content", async () => {
+  const largePayload = "x".repeat(2 * 1024 * 1024 - 1024);
+  const largeSource = `# Large presentation\n\n${largePayload}`;
+  let fullReads = 0;
+  let summaryReads = 0;
+  const store: McpPresentationStore = {
+    async getPresentation(id) {
+      fullReads += 1;
+      return {
+        id: id ?? presentationId,
+        lastOpenedAt: "2026-07-16T00:00:02.000Z",
+        source: largeSource,
+        sourceRevision: 12,
+        title: "Large presentation",
+        updatedAt: "2026-07-16T00:00:00.000Z"
+      };
+    },
+    async getPresentationSummary(id) {
+      summaryReads += 1;
+      return {
+        id: id ?? presentationId,
+        lastOpenedAt: "2026-07-16T00:00:02.000Z",
+        sourceRevision: 12,
+        title: "Large presentation",
+        updatedAt: "2026-07-16T00:00:00.000Z"
+      };
+    },
+    async listPresentations() {
+      return [];
+    },
+    async savePresentation() {
+      throw new Error("Not used by read tests.");
+    }
+  };
+  const connection = await connectMcp({
+    enablePresentationWrites: false,
+    profile: "remote",
+    presentationStore: store
+  });
+
+  try {
+    const summaryResult = await connection.client.callTool({
+      arguments: {},
+      name: "slidex_get_presentation"
+    });
+    const summaryText = (summaryResult.content as ToolContent[]).find(isToolTextContent);
+    assert.ok(summaryText && summaryText.type === "text");
+    assert.ok(Buffer.byteLength(JSON.stringify(summaryResult), "utf8") < 10_000);
+    assert.equal(summaryText.text.includes(largePayload), false);
+    assert.equal(fullReads, 0);
+    assert.equal(summaryReads, 1);
+
+    const fullResult = await connection.client.callTool({
+      arguments: { includeSource: true },
+      name: "slidex_get_presentation"
+    });
+    const fullText = (fullResult.content as ToolContent[]).find(isToolTextContent);
+    assert.ok(fullText && fullText.type === "text");
+    assert.equal(
+      (JSON.parse(fullText.text) as { presentation: { source: string } }).presentation.source,
+      largeSource
+    );
+    assert.equal(
+      "source" in (fullResult.structuredContent as {
+        result: { presentation: Record<string, unknown> };
+      }).result.presentation,
+      false
+    );
+    assert.equal(JSON.stringify(fullResult).split(largePayload).length - 1, 1);
+    assert.equal(fullReads, 1);
+    assert.equal(summaryReads, 1);
+  } finally {
+    await connection.close();
+  }
+});
+
+type ToolContent = { type: string; text?: string };
+
+function isToolTextContent(item: ToolContent): item is { type: "text"; text: string } {
+  return item.type === "text" && typeof item.text === "string";
+}
+
+test("remote catalog reads use presentation summaries without loading source", async () => {
+  let fullReads = 0;
+  let summaryReads = 0;
+  const store: McpPresentationStore = {
+    ...createPresentationStore(),
+    async getPresentation() {
+      fullReads += 1;
+      throw new Error("Catalog tools must not load presentation source.");
+    },
+    async getPresentationSummary(id) {
+      summaryReads += 1;
+      return {
+        id: id ?? presentationId,
+        lastOpenedAt: "2026-07-16T00:00:02.000Z",
+        sourceRevision: 4,
+        title: "MCP contract",
+        updatedAt: "2026-07-16T00:00:00.000Z"
+      };
+    }
+  };
+  const connection = await connectMcp({
+    enablePresentationWrites: false,
+    profile: "remote",
+    presentationStore: store
+  });
+
+  try {
+    const calls = [
+      { arguments: {}, name: "slidex_list_block_types" },
+      { arguments: {}, name: "slidex_get_motion_doc_schema" },
+      { arguments: {}, name: "slidex_list_shaders" },
+      { arguments: { shaderId: "mesh-gradient" }, name: "slidex_get_shader" },
+      { arguments: {}, name: "slidex_list_slide_layouts" },
+      { arguments: { layoutId: "title" }, name: "slidex_get_slide_layout" }
+    ];
+
+    for (const call of calls) {
+      const result = await connection.client.callTool(call);
+      assert.equal(result.isError, undefined, `${call.name} succeeds from summary metadata`);
+    }
+    assert.equal(fullReads, 0);
+    assert.equal(summaryReads, calls.length);
+  } finally {
+    await connection.close();
   }
 });
 
@@ -403,6 +551,15 @@ function createPresentationStore(): McpPresentationStore {
         updatedAt: "2026-07-16T00:00:00.000Z"
       };
     },
+    async getPresentationSummary(id) {
+      return {
+        id: id ?? presentationId,
+        lastOpenedAt: "2026-07-16T00:00:02.000Z",
+        sourceRevision: 4,
+        title: "MCP contract",
+        updatedAt: "2026-07-16T00:00:00.000Z"
+      };
+    },
     async listPresentations() {
       return [{
         id: presentationId,
@@ -417,7 +574,6 @@ function createPresentationStore(): McpPresentationStore {
       assert.equal(input.expectedRevision, 4);
       return {
         id: input.presentationId,
-        source: input.source,
         sourceRevision: 5,
         title: "MCP contract",
         updatedAt: "2026-07-16T00:00:01.000Z"

@@ -41,8 +41,8 @@ export function RemoteMcpActivityOverlay({
         return (
           <div
             className={`absolute rounded-[5px] border-2 border-[#8b5cf6] shadow-[0_0_0_1px_rgba(139,92,246,0.24),0_0_20px_rgba(139,92,246,0.28)] ${activity.status === "running" ? "motion-safe:animate-pulse" : "motion-safe:animate-[mcp-activity-settle_6s_ease-out_forwards]"} ${activity.status === "failed" ? "border-dashed" : "border-solid"}`}
-            data-mcp-node-id={activity.target.kind === "block" ? activity.target.nodeId : undefined}
             data-mcp-completed-revision={activity.completedRevision}
+            data-mcp-operation-id={activity.id}
             data-mcp-operation-status={isConflict ? "conflict" : activity.status}
             key={activity.id}
             style={{

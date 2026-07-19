@@ -16,6 +16,7 @@ const row = {
 
 test("remote presentation reads always filter by presentation id and OAuth owner", async () => {
   const filters: Array<[string, string]> = [];
+  const selections: string[] = [];
   const query = {
     eq(field: string, value: string) {
       filters.push([field, value]);
@@ -24,7 +25,8 @@ test("remote presentation reads always filter by presentation id and OAuth owner
     async maybeSingle() {
       return { data: row, error: null };
     },
-    select() {
+    select(columns: string) {
+      selections.push(columns);
       return this;
     }
   };
@@ -35,6 +37,81 @@ test("remote presentation reads always filter by presentation id and OAuth owner
   assert.deepEqual(filters, [
     ["user_id", ownerId],
     ["id", presentationId]
+  ]);
+  assert.deepEqual(selections, [
+    "id,title,source,source_revision,updated_at,last_opened_at"
+  ]);
+});
+
+test("remote presentation summary reads exclude source and preserve owner filtering", async () => {
+  const calls: string[] = [];
+  const durations: number[] = [];
+  const query = {
+    eq(field: string, value: string) {
+      calls.push(`eq:${field}:${value}`);
+      return this;
+    },
+    async maybeSingle() {
+      return { data: row, error: null };
+    },
+    select(columns: string) {
+      calls.push(`select:${columns}`);
+      return this;
+    }
+  };
+  const store = new SupabaseMcpPresentationStore(
+    { from: () => query } as never,
+    ownerId,
+    (durationMs) => durations.push(durationMs)
+  );
+
+  assert.deepEqual(await store.getPresentationSummary(presentationId), {
+    id: presentationId,
+    lastOpenedAt: row.last_opened_at,
+    sourceRevision: row.source_revision,
+    title: row.title,
+    updatedAt: row.updated_at
+  });
+  assert.deepEqual(calls, [
+    "select:id,title,source_revision,updated_at,last_opened_at",
+    `eq:user_id:${ownerId}`,
+    `eq:id:${presentationId}`
+  ]);
+  assert.equal(durations.length, 1);
+  assert.ok(Number.isFinite(durations[0]) && durations[0] >= 0);
+});
+
+test("remote presentation summary reads auto-select the owner's most recently opened deck", async () => {
+  const calls: string[] = [];
+  const query = {
+    eq(field: string, value: string) {
+      calls.push(`eq:${field}:${value}`);
+      return this;
+    },
+    limit(value: number) {
+      calls.push(`limit:${value}`);
+      return this;
+    },
+    async maybeSingle() {
+      return { data: row, error: null };
+    },
+    order(field: string, options: { ascending: boolean }) {
+      calls.push(`order:${field}:${options.ascending}`);
+      return this;
+    },
+    select(columns: string) {
+      calls.push(`select:${columns}`);
+      return this;
+    }
+  };
+  const store = new SupabaseMcpPresentationStore({ from: () => query } as never, ownerId);
+
+  assert.equal((await store.getPresentationSummary()).id, presentationId);
+  assert.deepEqual(calls, [
+    "select:id,title,source_revision,updated_at,last_opened_at",
+    `eq:user_id:${ownerId}`,
+    "order:last_opened_at:false",
+    "limit:1"
   ]);
 });
 
