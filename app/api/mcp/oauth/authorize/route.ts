@@ -40,6 +40,8 @@ export async function POST(request: NextRequest) {
   const origin = resolveRequestOrigin(request);
   if (!isSameOriginMcpConsentPost(request.headers.get("origin"), origin)) {
     logInvalidAuthorizationRequest(request, "origin_mismatch", {
+      actualOrigin: describePublicOrigin(request.headers.get("origin")),
+      expectedOrigin: describePublicOrigin(origin),
       originPresent: request.headers.has("origin")
     });
     return oauthJsonError("invalid_request", 400);
@@ -172,13 +174,23 @@ export async function POST(request: NextRequest) {
 function logInvalidAuthorizationRequest(
   request: NextRequest,
   stage: "consent_rejected" | "form_unreadable" | "origin_mismatch" | "schema_invalid",
-  details: Record<string, boolean | string[]> = {}
+  details: Record<string, boolean | string | string[]> = {}
 ) {
   console.warn("[mcp-oauth] authorization request rejected", {
     ...details,
     requestId: request.headers.get("x-request-id") ?? undefined,
     stage
   });
+}
+
+function describePublicOrigin(value: string | null) {
+  if (!value) return "missing";
+  try {
+    const origin = new URL(value).origin;
+    return origin === "null" ? "opaque" : origin;
+  } catch {
+    return "invalid";
+  }
 }
 
 function oauthRedirect(redirectUri: string, error: string, state?: string) {

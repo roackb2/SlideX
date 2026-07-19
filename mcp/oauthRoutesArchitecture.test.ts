@@ -27,6 +27,7 @@ test("authorization diagnostics expose only rejection stages and field names", a
   assert.match(authorize, /invalidFields/);
   assert.match(authorize, /noncePresent/);
   assert.match(authorize, /storeError/);
+  assert.match(authorize, /describePublicOrigin/);
   assert.doesNotMatch(
     authorize,
     /console\.warn\([\s\S]{0,240}(?:consentNonce|data\.user\.id|parsed\.data)/
