@@ -7,7 +7,7 @@ import {
   isExactMcpRedirectUri,
   isValidPkceCodeVerifier,
   normalizeMcpScopes,
-  resolveMcpResourceTarget
+  resolveMcpTokenRequestResource
 } from "@/mcp/oauth";
 import { mcpResourceUrl } from "@/mcp/oauthMetadata";
 import {
@@ -90,10 +90,14 @@ export async function POST(request: NextRequest) {
     return oauthRateLimitResponse(clientRateLimit.retryAfterSeconds);
   }
 
-  if (!resource) return oauthError("invalid_request");
-  const canonicalResource = resolveMcpResourceTarget(resource, expectedResource);
-  if (!canonicalResource) return oauthError("invalid_target");
   if (!grantType) return oauthError("invalid_request");
+  const resourceResolution = resolveMcpTokenRequestResource({
+    expectedResource,
+    grantType,
+    resource
+  });
+  if ("error" in resourceResolution) return oauthError(resourceResolution.error);
+  const canonicalResource = resourceResolution.resource;
 
   try {
     if (grantType === "authorization_code") {

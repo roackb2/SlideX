@@ -11,6 +11,7 @@ import {
   mcpResourcesMatch,
   normalizeMcpScopes,
   resolveMcpResourceTarget,
+  resolveMcpTokenRequestResource,
   validateMcpRedirectUri,
   verifyPkceChallenge
 } from "@/mcp/oauth";
@@ -36,6 +37,29 @@ test("MCP OAuth canonicalizes the legacy trailing-slash resource", () => {
     response_type: "code"
   });
   assert.equal(parsed.resource, canonical);
+});
+
+test("MCP token resource resolution safely supports Codex refresh requests without resource", () => {
+  const expectedResource = "https://slidexdeck.com/mcp";
+
+  assert.deepEqual(resolveMcpTokenRequestResource({
+    expectedResource,
+    grantType: "refresh_token"
+  }), { resource: expectedResource });
+  assert.deepEqual(resolveMcpTokenRequestResource({
+    expectedResource,
+    grantType: "authorization_code"
+  }), { error: "invalid_request" });
+  assert.deepEqual(resolveMcpTokenRequestResource({
+    expectedResource,
+    grantType: "refresh_token",
+    resource: "https://slidexdeck.com/mcp/"
+  }), { resource: expectedResource });
+  assert.deepEqual(resolveMcpTokenRequestResource({
+    expectedResource,
+    grantType: "refresh_token",
+    resource: "https://attacker.example/mcp"
+  }), { error: "invalid_target" });
 });
 
 test("MCP OAuth accepts HTTPS and loopback redirects only", () => {

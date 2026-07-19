@@ -6,6 +6,7 @@ const tokenRouteUrl = new URL("../app/api/mcp/oauth/token/route.ts", import.meta
 const oauthStoreUrl = new URL("./supabaseOAuthStore.ts", import.meta.url);
 const authorizeRouteUrl = new URL("../app/api/mcp/oauth/authorize/route.ts", import.meta.url);
 const authorizePageUrl = new URL("../app/mcp/authorize/page.tsx", import.meta.url);
+const remoteSmokeUrl = new URL("../scripts/smoke-remote-mcp.mts", import.meta.url);
 
 test("public OAuth clients reject client authentication and use two independent rate-limit buckets", async () => {
   const source = await readFile(tokenRouteUrl, "utf8");
@@ -17,6 +18,21 @@ test("public OAuth clients reject client authentication and use two independent 
   assert.match(source, /identity: "client_ip"/);
   assert.ok(source.indexOf('identity: "ip"') < source.indexOf("store.getClient(clientId)"));
   assert.ok(source.indexOf("store.getClient(clientId)") < source.indexOf('identity: "client_ip"'));
+});
+
+test("refresh requests may omit resource only through the audience-bound compatibility resolver", async () => {
+  const source = await readFile(tokenRouteUrl, "utf8");
+
+  assert.match(source, /resolveMcpTokenRequestResource\(\{/);
+  assert.doesNotMatch(source, /if \(!resource\) return oauthError\("invalid_request"\)/);
+  assert.match(source, /resource: canonicalResource/);
+});
+
+test("the destructive live rate-limit smoke is explicitly opt-in", async () => {
+  const source = await readFile(remoteSmokeUrl, "utf8");
+
+  assert.match(source, /REMOTE_MCP_SMOKE_VERIFY_RATE_LIMIT === "1"/);
+  assert.match(source, /if \(httpBaseUrl && verifyLiveTokenRateLimit\)/);
 });
 
 test("raw PKCE verifier is validated in Node and never enters the OAuth store RPC", async () => {

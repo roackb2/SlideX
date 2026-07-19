@@ -225,3 +225,11 @@ REMOTE_MCP_SMOKE_BASE_URL=https://slidexdeck.com npm run mcp:test:remote
 
 Without `REMOTE_MCP_SMOKE_BASE_URL`, the smoke test keeps its store-level and
 in-memory MCP coverage and reports the HTTP bearer chain as skipped.
+
+The live token-endpoint burst test is opt-in because it deliberately exhausts
+the shared rate-limit bucket. Run it only in an isolated validation window:
+
+```bash
+REMOTE_MCP_SMOKE_BASE_URL=https://slidexdeck.com \
+REMOTE_MCP_SMOKE_VERIFY_RATE_LIMIT=1 npm run mcp:test:remote
+```

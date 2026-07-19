@@ -62,6 +62,28 @@ export function resolveMcpResourceTarget(value: string, expectedResource: string
     : undefined;
 }
 
+export type McpTokenResourceResolution =
+  | { resource: string }
+  | { error: "invalid_request" | "invalid_target" };
+
+export function resolveMcpTokenRequestResource(input: {
+  expectedResource: string;
+  grantType: string;
+  resource?: string;
+}): McpTokenResourceResolution {
+  if (!input.resource) {
+    // rmcp 1.8 omits `resource` while refreshing. Bind that compatibility
+    // path to this server's canonical audience; the rotation RPC still checks
+    // that the stored refresh credential was issued for the same audience.
+    return input.grantType === "refresh_token"
+      ? { resource: canonicalizeMcpResource(input.expectedResource) }
+      : { error: "invalid_request" };
+  }
+
+  const resource = resolveMcpResourceTarget(input.resource, input.expectedResource);
+  return resource ? { resource } : { error: "invalid_target" };
+}
+
 export function createOAuthCredential(prefix: "slx_ac" | "slx_at" | "slx_rt") {
   return `${prefix}_${randomBytes(32).toString("base64url")}`;
 }

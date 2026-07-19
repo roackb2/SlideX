@@ -14,6 +14,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const httpBaseUrl = normalizeOptionalBaseUrl(process.env.REMOTE_MCP_SMOKE_BASE_URL);
+const verifyLiveTokenRateLimit = process.env.REMOTE_MCP_SMOKE_VERIFY_RATE_LIMIT === "1";
 if (!supabaseUrl || !serviceRoleKey || !publishableKey) {
   throw new Error("Remote MCP smoke requires Supabase URL, publishable, and service-role variables.");
 }
@@ -189,8 +190,7 @@ try {
     ? await refreshTokenOverHttp({
         baseUrl: httpBaseUrl,
         clientId: oauthClient.client_id,
-        refreshToken: tokens.refresh_token,
-        resource: legacyResource
+        refreshToken: tokens.refresh_token
       })
     : await oauthStore.exchangeRefreshToken({
         clientId: oauthClient.client_id,
@@ -373,7 +373,7 @@ try {
   );
   checkpoint("concurrent refresh replay revoked the newly issued token family");
 
-  if (httpBaseUrl) {
+  if (httpBaseUrl && verifyLiveTokenRateLimit) {
     await verifyTokenEndpointRateLimit(httpBaseUrl, oauthClient.client_id, resource);
     checkpoint("token endpoint rate limit verified");
   }
@@ -408,7 +408,7 @@ try {
     httpBearerChain: httpBaseUrl ? "valid" : "skipped",
     oauthPkceRefreshRotationMcpCallAndRevocation: "valid",
     refreshReplayRevokedConcurrentWinner: "valid",
-    tokenEndpointRateLimit: httpBaseUrl ? "valid" : "skipped",
+    tokenEndpointRateLimit: httpBaseUrl && verifyLiveTokenRateLimit ? "valid" : "skipped",
     ownership: "valid",
     realtimeRevision: 1,
     revisionConflict: "valid"
@@ -566,14 +566,14 @@ async function refreshTokenOverHttp(input: {
   baseUrl: string;
   clientId: string;
   refreshToken: string;
-  resource: string;
+  resource?: string;
   scope?: string;
 }) {
   return postTokenRequest(input.baseUrl, {
     client_id: input.clientId,
     grant_type: "refresh_token",
     refresh_token: input.refreshToken,
-    resource: input.resource,
+    ...(input.resource ? { resource: input.resource } : {}),
     ...(input.scope ? { scope: input.scope } : {})
   });
 }
