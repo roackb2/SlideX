@@ -7,6 +7,7 @@ import type { BlockFramePatch } from "@/features/pitch/application/pitchGeometry
 import type { SlideComment } from "@/features/pitch/application/slideComments";
 import type { SlideRow } from "@/features/pitch/application/slideRows";
 import type { AddBlockType } from "@/features/pitch/ui/pitchOptions";
+import type { RemoteMcpOperation } from "@/features/pitch/domain/remoteMcpOperation";
 
 export type SelectionMdx = { label: string; source: string };
 
@@ -143,6 +144,10 @@ export type PitchWorkspaceProps = {
   agent?: PitchWorkspaceAgent;
   commands: PitchWorkspaceCommands;
   document: PitchWorkspaceDocument;
+  remoteMcp?: {
+    activities: readonly RemoteMcpOperation[];
+    connectionWarning?: string | null;
+  };
   selection: PitchWorkspaceSelection;
   view: PitchWorkspaceView;
 };

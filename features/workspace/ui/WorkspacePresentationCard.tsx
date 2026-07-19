@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import Image from "next/image";
-import { Check, Copy, MoreHorizontal, Pencil, Trash2, X } from "lucide-react";
+import { Bot, Check, CheckCircle2, CircleAlert, Copy, MoreHorizontal, Pencil, Trash2, X } from "lucide-react";
+import {
+  isMcpOperationVisuallyActive,
+  mcpOperationAction,
+  mcpOperationVisualDeadline
+} from "@/features/workspace/application/mcpOperationActivity";
+import type { McpOperationActivity } from "@/features/workspace/domain/mcpOperationActivity";
 import {
   canDeleteWorkspacePresentation,
   type WorkspacePresentation
@@ -10,6 +16,7 @@ import { useWorkspaceI18n } from "@/features/workspace/ui/workspaceI18n";
 
 type WorkspacePresentationCardProps = {
   isMenuOpen: boolean;
+  mcpActivities?: readonly McpOperationActivity[];
   onDelete?: () => void;
   onDuplicate: () => void;
   onOpen: () => void;
@@ -52,14 +59,24 @@ function PresentationArtwork({ presentation }: { presentation: WorkspacePresenta
   );
 }
 
-export function WorkspacePresentationCard({ isMenuOpen, onDelete, onDuplicate, onOpen, onRename, onToggleMenu, presentation, textSize = "default" }: WorkspacePresentationCardProps) {
+export function WorkspacePresentationCard({ isMenuOpen, mcpActivities = [], onDelete, onDuplicate, onOpen, onRename, onToggleMenu, presentation, textSize = "default" }: WorkspacePresentationCardProps) {
   const { locale, tx } = useWorkspaceI18n();
   const [isRenaming, setIsRenaming] = useState(false);
   const [draftTitle, setDraftTitle] = useState(presentation.title);
+  const [visualNow, setVisualNow] = useState(() => Date.now());
   const menuContainerRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const moreButtonRef = useRef<HTMLButtonElement | null>(null);
   const canDelete = canDeleteWorkspacePresentation(presentation) && Boolean(onDelete);
+  const mcpActivity = mcpActivities.find((activity) => isMcpOperationVisuallyActive(activity, visualNow));
+
+  useEffect(() => {
+    if (!mcpActivity) return;
+    const remaining = mcpOperationVisualDeadline(mcpActivity) - Date.now();
+    if (remaining <= 0) return;
+    const timeout = window.setTimeout(() => setVisualNow(Date.now()), remaining + 20);
+    return () => window.clearTimeout(timeout);
+  }, [mcpActivity]);
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -122,6 +139,22 @@ export function WorkspacePresentationCard({ isMenuOpen, onDelete, onDuplicate, o
         <button className="block w-full overflow-hidden rounded-[12px] border border-white/[0.09] bg-[#242424] text-left transition duration-200 hover:border-white/[0.19] active:scale-[0.995] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/10" onClick={onOpen} type="button">
           <PresentationArtwork presentation={presentation} />
         </button>
+        {mcpActivity ? (
+          <div
+            aria-live="polite"
+            className={`pointer-events-none absolute inset-0 z-20 overflow-hidden rounded-[12px] ${mcpActivity.status === "running" ? "" : "motion-safe:animate-[mcp-activity-settle_6s_ease-out_forwards]"}`}
+            data-mcp-operation-status={mcpActivity.errorCode === "revision_conflict" ? "conflict" : mcpActivity.status}
+          >
+            <div className={`absolute inset-0 rounded-[12px] border-2 border-[#8b5cf6] shadow-[inset_0_0_0_1px_rgba(139,92,246,0.28),0_0_24px_rgba(139,92,246,0.22)] ${mcpActivity.status === "running" ? "motion-safe:animate-pulse" : ""} ${mcpActivity.status === "failed" ? "border-dashed" : "border-solid"}`} />
+            <div className="absolute bottom-2.5 left-2.5 max-w-[calc(100%-20px)] rounded-[7px] border border-[#a78bfa]/55 bg-[#26164a]/92 px-2.5 py-1.5 text-[#ede9fe] shadow-[0_8px_28px_rgba(36,16,74,0.45)] backdrop-blur-md">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold leading-4">
+                {mcpActivity.status === "running" ? <Bot className="h-3.5 w-3.5" /> : mcpActivity.status === "completed" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <CircleAlert className="h-3.5 w-3.5" />}
+                <span className="truncate">AI · {mcpActivity.clientName}</span>
+              </div>
+              <div className="truncate text-[10px] leading-4 text-[#ddd6fe]/78">{mcpOperationAction(mcpActivity, locale)}</div>
+            </div>
+          </div>
+        ) : null}
         <button aria-expanded={isMenuOpen} aria-haspopup="menu" aria-label={`${tx("More options for")} ${presentation.title}`} className={`absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-[7px] border border-white/[0.1] bg-[#151515]/86 text-white/58 backdrop-blur-md transition duration-200 hover:bg-[#292929] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/12 ${isMenuOpen ? "opacity-100" : "opacity-55 group-hover:opacity-100 group-focus-within:opacity-100"}`} onClick={onToggleMenu} ref={moreButtonRef} type="button">
           <MoreHorizontal className="h-4 w-4" strokeWidth={1.8} />
         </button>
