@@ -151,6 +151,21 @@ test("MCP consent POST requires the exact request origin", () => {
     isSameOriginMcpConsentPost("https://evil.example", "https://slidexdeck.com"),
     false
   );
+  assert.equal(
+    isSameOriginMcpConsentPost(
+      "https://slidexdeck.com, https://slidexdeck.com",
+      "https://slidexdeck.com"
+    ),
+    true
+  );
+  assert.equal(
+    isSameOriginMcpConsentPost(
+      "https://slidexdeck.com, https://evil.example",
+      "https://slidexdeck.com"
+    ),
+    false
+  );
+  assert.equal(isSameOriginMcpConsentPost("null", "https://slidexdeck.com"), false);
   assert.equal(isSameOriginMcpConsentPost(null, "https://slidexdeck.com"), false);
 });
 

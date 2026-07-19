@@ -185,9 +185,10 @@ function logInvalidAuthorizationRequest(
 
 function describePublicOrigin(value: string | null) {
   if (!value) return "missing";
+  if (value.trim() === "null") return "opaque";
   try {
-    const origin = new URL(value).origin;
-    return origin === "null" ? "opaque" : origin;
+    const origins = value.split(",").map((origin) => new URL(origin.trim()).origin);
+    return [...new Set(origins)].join(",");
   } catch {
     return "invalid";
   }

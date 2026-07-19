@@ -157,7 +157,9 @@ export async function recordMcpOAuthSecurityEvent(input: {
 export function isSameOriginMcpConsentPost(originHeader: string | null, expectedOrigin: string) {
   if (!originHeader) return false;
   try {
-    return new URL(originHeader).origin === new URL(expectedOrigin).origin;
+    const expected = new URL(expectedOrigin).origin;
+    const received = originHeader.split(",").map((value) => value.trim()).filter(Boolean);
+    return received.length > 0 && received.every((value) => new URL(value).origin === expected);
   } catch {
     return false;
   }
