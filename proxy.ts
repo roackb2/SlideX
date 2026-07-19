@@ -16,9 +16,15 @@ export async function proxy(request: NextRequest) {
     request.headers.has("x-nextjs-data")
   );
   if (redirectPath) {
-    const redirectUrl = request.nextUrl.clone();
+    // NextURL applies the project's trailingSlash normalization while it is
+    // mutated, which can turn `/login/` back into `/login` and create a
+    // self-redirect. A native URL preserves the canonical path exactly.
+    const redirectUrl = new URL(request.url);
     redirectUrl.pathname = redirectPath;
-    return NextResponse.redirect(redirectUrl, 308);
+    const redirectResponse = NextResponse.redirect(redirectUrl, 307);
+    redirectResponse.headers.set("Cache-Control", "no-store");
+    redirectResponse.headers.set("Pragma", "no-cache");
+    return redirectResponse;
   }
 
   return updateSupabaseSession(request);
