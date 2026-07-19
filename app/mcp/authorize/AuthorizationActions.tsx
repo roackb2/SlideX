@@ -11,14 +11,39 @@ export function AuthorizationActions() {
     event: MouseEvent<HTMLButtonElement>,
     nextDecision: AuthorizationDecision
   ) {
-    if (decision !== null) {
-      event.preventDefault();
-      return;
-    }
-    setDecision(nextDecision);
+    submitAuthorizationDecision({
+      currentDecision: decision,
+      event,
+      nextDecision,
+      setDecision
+    });
   }
 
   return <AuthorizationButtons decision={decision} onDecision={chooseDecision} />;
+}
+
+export function submitAuthorizationDecision({
+  currentDecision,
+  event,
+  nextDecision,
+  setDecision
+}: {
+  currentDecision: AuthorizationDecision | null;
+  event: Pick<MouseEvent<HTMLButtonElement>, "currentTarget" | "preventDefault">;
+  nextDecision: AuthorizationDecision;
+  setDecision: (decision: AuthorizationDecision) => void;
+}) {
+  event.preventDefault();
+  if (currentDecision !== null) return;
+
+  const form = event.currentTarget.form;
+  if (!form) return;
+
+  // Serialize the current server-rendered form immediately. In particular,
+  // this preserves the one-time consent nonce and the clicked button's value
+  // before React applies the pending-state render.
+  setDecision(nextDecision);
+  form.requestSubmit(event.currentTarget);
 }
 
 export function AuthorizationButtons({
