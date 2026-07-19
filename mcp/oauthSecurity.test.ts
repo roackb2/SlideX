@@ -156,7 +156,7 @@ test("MCP consent POST requires the exact request origin", () => {
       "https://slidexdeck.com, https://slidexdeck.com",
       "https://slidexdeck.com"
     ),
-    true
+    false
   );
   assert.equal(
     isSameOriginMcpConsentPost(
