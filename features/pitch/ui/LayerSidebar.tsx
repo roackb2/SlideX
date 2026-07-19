@@ -1,6 +1,6 @@
 "use client";
 
-import { Group, Layers, Plus, Trash2 } from "lucide-react";
+import { Bot, Group, Layers, Plus, Trash2 } from "lucide-react";
 import type { MouseEvent } from "react";
 import { useState } from "react";
 import { LayerRow } from "@/features/pitch/ui/LayerRow";
@@ -9,6 +9,11 @@ import type { MotionDocBlock, MotionDocScene } from "@/core/motion-doc/domain/mo
 import { SlideThumbnailPreview } from "@/features/pitch/ui/preview/SlideThumbnailPreview";
 import type { SlideRow } from "@/features/pitch/application/slideRows";
 import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
+import {
+  remoteMcpOperationAction,
+  remoteMcpOperationTargetsSlide
+} from "@/features/pitch/application/remoteMcpOperation";
+import type { RemoteMcpOperation } from "@/features/pitch/domain/remoteMcpOperation";
 
 export function LayerSidebar({
   activeSlideIndex,
@@ -24,6 +29,7 @@ export function LayerSidebar({
   reorderBlock,
   reorderSlide,
   renameBlock,
+  remoteMcpOperations,
   replayNonce,
   scenes,
   selectedBlockIndex,
@@ -47,6 +53,7 @@ export function LayerSidebar({
   reorderBlock: (fromIndex: number, toIndex: number) => void;
   reorderSlide: (fromIndex: number, toIndex: number) => void;
   renameBlock: (index: number, name: string) => void;
+  remoteMcpOperations: readonly RemoteMcpOperation[];
   replayNonce: number;
   scenes: MotionDocScene[];
   selectedBlockIndex: number | null;
@@ -119,6 +126,9 @@ export function LayerSidebar({
             {slideRows.map((slide) => {
               const isActive = slide.index === activeSlideIndex;
               const currentSlide = scenes[slide.index];
+              const mcpActivity = remoteMcpOperations.find((activity) => (
+                remoteMcpOperationTargetsSlide(activity, slide.index, activeSlideIndex)
+              ));
               return (
                 <div className="flex flex-col" key={slide.index}>
                   
@@ -129,7 +139,7 @@ export function LayerSidebar({
                         isActive
                           ? "bg-white/[0.08] text-white shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.05)] border border-white/[0.04]"
                           : "text-neutral-400 hover:bg-white/[0.03] hover:text-neutral-200 border border-transparent"
-                      }`}
+                      } ${mcpActivity ? `border-[#8b5cf6]/70 ${mcpActivity.status === "running" ? "motion-safe:animate-pulse" : "motion-safe:animate-[mcp-activity-settle_6s_ease-out_forwards]"} ${mcpActivity.status === "failed" ? "border-dashed" : "border-solid"}` : ""}`}
                       onClick={() => onSelectSlide(slide.index)}
                     >
                       <div className="flex items-center gap-2.5 overflow-hidden">
@@ -139,6 +149,7 @@ export function LayerSidebar({
                         </span>
                       </div>
                       <div className="flex items-center gap-2.5">
+                        {mcpActivity ? <Bot aria-label={`AI · ${mcpActivity.clientName}`} className="h-3.5 w-3.5 text-[#a78bfa]" /> : null}
                         <span className="font-mono text-xs font-semibold text-neutral-400/80 bg-neutral-900/40 px-2 py-0.5 rounded-lg border border-white/[0.04]">
                           {slide.duration}s
                         </span>
@@ -202,6 +213,15 @@ export function LayerSidebar({
                           scene={currentSlide}
                           source={source}
                         />
+                        {mcpActivity ? (
+                          <div className={`pointer-events-none absolute inset-0 z-10 rounded-lg border-2 border-[#8b5cf6] shadow-[inset_0_0_0_1px_rgba(139,92,246,0.22),0_0_18px_rgba(139,92,246,0.2)] ${mcpActivity.status === "running" ? "motion-safe:animate-pulse" : "motion-safe:animate-[mcp-activity-settle_6s_ease-out_forwards]"} ${mcpActivity.status === "failed" ? "border-dashed" : "border-solid"}`}>
+                            <div className="absolute bottom-1 left-1 flex max-w-[calc(100%-8px)] items-center gap-1 rounded bg-[#2e1065]/92 px-1.5 py-0.5 text-[9px] leading-3 text-[#ede9fe]">
+                              <Bot className="h-2.5 w-2.5 shrink-0" />
+                              <span className="truncate font-semibold">AI · {mcpActivity.clientName}</span>
+                              <span className="truncate text-[#ddd6fe]/65">{remoteMcpOperationAction(mcpActivity, locale)}</span>
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
                       <span className={`absolute bottom-1.5 left-2.5 text-[11px] font-medium ${isActive ? "text-[#8ea5ff]" : "text-neutral-500"}`}>
                         {slide.index + 1}

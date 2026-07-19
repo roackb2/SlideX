@@ -1,4 +1,4 @@
-# SlideX MCP Server v0.4
+# SlideX MCP Server v0.5
 
 Local MCP server for SlideX MotionDoc decks. It lets MCP clients create and validate decks, edit slides and blocks, apply Paper Shader presets, export standalone HTML, and write editable PowerPoint files.
 
@@ -125,6 +125,8 @@ Remote read tools automatically select the authenticated user's most recently op
 `slidex_get_canvas_nodes` returns each block's stable `nodeId`, type, text preview, percentage frame, and equivalent frame on SlideX's 1024 x 576 canvas. `slidex_update_canvas_node` moves or resizes a node by stable ID with percentage coordinates rounded to three decimal places and rejects frames outside the slide.
 
 Every Remote write requires the automatically discovered `presentationId` plus `expectedRevision`, performs a compare-and-swap save, and triggers Animark's existing private presentation Realtime broadcast so an open Pitch page receives the new revision. Revision conflicts reject the save and require the client to read again. Ownership validation applies to both discovery and mutation.
+
+Starting in v0.5, real Remote write and private-image tool operations also emit owner-private activity events. An open SlideX Workspace or Pitch editor renders these as non-interactive purple frames labelled with the authorized OAuth client name. The activity channel does not simulate a cursor or DOM clicks and never stores prompts, tokens, complete MotionDoc source, user-authored text, or raw errors. Activity summaries expire after seven days.
 
 Remote MCP deliberately does not expose deck creation, template cloning, local HTML/PPTX export, workspace CRUD, presentation deletion, video/SVG upload, or public media URLs. Image upload requires a ten-minute single-use upload request, writes only normalized static WebP files to the private `presentation-images` bucket, and never exposes the service-role credential. The Animark server must configure `SUPABASE_SERVICE_ROLE_KEY`; this value is server-only and must never be placed in a browser, MCP client configuration, or any `NEXT_PUBLIC_*` variable.
 

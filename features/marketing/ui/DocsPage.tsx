@@ -161,11 +161,11 @@ export function DocsPage() {
               <h2 className="text-[30px] font-semibold tracking-[-0.045em]">SlideX MCP Server</h2>
               <a
                 className="inline-flex items-center gap-1.5 rounded-full border border-[#9ad7ff]/20 bg-[#9ad7ff]/[0.08] px-2.5 py-1 text-[11px] font-semibold text-[#9ad7ff] transition-colors hover:border-[#9ad7ff]/40 hover:bg-[#9ad7ff]/[0.12]"
-                href="https://www.npmjs.com/package/@z7589xxz758/slidex-mcp-server/v/0.4.0"
+                href="https://www.npmjs.com/package/@z7589xxz758/slidex-mcp-server/v/0.5.0"
                 rel="noreferrer"
                 target="_blank"
               >
-                v0.4.0 on npm
+                v0.5.0 on npm
                 <ArrowUpRight className="h-3 w-3" />
               </a>
             </div>
@@ -173,6 +173,11 @@ export function DocsPage() {
               {isZh
                 ? "透過 Model Context Protocol，讓相容的 AI 客戶端建立、檢查與編輯 MotionDoc 簡報。你可以選擇在電腦執行本機 MCP，或連接 SlideX 的受保護 Remote MCP。"
                 : "Use the Model Context Protocol to let compatible AI clients create, validate, and edit MotionDoc presentations. Run the local MCP on your computer or connect to SlideX through the protected Remote MCP."}
+            </p>
+            <p className="mt-3 max-w-2xl text-[13px] leading-6 text-[#c4b5fd]/72">
+              {isZh
+                ? "v0.5 會在開啟的 Workspace 與 Pitch 以紫色框即時標示真實 Remote MCP 操作與 OAuth client 名稱；它不會模擬滑鼠，也不會顯示模型未呼叫 tool 時的思考過程。"
+                : "v0.5 visualizes real Remote MCP operations in an open Workspace or Pitch editor with purple frames and the OAuth client name. It does not simulate a cursor or expose model reasoning when no tool is called."}
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">

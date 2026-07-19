@@ -4,9 +4,11 @@ import { X } from "lucide-react";
 import { LayerSidebar } from "@/features/pitch/ui/LayerSidebar";
 import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWorkspaceTypes";
 import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
+import type { RemoteMcpOperation } from "@/features/pitch/domain/remoteMcpOperation";
 
 type WorkspaceLayerSidebarProps = Pick<PitchWorkspaceProps, "commands" | "document" | "selection" | "view"> & {
   onSelectSlide: (index: number) => void;
+  remoteMcpOperations: readonly RemoteMcpOperation[];
 };
 
 export function WorkspaceLayerSidebar(props: WorkspaceLayerSidebarProps) {
@@ -54,7 +56,7 @@ export function WorkspaceLayerSidebar(props: WorkspaceLayerSidebarProps) {
   );
 }
 
-function LayerSidebarContent({ commands, document, onSelectSlide, selection, view }: WorkspaceLayerSidebarProps) {
+function LayerSidebarContent({ commands, document, onSelectSlide, remoteMcpOperations, selection, view }: WorkspaceLayerSidebarProps) {
   return (
     <LayerSidebar
       activeSlideIndex={document.activeSlideIndex}
@@ -71,6 +73,7 @@ function LayerSidebarContent({ commands, document, onSelectSlide, selection, vie
       onSelectBlock={selection.selectBlockFromLayer}
       onSelectSlide={onSelectSlide}
       renameBlock={commands.renameBlock}
+      remoteMcpOperations={remoteMcpOperations}
       reorderBlock={commands.reorderBlock}
       reorderSlide={commands.reorderSlide}
       replayNonce={view.replayNonce}

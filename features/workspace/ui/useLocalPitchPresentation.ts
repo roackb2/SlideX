@@ -40,6 +40,7 @@ import {
   PresentationRevisionConflictError,
   updateSupabasePresentation
 } from "@/features/workspace/infrastructure/supabasePresentationRepository";
+import { useMcpOperationActivities } from "@/features/workspace/ui/hooks/useMcpOperationActivities";
 
 export type PitchAccessMode = "authenticated" | "guest";
 
@@ -69,6 +70,10 @@ export function useLocalPitchPresentation() {
   const presentationId = searchParams.get("presentation");
   const isDemoEntry = searchParams.get("demo") === "1";
   const userId = session?.user.id;
+  const {
+    activities: mcpActivities,
+    connectionWarning: mcpActivityWarning
+  } = useMcpOperationActivities(userId, presentationId ?? undefined);
   const accessMode: PitchAccessMode = isDemoEntry && !session ? "guest" : "authenticated";
   const agentSessionId = searchParams.get("agentSession") ?? undefined;
   const syncWarning = conflictWarning ?? connectionWarning;
@@ -542,6 +547,8 @@ export function useLocalPitchPresentation() {
     agentSessionId,
     error,
     isReady,
+    mcpActivities,
+    mcpActivityWarning,
     openAgentSession,
     presentation,
     save,

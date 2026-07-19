@@ -9,7 +9,10 @@ import {
   reorderMotionDocBlock,
   updateMotionDocBlock
 } from "@/core/motion-doc/application/motionDocAutomation";
-import { updateMotionDocCanvasNodeFrame } from "@/core/motion-doc/application/motionDocCanvas";
+import {
+  getMotionDocCanvasNodes,
+  updateMotionDocCanvasNodeFrame
+} from "@/core/motion-doc/application/motionDocCanvas";
 import {
   addMotionDocSlideFromLayout,
   replaceMotionDocSlideWithLayout
@@ -20,6 +23,7 @@ import {
   motionDocPropsSchema
 } from "@/mcp/motionDocMcpSchema";
 import type { McpPresentationStore } from "@/mcp/presentationStore";
+import type { McpOperationActivityStore, McpOperationTarget } from "@/mcp/operationActivity";
 import { mutatePresentation } from "@/mcp/remotePresentationHelpers";
 import {
   blockIndexSchema,
@@ -34,7 +38,8 @@ import { applyMcpShaderPreset } from "@/mcp/shaderMcp";
 
 export function registerRemotePresentationWriteTools(
   server: McpServer,
-  store: McpPresentationStore
+  store: McpPresentationStore,
+  activity?: McpOperationActivityStore
 ) {
   server.registerTool(
     "slidex_save_presentation",
@@ -49,7 +54,13 @@ export function registerRemotePresentationWriteTools(
       }
     },
     ({ expectedRevision, presentationId, source }) =>
-      mutatePresentation(store, presentationId, expectedRevision, () => ({ source }))
+      mutatePresentation(
+        store,
+        presentationId,
+        expectedRevision,
+        () => ({ source }),
+        tracked(activity, "slidex_save_presentation", { kind: "presentation" })
+      )
   );
 
   server.registerTool(
@@ -70,8 +81,22 @@ export function registerRemotePresentationWriteTools(
       }
     },
     ({ afterBlockIndex, expectedRevision, position, presentationId, props, slideIndex, text, type }) =>
-      mutatePresentation(store, presentationId, expectedRevision, (source) =>
-        addMotionDocBlock(source, slideIndex, type, { afterBlockIndex, position, props, text })
+      mutatePresentation(
+        store,
+        presentationId,
+        expectedRevision,
+        (source) => addMotionDocBlock(
+          source,
+          slideIndex,
+          type,
+          { afterBlockIndex, position, props, text }
+        ),
+        tracked(
+          activity,
+          "slidex_add_block",
+          { kind: "slide", slideIndex },
+          ({ mutation, nextSource }) => blockTarget(nextSource, slideIndex, mutation.blockIndex)
+        )
       )
   );
 
@@ -90,8 +115,16 @@ export function registerRemotePresentationWriteTools(
       }
     },
     ({ blockIndex, expectedRevision, presentationId, props, slideIndex, text }) =>
-      mutatePresentation(store, presentationId, expectedRevision, (source) =>
-        updateMotionDocBlock(source, slideIndex, blockIndex, { props, text })
+      mutatePresentation(
+        store,
+        presentationId,
+        expectedRevision,
+        (source) => updateMotionDocBlock(source, slideIndex, blockIndex, { props, text }),
+        tracked(
+          activity,
+          "slidex_update_block",
+          (source) => blockTarget(source, slideIndex, blockIndex)
+        )
       )
   );
 
@@ -110,8 +143,12 @@ export function registerRemotePresentationWriteTools(
       }
     },
     ({ expectedRevision, frame, nodeId, presentationId, slideIndex }) =>
-      mutatePresentation(store, presentationId, expectedRevision, (source) =>
-        updateMotionDocCanvasNodeFrame(source, slideIndex, nodeId, frame)
+      mutatePresentation(
+        store,
+        presentationId,
+        expectedRevision,
+        (source) => updateMotionDocCanvasNodeFrame(source, slideIndex, nodeId, frame),
+        tracked(activity, "slidex_update_canvas_node", { kind: "block", nodeId, slideIndex })
       )
   );
 
@@ -128,8 +165,17 @@ export function registerRemotePresentationWriteTools(
       }
     },
     ({ blockIndex, expectedRevision, presentationId, slideIndex }) =>
-      mutatePresentation(store, presentationId, expectedRevision, (source) =>
-        deleteMotionDocBlock(source, slideIndex, blockIndex)
+      mutatePresentation(
+        store,
+        presentationId,
+        expectedRevision,
+        (source) => deleteMotionDocBlock(source, slideIndex, blockIndex),
+        tracked(
+          activity,
+          "slidex_delete_block",
+          (source) => blockTarget(source, slideIndex, blockIndex),
+          () => ({ kind: "slide", slideIndex })
+        )
       )
   );
 
@@ -147,8 +193,17 @@ export function registerRemotePresentationWriteTools(
       }
     },
     ({ blockIndex, expectedRevision, offset, presentationId, slideIndex }) =>
-      mutatePresentation(store, presentationId, expectedRevision, (source) =>
-        duplicateMotionDocBlock(source, slideIndex, blockIndex, offset)
+      mutatePresentation(
+        store,
+        presentationId,
+        expectedRevision,
+        (source) => duplicateMotionDocBlock(source, slideIndex, blockIndex, offset),
+        tracked(
+          activity,
+          "slidex_duplicate_block",
+          (source) => blockTarget(source, slideIndex, blockIndex),
+          ({ mutation, nextSource }) => blockTarget(nextSource, slideIndex, mutation.blockIndex)
+        )
       )
   );
 
@@ -166,8 +221,16 @@ export function registerRemotePresentationWriteTools(
       }
     },
     ({ expectedRevision, fromIndex, presentationId, slideIndex, toIndex }) =>
-      mutatePresentation(store, presentationId, expectedRevision, (source) =>
-        reorderMotionDocBlock(source, slideIndex, fromIndex, toIndex)
+      mutatePresentation(
+        store,
+        presentationId,
+        expectedRevision,
+        (source) => reorderMotionDocBlock(source, slideIndex, fromIndex, toIndex),
+        tracked(
+          activity,
+          "slidex_reorder_block",
+          (source) => blockTarget(source, slideIndex, fromIndex)
+        )
       )
   );
 
@@ -185,8 +248,12 @@ export function registerRemotePresentationWriteTools(
       }
     },
     ({ expectedRevision, presentationId, presetName, shaderId, slideIndex }) =>
-      mutatePresentation(store, presentationId, expectedRevision, (source) =>
-        applyMcpShaderPreset(source, slideIndex, shaderId, presetName)
+      mutatePresentation(
+        store,
+        presentationId,
+        expectedRevision,
+        (source) => applyMcpShaderPreset(source, slideIndex, shaderId, presetName),
+        tracked(activity, "slidex_apply_shader_preset", { kind: "slide", slideIndex })
       )
   );
 
@@ -204,14 +271,30 @@ export function registerRemotePresentationWriteTools(
       }
     },
     ({ afterSlideIndex, expectedRevision, layoutId, presentationId, ...options }) =>
-      mutatePresentation(store, presentationId, expectedRevision, (source) => ({
-        source: addMotionDocSlideFromLayout(
-          source,
-          getLayout(layoutId).source,
-          afterSlideIndex,
-          { ...options, layoutId }
+      mutatePresentation(
+        store,
+        presentationId,
+        expectedRevision,
+        (source) => ({
+          source: addMotionDocSlideFromLayout(
+            source,
+            getLayout(layoutId).source,
+            afterSlideIndex,
+            { ...options, layoutId }
+          )
+        }),
+        tracked(
+          activity,
+          "slidex_add_slide_from_layout",
+          { kind: "presentation" },
+          ({ nextSource }) => ({
+            kind: "slide",
+            slideIndex: afterSlideIndex === undefined
+              ? getMotionDocCanvasNodes(nextSource).slides.length - 1
+              : afterSlideIndex + 1
+          })
         )
-      }))
+      )
   );
 
   server.registerTool(
@@ -228,13 +311,49 @@ export function registerRemotePresentationWriteTools(
       }
     },
     ({ expectedRevision, layoutId, presentationId, slideIndex, ...options }) =>
-      mutatePresentation(store, presentationId, expectedRevision, (source) => ({
-        source: replaceMotionDocSlideWithLayout(
-          source,
-          slideIndex,
-          getLayout(layoutId).source,
-          { ...options, layoutId }
+      mutatePresentation(
+        store,
+        presentationId,
+        expectedRevision,
+        (source) => ({
+          source: replaceMotionDocSlideWithLayout(
+            source,
+            slideIndex,
+            getLayout(layoutId).source,
+            { ...options, layoutId }
+          )
+        }),
+        tracked(
+          activity,
+          "slidex_replace_slide_with_layout",
+          { kind: "slide", slideIndex }
         )
-      }))
+      )
   );
+}
+
+function blockTarget(
+  source: string,
+  slideIndex: number,
+  blockIndexValue: unknown
+): McpOperationTarget {
+  const blockIndex = Number(blockIndexValue);
+  const node = getMotionDocCanvasNodes(source, slideIndex).slides[0]?.nodes.find(
+    (candidate) => candidate.blockIndex === blockIndex
+  );
+  if (!node) throw new Error(`blockIndex ${blockIndex} is outside slide ${slideIndex}.`);
+  return { kind: "block", nodeId: node.nodeId, slideIndex };
+}
+
+function tracked(
+  activity: McpOperationActivityStore | undefined,
+  toolName: string,
+  target: McpOperationTarget | ((source: string) => McpOperationTarget),
+  completedTarget?: (input: {
+    mutation: { source: string; [key: string]: unknown };
+    nextSource: string;
+    previousSource: string;
+  }) => McpOperationTarget
+) {
+  return { activity, completedTarget, target, toolName };
 }

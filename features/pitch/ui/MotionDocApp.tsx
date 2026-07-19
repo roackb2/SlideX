@@ -33,6 +33,7 @@ import {
   type GuestSignInIntent
 } from "@/features/pitch/ui/GuestSignInDialog";
 import type { AgentSessionSummary } from "@/features/pitch/domain/agentRun";
+import type { RemoteMcpOperation } from "@/features/pitch/domain/remoteMcpOperation";
 
 const isSlideXAgentEnabled = process.env.NEXT_PUBLIC_SLIDEX_AGENT_ENABLED === "true";
 
@@ -59,6 +60,8 @@ type MotionDocAppProps = {
   onSelectedAgentSessionChange?: (sessionId?: string) => void;
   presentationId?: string;
   projectVersion?: number;
+  remoteMcpActivityWarning?: string | null;
+  remoteMcpOperations?: readonly RemoteMcpOperation[];
   syncWarning?: string | null;
 };
 
@@ -76,6 +79,8 @@ export function MotionDocApp({
   onSelectedAgentSessionChange,
   presentationId,
   projectVersion,
+  remoteMcpActivityWarning,
+  remoteMcpOperations = [],
   syncWarning
 }: MotionDocAppProps = {}) {
   const isMobileViewport = useMobilePitchViewport();
@@ -498,6 +503,10 @@ export function MotionDocApp({
   const desktopExperience = (
     <>
     <PitchWorkspace
+      remoteMcp={{
+        activities: remoteMcpOperations,
+        connectionWarning: remoteMcpActivityWarning
+      }}
       agent={{
         isEnabled: isAgentAvailable,
         isPanelOpen: isAgentAvailable && isAgentPanelOpen,

@@ -6,6 +6,7 @@ import { resolveRequestOrigin } from "@/common/lib/siteUrl";
 import { createSlideXMcpServer } from "@/mcp/server";
 import { mcpResourceUrl } from "@/mcp/oauthMetadata";
 import { SupabaseMcpOAuthStore } from "@/mcp/supabaseOAuthStore";
+import { SupabaseMcpOperationActivityStore } from "@/mcp/supabaseOperationActivityStore";
 import { SupabaseMcpPresentationImageUploadStore } from "@/mcp/supabasePresentationImageUploadStore";
 import { SupabaseMcpPresentationStore } from "@/mcp/supabasePresentationStore";
 
@@ -35,6 +36,13 @@ async function handleMcpRequest(request: NextRequest) {
     return NextResponse.json({ error: "insufficient_scope" }, { status: 403 });
   }
 
+  const oauthClient = await oauthStore.getClient(auth.clientId).catch(() => null);
+  const operationActivity = new SupabaseMcpOperationActivityStore(admin, {
+    clientId: auth.clientId,
+    clientName: oauthClient?.client_name?.trim() || "MCP client",
+    userId: auth.userId
+  });
+
   const server = createSlideXMcpServer({
     enablePresentationWrites: auth.scopes.includes("presentations:write"),
     imageUploads: auth.scopes.includes("presentation-assets:write")
@@ -44,6 +52,7 @@ async function handleMcpRequest(request: NextRequest) {
           userId: auth.userId
         }
       : undefined,
+    operationActivity,
     profile: "remote",
     presentationStore: new SupabaseMcpPresentationStore(admin, auth.userId)
   });

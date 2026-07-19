@@ -12,13 +12,15 @@ import { WorkspaceScrollbarStyle } from "@/features/pitch/ui/workspace/Workspace
 import { WorkspaceTemplateDialog } from "@/features/pitch/ui/workspace/WorkspaceTemplateDialog";
 import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWorkspaceTypes";
 import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
+import { useVisibleRemoteMcpOperations } from "@/features/pitch/ui/hooks/useVisibleRemoteMcpOperations";
 
-export function PitchWorkspace({ agent, commands, document, selection, view }: PitchWorkspaceProps) {
+export function PitchWorkspace({ agent, commands, document, remoteMcp, selection, view }: PitchWorkspaceProps) {
   const { tx } = usePitchI18n();
   const sceneCount = document.scenes.length;
   const setActiveCanvasTool = view.setActiveCanvasTool;
   const [zoomLevel, setZoomLevel] = useState<number | "fit">("fit");
   const [fitScale, setFitScale] = useState(1);
+  const visibleRemoteMcpOperations = useVisibleRemoteMcpOperations(remoteMcp?.activities ?? []);
 
   useMobileEdgePanels({
     isLeftPanelOpen: view.isMobileSidebarOpen,
@@ -77,6 +79,7 @@ export function PitchWorkspace({ agent, commands, document, selection, view }: P
           commands={commands}
           document={document}
           onSelectSlide={selectSlide}
+          remoteMcpOperations={visibleRemoteMcpOperations}
           selection={selection}
           view={view}
         />
@@ -121,6 +124,8 @@ export function PitchWorkspace({ agent, commands, document, selection, view }: P
             onUpdateBlockFrames={commands.updatePositionedBlockFrames}
             onUseSelectedImageAsBackground={commands.useSelectedImageAsBackground}
             replayNonce={view.replayNonce}
+            remoteMcpActivityWarning={remoteMcp?.connectionWarning}
+            remoteMcpOperations={visibleRemoteMcpOperations}
             sceneCount={sceneCount}
             scenes={document.scenes}
             selectedBlockIndex={selection.selectedBlockIndex}
