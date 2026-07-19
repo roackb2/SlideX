@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const appPort = 3102;
-const fixturePort = 54329;
+const fixturePort = 54328;
 const baseURL = `http://127.0.0.1:${appPort}`;
 const fixtureURL = `http://127.0.0.1:${fixturePort}`;
 
@@ -19,7 +19,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: `node tests/browser/mcp-activity/supabase-fixture.mjs --port ${fixturePort}`,
+      command: `node tests/browser/supabase-fixture.mjs --port ${fixturePort} --app-origin ${baseURL}`,
       reuseExistingServer: false,
       timeout: 30_000,
       url: `${fixtureURL}/health`

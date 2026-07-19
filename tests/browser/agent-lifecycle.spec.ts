@@ -1,11 +1,54 @@
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 import { defaultMdx } from "../../core/motion-doc/presets/defaultMdx";
+import {
+  createSupabaseFixtureSession,
+  installSupabaseRealtimeFixture,
+  supabaseFixtureURL
+} from "./supabaseFixtureClient";
 
 const timestamp = "2026-07-12T00:00:00.000Z";
-const anonymousAccessToken = "test-anonymous-access-token";
 const defaultModelKey = "sk-test-current-tab-only-key";
-const workspaceOwnerId = "test-workspace-user";
-const workspacePresentationId = "test-presentation";
+const workspaceOwnerId = "729c3ccc-09e6-47d8-a49f-66a8395c041c";
+const workspacePresentationId = "3ffb8bd0-f055-415d-8ec5-29c7effdecd2";
+const productSession = createSupabaseFixtureSession({
+  id: workspaceOwnerId,
+  aud: "authenticated",
+  role: "authenticated",
+  email: "agent-test@example.com",
+  phone: "",
+  app_metadata: { provider: "google", providers: ["google"] },
+  user_metadata: { full_name: "Agent Test User" },
+  identities: [],
+  created_at: timestamp,
+  updated_at: timestamp,
+  is_anonymous: false
+});
+const productAccessToken = productSession.accessToken;
+
+test.beforeEach(async ({ context, page, request }) => {
+  const response = await request.post(`${supabaseFixtureURL}/test/reset`, {
+    data: {
+      presentation: {
+        createdAt: timestamp,
+        id: workspacePresentationId,
+        ownerId: workspaceOwnerId,
+        source: defaultMdx,
+        title: "Untitled"
+      },
+      user: productSession.user
+    }
+  });
+  expect(response.ok()).toBe(true);
+  await context.addCookies([{
+    domain: "127.0.0.1",
+    name: "sb-127-auth-token",
+    path: "/",
+    sameSite: "Lax",
+    value: productSession.cookie
+  }]);
+  await page.addInitScript(() => localStorage.setItem("slidex-locale", "en"));
+  await installSupabaseRealtimeFixture(page);
+});
 
 test("keeps one conversational deck across turns, refresh, detach, and explicit delete", async ({ page }) => {
   const agent = new DeterministicAgentApi();
@@ -125,28 +168,16 @@ test("opens a saved conversation with its presentation", async ({ page }) => {
     title: "Other deck conversation"
   });
   const { consoleErrors, panel } = await openAgentPanel(page, agent);
-  await page.evaluate(({ createdAt, ownerId, presentationId, source }) => {
-    const key = `slidex_local_presentations_v1:${ownerId}`;
-    const presentations = JSON.parse(localStorage.getItem(key) ?? "[]") as Array<Record<string, unknown>>;
-    localStorage.setItem(key, JSON.stringify([
-      ...presentations,
-      {
-        createdAt,
-        id: presentationId,
-        kind: "presentation",
-        lastOpenedAt: createdAt,
-        ownerId,
-        source,
-        title: "Other deck",
-        updatedAt: createdAt
-      }
-    ]));
-  }, {
-    createdAt: timestamp,
-    ownerId: workspaceOwnerId,
-    presentationId: otherPresentationId,
-    source: defaultMdx
+  const seedResponse = await page.request.post(`${supabaseFixtureURL}/test/presentations`, {
+    data: {
+      createdAt: timestamp,
+      id: otherPresentationId,
+      ownerId: workspaceOwnerId,
+      source: defaultMdx,
+      title: "Other deck"
+    }
   });
+  expect(seedResponse.ok()).toBe(true);
 
   await panel.getByRole("button", { name: "Conversation history" }).click();
   await panel.getByRole("button", { name: /^Other deck conversation/ }).click();
@@ -254,7 +285,7 @@ test("keeps the model key only in current-tab memory", async ({ page }) => {
   await panel.getByRole("button", { name: "Agent settings" }).click();
   await expect(panel.getByLabel("OpenAI API key")).toHaveValue("");
   expect(agent.authorizationHeaders.every(
-    (header) => header === `Bearer ${anonymousAccessToken}`
+    (header) => header === `Bearer ${productAccessToken}`
   )).toBe(true);
   expect(consoleErrors).toEqual([]);
 });
@@ -502,41 +533,6 @@ async function openAgentPanel(
     }
   });
   page.on("pageerror", (error) => consoleErrors.push(error.message));
-  await page.addInitScript(({ ownerId, presentationId, source, createdAt }) => {
-    localStorage.setItem("slidex_local_auth_session_v1", JSON.stringify({
-      createdAt,
-      provider: "google",
-      user: {
-        displayName: "Agent Test User",
-        email: "agent-test@example.com",
-        id: ownerId
-      }
-    }));
-    const presentationsKey = `slidex_local_presentations_v1:${ownerId}`;
-    if (!localStorage.getItem(presentationsKey)) {
-      localStorage.setItem(presentationsKey, JSON.stringify([{
-        createdAt,
-        id: presentationId,
-        kind: "presentation",
-        lastOpenedAt: createdAt,
-        ownerId,
-        source,
-        title: "Untitled",
-        updatedAt: createdAt
-      }]));
-    }
-  }, {
-    createdAt: timestamp,
-    ownerId: workspaceOwnerId,
-    presentationId: workspacePresentationId,
-    source: defaultMdx
-  });
-  await page.route("**/auth/v1/signup", async (route) => {
-    await route.fulfill({
-      json: createAnonymousSessionResponse(),
-      status: 200
-    });
-  });
   await page.route("**/api/agent/**", (route) => agent.handle(route));
   await page.goto(`/workspace/pitch/?presentation=${workspacePresentationId}`);
   await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
@@ -751,7 +747,7 @@ class DeterministicAgentApi {
     const url = new URL(request.url());
     const authorization = request.headers()["authorization"] ?? "";
     this.authorizationHeaders.push(authorization);
-    if (authorization !== `Bearer ${anonymousAccessToken}`) {
+    if (authorization !== `Bearer ${productAccessToken}`) {
       await route.fulfill({
         json: { error: { code: "auth_required", message: "Authentication required" } },
         status: 401
@@ -1163,29 +1159,4 @@ class DeterministicAgentApi {
     }
     return session;
   }
-}
-
-function createAnonymousSessionResponse() {
-  const expiresAt = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
-  const user = {
-    id: "anonymous-user",
-    aud: "authenticated",
-    role: "authenticated",
-    email: "",
-    phone: "",
-    app_metadata: { provider: "anonymous", providers: [] },
-    user_metadata: {},
-    identities: [],
-    created_at: timestamp,
-    updated_at: timestamp,
-    is_anonymous: true
-  };
-  return {
-    access_token: anonymousAccessToken,
-    token_type: "bearer",
-    expires_in: 24 * 60 * 60,
-    expires_at: expiresAt,
-    refresh_token: "test-anonymous-refresh-token",
-    user
-  };
 }

@@ -2,6 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 const port = 3100;
 const baseURL = `http://127.0.0.1:${port}`;
+const supabaseFixturePort = 54328;
+const supabaseFixtureURL = `http://127.0.0.1:${supabaseFixturePort}`;
 
 export default defineConfig({
   testDir: "./tests/browser",
@@ -17,16 +19,24 @@ export default defineConfig({
     trace: "retain-on-failure",
     video: "retain-on-failure"
   },
-  webServer: {
-    command: "npm run dev:no-clean -- --hostname 127.0.0.1 --port 3100",
-    env: {
-      NEXT_PUBLIC_SLIDEX_AGENT_ENABLED: "true",
-      NEXT_PUBLIC_SLIDEX_AGENT_SERVER_URL: baseURL,
-      NEXT_PUBLIC_SUPABASE_URL: baseURL,
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "test-publishable-key"
+  webServer: [
+    {
+      command: `node tests/browser/supabase-fixture.mjs --port ${supabaseFixturePort} --app-origin ${baseURL}`,
+      reuseExistingServer: false,
+      timeout: 30_000,
+      url: `${supabaseFixtureURL}/health`
     },
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    url: `${baseURL}/workspace/pitch/`
-  }
+    {
+      command: "npm run dev:no-clean -- --hostname 127.0.0.1 --port 3100",
+      env: {
+        NEXT_PUBLIC_SLIDEX_AGENT_ENABLED: "true",
+        NEXT_PUBLIC_SLIDEX_AGENT_SERVER_URL: baseURL,
+        NEXT_PUBLIC_SUPABASE_URL: supabaseFixtureURL,
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "test-publishable-key"
+      },
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      url: `${baseURL}/workspace/pitch/`
+    }
+  ]
 });
