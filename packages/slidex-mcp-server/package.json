@@ -1,6 +1,6 @@
 {
   "name": "@z7589xxz758/slidex-mcp-server",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "MCP server for creating, validating, editing, and exporting SlideX MotionDoc decks.",
   "type": "module",
   "bin": {

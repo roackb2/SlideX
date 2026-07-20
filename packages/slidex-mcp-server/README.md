@@ -1,4 +1,4 @@
-# SlideX MCP Server v0.5
+# SlideX MCP Server v0.6
 
 Local MCP server for SlideX MotionDoc decks. It lets MCP clients create and validate decks, edit slides and blocks, apply Paper Shader presets, export standalone HTML, and write editable PowerPoint files.
 
@@ -108,7 +108,7 @@ Use `slidex_list_shaders` to read the current Paper Shader catalog, `slidex_get_
 
 ## Remote MCP
 
-Animark also exposes an authenticated Streamable HTTP endpoint at `/mcp/`. Remote clients discover OAuth metadata through `/.well-known/oauth-authorization-server` and `/.well-known/oauth-protected-resource/mcp`, register as public PKCE clients, and request `presentations:read`, optionally `presentations:write`, and separately `presentation-assets:write` for private image uploads.
+Animark also exposes an authenticated Streamable HTTP endpoint at `/mcp`. Remote clients discover OAuth metadata through `/.well-known/oauth-authorization-server` and `/.well-known/oauth-protected-resource/mcp`, register as public PKCE clients, and request `presentations:read`, optionally `presentations:write`, and separately `presentation-assets:write` for private image uploads.
 
 The Remote profile exposes only presentation-scoped tools:
 
@@ -122,13 +122,19 @@ The Remote profile exposes only presentation-scoped tools:
 
 Remote read tools automatically select the authenticated user's most recently opened SlideX presentation when `presentationId` is omitted, and always return the selected presentation ID. `slidex_list_presentations` can also discover recent decks. MCP clients should perform this discovery themselves and reuse the returned ID instead of asking the user to copy it.
 
+Starting in v0.6, `slidex_get_presentation` returns presentation metadata by default. Pass `includeSource: true` only when a complete MotionDoc rewrite requires the raw MDX. Catalog reads, canvas reads, and successful writes return the selected presentation summary and current `sourceRevision` without repeating the complete document. When full source is explicitly requested, it is emitted once in the text result while structured content remains summary-only.
+
 `slidex_get_canvas_nodes` returns each block's stable `nodeId`, type, text preview, percentage frame, and equivalent frame on SlideX's 1024 x 576 canvas. `slidex_update_canvas_node` moves or resizes a node by stable ID with percentage coordinates rounded to three decimal places and rejects frames outside the slide.
 
 Every Remote write requires the automatically discovered `presentationId` plus `expectedRevision`, performs a compare-and-swap save, and triggers Animark's existing private presentation Realtime broadcast so an open Pitch page receives the new revision. Revision conflicts reject the save and require the client to read again. Ownership validation applies to both discovery and mutation.
 
 Starting in v0.5, real Remote write and private-image tool operations also emit owner-private activity events. An open SlideX Workspace or Pitch editor renders these as non-interactive purple frames labelled with the authorized OAuth client name. The activity channel does not simulate a cursor or DOM clicks and never stores prompts, tokens, complete MotionDoc source, user-authored text, or raw errors. Activity summaries expire after seven days.
 
-Remote MCP deliberately does not expose deck creation, template cloning, local HTML/PPTX export, workspace CRUD, presentation deletion, video/SVG upload, or public media URLs. Image upload requires a ten-minute single-use upload request, writes only normalized static WebP files to the private `presentation-images` bucket, and never exposes the service-role credential. The Animark server must configure `SUPABASE_SERVICE_ROLE_KEY`; this value is server-only and must never be placed in a browser, MCP client configuration, or any `NEXT_PUBLIC_*` variable.
+The canonical Remote MCP resource is `https://slidexdeck.com/mcp`; the legacy trailing-slash form remains accepted. Access tokens last one hour and compatible clients renew them automatically with rotating refresh tokens. Refresh rotation is atomic and retains the token-family relationship; replaying an invalidated refresh token revokes the active family and requires a new authorization grant.
+
+Authorization consent is bound to the signed-in user, registered client, and complete OAuth request by a ten-minute, single-use server-side nonce. Registration, authorization, and token endpoints use persistent rate limits without adding a database round trip to normal `/mcp` calls. Sensitive OAuth responses are non-cacheable and the consent page cannot be framed. Successful authenticated MCP responses include aggregate `Server-Timing` metrics for `auth`, `store`, `handler`, and `total`; these metrics contain no presentation, user, client, or token data.
+
+Remote MCP deliberately does not expose deck creation, template cloning, local HTML/PPTX export, workspace CRUD, presentation deletion, video/SVG upload, or public media URLs. Image upload requires a ten-minute single-use upload request, writes only normalized static WebP files to the private `presentation-images` bucket, and never exposes the service-role credential. The Animark server must configure `SUPABASE_SERVICE_ROLE_KEY`, `MCP_OAUTH_RATE_LIMIT_SECRET`, and a separate `MCP_OAUTH_AUDIT_HMAC_SECRET`; both HMAC values must contain at least 32 random bytes. These values are server-only and must never be placed in a browser, MCP client configuration, or any `NEXT_PUBLIC_*` variable. Deploy in this order: configure the server-only secrets, apply the Supabase migrations, deploy the application, then run the Remote MCP HTTP smoke test.
 
 ## Built-in Slide Layouts
 

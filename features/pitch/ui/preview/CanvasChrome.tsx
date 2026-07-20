@@ -47,6 +47,7 @@ export function CanvasSlideNav({
         aria-label={tx("Next slide")}
         className="rounded-lg p-1.5 text-neutral-400 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-white/[0.04] hover:text-white hover:scale-[1.04] active:scale-[0.93] cursor-pointer"
         onClick={onNextSlide}
+        data-canvas-next-slide
         type="button"
       >
         <ChevronRight size={12} strokeWidth={2.5} />
