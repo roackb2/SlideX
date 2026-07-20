@@ -4,13 +4,14 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { AlertTriangle, Bot, Check, History, RotateCcw, Send, Settings2, Square, Trash2, Wrench, X } from "lucide-react";
 import { usePitchAgentContext } from "@/features/pitch/ui/agent/PitchAgentProvider";
+import { PitchAgentCredentialSettings } from "@/features/pitch/ui/agent/PitchAgentCredentialSettings";
 import { PitchAgentSessionList } from "@/features/pitch/ui/agent/PitchAgentSessionList";
+import type { ModelCredential } from "@/features/pitch/domain/agentRun";
 
 export function PitchAgentPanel() {
-  const [keyError, setKeyError] = useState<string>();
+  const [credentialValidationError, setCredentialValidationError] = useState<string>();
   const [showSettings, setShowSettings] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
-  const keyInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { actions, meta, state } = usePitchAgentContext();
 
@@ -18,22 +19,18 @@ export function PitchAgentPanel() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [state.messages, state.tools]);
 
-  const credentialError = state.errorCode === "model_credential_rejected"
+  const runCredentialError = state.errorCode === "model_credential_rejected"
     ? state.error
     : undefined;
-  const visibleKeyError = keyError ?? credentialError;
+  const visibleCredentialError = credentialValidationError
+    ?? runCredentialError
+    ?? state.deviceAuth.error;
 
   useEffect(() => {
-    if (visibleKeyError) {
+    if (visibleCredentialError) {
       setShowSettings(true);
     }
-  }, [visibleKeyError]);
-
-  useEffect(() => {
-    if (showSettings && visibleKeyError) {
-      keyInputRef.current?.focus();
-    }
-  }, [showSettings, visibleKeyError]);
+  }, [visibleCredentialError]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -41,27 +38,16 @@ export function PitchAgentPanel() {
     if (!nextMessage) {
       return;
     }
-    if (state.llmApiKey.trim().length < 8) {
-      setKeyError("Enter a valid OpenAI API key before sending.");
+    if (!isUsableModelCredential(state.modelCredential)) {
+      setCredentialValidationError(
+        "Enter a valid OpenAI API key or connect a Codex subscription before sending."
+      );
       setShowSettings(true);
       return;
     }
     actions.setDraft("");
-    setKeyError(undefined);
-    void actions.submit(nextMessage, state.llmApiKey);
-  }
-
-  function handleApiKeyChange(value: string): void {
-    actions.setLlmApiKey(value);
-    setKeyError(undefined);
-    actions.clearCredentialError();
-  }
-
-  function forgetApiKey(): void {
-    actions.setLlmApiKey("");
-    setKeyError(undefined);
-    actions.clearCredentialError();
-    keyInputRef.current?.focus();
+    setCredentialValidationError(undefined);
+    void actions.submit(nextMessage, state.modelCredential);
   }
 
   return (
@@ -116,41 +102,11 @@ export function PitchAgentPanel() {
       </div>
 
       {showSettings && (
-        <div className="border-b border-white/[0.08] p-4">
-          <label className="mb-1.5 block text-xs font-medium text-neutral-300" htmlFor="slidex-agent-api-key">
-            OpenAI API key
-          </label>
-          <input
-            aria-describedby={visibleKeyError
-              ? "slidex-agent-api-key-help slidex-agent-api-key-error"
-              : "slidex-agent-api-key-help"}
-            aria-invalid={Boolean(visibleKeyError)}
-            autoComplete="off"
-            className="h-11 w-full rounded-md border border-white/[0.12] bg-black px-3 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-white/30 focus:ring-2 focus:ring-white/10"
-            id="slidex-agent-api-key"
-            onChange={(event) => handleApiKeyChange(event.target.value)}
-            placeholder="sk-…"
-            ref={keyInputRef}
-            spellCheck={false}
-            type="password"
-            value={state.llmApiKey}
+        <div className="max-h-80 shrink-0 overflow-y-auto border-b border-white/[0.08] p-4">
+          <PitchAgentCredentialSettings
+            error={visibleCredentialError}
+            onCredentialChanged={() => setCredentialValidationError(undefined)}
           />
-          {visibleKeyError && (
-            <p className="mt-2 text-pretty text-xs leading-5 text-red-300" id="slidex-agent-api-key-error" role="alert">
-              {visibleKeyError}
-            </p>
-          )}
-          <p className="mt-2 text-pretty text-xs leading-5 text-neutral-500" id="slidex-agent-api-key-help">
-            Current tab only. Forgotten on refresh or when you choose Forget key. Sent only with a run-start request; the editor and server do not store it.
-          </p>
-          <button
-            className="mt-3 flex h-11 w-full items-center justify-center rounded-md border border-white/[0.12] px-3 text-sm font-medium text-neutral-200 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-            disabled={!state.llmApiKey}
-            onClick={forgetApiKey}
-            type="button"
-          >
-            Forget key
-          </button>
           <AlertDialog.Root>
             <AlertDialog.Trigger asChild>
               <button
@@ -405,4 +361,15 @@ export function PitchAgentPanel() {
       )}
     </aside>
   );
+}
+
+function isUsableModelCredential(
+  credential: ModelCredential | undefined
+): credential is ModelCredential {
+  if (!credential) {
+    return false;
+  }
+  return credential.type === "api-key"
+    ? credential.apiKey.trim().length >= 8
+    : credential.expiresAt > Date.now();
 }

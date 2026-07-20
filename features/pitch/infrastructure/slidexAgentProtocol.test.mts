@@ -12,6 +12,7 @@ import {
 } from "./slidexAgentIdentity";
 import {
   AgentSessionStateSchema,
+  OpenAiDeviceCodeChallengeSchema,
   SlideXAgentRunProtocol
 } from "./slidexAgentProtocol";
 import {
@@ -58,6 +59,16 @@ test("validates hydrated conversation history and active-run discovery", () => {
 
   assert.equal(state.session.messages[0]?.content, "Make it clearer");
   assert.equal(state.activeRun?.runId, "run-1");
+});
+
+test("rejects device verification links outside the official OpenAI auth host", () => {
+  assert.throws(() => OpenAiDeviceCodeChallengeSchema.parse({
+    deviceAuthId: "device-auth-1",
+    userCode: "ABCD-EFGH",
+    verificationUrl: "https://sign-in.example.test/codex/device",
+    intervalMs: 5_000,
+    expiresAt: Date.now() + 60_000
+  }));
 });
 
 test("keeps an active conversation binding for each canonical presentation", () => {
@@ -224,6 +235,70 @@ test("lists, attaches, and deletes presentation conversations through product ro
   ]);
 });
 
+test("requests and polls a browser-owned Codex device challenge", async () => {
+  const expiresAt = Date.parse("2026-07-11T01:00:00.000Z");
+  const challenge = {
+    deviceAuthId: "device-auth-1",
+    userCode: "ABCD-EFGH",
+    verificationUrl: "https://auth.openai.com/codex/device",
+    intervalMs: 5_000,
+    expiresAt
+  };
+  const calls: Array<{
+    authorization: string | null;
+    body?: unknown;
+    url: string;
+  }> = [];
+  const client = new SlideXAgentClient({
+    baseUrl: "https://agent.example.test",
+    getHeaders: () => ({ Authorization: "Bearer product-token" }),
+    fetch: async (input, init) => {
+      const url = String(input);
+      calls.push({
+        authorization: new Headers(init?.headers).get("Authorization"),
+        ...(typeof init?.body === "string"
+          ? { body: JSON.parse(init.body) }
+          : {}),
+        url
+      });
+      return url.endsWith("/poll")
+        ? Response.json({
+          status: "authorized",
+          credential: {
+            type: "oauth-access-token",
+            provider: "openai",
+            accessToken: "runtime-token",
+            expiresAt
+          }
+        })
+        : Response.json(challenge);
+    }
+  });
+
+  assert.deepEqual(await client.requestOpenAiDeviceCode(), challenge);
+  assert.deepEqual(await client.pollOpenAiDeviceCode(challenge), {
+    status: "authorized",
+    credential: {
+      type: "oauth-access-token",
+      provider: "openai",
+      accessToken: "runtime-token",
+      expiresAt
+    }
+  });
+  assert.deepEqual(calls, [
+    {
+      authorization: "Bearer product-token",
+      body: {},
+      url: "https://agent.example.test/api/agent/model-auth/openai/device-code"
+    },
+    {
+      authorization: "Bearer product-token",
+      body: { challenge },
+      url: "https://agent.example.test/api/agent/model-auth/openai/device-code/poll"
+    }
+  ]);
+});
+
 test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async () => {
   const calls: Array<{
     url: string;
@@ -293,7 +368,11 @@ test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async ()
     motionDoc: "# Deck",
     sourceRevision: "revision-1",
     presentationSourceRevision: 7,
-    llmApiKey: "test-key"
+    modelCredential: {
+      type: "api-key",
+      provider: "openai",
+      apiKey: "test-key"
+    }
   });
   const events: unknown[] = [];
   await client.runs.subscribe({
@@ -317,7 +396,11 @@ test("composes SlideX payloads and auth with Heddle's HTTP/SSE client", async ()
         motionDoc: "# Deck",
         sourceRevision: "revision-1",
         presentationSourceRevision: 7,
-        llmApiKey: "test-key"
+        modelCredential: {
+          type: "api-key",
+          provider: "openai",
+          apiKey: "test-key"
+        }
       }
     },
     {

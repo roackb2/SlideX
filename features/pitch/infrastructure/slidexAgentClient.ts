@@ -7,6 +7,9 @@ import type {
   AgentSessionPage,
   AgentSessionState,
   AttachAgentSessionResult,
+  ModelCredential,
+  OpenAiDeviceCodeChallenge,
+  OpenAiDeviceCodePollResult,
   StartAgentRunResult
 } from "@/features/pitch/domain/agentRun";
 import {
@@ -15,6 +18,8 @@ import {
   AgentSessionStateSchema,
   AttachAgentSessionResultSchema,
   CancelAgentRunResultSchema,
+  OpenAiDeviceCodeChallengeSchema,
+  OpenAiDeviceCodePollResultSchema,
   ResetAgentSessionResultSchema,
   SlideXAgentRunProtocol,
   StartAgentRunResultSchema
@@ -30,7 +35,7 @@ export type StartAgentRunInput = {
   motionDoc: string;
   sourceRevision: string;
   presentationSourceRevision: number;
-  llmApiKey: string;
+  modelCredential: ModelCredential;
   model?: string;
 };
 
@@ -128,6 +133,29 @@ export class SlideXAgentClient {
       `/api/agent/sessions/${encodeURIComponent(sessionId)}`,
       ResetAgentSessionResultSchema,
       { method: "DELETE" }
+    );
+  }
+
+  requestOpenAiDeviceCode(signal?: AbortSignal): Promise<OpenAiDeviceCodeChallenge> {
+    return this.request(
+      "/api/agent/model-auth/openai/device-code",
+      OpenAiDeviceCodeChallengeSchema,
+      { method: "POST", body: "{}", signal }
+    );
+  }
+
+  pollOpenAiDeviceCode(
+    challenge: OpenAiDeviceCodeChallenge,
+    signal?: AbortSignal
+  ): Promise<OpenAiDeviceCodePollResult> {
+    return this.request(
+      "/api/agent/model-auth/openai/device-code/poll",
+      OpenAiDeviceCodePollResultSchema,
+      {
+        method: "POST",
+        body: JSON.stringify({ challenge }),
+        signal
+      }
     );
   }
 
