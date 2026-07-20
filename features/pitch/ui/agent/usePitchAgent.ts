@@ -25,7 +25,8 @@ import type {
   AgentSession,
   AgentSessionSummary,
   AgentSessionState,
-  AgentToolActivity
+  AgentToolActivity,
+  ModelCredential
 } from "@/features/pitch/domain/agentRun";
 
 type AgentRunConsumer = ConversationRunConsumerService<{ runId: string }>;
@@ -445,10 +446,10 @@ export function usePitchAgent(
     notifySessionChanged
   ]);
 
-  const submit = useCallback(async (message: string, llmApiKey: string) => {
+  const submit = useCallback(async (message: string, modelCredential: ModelCredential) => {
     const trimmedMessage = message.trim();
-    const trimmedApiKey = llmApiKey.trim();
-    if (!trimmedMessage || !trimmedApiKey
+    const normalizedCredential = normalizeModelCredential(modelCredential);
+    if (!trimmedMessage || !normalizedCredential
       || activeRunIdRef.current || isHydrating || isDeleting
       || isCheckingStatus) {
       return;
@@ -482,7 +483,7 @@ export function usePitchAgent(
         message: trimmedMessage,
         motionDoc,
         sourceRevision,
-        llmApiKey: trimmedApiKey
+        modelCredential: normalizedCredential
       };
       const currentSessionId = sessionIdRef.current;
       let accepted;
@@ -931,6 +932,16 @@ async function hashSource(source: string): Promise<string> {
 
 function displayToolName(tool: string): string {
   return tool.replace(/^slidex_/, "").replaceAll("_", " ");
+}
+
+function normalizeModelCredential(
+  credential: ModelCredential
+): ModelCredential | undefined {
+  if (credential.type === "oauth-access-token") {
+    return credential.expiresAt > Date.now() ? credential : undefined;
+  }
+  const apiKey = credential.apiKey.trim();
+  return apiKey.length >= 8 ? { ...credential, apiKey } : undefined;
 }
 
 function wait(durationMs: number, signal: AbortSignal): Promise<void> {

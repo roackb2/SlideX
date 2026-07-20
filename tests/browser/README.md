@@ -11,8 +11,10 @@ real editor UI while replacing only external service boundaries:
 - `supabaseFixtureClient.ts` creates the matching browser session cookie and
   acknowledges the Supabase Realtime protocol used by the production hooks.
 - `DeterministicAgentApi` in `agent-lifecycle.spec.ts` supplies agent HTTP/SSE
-  responses. The agent server repository separately verifies its real router,
-  storage, and run service.
+  and OpenAI device-auth responses. It proves API keys and Codex runtime
+  credentials stay out of browser persistence and are forgotten on refresh.
+  The agent server repository separately verifies its real router, storage,
+  credential redaction, and run service.
 
 Run the suite with:
 

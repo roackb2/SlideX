@@ -15,12 +15,13 @@ This file remains authoritative for the editor-local boundary.
   run start/subscribe/cancel requests, framing, validation, abort cleanup, and
   transport errors. SlideX injects sync/async auth headers and retains its
   bounded catalog, detail, immutable Presentation association, and deletion
-  APIs, but does not acquire tokens or choose model credentials.
+  APIs. Its model-auth methods transport Heddle's device challenge and poll
+  result without storing either value.
 - `infrastructure/slidexAgentIdentity.ts` restores the signed-in Supabase
   product identity from the application's shared browser client and supplies
   its bearer token to the agent client. Concurrent requests share one session
   read. It never creates a second auth client, falls back to another identity,
-  or receives the user's model key.
+  or receives the user's model credential.
 - `infrastructure/slidexAgentPersistence.ts` owns the tab-scoped active
   conversation selection for each canonical presentation ID. It preserves
   independent bindings when the user moves between presentations; it is not a
@@ -32,10 +33,18 @@ This file remains authoritative for the editor-local boundary.
   detection, terminal state, and bounded retry attempts.
 - `ui/agent/PitchAgentProvider.tsx` owns the live run and current-tab composer
   state independently from the visual surface. A panel, sheet, or FAB may
-  unmount without cancelling the run or forgetting the in-memory model key. It
-  also injects the application-wide Supabase browser client into the agent
+  unmount without cancelling the run or forgetting the in-memory model
+  credential. It also injects the application-wide Supabase browser client into the agent
   identity service, then creates one authenticated agent client and TanStack
   Query cache shared by the runtime and catalog.
+- `ui/agent/useOpenAiModelCredential.ts` owns the browser-only OpenAI
+  credential state and device-code lifecycle. It respects the provider poll
+  interval, cancels on method changes or unmount, expires runtime credentials,
+  and never writes challenges or credentials to browser persistence.
+- `ui/agent/PitchAgentCredentialSettings.tsx` renders the explicit API-key or
+  Codex-subscription choice. Device codes link only to the verification URL
+  returned by the authenticated server and warn users to enter them only at
+  `auth.openai.com`.
 - `ui/agent/useAgentSessionCatalog.ts` owns bounded catalog loading, pagination,
   cache invalidation, and retry state through the authenticated agent-server
   API. The browser never inserts, updates, or deletes `agent_sessions`
@@ -54,8 +63,7 @@ This file remains authoritative for the editor-local boundary.
   A manual-edit conflict remains pending/error instead of being overwritten.
 
 Execution, event replay, run-consumer policy, and cancellation semantics belong
-to Heddle. Product
-session persistence and MotionDoc artifact finalization belong to the SlideX
+to Heddle. Product session persistence and MotionDoc artifact finalization belong to the SlideX
 agent server. Do not duplicate either concern in this feature.
 
 The workspace route must pass its durable presentation ID into `MotionDocApp`.
@@ -78,11 +86,13 @@ disabled while a run, hydration, status check, or deletion is active.
 **New conversation** only detaches the current selection and keeps the old
 server session for the session list. **Delete conversation** is the separate,
 confirmed destructive action. Neither action erases or replaces the current
-deck. The OpenAI API key is different: it lives only in
-`PitchAgentProvider` React state, is sent only in a run-start body, and is
-forgotten on refresh or through the explicit **Forget key** action. Never add it
-to local/session storage, cookies, URLs, analytics, run events, or project
-persistence.
+deck. The selected model credential is different: it is either an OpenAI API
+key or a short-lived Codex access token, lives only in provider React state,
+and is sent only in a run-start body. The Codex device challenge also remains
+in React memory and is sent only to the authenticated poll endpoint. Refresh,
+expiry, cancellation, **Forget key**, or **Disconnect Codex** clears the
+relevant value. Never add either secret to local/session storage, cookies,
+URLs, analytics, run events, or project persistence.
 
 The server exposes active-run discovery and the editor can replay a retained
 active run after refresh. The persisted cursor is
@@ -106,8 +116,8 @@ The enabled editor also requires `NEXT_PUBLIC_SUPABASE_URL` and
 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, plus a supported OAuth provider for
 SlideX login. Agent requests reuse that signed-in product session; anonymous
 sign-in is neither required nor used. These values establish product identity
-only. The user's OpenAI key is entered at runtime and must not be placed in an
-environment variable or deployment secret.
+only. The user's OpenAI API key or Codex access token is acquired at runtime
+and must not be placed in an environment variable or deployment secret.
 
 The editor flag only controls presentation. A deployment must also set
 `SLIDEX_AGENT_ENABLED=true` on the SlideX agent server to register the
@@ -127,6 +137,8 @@ also locks stale-session self-healing, explicit cancellation, sanitized start
 failure with retry, and active-run conflict reattachment. An accepted run whose
 event stream cannot be opened enters the same durable status-recovery path
 instead of leaving the composer locked behind a generic error. The same test
+runs API-key and Codex-subscription paths and proves neither credential enters
+local storage, session storage, or cookies; refresh always forgets it. The suite
 runs in `.github/workflows/agent-regression.yml`. The route fixture in
 `tests/browser/agent-lifecycle.spec.ts` owns only deterministic HTTP/SSE test
 responses; it must not reimplement product session or Heddle run policy. The
