@@ -18,6 +18,7 @@ const navItems = [
   { href: "/download", en: "Download", zh: "下載" },
   { href: "/pricing", en: "Pricing", zh: "價格" },
   { href: "/docs", en: "Docs", zh: "文件" },
+  { href: "/docs#mcp", en: "MCP", zh: "MCP" },
   { href: "/blog", en: "Blog", zh: "部落格" }
 ];
 
@@ -44,7 +45,7 @@ export function SiteNav() {
     <>
       <header className="fixed inset-x-0 top-0 z-[110] border-b border-white/[0.08] bg-[#0b0c0f]/92 backdrop-blur-xl">
         <a
-          className="flex h-7 items-center justify-center bg-[#c4ee87] px-4 text-center text-[12px] font-semibold text-[#0a1a00] transition-colors hover:bg-[#d2f5a0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#0a1a00]"
+          className="flex h-7 items-center justify-center bg-[#c4ee87] px-4 text-center font-mono-geist text-[11px] font-medium tracking-[0.06em] text-[#0a1a00] transition-colors hover:bg-[#d2f5a0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#0a1a00]"
           href="https://tally.so/r/jaYbe4"
           rel="noreferrer"
           target="_blank"
@@ -63,7 +64,7 @@ export function SiteNav() {
             <Link aria-label={isZh ? "SlideX 首頁" : "SlideX home"} className="inline-flex items-center opacity-95 transition-opacity hover:opacity-70" href={localePath("/")}>
               <Image alt="SlideX" className="h-auto w-[92px] object-contain" height={72} loading="eager" priority src="/logo.png" width={260} />
             </Link>
-            <span className="whitespace-nowrap rounded-md border border-white/[0.14] px-2 py-1 text-[11px] font-semibold text-white/62">Pitch Beta</span>
+            <span className="whitespace-nowrap rounded-md border border-white/[0.14] px-2 py-1 font-mono-geist text-[10px] font-medium tracking-[0.14em] text-white/62">PITCH BETA</span>
           </div>
 
           <nav aria-label={isZh ? "主要導覽" : "Main navigation"} className="ml-9 hidden items-center lg:flex">

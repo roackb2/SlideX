@@ -3,6 +3,7 @@
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --font-mono-geist: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-ibm: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 
   --color-ibm-primary: #0f62fe;
@@ -17,6 +18,14 @@
 
   --color-accent-green: #c4ee87;
   --color-accent-green-hover: #d4f4a7;
+
+  /* SlideX marketing site palette (site pages only) */
+  --color-canvas: #0a0b0d;
+  --color-canvas-deep: #07080a;
+  --color-ink: #fcfbf8;
+  --color-accent: #c4ee87;
+  --color-accent-hover: #d7f5aa;
+  --color-on-accent: #0a1a00;
 }
 
 :root {
@@ -213,5 +222,17 @@ button {
   }
   100% {
     opacity: 0;
+  }
+}
+
+/* SlideX marketing site: single capability marquee */
+@keyframes mktg-marquee-x {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-mktg-marquee {
+    animation: mktg-marquee-x 32s linear infinite;
   }
 }

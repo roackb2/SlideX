@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { defaultLocale, isLocale, locales, type Locale } from "@/common/lib/i18n";
 
-export const localizedSiteSegments = ["blog", "docs", "download", "pitch", "pricing", "privacy", "terms"] as const;
+export const localizedSiteSegments = ["blog", "docs", "download", "pricing", "privacy", "terms"] as const;
 
-export type SitePageKey = "blog" | "docs" | "download" | "home" | "pitch" | "pricing" | "privacy" | "terms";
+export type SitePageKey = "blog" | "docs" | "download" | "home" | "pricing" | "privacy" | "terms";
 
 export type LocaleRouteParams = Promise<{ locale: string }>;
 
@@ -14,7 +14,6 @@ type PageMetadataCopy = {
 
 export const sitePagePaths = {
   home: "/",
-  pitch: "/pitch",
   download: "/download",
   pricing: "/pricing",
   docs: "/docs",
@@ -28,10 +27,6 @@ const pageMetadata = {
     home: {
       title: "SlideX Pitch - 專注的簡報工作區",
       description: "用精確畫布、單色 Fill 與克制動態製作清楚的簡報。"
-    },
-    pitch: {
-      title: "SlideX Pitch - 單色簡報編輯器",
-      description: "用單色 Fill、精確畫布與動態節奏完成可持續修改的簡報。"
     },
     download: {
       title: "下載 SlideX Pitch",
@@ -62,10 +57,6 @@ const pageMetadata = {
     home: {
       title: "SlideX Pitch - A focused presentation workspace",
       description: "Build clear presentations with a precise canvas, solid fills, and restrained motion."
-    },
-    pitch: {
-      title: "SlideX Pitch - Solid color presentation editor",
-      description: "Build editable presentations with solid fills, a precise canvas, and focused motion."
     },
     download: {
       title: "Download SlideX Pitch",

@@ -14,6 +14,14 @@ const geistSans = localFont({
   weight: "100 900"
 });
 
+const geistMono = localFont({
+  display: "swap",
+  preload: false,
+  src: "../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2",
+  variable: "--font-geist-mono",
+  weight: "100 900"
+});
+
 const defaultMetadata = dictionaries[defaultLocale].metadata;
 const defaultTitle = defaultLocale === "zh-TW"
   ? "SlideX Pitch - 專注的簡報工作區"
@@ -72,7 +80,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang={defaultLocale} suppressHydrationWarning translate="no" className={geistSans.variable}>
+    <html lang={defaultLocale} suppressHydrationWarning translate="no" className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>

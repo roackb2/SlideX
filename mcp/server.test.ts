@@ -654,7 +654,7 @@ function createImageUploadStore(): McpPresentationImageUploadStore {
 
 async function connectMcp(options: Parameters<typeof createSlideXMcpServer>[0]) {
   const server = createSlideXMcpServer(options);
-  const client = new Client({ name: "slidex-contract-test", version: "0.5.0" });
+  const client = new Client({ name: "slidex-contract-test", version: "0.6.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
