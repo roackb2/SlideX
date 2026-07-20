@@ -8,6 +8,7 @@
     "dev:no-clean": "(ulimit -n 1048575 || true) && WATCHPACK_POLLING=true NEXT_DIST_DIR=.next-turbo next dev --turbopack",
     "dev:reset": "npm run dev",
     "build": "next build --webpack",
+    "build:scan-secrets": "node scripts/check-client-secret-leaks.mjs",
     "build:clean": "npm run clean && npm run build",
     "start": "next start",
     "test": "tsx --test app/mcp/authorize/*.test.ts common/lib/*.test.ts core/motion-doc/application/*.test.ts core/motion-doc/infrastructure/export/*.test.ts core/motion-doc/presets/*.test.ts features/auth/application/*.test.ts features/pitch/application/*.test.ts features/pitch/infrastructure/*.test.ts features/workspace/application/*.test.ts features/workspace/infrastructure/*.test.ts mcp/*.test.ts",
@@ -67,6 +68,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
     "@eslint/eslintrc": "3.3.5",
     "@playwright/test": "1.61.1",
     "@tailwindcss/postcss": "4.3.0",

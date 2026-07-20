@@ -51,13 +51,14 @@ export function PreviewBlockList({
   return (
     <>
       {flowBlocks.map(({ block, blockKey }) => (
-        <div key={blockKey}>
+        <div data-motion-doc-node-id={blockKey} key={blockKey}>
           <PreviewBlock block={block} imageFetchPriority={imageFetchPriority} imageLoading={imageLoading} />
         </div>
       ))}
       {positionedBlocks.map(({ block, blockKey, originalIndex }) => (
         <PositionedPreviewBlock
           block={block}
+          blockKey={blockKey}
           frameOverride={frameOverrides?.get(blockKey)}
           imageFetchPriority={imageFetchPriority}
           imageLoading={imageLoading}
@@ -71,11 +72,12 @@ export function PreviewBlockList({
 
 function PositionedPreviewBlock({
   block,
+  blockKey,
   frameOverride,
   imageFetchPriority,
   imageLoading,
   originalIndex
-}: Omit<PreviewBlockItem, "blockKey"> & {
+}: PreviewBlockItem & {
   frameOverride?: MotionDocFrame;
   imageFetchPriority?: "auto" | "high" | "low";
   imageLoading?: "eager" | "lazy";
@@ -85,6 +87,7 @@ function PositionedPreviewBlock({
   return (
     <div
       className="motion-positioned-block"
+      data-motion-doc-node-id={blockKey}
       style={positionedBlockStyle(block, originalIndex, frame)}
     >
       <PreviewBlock

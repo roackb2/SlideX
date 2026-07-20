@@ -176,8 +176,8 @@ export function DocsPage() {
             </p>
             <p className="mt-3 max-w-2xl text-[13px] leading-6 text-[#c4b5fd]/72">
               {isZh
-                ? "v0.5 會在開啟的 Workspace 與 Pitch 以紫色框即時標示真實 Remote MCP 操作與 OAuth client 名稱；它不會模擬滑鼠，也不會顯示模型未呼叫 tool 時的思考過程。"
-                : "v0.5 visualizes real Remote MCP operations in an open Workspace or Pitch editor with purple frames and the OAuth client name. It does not simulate a cursor or expose model reasoning when no tool is called."}
+                ? "Remote MCP 預設只讀取簡報摘要，只有完整重寫時才傳輸 MotionDoc source；真實寫入仍會在 Workspace 與 Pitch 顯示 OAuth client 名稱與紫色操作框。"
+                : "Remote MCP reads presentation summaries by default and transfers MotionDoc source only for complete rewrites. Real writes still appear in Workspace and Pitch with the OAuth client name and purple activity frames."}
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -228,7 +228,12 @@ export function DocsPage() {
                   ? "Remote MCP 使用 OAuth 與 PKCE 驗證，讓支援 Streamable HTTP 的客戶端安全讀取或編輯你已登入的 SlideX 簡報。"
                   : "Remote MCP uses OAuth and PKCE so Streamable HTTP clients can securely read or edit presentations in your signed-in SlideX account."}
               </p>
-              <pre className="mt-4 overflow-x-auto rounded-lg border border-white/[0.09] bg-black/30 p-4 text-[13px] leading-6 text-white/70"><code>https://slidexdeck.com/mcp/</code></pre>
+              <pre className="mt-4 overflow-x-auto rounded-lg border border-white/[0.09] bg-black/30 p-4 text-[13px] leading-6 text-white/70"><code>https://slidexdeck.com/mcp</code></pre>
+              <p className="mt-4 max-w-2xl text-[12px] leading-5 text-white/35">
+                {isZh
+                  ? "讀取簡報時預設只回傳 metadata 與 sourceRevision；只有完整重寫 MotionDoc 時才需要 includeSource: true。Access token 到期後會透過 rotating refresh token 自動續期；偵測到 refresh token 重放時會撤銷該授權鏈並要求重新登入。"
+                  : "Presentation reads return metadata and sourceRevision by default. Use includeSource: true only for a complete MotionDoc rewrite. Expired access tokens renew automatically through rotating refresh tokens; detected refresh-token replay revokes that grant and requires authorization again."}
+              </p>
               <div className="mt-5 rounded-lg border border-amber-200/15 bg-amber-100/[0.04] p-4 text-[13px] leading-6 text-white/48">
                 {isZh
                   ? "Remote MCP 僅開放目前簡報的讀取與編輯，不提供建立 deck、本機 HTML／PPTX 輸出、工作區管理或刪除簡報。每次寫入都會檢查簡報版本，遇到版本衝突時需重新讀取後再提交。"

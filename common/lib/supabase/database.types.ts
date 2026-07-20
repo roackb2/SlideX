@@ -148,6 +148,7 @@ export type Database = {
           credential_hash: string;
           credential_type: "authorization_code" | "access_token" | "refresh_token";
           expires_at: string;
+          grant_id: string;
           id: string;
           redirect_uri: string | null;
           resource: string;
@@ -162,6 +163,7 @@ export type Database = {
           credential_hash: string;
           credential_type: "authorization_code" | "access_token" | "refresh_token";
           expires_at: string;
+          grant_id?: string;
           id?: string;
           redirect_uri?: string | null;
           resource: string;
@@ -170,6 +172,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          grant_id?: string;
           revoked_at?: string | null;
         };
         Relationships: [
@@ -181,6 +184,112 @@ export type Database = {
             referencedColumns: ["client_id"];
           }
         ];
+      };
+      mcp_oauth_consent_requests: {
+        Row: {
+          client_id: string;
+          consumed_at: string | null;
+          created_at: string;
+          expires_at: string;
+          id: string;
+          nonce_hash: string;
+          request_hash: string;
+          user_id: string;
+        };
+        Insert: {
+          client_id: string;
+          consumed_at?: string | null;
+          created_at?: string;
+          expires_at: string;
+          id?: string;
+          nonce_hash: string;
+          request_hash: string;
+          user_id: string;
+        };
+        Update: {
+          consumed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mcp_oauth_consent_requests_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "mcp_oauth_clients";
+            referencedColumns: ["client_id"];
+          }
+        ];
+      };
+      mcp_oauth_rate_limits: {
+        Row: {
+          bucket_hash: string;
+          last_refilled_at: string;
+          tokens: number;
+          updated_at: string;
+        };
+        Insert: {
+          bucket_hash: string;
+          last_refilled_at?: string;
+          tokens: number;
+          updated_at?: string;
+        };
+        Update: {
+          last_refilled_at?: string;
+          tokens?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      mcp_oauth_security_events: {
+        Row: {
+          client_hash: string | null;
+          created_at: string;
+          error_code: string | null;
+          event_type:
+            | "refresh_replay"
+            | "invalid_grant"
+            | "invalid_grant_burst"
+            | "pkce_failure"
+            | "redirect_mismatch"
+            | "rate_limit_triggered"
+            | "rate_limit_burst"
+            | "account_ip_anomaly"
+            | "sensitive_environment_misconfiguration";
+          expires_at: string;
+          grant_hash: string | null;
+          id: string;
+          ip_hash: string | null;
+          request_id: string | null;
+          route: string;
+          severity: "low" | "medium" | "high" | "critical";
+          user_hash: string | null;
+        };
+        Insert: {
+          client_hash?: string | null;
+          created_at?: string;
+          error_code?: string | null;
+          event_type:
+            | "refresh_replay"
+            | "invalid_grant"
+            | "invalid_grant_burst"
+            | "pkce_failure"
+            | "redirect_mismatch"
+            | "rate_limit_triggered"
+            | "rate_limit_burst"
+            | "account_ip_anomaly"
+            | "sensitive_environment_misconfiguration";
+          expires_at?: string;
+          grant_hash?: string | null;
+          id?: string;
+          ip_hash?: string | null;
+          request_id?: string | null;
+          route: string;
+          severity: "low" | "medium" | "high" | "critical";
+          user_hash?: string | null;
+        };
+        Update: {
+          expires_at?: string;
+        };
+        Relationships: [];
       };
       mcp_operation_events: {
         Row: {
@@ -393,6 +502,94 @@ export type Database = {
           source_revision: number | null;
           title: string | null;
           updated_at: string | null;
+        }>;
+      };
+      mcp_consume_oauth_consent_request: {
+        Args: {
+          actor_user_id: string;
+          authorization_request_hash: string;
+          consent_nonce_hash: string;
+          oauth_client_id: string;
+        };
+        Returns: boolean;
+      };
+      mcp_consume_oauth_rate_limit: {
+        Args: {
+          bucket_capacity: number;
+          refill_interval_seconds: number;
+          target_bucket_hash: string;
+        };
+        Returns: Array<{
+          allowed: boolean;
+          retry_after_seconds: number;
+          tokens_remaining: number;
+        }>;
+      };
+      mcp_exchange_oauth_authorization_code: {
+        Args: {
+          issued_access_expires_at: string;
+          issued_access_hash: string;
+          issued_refresh_expires_at: string;
+          issued_refresh_hash: string;
+          oauth_client_id: string;
+          oauth_redirect_uri: string;
+          oauth_resource: string;
+          presented_code_challenge: string;
+          presented_code_hash: string;
+        };
+        Returns: Array<{
+          granted_scopes: string[] | null;
+          result_status: "exchanged" | "invalid_grant" | "pkce_failure" | "redirect_mismatch";
+          security_grant_id: string | null;
+          security_user_id: string | null;
+        }>;
+      };
+      mcp_issue_oauth_consent_request: {
+        Args: {
+          actor_user_id: string;
+          authorization_request_hash: string;
+          consent_expires_at: string;
+          consent_nonce_hash: string;
+          oauth_client_id: string;
+        };
+        Returns: boolean;
+      };
+      mcp_record_oauth_security_event: {
+        Args: {
+          security_client_hash: string | null;
+          security_error_code: string | null;
+          security_event_type: Database["public"]["Tables"]["mcp_oauth_security_events"]["Row"]["event_type"];
+          security_grant_hash: string | null;
+          security_ip_hash: string | null;
+          security_request_id: string | null;
+          security_route: string;
+          security_severity: Database["public"]["Tables"]["mcp_oauth_security_events"]["Row"]["severity"];
+          security_user_hash: string | null;
+        };
+        Returns: string;
+      };
+      mcp_revoke_oauth_grant_family: {
+        Args: {
+          presented_credential_hash: string;
+        };
+        Returns: boolean;
+      };
+      mcp_rotate_oauth_refresh_token: {
+        Args: {
+          issued_access_expires_at: string;
+          issued_access_hash: string;
+          issued_refresh_expires_at: string;
+          issued_refresh_hash: string;
+          oauth_client_id: string;
+          oauth_resource: string;
+          presented_refresh_hash: string;
+          requested_scopes: string[] | null;
+        };
+        Returns: Array<{
+          granted_scopes: string[] | null;
+          result_status: "invalid_grant" | "invalid_scope" | "refresh_replay" | "rotated";
+          security_grant_id: string | null;
+          security_user_id: string | null;
         }>;
       };
       mcp_claim_presentation_image_upload: {

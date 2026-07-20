@@ -4,11 +4,18 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseAdminClient } from "@/common/lib/supabase/adminClient";
 import { resolveRequestOrigin } from "@/common/lib/siteUrl";
 import { createSlideXMcpServer } from "@/mcp/server";
+import {
+  applyMcpTransportSecurityHeaders,
+  createMcpAuthorizationFailure,
+  type McpAuthorizationFailureKind,
+  parseMcpBearerAuthorization
+} from "@/mcp/oauthHttp";
 import { mcpResourceUrl } from "@/mcp/oauthMetadata";
 import { SupabaseMcpOAuthStore } from "@/mcp/supabaseOAuthStore";
 import { SupabaseMcpOperationActivityStore } from "@/mcp/supabaseOperationActivityStore";
 import { SupabaseMcpPresentationImageUploadStore } from "@/mcp/supabasePresentationImageUploadStore";
 import { SupabaseMcpPresentationStore } from "@/mcp/supabasePresentationStore";
+import { applyMcpServerTiming, McpServerTiming } from "@/mcp/serverTiming";
 
 export const runtime = "nodejs";
 
@@ -17,29 +24,43 @@ export const POST = handleMcpRequest;
 export const DELETE = handleMcpRequest;
 
 async function handleMcpRequest(request: NextRequest) {
+  const timing = new McpServerTiming();
   const origin = resolveRequestOrigin(request);
   const resource = mcpResourceUrl(origin);
   const resourceMetadataUrl = new URL("/.well-known/oauth-protected-resource/mcp", origin).toString();
-  const token = bearerToken(request.headers.get("authorization"));
-  if (!token) return unauthorized(resourceMetadataUrl);
+  const authorization = parseMcpBearerAuthorization(
+    request.headers.get("authorization")
+  );
+  if (authorization.kind !== "token") {
+    return authorizationFailure(
+      resourceMetadataUrl,
+      authorization.kind === "invalid" ? "invalid_token" : "missing_token"
+    );
+  }
+  const token = authorization.token;
 
   const admin = createSupabaseAdminClient();
   const oauthStore = new SupabaseMcpOAuthStore(admin);
   let auth;
   try {
-    auth = await oauthStore.verifyAccessToken(token, resource);
+    auth = await timing.measure("auth", () => oauthStore.verifyAccessToken(token, resource));
   } catch {
-    return unauthorized(resourceMetadataUrl);
+    return authorizationFailure(resourceMetadataUrl, "invalid_token");
   }
 
   if (!auth.scopes.includes("presentations:read")) {
-    return NextResponse.json({ error: "insufficient_scope" }, { status: 403 });
+    return authorizationFailure(
+      resourceMetadataUrl,
+      "insufficient_scope",
+      ["presentations:read"]
+    );
   }
 
-  const oauthClient = await oauthStore.getClient(auth.clientId).catch(() => null);
   const operationActivity = new SupabaseMcpOperationActivityStore(admin, {
     clientId: auth.clientId,
-    clientName: oauthClient?.client_name?.trim() || "MCP client",
+    async resolveClientName() {
+      return (await oauthStore.getClient(auth.clientId))?.client_name;
+    },
     userId: auth.userId
   });
 
@@ -54,7 +75,11 @@ async function handleMcpRequest(request: NextRequest) {
       : undefined,
     operationActivity,
     profile: "remote",
-    presentationStore: new SupabaseMcpPresentationStore(admin, auth.userId)
+    presentationStore: new SupabaseMcpPresentationStore(
+      admin,
+      auth.userId,
+      (durationMs) => timing.add("store", durationMs)
+    )
   });
   const transport = new WebStandardStreamableHTTPServerTransport({
     enableJsonResponse: true,
@@ -62,31 +87,36 @@ async function handleMcpRequest(request: NextRequest) {
   });
 
   await server.connect(transport);
-  return transport.handleRequest(request, {
-    authInfo: {
-      clientId: auth.clientId,
-      expiresAt: auth.expiresAt,
-      extra: { userId: auth.userId },
-      resource: new URL(auth.resource),
-      scopes: auth.scopes,
-      token
-    }
-  });
-}
-
-function bearerToken(header: string | null) {
-  const match = header?.match(/^Bearer\s+([^\s]+)$/i);
-  return match?.[1];
-}
-
-function unauthorized(resourceMetadataUrl: string) {
-  return NextResponse.json(
-    { error: "unauthorized" },
-    {
-      status: 401,
-      headers: {
-        "WWW-Authenticate": `Bearer resource_metadata="${resourceMetadataUrl}"`
+  const response = await timing.measure("handler", () =>
+    transport.handleRequest(request, {
+      authInfo: {
+        clientId: auth.clientId,
+        expiresAt: auth.expiresAt,
+        extra: { userId: auth.userId },
+        resource: new URL(auth.resource),
+        scopes: auth.scopes,
+        token
       }
-    }
+    })
   );
+  return applyMcpTransportSecurityHeaders(applyMcpServerTiming(response, timing));
+}
+
+function authorizationFailure(
+  resourceMetadataUrl: string,
+  kind: McpAuthorizationFailureKind,
+  scopes?: string[]
+) {
+  const failure = createMcpAuthorizationFailure(
+    kind,
+    resourceMetadataUrl,
+    scopes
+  );
+  return applyMcpTransportSecurityHeaders(NextResponse.json(
+    failure.body,
+    {
+      headers: failure.headers,
+      status: failure.status
+    }
+  ));
 }

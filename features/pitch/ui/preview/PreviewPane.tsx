@@ -122,7 +122,11 @@ export const PreviewPane = memo(function PreviewPane({
               {imageItems
                 .filter(({ originalIndex }) => !hiddenBlockIndexSet.has(originalIndex))
                 .map(({ block, blockKey }) => (
-                  <div key={blockKey} style={{ width: "100%" }}>
+                  <div
+                    data-motion-doc-node-id={blockKey}
+                    key={blockKey}
+                    style={{ width: "100%" }}
+                  >
                     <PreviewBlock
                       block={block}
                       imageFetchPriority={imageFetchPriority}

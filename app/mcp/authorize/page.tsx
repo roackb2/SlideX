@@ -8,6 +8,7 @@ import {
   type LucideIcon
 } from "lucide-react";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { appRoutes } from "@/common/lib/appRoutes";
@@ -16,10 +17,16 @@ import { createSupabaseServerClient } from "@/common/lib/supabase/serverClient";
 import { resolveSiteOrigin } from "@/common/lib/siteUrl";
 import {
   mcpAuthorizationRequestSchema,
+  isExactMcpRedirectUri,
   normalizeMcpScopes,
   type McpOAuthScope
 } from "@/mcp/oauth";
 import { mcpResourceUrl } from "@/mcp/oauthMetadata";
+import {
+  hashMcpAuthorizationRequest,
+  recordMcpOAuthSecurityEvent
+} from "@/mcp/oauthSecurity";
+import { consumeMcpOAuthRateLimit } from "@/mcp/oauthRateLimit";
 import { SupabaseMcpOAuthStore } from "@/mcp/supabaseOAuthStore";
 
 import { AuthorizationActions } from "./AuthorizationActions";
@@ -68,14 +75,73 @@ export default async function McpAuthorizePage({ searchParams }: McpAuthorizePag
   }
 
   const store = new SupabaseMcpOAuthStore(createSupabaseAdminClient());
-  const client = await store.getClient(parsed.data.client_id);
+  const requestHeaders = new Headers(await headers());
+  const rateLimit = await consumeMcpOAuthRateLimit({
+    headers: requestHeaders,
+    identity: "ip",
+    kind: "authorize",
+    store
+  }).catch(() => null);
+  if (!rateLimit) {
+    return <AuthorizationError message="Authorization is temporarily unavailable." />;
+  }
+  if (!rateLimit.allowed) {
+    await recordMcpOAuthSecurityEvent({
+      errorCode: "authorize_ip",
+      eventType: "rate_limit_triggered",
+      headers: requestHeaders,
+      route: "/mcp/authorize",
+      severity: "medium",
+      store
+    });
+    return <AuthorizationError message="Too many authorization attempts. Try again shortly." />;
+  }
+
+  const client = await store.getClient(parsed.data.client_id).catch(() => undefined);
+  if (client === undefined) {
+    return <AuthorizationError message="Authorization is temporarily unavailable." />;
+  }
   if (
     !client ||
     !client.grant_types.includes("authorization_code") ||
-    !client.response_types.includes("code") ||
-    !client.redirect_uris.includes(parsed.data.redirect_uri)
+    !client.response_types.includes("code")
   ) {
     return <AuthorizationError message="This MCP client is not registered with SlideX." />;
+  }
+  if (!isExactMcpRedirectUri(parsed.data.redirect_uri, client.redirect_uris)) {
+    await recordMcpOAuthSecurityEvent({
+      clientId: client.client_id,
+      errorCode: "invalid_client",
+      eventType: "redirect_mismatch",
+      headers: requestHeaders,
+      route: "/mcp/authorize",
+      severity: "medium",
+      store
+    });
+    return <AuthorizationError message="This MCP client is not registered with SlideX." />;
+  }
+
+  const clientRateLimit = await consumeMcpOAuthRateLimit({
+    clientId: client.client_id,
+    headers: requestHeaders,
+    identity: "client_ip",
+    kind: "authorize",
+    store
+  }).catch(() => null);
+  if (!clientRateLimit) {
+    return <AuthorizationError message="Authorization is temporarily unavailable." />;
+  }
+  if (!clientRateLimit.allowed) {
+    await recordMcpOAuthSecurityEvent({
+      clientId: client.client_id,
+      errorCode: "authorize_client",
+      eventType: "rate_limit_triggered",
+      headers: requestHeaders,
+      route: "/mcp/authorize",
+      severity: "medium",
+      store
+    });
+    return <AuthorizationError message="Too many authorization attempts. Try again shortly." />;
   }
 
   if (parsed.data.resource !== mcpResourceUrl(resolveSiteOrigin())) {
@@ -98,6 +164,14 @@ export default async function McpAuthorizePage({ searchParams }: McpAuthorizePag
 
   const redirectHost = new URL(parsed.data.redirect_uri).host;
   const email = data.user.email ?? "your SlideX account";
+  const consentNonce = await store.issueConsentRequest({
+    clientId: parsed.data.client_id,
+    requestHash: hashMcpAuthorizationRequest(parsed.data),
+    userId: data.user.id
+  }).catch(() => null);
+  if (!consentNonce) {
+    return <AuthorizationError message="Authorization is temporarily unavailable." />;
+  }
 
   return (
     <AuthorizationShell>
@@ -196,6 +270,7 @@ export default async function McpAuthorizePage({ searchParams }: McpAuthorizePag
           {Object.entries(input).map(([name, value]) => (
             <input key={name} name={name} type="hidden" value={value} />
           ))}
+          <input name="consent_nonce" type="hidden" value={consentNonce} />
           <AuthorizationActions />
         </form>
       </section>

@@ -27,6 +27,7 @@ import { MobileEdgePanelHandles } from "@/features/pitch/ui/preview/MobileCanvas
 import { CanvasContextMenu } from "@/features/pitch/ui/preview/CanvasContextMenu";
 import { CanvasSelectionLayer } from "@/features/pitch/ui/preview/CanvasSelectionLayer";
 import { RemoteMcpActivityOverlay } from "@/features/pitch/ui/preview/RemoteMcpActivityOverlay";
+import { RemoteMcpCanvasCursor } from "@/features/pitch/ui/preview/RemoteMcpCanvasCursor";
 import { RemoteMcpActivityRail } from "@/features/pitch/ui/preview/RemoteMcpActivityRail";
 import type { RemoteMcpOperation } from "@/features/pitch/domain/remoteMcpOperation";
 import { PreviewPane } from "@/features/pitch/ui/preview/PreviewPane";
@@ -35,6 +36,7 @@ import { useCanvasInteractionEngine } from "@/features/pitch/ui/preview/interact
 import { useCanvasPanZoom } from "@/features/pitch/ui/preview/interaction/useCanvasPanZoom";
 import { useTransientFramePreview } from "@/features/pitch/ui/preview/interaction/useTransientFramePreview";
 import { useCanvasViewportMetrics } from "@/features/pitch/ui/preview/interaction/useCanvasViewportMetrics";
+import { useRemoteMcpCanvasCursor } from "@/features/pitch/ui/hooks/useRemoteMcpCanvasCursor";
 import type { BlockUpdater } from "@/features/pitch/application/pitchCommandTypes";
 import type { AddBlockType } from "@/features/pitch/ui/pitchOptions";
 
@@ -147,6 +149,18 @@ export function PreviewCanvas({
     onFitScaleChange,
     scrollAreaRef,
     zoomLevel
+  });
+  const {
+    cursor: remoteMcpCursor,
+    cursorLayerRef: remoteMcpCursorLayerRef,
+    reducedMotion: remoteMcpCursorReducedMotion
+  } = useRemoteMcpCanvasCursor({
+    activeSlideIndex,
+    activities: remoteMcpOperations,
+    actualScale,
+    canvasViewportOffset,
+    scene: activeSlide,
+    scrollAreaRef
   });
   const imageCropBlockIndex = imageCropTarget?.slideIndex === activeSlideIndex && imageCropTarget.blockIndex === selectedBlockIndex && activeSlide?.blocks[imageCropTarget.blockIndex]?.type === "ImageBlock"
     ? imageCropTarget.blockIndex
@@ -737,6 +751,13 @@ export function PreviewCanvas({
                       scene={slideScene}
                       slideIndex={slide.index}
                     />
+                    {isActiveSlideFrame ? (
+                      <RemoteMcpCanvasCursor
+                        cursor={remoteMcpCursor}
+                        layerRef={remoteMcpCursorLayerRef}
+                        reducedMotion={remoteMcpCursorReducedMotion}
+                      />
+                    ) : null}
                     {isActiveSlideFrame && contextMenu ? (
                       <CanvasContextMenu
                         canGroup={selectedBlockIndices.length > 1}

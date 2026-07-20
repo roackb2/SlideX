@@ -16,7 +16,10 @@ export function runMcpTool<T>(callback: () => T): CallToolResult {
   }
 }
 
-export function jsonMcpResult(data: unknown): CallToolResult {
+export function jsonMcpResult(
+  data: unknown,
+  structuredData: unknown = data
+): CallToolResult {
   return {
     content: [
       {
@@ -25,7 +28,7 @@ export function jsonMcpResult(data: unknown): CallToolResult {
       }
     ],
     structuredContent: {
-      result: data
+      result: structuredData
     }
   };
 }

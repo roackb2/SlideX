@@ -46,7 +46,7 @@ export function registerRemotePresentationWriteTools(
     {
       title: "Save SlideX Presentation",
       description:
-        "Save a complete MotionDoc source with revision safety. Use the presentationId returned by a read tool automatically; do not ask the user to find it.",
+        "Save a complete MotionDoc source with revision safety. Read with includeSource: true before a complete rewrite, reuse the returned presentationId and sourceRevision, and expect a summary with the new revision rather than echoed source.",
       inputSchema: {
         expectedRevision: expectedRevisionSchema,
         presentationId: requiredPresentationIdSchema,
