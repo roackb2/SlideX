@@ -155,14 +155,39 @@ export function SiteNav() {
                 </Link>
               ))}
             </nav>
-            <div className="mt-auto grid gap-3 pt-8">
-              <Link className="inline-flex h-11 items-center justify-center rounded-md border border-white/[0.14] text-[14px] font-semibold text-white" href={localePath("/login")}>
-                {isZh ? "登入" : "Log in"}
-              </Link>
-              <Link className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#f4f4f1] text-[14px] font-semibold text-[#0b0c0f]" href={appRoutes.liveDemo}>
-                {isZh ? "立即試用 Live Demo" : "Try Live Demo"}
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
+            <div className="mt-auto pt-8">
+              <div className="mb-8 flex items-center justify-between border-b border-white/[0.08] pb-8">
+                <span className="flex items-center gap-2 text-[14px] font-medium text-white/50">
+                  <Globe2 className="h-4 w-4" />
+                  {isZh ? "語言 Language" : "Language"}
+                </span>
+                <div className="flex gap-1 rounded-lg border border-white/[0.08] bg-white/[0.02] p-1">
+                  {languages.map((language) => (
+                    <button
+                      key={language.code}
+                      onClick={() => setLocale(language.code)}
+                      type="button"
+                      className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
+                        locale === language.code
+                          ? "bg-white/[0.12] text-white shadow-sm"
+                          : "text-white/50 hover:text-white"
+                      }`}
+                    >
+                      {language.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-3">
+                <Link className="inline-flex h-11 items-center justify-center rounded-md border border-white/[0.14] text-[14px] font-semibold text-white" href={localePath("/login")}>
+                  {isZh ? "登入" : "Log in"}
+                </Link>
+                <Link className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#f4f4f1] text-[14px] font-semibold text-[#0b0c0f]" href={appRoutes.liveDemo}>
+                  {isZh ? "立即試用 Live Demo" : "Try Live Demo"}
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </div>
             </div>
           </motion.div>
         ) : null}
