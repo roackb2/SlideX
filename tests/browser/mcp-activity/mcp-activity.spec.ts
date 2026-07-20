@@ -86,9 +86,12 @@ test("purple MCP frames and Canvas cursor stay visual-only while editing remains
   const blockControl = page.locator('[data-frame-control][data-block-index="0"]');
   await blockControl.click({ position: { x: 20, y: 20 } });
   const beforeLeft = await blockControl.evaluate((element) => (element as HTMLElement).style.left);
-  await blockControl.hover({ position: { x: 20, y: 20 } });
+  const moveHalo = blockControl.locator("span.cursor-move").first();
+  const box = await moveHalo.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + 2, box!.y + box!.height / 2);
   await page.mouse.down();
-  await page.mouse.move(700, 420, { steps: 4 });
+  await page.mouse.move(box!.x + 26, box!.y + box!.height / 2 + 8, { steps: 4 });
   await page.mouse.up();
   await expect.poll(() => blockControl.evaluate((element) => (element as HTMLElement).style.left))
     .not.toBe(beforeLeft);
