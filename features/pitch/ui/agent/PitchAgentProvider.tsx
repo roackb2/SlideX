@@ -11,7 +11,10 @@ import {
 } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createSupabaseBrowserClient } from "@/common/lib/supabase/browserClient";
-import type { AgentSessionSummary } from "@/features/pitch/domain/agentRun";
+import type {
+  AgentSessionSummary,
+  ModelCredential
+} from "@/features/pitch/domain/agentRun";
 import { SlideXAgentClient } from "@/features/pitch/infrastructure/slidexAgentClient";
 import { SlideXAgentIdentityService } from "@/features/pitch/infrastructure/slidexAgentIdentity";
 import {
@@ -20,17 +23,25 @@ import {
   type PitchAgentRuntimeInput
 } from "@/features/pitch/ui/agent/usePitchAgent";
 import { useAgentSessionCatalog } from "@/features/pitch/ui/agent/useAgentSessionCatalog";
+import {
+  useOpenAiModelCredential,
+  type OpenAiDeviceAuthState
+} from "@/features/pitch/ui/agent/useOpenAiModelCredential";
 
 type PitchAgentContextValue = {
   state: PitchAgentRuntime["state"] & {
     draft: string;
-    llmApiKey: string;
+    modelCredential?: ModelCredential;
+    deviceAuth: OpenAiDeviceAuthState;
     sessions: AgentSessionSummary[];
     sessionsError?: string;
   };
   actions: PitchAgentRuntime["actions"] & {
     setDraft: Dispatch<SetStateAction<string>>;
-    setLlmApiKey: Dispatch<SetStateAction<string>>;
+    setApiKey: (apiKey: string) => void;
+    connectCodex: () => Promise<void>;
+    cancelCodexConnection: () => void;
+    clearModelCredential: () => void;
     loadMoreSessions: () => Promise<unknown>;
     retrySessions: () => Promise<unknown>;
     selectSession: (session: AgentSessionSummary) => Promise<boolean>;
@@ -86,8 +97,8 @@ function PitchAgentRuntimeProvider({
 }) {
   const catalog = useAgentSessionCatalog(client);
   const runtime = usePitchAgent(runtimeInput, client, catalog.invalidate);
+  const credential = useOpenAiModelCredential(client);
   const [draft, setDraft] = useState("");
-  const [llmApiKey, setLlmApiKey] = useState("");
 
   const selectSession = async (session: AgentSessionSummary) => {
     if (session.presentation.id === runtimeInput.presentationId) {
@@ -110,14 +121,14 @@ function PitchAgentRuntimeProvider({
         state: {
           ...runtime.state,
           draft,
-          llmApiKey,
+          ...credential.state,
           sessions: catalog.sessions,
           sessionsError: catalog.error
         },
         actions: {
           ...runtime.actions,
           setDraft,
-          setLlmApiKey,
+          ...credential.actions,
           loadMoreSessions: catalog.loadMore,
           retrySessions: catalog.retry,
           selectSession

@@ -272,7 +272,11 @@ test("keeps the model key only in current-tab memory", async ({ page }) => {
   await submitAgentMessage(page, "Use a current-tab key", sentinel);
   await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
 
-  expect(agent.startRequests[0]?.llmApiKey).toBe(sentinel);
+  expect(agent.startRequests[0]?.modelCredential).toEqual({
+    type: "api-key",
+    provider: "openai",
+    apiKey: sentinel
+  });
   const browserStorage = await page.evaluate(() => JSON.stringify({
     local: { ...localStorage },
     session: { ...sessionStorage },
@@ -290,20 +294,61 @@ test("keeps the model key only in current-tab memory", async ({ page }) => {
   expect(consoleErrors).toEqual([]);
 });
 
-test("puts a rejected model key next to the key input and allows retry", async ({ page }) => {
+test("puts a rejected model credential next to its control and allows retry", async ({ page }) => {
   const agent = new DeterministicAgentApi();
   agent.rejectNextCredential();
   const { consoleErrors, panel } = await openAgentPanel(page, agent);
 
   await submitAgentMessage(page, "Use a rejected key", "sk-rejected-model-key");
-  await expect(panel.locator("#slidex-agent-api-key-error")).toHaveText(
-    "OpenAI rejected this API key. Check the key and try again."
+  await expect(panel.locator("#slidex-agent-credential-error")).toHaveText(
+    "OpenAI rejected this model credential. Reconnect the Codex account or check the API key, then try again."
   );
   await expect(panel.getByLabel("OpenAI API key")).toBeFocused();
 
   await submitAgentMessage(page, "Retry with a working key", "sk-working-model-key");
   await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
   expect(agent.startRequests).toHaveLength(2);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("uses a Codex subscription credential only in current-tab memory", async ({ page }) => {
+  const agent = new DeterministicAgentApi();
+  const { consoleErrors, panel } = await openAgentPanel(page, agent);
+
+  await panel.getByRole("button", { name: "Agent settings" }).click();
+  await panel.getByRole("button", { name: "Codex subscription" }).click();
+  await panel.getByRole("button", { name: "Connect Codex subscription" }).click();
+  await expect(panel.getByLabel("OpenAI device code")).toHaveText("ABCD-EFGH");
+  await expect(panel.getByRole("link", { name: "Open OpenAI sign-in" })).toHaveAttribute(
+    "href",
+    "https://auth.openai.com/codex/device"
+  );
+  await expect(panel.getByText("Codex connected", { exact: true })).toBeVisible({
+    timeout: 5_000
+  });
+
+  await page.getByLabel("Message the SlideX agent").fill("Use my Codex subscription");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  expect(agent.startRequests[0]?.modelCredential).toMatchObject({
+    type: "oauth-access-token",
+    provider: "openai",
+    accessToken: agent.codexAccessToken
+  });
+
+  const browserStorage = await page.evaluate(() => JSON.stringify({
+    local: { ...localStorage },
+    session: { ...sessionStorage },
+    cookies: document.cookie
+  }));
+  expect(browserStorage).not.toContain(agent.codexAccessToken);
+
+  await page.reload();
+  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await panel.getByRole("button", { name: "Agent settings" }).click();
+  await panel.getByRole("button", { name: "Codex subscription" }).click();
+  await expect(panel.getByRole("button", { name: "Connect Codex subscription" })).toBeVisible();
+  await expect(panel.getByText("Codex connected", { exact: true })).toBeHidden();
   expect(consoleErrors).toEqual([]);
 });
 
@@ -570,7 +615,15 @@ type StartRequest = {
   message: string;
   motionDoc: string;
   sourceRevision: string;
-  llmApiKey?: string;
+  modelCredential?:
+    | { type: "api-key"; provider: "openai"; apiKey: string }
+    | {
+      type: "oauth-access-token";
+      provider: "openai";
+      accessToken: string;
+      expiresAt: number;
+      accountId?: string;
+    };
 };
 
 type SessionMessage = {
@@ -633,6 +686,7 @@ type SubscriptionFailure = {
  * service. Product lifecycle rules must stay in production code, not here.
  */
 class DeterministicAgentApi {
+  readonly codexAccessToken = "codex-browser-sentinel-access-token";
   readonly authorizationHeaders: string[] = [];
   readonly producedMotionDocs: string[] = [];
   readonly startRequests: StartRequest[] = [];
@@ -757,6 +811,35 @@ class DeterministicAgentApi {
 
     if (request.method() === "POST" && url.pathname === "/api/agent/runs") {
       await this.start(route);
+      return;
+    }
+    if (request.method() === "POST" && url.pathname === "/api/agent/model-auth/openai/device-code") {
+      await route.fulfill({
+        json: {
+          deviceAuthId: "device-auth-1",
+          userCode: "ABCD-EFGH",
+          verificationUrl: "https://auth.openai.com/codex/device",
+          intervalMs: 10,
+          expiresAt: Date.now() + 60_000
+        },
+        status: 200
+      });
+      return;
+    }
+    if (request.method() === "POST" && url.pathname === "/api/agent/model-auth/openai/device-code/poll") {
+      await route.fulfill({
+        json: {
+          status: "authorized",
+          credential: {
+            type: "oauth-access-token",
+            provider: "openai",
+            accessToken: this.codexAccessToken,
+            expiresAt: Date.now() + 60 * 60_000,
+            accountId: "account-1"
+          }
+        },
+        status: 200
+      });
       return;
     }
     if (request.method() === "GET" && url.pathname === "/api/agent/sessions") {
@@ -1002,7 +1085,7 @@ class DeterministicAgentApi {
       return run.events;
     }
     const session = this.requireSession(run.sessionId);
-    const message = "OpenAI rejected this API key. Check the key and try again.";
+    const message = "OpenAI rejected this model credential. Reconnect the Codex account or check the API key, then try again.";
     session.messages.push({
       id: `message-assistant-${run.turn}`,
       role: "assistant",
