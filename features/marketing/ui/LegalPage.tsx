@@ -67,22 +67,27 @@ export function LegalPage({ kind }: LegalPageProps) {
       : "These terms describe the basic rules between you and SlideX Pitch when you use the service.";
 
   return (
-    <main className="min-h-[100dvh] bg-[#0b0c0f] px-5 pb-24 pt-28 text-[#f4f4f1] sm:px-7 lg:px-10 lg:pt-36">
-      <section className="mx-auto max-w-4xl">
-        <p className="text-[12px] font-semibold tracking-[-0.01em] text-[#79b6ff]">SlideX</p>
-        <h1 className="mt-5 text-[clamp(3rem,6vw,6rem)] font-semibold leading-[0.95] tracking-[-0.065em]">{title}</h1>
-        <p className="mt-6 max-w-2xl text-[17px] leading-8 text-white/59">{intro}</p>
+    <main className="relative min-h-[100dvh] bg-canvas px-5 pb-24 pt-28 text-ink selection:bg-accent/30 sm:px-7 lg:px-10 lg:pt-36">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-accent/10 rounded-full blur-[140px] mix-blend-screen" />
+      </div>
+      <div className="relative z-10">
+        <section className="mx-auto max-w-4xl">
+          <p className="text-[12px] font-semibold tracking-[-0.01em] text-accent">SlideX</p>
+          <h1 className="mt-5 text-[clamp(3rem,6vw,6rem)] font-semibold leading-[0.95] tracking-[-0.065em] text-white">{title}</h1>
+        <p className="mt-6 max-w-2xl text-[17px] leading-8 text-white/60">{intro}</p>
         <p className="mt-8 text-[13px] text-white/38">{isZh ? "最後更新：2026 年 7 月 11 日" : "Last updated: July 11, 2026"}</p>
       </section>
 
-      <section className="mx-auto mt-16 max-w-4xl border-t border-white/[0.09] pt-3 lg:mt-20">
-        {sections.map((section) => (
-          <article className="grid gap-3 border-b border-white/[0.09] py-7 md:grid-cols-[0.35fr_0.65fr] md:gap-8" key={section.title}>
-            <h2 className="text-[17px] font-semibold tracking-[-0.025em] text-white">{section.title}</h2>
-            <p className="text-[15px] leading-7 text-white/52">{section.body}</p>
-          </article>
-        ))}
-      </section>
+        <section className="mx-auto mt-16 max-w-4xl border-t border-white/10 pt-3 lg:mt-20">
+          {sections.map((section) => (
+            <article className="grid gap-3 border-b border-white/10 py-7 md:grid-cols-[0.35fr_0.65fr] md:gap-8" key={section.title}>
+              <h2 className="text-[17px] font-semibold tracking-[-0.025em] text-white">{section.title}</h2>
+              <p className="text-[15px] leading-7 text-ink/65">{section.body}</p>
+            </article>
+          ))}
+        </section>
+      </div>
     </main>
   );
 }

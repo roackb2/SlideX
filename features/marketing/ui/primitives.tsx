@@ -26,15 +26,6 @@ export function MktgSection({
   );
 }
 
-export function Eyebrow({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return (
-    <p className={`flex items-center gap-3 font-mono-geist text-[11px] uppercase tracking-[0.3em] text-ink/40 ${className}`}>
-      <span aria-hidden="true" className="inline-block h-1.5 w-1.5 bg-accent" />
-      {children}
-    </p>
-  );
-}
-
 export function MktgPrimaryLink({
   children,
   className = "",
@@ -46,7 +37,7 @@ export function MktgPrimaryLink({
 }) {
   return (
     <Link
-      className={`inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-accent px-7 text-[15px] font-semibold text-on-accent transition-colors hover:bg-accent-hover active:translate-y-px ${focusRing} ${className}`}
+      className={`inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-accent px-7 text-[16px] font-semibold text-on-accent transition-colors hover:bg-accent-hover active:translate-y-px ${focusRing} ${className}`}
       href={href}
     >
       {children}
@@ -65,7 +56,7 @@ export function MktgGhostLink({
   external?: boolean;
   href: string;
 }) {
-  const classes = `inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-white/16 bg-white/[0.045] px-6 text-[14px] font-semibold text-white/72 transition-colors hover:border-white/30 hover:text-white active:translate-y-px ${focusRing} ${className}`;
+  const classes = `inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/16 bg-white/[0.045] px-6 text-[15px] font-semibold text-white/72 transition-colors hover:border-white/30 hover:text-white active:translate-y-px ${focusRing} ${className}`;
 
   if (external) {
     return (
@@ -93,7 +84,7 @@ export function MktgTextLink({
   external?: boolean;
   href: string;
 }) {
-  const classes = `group inline-flex w-fit items-center gap-2 text-[14px] font-semibold text-white transition-colors hover:text-accent ${focusRing} ${className}`;
+  const classes = `group inline-flex w-fit items-center gap-2 text-[15px] font-semibold text-white transition-colors hover:text-accent ${focusRing} ${className}`;
   const icon = <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />;
 
   if (external) {
@@ -142,7 +133,7 @@ export function CodeCard({
   };
 
   return (
-    <div className="overflow-hidden rounded-lg border border-white/10 bg-canvas-deep">
+    <div className="w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-white/10 bg-canvas-deep">
       <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-2.5">
         <p className="font-mono-geist text-[11px] tracking-[0.18em] text-white/36">{title ?? "TERMINAL"}</p>
         <button
@@ -155,7 +146,7 @@ export function CodeCard({
           {copied ? copiedLabel : copyLabel}
         </button>
       </div>
-      <pre className="overflow-x-auto px-5 py-4 font-mono-geist text-[13px] leading-6 text-white/78">
+      <pre className="w-full min-w-0 max-w-full overflow-x-auto px-5 py-4 font-mono-geist text-[14px] leading-6 text-white/78">
         <code>{code}</code>
       </pre>
     </div>
@@ -213,10 +204,10 @@ export function TrustBadgeRow({ items }: { items: string[] }) {
 
 export function StatStrip({ items }: { items: { label: string; value: string }[] }) {
   return (
-    <dl className="grid grid-cols-2 border-y border-white/[0.08] md:grid-cols-4">
+    <dl className="grid grid-cols-2 border-y border-white/10 md:grid-cols-4">
       {items.map((item, index) => (
         <div
-          className={`px-5 py-6 sm:px-6 ${index > 0 ? "border-l border-white/[0.08] max-md:[&:nth-child(3)]:border-l-0 max-md:[&:nth-child(n+3)]:border-t max-md:[&:nth-child(n+3)]:border-white/[0.08]" : ""}`}
+          className={`px-5 py-6 sm:px-6 ${index > 0 ? "border-l border-white/10 max-md:[&:nth-child(3)]:border-l-0 max-md:[&:nth-child(n+3)]:border-t max-md:[&:nth-child(n+3)]:border-white/10" : ""}`}
           key={item.label}
         >
           <dt className="font-mono-geist text-[10px] uppercase tracking-[0.22em] text-white/36">{item.label}</dt>
@@ -226,4 +217,3 @@ export function StatStrip({ items }: { items: { label: string; value: string }[]
     </dl>
   );
 }
-

@@ -1,7 +1,9 @@
 export { HomePage } from "@/features/marketing/ui/HomePage";
+export { AgentPage } from "@/features/marketing/ui/AgentPage";
 export { BlogPage } from "@/features/marketing/ui/BlogPage";
 export { DocsPage } from "@/features/marketing/ui/DocsPage";
 export { DownloadPage } from "@/features/marketing/ui/DownloadPage";
 export { LegalPage } from "@/features/marketing/ui/LegalPage";
+export { MarketingFooter } from "@/features/marketing/ui/MarketingFooter";
 export { PricingPage } from "@/features/marketing/ui/PricingPage";
 export { StyleThumbnail } from "@/features/marketing/ui/StyleThumbnail";

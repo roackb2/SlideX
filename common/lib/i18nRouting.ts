@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { defaultLocale, isLocale, locales, type Locale } from "@/common/lib/i18n";
 
-export const localizedSiteSegments = ["blog", "docs", "download", "pricing", "privacy", "terms"] as const;
+export const localizedSiteSegments = ["blog", "docs", "download", "pricing", "privacy", "terms", "agent", "mcp-server"] as const;
 
-export type SitePageKey = "blog" | "docs" | "download" | "home" | "pricing" | "privacy" | "terms";
+export type SitePageKey = "blog" | "docs" | "download" | "home" | "pricing" | "privacy" | "terms" | "agent" | "mcpServer";
 
 export type LocaleRouteParams = Promise<{ locale: string }>;
 
@@ -19,7 +19,9 @@ export const sitePagePaths = {
   docs: "/docs",
   blog: "/blog",
   terms: "/terms",
-  privacy: "/privacy"
+  privacy: "/privacy",
+  agent: "/agent",
+  mcpServer: "/mcp-server"
 } satisfies Record<SitePageKey, string>;
 
 const pageMetadata = {
@@ -38,7 +40,7 @@ const pageMetadata = {
     },
     docs: {
       title: "SlideX Pitch 文件",
-      description: "快速了解 Pitch 的畫布、單色 Fill、動態背景與 SlideX MCP Server。"
+      description: "快速了解 Pitch 的畫布、Paper Shaders、MCP Server 連線與輸出工作流程。"
     },
     blog: {
       title: "SlideX Journal",
@@ -51,6 +53,14 @@ const pageMetadata = {
     privacy: {
       title: "SlideX 隱私權政策",
       description: "SlideX Pitch 如何處理與保護個人資料。"
+    },
+    agent: {
+      title: "SlideX AI Agent",
+      description: "用自然語言，與 AI Agent 一起打造專業簡報。"
+    },
+    mcpServer: {
+      title: "SlideX MCP Server",
+      description: "讓相容的 AI client 建立、檢查與修改真實的 SlideX 簡報。"
     }
   },
   en: {
@@ -68,7 +78,7 @@ const pageMetadata = {
     },
     docs: {
       title: "SlideX Pitch Documentation",
-      description: "Learn the Pitch canvas, solid fill, motion background, and SlideX MCP Server workflow."
+      description: "Learn the Pitch canvas, Paper Shaders, MCP Server connection, and export workflow."
     },
     blog: {
       title: "SlideX Journal",
@@ -81,6 +91,14 @@ const pageMetadata = {
     privacy: {
       title: "SlideX Privacy Policy",
       description: "How SlideX Pitch handles and protects personal information."
+    },
+    agent: {
+      title: "SlideX AI Agent",
+      description: "Build professional presentations effortlessly with AI Agents."
+    },
+    mcpServer: {
+      title: "SlideX MCP Server",
+      description: "Let compatible AI clients create, inspect, and update real SlideX presentations."
     }
   }
 } satisfies Record<Locale, Record<SitePageKey, PageMetadataCopy>>;

@@ -2,6 +2,7 @@
 
 import { useState, type PointerEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   AnimatePresence,
   easeOut,
@@ -13,13 +14,9 @@ import {
 } from "framer-motion";
 import {
   ArrowRight,
-  ArrowUpRight,
   Check,
   ChevronDown,
-  Terminal,
   Sparkles,
-  Layers,
-  Cpu,
   FileSpreadsheet,
   Palette,
   ShieldCheck,
@@ -28,23 +25,20 @@ import {
   Edit3,
   Download,
   Copy,
-  SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
   Play,
   Share2,
-  Undo,
-  RotateCcw,
   Grid,
   Maximize2,
-  Zap
+  Zap,
+  MessageSquare
 } from "lucide-react";
 import { appRoutes } from "@/common/lib/appRoutes";
 import { useI18n } from "@/common/lib/I18nProvider";
 import {
   BrowserFrame,
   CodeCard,
-  Eyebrow,
   MktgGhostLink,
   MktgPrimaryLink,
   MktgSection,
@@ -54,15 +48,6 @@ import {
 import { StyleThumbnail } from "@/features/marketing/ui/StyleThumbnail";
 
 const MCP_INSTALL_COMMAND = "npx -y @z7589xxz758/slidex-mcp-server";
-
-const MCP_CONFIG_SNIPPET = `{
-  "mcpServers": {
-    "slidex": {
-      "command": "npx",
-      "args": ["-y", "@z7589xxz758/slidex-mcp-server"]
-    }
-  }
-}`;
 
 const MARQUEE_ITEMS = [
   "CREATE",
@@ -124,24 +109,22 @@ type HomeCopy = {
   ctaTitle: string;
   exportBody: string;
   exportFormats: { detail: string; label: string }[];
-  exportNote: string;
   exportTitle: string;
   faqBody: string;
   faqItems: string[][];
   faqTitle: string;
   heroBody: string;
   heroSlideAria: (variant: SlideVariant) => string;
-  mcpAgentDone: string[];
-  mcpAgentPrompt: string;
   mcpBody: string;
   mcpCapabilities: { detail: string; label: string }[];
   mcpClients: string;
   mcpTitle: string;
-  paths: { body: string; bullets: string[]; eyebrow: string; title: string }[];
+  paths: { body: string; bullets: string[]; cta: string; title: string }[];
   pathsTitle: string;
   primaryCta: string;
-  secondaryCta: string;
+  docsCta: string;
   workflow: { detail: string; title: string }[];
+  workflowTitle: string;
 };
 
 type Reveal = (delay?: number) => Record<string, unknown>;
@@ -150,7 +133,8 @@ export function HomePage() {
   const { locale, localePath } = useI18n();
   const reduceMotion = useReducedMotion();
   const isZh = locale === "zh-TW";
-  const docsMcpPath = localePath("/docs#mcp");
+  const agentPath = localePath("/agent");
+  const mcpServerPath = localePath("/docs#mcp-server");
 
   const reveal = (delay = 0) =>
     reduceMotion
@@ -164,45 +148,45 @@ export function HomePage() {
 
   const copy: HomeCopy = {
     heroBody: isZh
-      ? "不需要複雜學習，用自然語言或手動調整，輕鬆打造專業 Pitch Deck。"
-      : "No complex learning curve. Build professional pitch decks effortlessly with natural language or manual edits.",
+      ? "從一個想法開始，和 AI Agent 一起完成一份清楚、有說服力的簡報。"
+      : "Turn an idea into a clear presentation, then refine every slide with AI.",
     primaryCta: isZh ? "開啟 Live Demo" : "Try Live Demo",
-    secondaryCta: isZh ? "連接 AI client" : "Connect your AI client",
+    docsCta: isZh ? "查看詳細文件" : "Read the documentation",
     heroSlideAria: (variant) => (isZh ? `顯示 ${variant} 投影片` : `Show ${variant} slide`),
-    pathsTitle: isZh ? "兩種方式，同一份簡報。" : "Two ways in. One deck.",
+    pathsTitle: isZh ? "把想法做成簡報" : "Turn an idea into a polished deck",
     paths: isZh
       ? [
           {
-            body: "從一份完整的示範簡報開始，直接在瀏覽器修改文字、圖片與版面，準備好就匯出 PowerPoint。",
+            body: "從完整的示範簡報開始，改文字、換圖片、調整版面，完成後直接匯出。",
             bullets: ["免註冊 Live Demo", "畫布與圖層直接編輯", "匯出可編輯的 PPTX"],
-            eyebrow: "FOR PRESENTERS",
-            title: "打開就能改，改完就能匯出。"
+            cta: "開啟 Live Demo",
+            title: "直接打開簡報開始修改"
           },
           {
-            body: "SlideX MCP 讓相容的 AI client 建立、檢查、編輯與匯出簡報。一句指令，就是一頁投影片。",
-            bullets: ["建立與重排投影片", "檢查並修改每個區塊", "Revision 衝突安全寫入"],
-            eyebrow: "FOR AI BUILDERS",
-            title: "你的 AI client，直接操作整份簡報。"
+            body: "說出方向、補充資料、調整語氣。AI Agent 會在同一份簡報裡一路幫你完成。",
+            bullets: ["建立與重排投影片", "檢查並修改每個區塊", "在同一段對話持續完成"],
+            cta: "了解 AI Agent",
+            title: "和 AI 一起更快完成簡報"
           }
         ]
       : [
           {
-            body: "Start from a complete demo deck, change text, images, and layout right in the browser, then export to PowerPoint.",
+            body: "Start with a complete demo deck. Change the copy, images, and layout, then export when it is ready.",
             bullets: ["Live Demo without sign-up", "Direct canvas and layer editing", "Editable PPTX export"],
-            eyebrow: "FOR PRESENTERS",
-            title: "Open, edit, export. That is the flow."
+            cta: "Try Live Demo",
+            title: "Open a deck and make it yours"
           },
           {
-            body: "SlideX MCP lets compatible AI clients create, inspect, edit, and export presentations. One prompt becomes one slide.",
-            bullets: ["Create and reorder slides", "Inspect and edit every block", "Conflict-safe revision writes"],
-            eyebrow: "FOR AI BUILDERS",
-            title: "Your AI client drives the whole deck."
+            body: "Set the direction, add context, and keep refining. Your agent works with you in the same presentation.",
+            bullets: ["Create and reorder slides", "Inspect and edit every block", "Keep refining in one conversation"],
+            cta: "Explore AI Agent",
+            title: "Build the deck with an AI Agent"
           }
         ],
-    exportTitle: isZh ? "即時預覽，無縫匯出。" : "Instant preview, seamless export.",
+    exportTitle: isZh ? "先看細節再放心匯出" : "Preview every detail before you export",
     exportBody: isZh
-      ? "隨時播放完整簡報掌握發表節奏，輕鬆匯出至習慣的工具繼續編輯與分享。"
-      : "Play the complete deck anytime to check your rhythm, then export to your preferred tools to continue editing.",
+      ? "在送出前播放整份簡報，確認節奏與細節，再匯出到你習慣的工具。"
+      : "Play through the deck before you share it, then export to the tools your team already uses.",
     exportFormats: isZh
       ? [
           { detail: "無縫匯出至 PowerPoint、Keynote 或 Google Slides 繼續微調", label: "PPTX" },
@@ -214,16 +198,11 @@ export function HomePage() {
           { detail: "Motion and transitions intact, ready to share online", label: "HTML" },
           { detail: "MotionDoc source code, friendly to version control", label: "MDX" }
         ],
-    exportNote: isZh ? "免費註冊即可解鎖 HTML 網頁簡報與 MDX 匯出。" : "Sign in to unlock HTML web presentations and MDX export.",
-    mcpTitle: isZh ? "讓 AI 幫你做簡報。" : "Let your AI build the deck.",
+    mcpTitle: isZh ? "讓 AI client 操作你的簡報" : "Let your AI client work on real decks",
     mcpBody: isZh
-      ? "在本機用 npx 啟動，或透過 OAuth 連接 Remote MCP。"
-      : "Run locally with npx, or connect to Remote MCP over OAuth.",
-    mcpClients: isZh ? "Claude · Codex · Cursor · Antigravity 等相容 client" : "Claude · Codex · Cursor · Antigravity, and any compatible client",
-    mcpAgentPrompt: isZh ? "「把 Q3 業務回顧做成 6 頁簡報。」" : "\u201CTurn the Q3 review into a 6-slide deck.\u201D",
-    mcpAgentDone: isZh
-      ? ["建立 6 張投影片", "套用 Editorial 版型", "匯出 deck.pptx"]
-      : ["Created 6 slides", "Applied Editorial layout", "Exported deck.pptx"],
+      ? "以本機或遠端 MCP 連接相容的 AI client，直接建立、檢查與更新 SlideX 簡報。"
+      : "Connect a compatible AI client through local or remote MCP to create, inspect, and update SlideX presentations.",
+    mcpClients: isZh ? "支援 Claude、Codex、Cursor、Antigravity 與其他相容 client" : "Works with Claude, Codex, Cursor, Antigravity, and other compatible clients",
     mcpCapabilities: isZh
       ? [
           { detail: "建立 deck、套用版型與 shader", label: "CREATE" },
@@ -241,20 +220,22 @@ export function HomePage() {
     copiedLabel: isZh ? "已複製" : "Copied",
     workflow: isZh
       ? [
-          { detail: "開啟一份版面與視覺都已完成的示範簡報。", title: "選擇完整簡報" },
-          { detail: "直接在 Pitch 修改文字、圖片與版面。", title: "在瀏覽器編輯" },
-          { detail: "直接下載 PPTX；HTML 與 MDX 登入後即可使用。", title: "匯出 PowerPoint" }
+          { detail: "從一份已完成版面與視覺的簡報開始。", title: "選一份簡報" },
+          { detail: "在瀏覽器裡調整文字、圖片與版面。", title: "完成內容" },
+          { detail: "下載 PPTX，或登入後輸出 HTML 與 MDX。", title: "帶著成果離開" }
         ]
       : [
-          { detail: "Open a complete demo deck and start with a finished layout.", title: "Choose a deck" },
-          { detail: "Change text, images, and layout directly in Pitch.", title: "Edit in your browser" },
-          { detail: "Download a PPTX directly. Sign in to unlock HTML and MDX.", title: "Export to PowerPoint" }
+          { detail: "Start with a deck that already has a finished visual direction.", title: "Pick a deck" },
+          { detail: "Refine the copy, images, and layout in your browser.", title: "Make it yours" },
+          { detail: "Download a PPTX, or sign in to export HTML and MDX.", title: "Share the result" }
         ],
-    faqTitle: isZh ? "常見問題，幫你解答。" : "Questions, answered.",
+    workflowTitle: isZh ? "三步完成一份簡報" : "From idea to final deck",
+    faqTitle: isZh ? "常見問題" : "Frequently asked questions",
     faqBody: isZh ? "關於 Pitch 與 SlideX MCP 的核心問題。" : "The essentials about Pitch and SlideX MCP.",
     faqItems: isZh
       ? [
           ["需要註冊才能試用嗎？", "不需要。你可以直接開啟 Live Demo，修改文字與圖片，並預覽整份簡報。"],
+          ["AI Agent 可以幫我做什麼？", "用自然語言說明需求後，Agent 會在同一份簡報裡建立投影片、調整內容與版面，同時保留你的手動修改。"],
           ["什麼是 SlideX MCP？", "SlideX MCP 是讓 AI client 操作簡報的 Model Context Protocol server。可以在本機用 npx 執行，或透過 OAuth 連接 Remote MCP。"],
           ["用 MCP 需要會寫程式嗎？", "不需要。安裝一次之後，用自然語言告訴 AI 你要什麼。建立投影片、調整版面或匯出 PPTX 都可以。"],
           ["重新整理後修改會消失嗎？", "不會。訪客的示範內容會自動保存在目前瀏覽器的 localStorage。"],
@@ -264,6 +245,7 @@ export function HomePage() {
         ]
       : [
           ["Do I need an account to try it?", "No. Open the Live Demo to edit text and images, preview the deck, and play the presentation."],
+          ["What can the AI Agent do?", "Describe what you need in natural language. The Agent creates slides and refines content and layout in the same presentation while keeping your manual edits."],
           ["What is SlideX MCP?", "SlideX MCP is a Model Context Protocol server that lets AI clients work on presentations. Run it locally with npx, or connect to Remote MCP over OAuth."],
           ["Do I need to code to use MCP?", "No. Install it once, then just tell your AI what you want. Create slides, adjust layouts, or export a PPTX."],
           ["Will my changes survive a refresh?", "Yes. Guest demo changes are saved automatically in this browser's localStorage."],
@@ -271,37 +253,35 @@ export function HomePage() {
           ["Can I preview and play the deck in the browser?", "Yes. Open the presentation preview at any time and play through every slide."],
           ["Can I export to PowerPoint?", "Yes. The Live Demo exports PPTX directly. Sign in to unlock HTML, MDX, and other formats."]
         ],
-    ctaTitle: isZh ? "現在就用一份完整簡報開始。" : "Start with a complete deck now.",
-    ctaBody: isZh ? "自己動手，或交給 AI。兩種方式都不需要註冊。" : "Build it yourself or hand it to your AI. No sign-up either way."
+    ctaTitle: isZh ? "開始下一份簡報" : "Start your next deck",
+    ctaBody: isZh ? "自己修改，或和 AI Agent 一起完成。" : "Work on it yourself, or build it with an AI Agent."
   };
 
   const previewImage = `/marketing/preview-${locale}.webp`;
 
   return (
-    <main className="min-h-[100dvh] overflow-hidden bg-canvas text-ink selection:bg-accent/30">
+    <main className="marketing-shell min-h-[100dvh] overflow-hidden text-ink selection:bg-accent/30">
       <InteractiveHero
         body={copy.heroBody}
         isZh={isZh}
         primaryCta={copy.primaryCta}
         reduceMotion={Boolean(reduceMotion)}
-        secondaryCta={copy.secondaryCta}
-        supportingNote={isZh ? "不需要註冊即可開始試用。" : "No account required to start."}
-        title={isZh ? ["用自然語言，與 AI Agent", "一起打造專業簡報。"] : ["Build professional presentations", "effortlessly with AI Agents."]}
+        title={isZh ? ["和 AI Agent 一起", "完成下一份簡報"] : ["Build better presentations", "with an AI Agent"]}
       />
 
       <MarqueeStrip />
 
-      <BentoGridSection copy={copy} docsMcpPath={docsMcpPath} isZh={isZh} reveal={reveal} />
+      <BentoGridSection agentPath={agentPath} copy={copy} isZh={isZh} reveal={reveal} />
 
       <ExportSection copy={copy} image={previewImage} reveal={reveal} />
 
-      <McpSection copy={copy} docsMcpPath={docsMcpPath} reduceMotion={Boolean(reduceMotion)} reveal={reveal} />
+      <McpSection copy={copy} mcpServerPath={mcpServerPath} reveal={reveal} />
 
-      <WorkflowSection items={copy.workflow} reveal={reveal} />
+      <WorkflowSection items={copy.workflow} reveal={reveal} title={copy.workflowTitle} />
 
       <FaqSection body={copy.faqBody} items={copy.faqItems} reduceMotion={Boolean(reduceMotion)} reveal={reveal} title={copy.faqTitle} />
 
-      <FinalCtaSection copy={copy} docsMcpPath={docsMcpPath} reveal={reveal} />
+      <FinalCtaSection copy={copy} mcpServerPath={mcpServerPath} reveal={reveal} />
     </main>
   );
 }
@@ -311,16 +291,12 @@ function InteractiveHero({
   isZh,
   primaryCta,
   reduceMotion,
-  secondaryCta,
-  supportingNote,
   title
 }: {
   body: string;
   isZh: boolean;
   primaryCta: string;
   reduceMotion: boolean;
-  secondaryCta: string;
-  supportingNote: string;
   title: string[];
 }) {
   const [activeSlide, setActiveSlide] = useState(0);
@@ -343,74 +319,55 @@ function InteractiveHero({
   return (
     <motion.section
       initial={false}
-      animate={{ backgroundColor: activeSlide === 0 ? "#0b0c0f" : activeSlide === 1 ? "#0e0d0d" : activeSlide === 2 ? "#090d10" : "#100a0d" }}
-      transition={{ duration: 0.55 }}
-      onPointerMove={updatePointer}
-      onPointerLeave={() => {
-        pointerX.set(0);
-        pointerY.set(0);
-      }}
-      className="relative flex min-h-[100dvh] items-center overflow-hidden bg-[#0b0c0f] px-5 pb-12 pt-24 text-white sm:px-6 lg:px-8 lg:pb-10 lg:pt-20"
+      className="relative isolate flex flex-col items-center overflow-hidden border-b border-white/[0.09] px-5 pb-12 pt-36 text-white sm:px-6 lg:px-8 lg:pb-24 lg:pt-40"
     >
-      <div className="absolute inset-x-0 top-[22%] h-px bg-white/[0.055]" />
-      <div className="absolute inset-x-0 bottom-[20%] h-px bg-white/[0.055]" />
-      <div className="absolute inset-y-0 left-[17%] w-px bg-white/[0.04]" />
-      <div className="absolute inset-y-0 right-[17%] w-px bg-white/[0.04]" />
-
-      <div className="absolute inset-0 z-10 hidden lg:block">
-        {heroSlides.map((slide, index) => (
-          <motion.button
-            key={slide.label}
-            type="button"
-            aria-label={isZh ? `顯示 ${slide.label} 投影片` : `Show ${slide.label} slide`}
-            aria-pressed={activeSlide === index}
-            onClick={() => setActiveSlide(index)}
-            style={{
-              x: slide.depth === "near" ? nearX : farX,
-              y: slide.depth === "near" ? nearY : farY
-            }}
-            whileHover={reduceMotion ? undefined : { scale: 1.025, rotate: 0 }}
-            className={`absolute ${slide.className} aspect-video overflow-hidden rounded-lg border p-1.5 shadow-[0_34px_90px_rgba(0,0,0,0.42)] transition-[border-color,opacity] duration-300 ${
-              activeSlide === index ? "z-20 border-white/52 opacity-100" : "border-white/16 opacity-64 hover:opacity-90"
-            }`}
-          >
-            <SlideArtwork variant={slide.variant} background={slide.background} compact />
-          </motion.button>
-        ))}
+      <div aria-hidden="true" className="marketing-hero-surface absolute inset-0 -z-20" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[18%] left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-[#d8f27d]/10 blur-[160px]" />
       </div>
 
       <motion.div
         initial={reduceMotion ? undefined : { opacity: 0, y: 22 }}
         animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.82, ease: easeOut }}
-        className="relative z-20 mx-auto w-full max-w-7xl text-center"
+        className={`relative z-20 mx-auto w-full text-center ${isZh ? "max-w-[900px]" : "max-w-[1080px]"}`}
       >
-        <h1 className="mx-auto max-w-[1120px] text-[42px] font-semibold leading-[0.98] tracking-[-0.035em] [text-wrap:balance] sm:text-[54px] lg:text-[clamp(50px,5vw,68px)] lg:leading-[1.01] lg:tracking-[-0.035em]">
-          {title.map((line, index) => (
-            <span key={line} className="block lg:whitespace-nowrap">
-              {line}{index < title.length - 1 ? " " : null}
-            </span>
+        <div className="mx-auto mb-8 flex h-16 w-16 items-center justify-center rounded-[14px] shadow-[0_0_40px_rgba(216,242,125,0.14)]">
+          <Image src="/favicon.svg" alt="SlideX Icon" width={64} height={64} className="h-16 w-16" />
+        </div>
+
+        <h1 className={`mx-auto font-semibold leading-[1.05] tracking-[-0.03em] [text-wrap:balance] ${isZh ? "text-[48px] sm:text-[64px] lg:text-[76px]" : "text-[43px] sm:text-[48px] lg:text-[68px]"}`}>
+          {title.map((line) => (
+            <span className="block" key={line}>{line}</span>
           ))}
         </h1>
-        <p className="mx-auto mt-5 max-w-md text-[16px] leading-7 text-white/58 sm:mt-6 sm:max-w-xl sm:text-lg">{body}</p>
+        <p className="mx-auto mt-6 max-w-[600px] text-[18px] leading-8 text-white/50">
+          {body}
+        </p>
 
-        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+        <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
           <Link
             href={appRoutes.liveDemo}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#c4ee87] px-7 text-[15px] font-semibold text-[#0a1a00] transition-colors hover:bg-[#d7f5aa] active:translate-y-px sm:w-auto"
+            className="group inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-accent px-6 text-[15px] font-semibold text-on-accent transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-accent-hover active:scale-[0.98] sm:w-auto"
           >
             {primaryCta}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link
-            href={appRoutes.exampleDeck}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-white/16 bg-white/[0.045] px-6 text-[14px] font-semibold text-white/72 transition-colors hover:border-white/30 hover:text-white active:translate-y-px sm:w-auto"
-          >
-            {secondaryCta}
-            <ArrowRight className="h-4 w-4" />
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/10 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1 group-hover:-translate-y-px"><ArrowRight className="h-4 w-4" /></span>
           </Link>
         </div>
-        <p className="mt-4 text-[13px] text-white/46">{supportingNote}</p>
+      </motion.div>
+
+      {/* Hero Container with Floating Mockup */}
+      <motion.div
+        initial={reduceMotion ? undefined : { opacity: 0, y: 40 }}
+        animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.2, ease: easeOut }}
+        className="relative z-10 mx-auto mt-20 w-full max-w-[1200px]"
+      >
+        <div className="paper-panel relative aspect-[16/11] overflow-hidden rounded-[2rem] border border-white/14 p-2 sm:p-3">
+          <div className="relative h-full w-full overflow-hidden rounded-[calc(2rem-0.375rem)] border border-white/[0.08] bg-[#0a0b09] p-2 sm:p-3">
+            <BrowserFrame alt="App preview" src="/marketing/preview-en.webp" url="slidexdeck.com/workspace/pitch" />
+          </div>
+        </div>
       </motion.div>
     </motion.section>
   );
@@ -476,8 +433,8 @@ function MarqueeStrip() {
           <div className="flex items-center" key={half}>
             {MARQUEE_ITEMS.map((item) => (
               <span className="flex items-center" key={`${half}-${item}`}>
-                <span className="px-7 font-mono-geist text-[12px] tracking-[0.3em] text-white/45">{item}</span>
-                <span className="h-1.5 w-1.5 rounded-full bg-accent/70 shadow-[0_0_8px_rgba(196,238,135,0.6)]" />
+                <span className="px-7 font-mono-geist text-[12px] tracking-[0.3em] text-white/40">{item}</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-white/20" />
               </span>
             ))}
           </div>
@@ -489,55 +446,39 @@ function MarqueeStrip() {
 
 {/* Clean, Minimalist Editorial Bento Grid Section */}
 function BentoGridSection({
+  agentPath,
   copy,
-  docsMcpPath,
   isZh,
   reveal
 }: {
+  agentPath: string;
   copy: HomeCopy;
-  docsMcpPath: string;
   isZh: boolean;
   reveal: Reveal;
 }) {
   return (
     <MktgSection className="py-24 lg:py-32">
       <motion.div {...reveal()} className="text-center md:text-left">
-        <Eyebrow className="justify-center md:justify-start">ESSENTIAL CAPABILITIES</Eyebrow>
-        <h2 className="mt-4 text-[clamp(32px,4.6vw,56px)] font-semibold leading-[1.02] tracking-[-0.035em] [text-wrap:balance]">
+        <h2 className="text-[clamp(32px,4.6vw,56px)] font-semibold leading-[1.02] tracking-[-0.035em] [text-wrap:balance]">
           {copy.pathsTitle}
         </h2>
       </motion.div>
 
-      {/* Clean Minimalist Bento Grid */}
       <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-12">
-        {/* Tier 1 Card A: AI Builder Bento Card (7 cols) */}
         <motion.article
           {...reveal(0.05)}
-          className="group relative md:col-span-7 flex flex-col justify-between rounded-3xl border border-white/12 bg-white/[0.02] p-8 backdrop-blur-xl transition-all duration-300 hover:border-accent/40 hover:bg-white/[0.035] sm:p-10"
+          className="group relative md:col-span-7 flex flex-col justify-between rounded-3xl border border-white/12 bg-white/[0.02] p-8 backdrop-blur-md transition-all duration-300 hover:border-accent/40 hover:bg-white/[0.04] sm:p-10"
         >
           <div>
-            <div className="flex items-center justify-between">
-              <div className="inline-flex items-center gap-2 rounded-md border border-white/14 bg-white/[0.04] px-3 py-1 font-mono-geist text-[11px] tracking-[0.24em] text-accent">
-                <Cpu className="h-3.5 w-3.5 text-accent" />
-                {copy.paths[1].eyebrow}
-              </div>
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent" />
-              </span>
-            </div>
-            
-            <h3 className="mt-6 text-[clamp(26px,2.8vw,36px)] font-semibold leading-[1.06] tracking-[-0.03em] [text-wrap:balance]">
+            <h3 className="text-[clamp(26px,2.8vw,36px)] font-semibold leading-[1.06] tracking-[-0.03em] [text-wrap:balance] text-white">
               {copy.paths[1].title}
             </h3>
-            <p className="mt-3 text-[15px] leading-relaxed text-ink/65">{copy.paths[1].body}</p>
+            <p className="mt-3 text-[15px] leading-relaxed text-white/50">{copy.paths[1].body}</p>
 
-            <ul className="mt-8 grid gap-3 border-t border-white/[0.09] pt-6">
+            <ul className="mt-8 grid gap-3 border-t border-white/10 pt-6">
               {copy.paths[1].bullets.map((bullet) => (
-                <li className="flex items-center gap-3 text-[14px] text-ink/80" key={bullet}>
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent/15 text-accent border border-accent/30 shrink-0">
-                    <Check className="h-3 w-3" />
-                  </div>
+                <li className="flex items-center gap-3 text-[14px] text-white/70" key={bullet}>
+                  <Check className="h-4 w-4 shrink-0 text-white/50" />
                   {bullet}
                 </li>
               ))}
@@ -545,33 +486,27 @@ function BentoGridSection({
           </div>
           
           <div className="mt-10 pt-2">
-            <MktgGhostLink href={docsMcpPath}>
-              {copy.secondaryCta}
+            <MktgGhostLink href={agentPath}>
+              {copy.paths[1].cta}
               <ArrowRight className="h-4 w-4" />
             </MktgGhostLink>
           </div>
         </motion.article>
 
-        {/* Tier 1 Card B: Presenter Live Canvas Bento Card (5 cols) */}
         <motion.article
           {...reveal(0.12)}
-          className="group relative md:col-span-5 flex flex-col justify-between overflow-hidden rounded-3xl bg-accent p-8 text-on-accent shadow-[0_20px_60px_rgba(196,238,135,0.18)] transition-all duration-300 hover:scale-[1.01] sm:p-10"
+          className="group relative md:col-span-5 flex flex-col justify-between overflow-hidden rounded-3xl border border-white/12 bg-white/[0.02] p-8 text-white transition-all duration-300 hover:border-accent/40 hover:bg-white/[0.04] sm:p-10"
         >
           <div>
-            <div className="inline-flex items-center gap-2 rounded-md border border-on-accent/20 bg-on-accent/10 px-3 py-1 font-mono-geist text-[11px] tracking-[0.24em] text-on-accent/70">
-              <Layers className="h-3.5 w-3.5 text-on-accent" />
-              {copy.paths[0].eyebrow}
-            </div>
-            
-            <h3 className="mt-6 text-[clamp(26px,2.8vw,36px)] font-semibold leading-[1.06] tracking-[-0.03em] [text-wrap:balance]">
+            <h3 className="text-[clamp(26px,2.8vw,36px)] font-semibold leading-[1.06] tracking-[-0.03em] [text-wrap:balance]">
               {copy.paths[0].title}
             </h3>
-            <p className="mt-3 text-[15px] leading-relaxed text-on-accent/75">{copy.paths[0].body}</p>
+            <p className="mt-3 text-[15px] leading-relaxed text-white/50">{copy.paths[0].body}</p>
 
-            <ul className="mt-8 grid gap-3 border-t border-on-accent/20 pt-6">
+            <ul className="mt-8 grid gap-3 border-t border-white/10 pt-6">
               {copy.paths[0].bullets.map((bullet) => (
-                <li className="flex items-center gap-3 text-[14px] text-on-accent/90" key={bullet}>
-                  <Check className="h-3.5 w-3.5 shrink-0 text-on-accent" />
+                <li className="flex items-center gap-3 text-[14px] text-white/70" key={bullet}>
+                  <Check className="h-4 w-4 shrink-0 text-white/50" />
                   {bullet}
                 </li>
               ))}
@@ -580,7 +515,7 @@ function BentoGridSection({
           
           <div className="mt-10 pt-2">
             <Link
-              className="inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-canvas px-7 text-[15px] font-semibold text-ink transition-colors hover:bg-[#16181c] active:translate-y-px"
+              className="inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-accent px-7 text-[15px] font-semibold text-on-accent transition-colors hover:bg-accent-hover active:translate-y-px"
               href={appRoutes.liveDemo}
             >
               {copy.primaryCta}
@@ -589,73 +524,70 @@ function BentoGridSection({
           </div>
         </motion.article>
 
-        {/* Tier 2 Card 1: PPTX Export Bento Card (4 cols) */}
         <motion.article
           {...reveal(0.16)}
-          className="group relative md:col-span-4 flex flex-col justify-between rounded-3xl border border-white/12 bg-white/[0.02] p-7 backdrop-blur-md transition-all duration-300 hover:border-accent/40 hover:bg-white/[0.035]"
+          className="group relative md:col-span-4 flex flex-col justify-between rounded-3xl border border-white/12 bg-white/[0.02] p-7 backdrop-blur-md transition-all duration-300 hover:border-accent/40 hover:bg-white/[0.04]"
         >
           <div>
             <div className="flex items-center gap-2.5 font-mono-geist text-[12px] font-semibold text-accent">
-              <FileSpreadsheet className="h-4 w-4 text-accent" />
+              <FileSpreadsheet className="h-4 w-4" />
               <span>{copy.exportFormats[0].label}</span>
             </div>
-            <h4 className="mt-4 text-[20px] font-semibold text-ink">
+            <h4 className="mt-4 text-[20px] font-semibold text-white">
               {isZh ? "PowerPoint 向量相容" : "PowerPoint Vector Ready"}
             </h4>
-            <p className="mt-2 text-[14px] leading-relaxed text-ink/60">{copy.exportFormats[0].detail}</p>
+            <p className="mt-2 text-[14px] leading-relaxed text-white/50">{copy.exportFormats[0].detail}</p>
           </div>
-          <div className="mt-8 pt-4 border-t border-white/[0.08] flex items-center justify-between text-ink/40 font-mono-geist text-[11px]">
+          <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-white/40 font-mono-geist text-[11px]">
             <span>FULLY EDITABLE</span>
             <span>Keynote · Slides</span>
           </div>
         </motion.article>
 
-        {/* Tier 2 Card 2: Paper Shaders Bento Card (4 cols) */}
         <motion.article
           {...reveal(0.2)}
-          className="group relative md:col-span-4 flex flex-col justify-between rounded-3xl border border-white/12 bg-white/[0.02] p-7 backdrop-blur-md transition-all duration-300 hover:border-accent/40 hover:bg-white/[0.035]"
+          className="group relative md:col-span-4 flex flex-col justify-between rounded-3xl border border-white/12 bg-white/[0.02] p-7 backdrop-blur-md transition-all duration-300 hover:border-accent/40 hover:bg-white/[0.04]"
         >
           <div>
             <div className="flex items-center gap-2.5 font-mono-geist text-[12px] font-semibold text-accent">
-              <Palette className="h-4 w-4 text-accent" />
+              <Palette className="h-4 w-4" />
               <span>PAPER SHADERS</span>
             </div>
-            <h4 className="mt-4 text-[20px] font-semibold text-ink">
+            <h4 className="mt-4 text-[20px] font-semibold text-white">
               {isZh ? "視覺版型與 GLSL" : "Aesthetic Layouts & GLSL"}
             </h4>
-            <p className="mt-2 text-[14px] leading-relaxed text-ink/60">
+            <p className="mt-2 text-[14px] leading-relaxed text-white/50">
               {isZh ? "內建 Editorial, Mesh, Orbit, Signal 等高質感視覺預設。" : "Built-in Editorial, Mesh, Orbit, Signal shaders and refined typography."}
             </p>
           </div>
-          <div className="mt-8 pt-4 border-t border-white/[0.08] flex items-center gap-1.5">
+          <div className="mt-8 pt-4 border-t border-white/10 flex items-center gap-1.5 flex-wrap">
             {["EDITORIAL", "MESH", "ORBIT", "SIGNAL"].map((preset) => (
-              <span className="rounded bg-white/[0.06] px-2 py-0.5 font-mono-geist text-[10px] text-white/60" key={preset}>
+              <span className="rounded-sm border border-white/10 bg-transparent px-2 py-0.5 font-mono-geist text-[10px] text-white/50" key={preset}>
                 {preset}
               </span>
             ))}
           </div>
         </motion.article>
 
-        {/* Tier 2 Card 3: Local MDX Privacy Bento Card (4 cols) */}
         <motion.article
           {...reveal(0.24)}
-          className="group relative md:col-span-4 flex flex-col justify-between rounded-3xl border border-white/12 bg-white/[0.02] p-7 backdrop-blur-md transition-all duration-300 hover:border-accent/40 hover:bg-white/[0.035]"
+          className="group relative md:col-span-4 flex flex-col justify-between rounded-3xl border border-white/12 bg-white/[0.02] p-7 backdrop-blur-md transition-all duration-300 hover:border-accent/40 hover:bg-white/[0.04]"
         >
           <div>
             <div className="flex items-center gap-2.5 font-mono-geist text-[12px] font-semibold text-accent">
-              <ShieldCheck className="h-4 w-4 text-accent" />
+              <ShieldCheck className="h-4 w-4" />
               <span>LOCAL & PRIVATE</span>
             </div>
-            <h4 className="mt-4 text-[20px] font-semibold text-ink">
+            <h4 className="mt-4 text-[20px] font-semibold text-white">
               {isZh ? "本機離線與版本控制" : "Offline & MDX Friendly"}
             </h4>
-            <p className="mt-2 text-[14px] leading-relaxed text-ink/60">
+            <p className="mt-2 text-[14px] leading-relaxed text-white/50">
               {copy.exportFormats[1].detail} & {copy.exportFormats[2].detail}
             </p>
           </div>
-          <div className="mt-8 pt-4 border-t border-white/[0.08] flex items-center justify-between text-ink/40 font-mono-geist text-[11px]">
+          <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-white/40 font-mono-geist text-[11px]">
             <span className="flex items-center gap-1">
-              <Code className="h-3.5 w-3.5 text-accent" /> MDX SOURCE
+              <Code className="h-3.5 w-3.5 text-white/40" /> MDX SOURCE
             </span>
             <span>NO ACCOUNT NEEDED</span>
           </div>
@@ -669,36 +601,27 @@ function BentoGridSection({
 
 function ExportSection({ copy, image, reveal }: { copy: HomeCopy; image: string; reveal: Reveal }) {
   return (
-    <MktgSection className="border-t border-white/[0.08] py-24 lg:py-32">
+    <MktgSection className="py-24 lg:py-32">
       <div className="grid gap-10 lg:grid-cols-[7fr_5fr] lg:gap-16">
         <motion.div {...reveal(0.05)}>
           <BrowserFrame alt={copy.exportTitle} src={image} url="slidexdeck.com/workspace/pitch?demo=1&view=preview" />
-          <div className="flex items-center justify-between border-b border-white/[0.1] pb-3 pt-4">
-            <p className="font-mono-geist text-[10px] tracking-[0.24em] text-white/45">FIG.02 — PLAYBACK</p>
-            <p className="font-mono-geist text-[10px] tracking-[0.24em] text-white/45">MOTION INTACT</p>
-          </div>
         </motion.div>
 
         <motion.div {...reveal(0.12)} className="flex flex-col justify-center">
-          <Eyebrow>EXPORT & PREVIEW</Eyebrow>
-          <h3 className="mt-4 max-w-md text-[clamp(26px,3vw,38px)] font-semibold leading-[1.06] tracking-[-0.03em] [text-wrap:balance]">
+          <h3 className="max-w-md text-[clamp(26px,3vw,38px)] font-semibold leading-[1.06] tracking-[-0.03em] [text-wrap:balance]">
             {copy.exportTitle}
           </h3>
-          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-ink/60">{copy.exportBody}</p>
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-white/50">{copy.exportBody}</p>
           
-          <dl className="mt-8 border-t border-white/[0.1]">
+          <dl className="mt-8 border-t border-white/5">
             {copy.exportFormats.map((format) => (
-              <div className="grid grid-cols-[72px_1fr] items-baseline gap-4 border-b border-white/[0.1] py-4" key={format.label}>
+              <div className="grid grid-cols-[72px_1fr] items-baseline gap-4 border-b border-white/5 py-4" key={format.label}>
                 <dt className="font-mono-geist text-[12px] font-semibold tracking-[0.18em] text-accent">{format.label}</dt>
-                <dd className="text-[14px] leading-6 text-ink/70">{format.detail}</dd>
+                <dd className="text-[14px] leading-6 text-white/70">{format.detail}</dd>
               </div>
             ))}
           </dl>
           
-          <div className="mt-6 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.03] px-3.5 py-2">
-            <Sparkles className="h-3.5 w-3.5 text-accent shrink-0" />
-            <span className="font-mono-geist text-[11px] tracking-[0.12em] text-white/50">{copy.exportNote}</span>
-          </div>
         </motion.div>
       </div>
     </MktgSection>
@@ -707,244 +630,93 @@ function ExportSection({ copy, image, reveal }: { copy: HomeCopy; image: string;
 
 function McpSection({
   copy,
-  docsMcpPath,
-  reduceMotion,
+  mcpServerPath,
   reveal
 }: {
   copy: HomeCopy;
-  docsMcpPath: string;
-  reduceMotion: boolean;
+  mcpServerPath: string;
   reveal: Reveal;
 }) {
-  const [activeTab, setActiveTab] = useState<"workflow" | "install" | "config">("workflow");
-
   const capabilities = [
-    { icon: Sparkles, badge: "GLSL & Layouts", ...copy.mcpCapabilities[0] },
-    { icon: Search, badge: "Blocks & MotionDoc", ...copy.mcpCapabilities[1] },
-    { icon: Edit3, badge: "Conflict-Safe Writes", ...copy.mcpCapabilities[2] },
-    { icon: Download, badge: "PPTX, HTML & MDX", ...copy.mcpCapabilities[3] }
+    { icon: Sparkles, ...copy.mcpCapabilities[0] },
+    { icon: Search, ...copy.mcpCapabilities[1] },
+    { icon: Edit3, ...copy.mcpCapabilities[2] },
+    { icon: Download, ...copy.mcpCapabilities[3] }
   ];
 
-  const clientPills = ["Claude", "Codex", "Cursor", "Antigravity"];
-
   return (
-    <section className="relative border-t border-white/[0.08] bg-canvas-deep px-5 py-24 sm:px-7 lg:px-10 lg:py-32">
-      <div aria-hidden="true" className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-accent/5 blur-[120px]" />
-      
-      <div className="mx-auto max-w-[1200px]">
-        {/* Header with Title & Top-Right Action Buttons */}
-        <motion.div {...reveal()} className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <Eyebrow>SlideX MCP Protocol</Eyebrow>
-            <h2 className="mt-4 text-[clamp(32px,4.6vw,56px)] font-semibold leading-[1.02] tracking-[-0.035em] [text-wrap:balance]">
+    <MktgSection className="py-24 lg:py-32" id="mcp">
+      <motion.section
+        {...reveal()}
+        className="paper-panel relative overflow-hidden rounded-[30px] border border-white/12 p-6 sm:p-10 lg:p-14"
+      >
+        <div aria-hidden="true" className="absolute -right-40 -top-48 h-[30rem] w-[30rem] rounded-full bg-accent/[0.09] blur-[120px]" />
+        <div className="relative z-10 grid items-center gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+          <div className="max-w-xl">
+            <h2 className="text-[clamp(34px,4.8vw,58px)] font-semibold leading-[0.98] tracking-[-0.045em] [text-wrap:balance]">
               {copy.mcpTitle}
             </h2>
-            <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-ink/65 sm:text-[16px] sm:leading-8">{copy.mcpBody}</p>
-            
-            {/* Client Ecosystem Badges Bar */}
-            <div className="mt-5 flex flex-wrap items-center gap-2.5">
-              <span className="font-mono-geist text-[11px] tracking-[0.18em] text-white/40 uppercase mr-1">SUPPORTED CLIENTS:</span>
-              {clientPills.map((client) => (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/14 bg-white/[0.04] px-3.5 py-1 backdrop-blur-md font-mono-geist text-[12px] font-medium text-white/80 transition-colors hover:border-accent/40 hover:text-accent" key={client}>
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                  {client}
-                </span>
-              ))}
+            <p className="mt-5 text-[15px] leading-relaxed text-white/55 sm:text-[16px] sm:leading-8">{copy.mcpBody}</p>
+            <p className="mt-6 font-mono-geist text-[11px] leading-6 tracking-[0.12em] text-white/38 sm:text-[12px]">{copy.mcpClients}</p>
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <MktgPrimaryLink href={mcpServerPath}>
+                {copy.docsCta}
+                <ArrowRight className="h-4 w-4" />
+              </MktgPrimaryLink>
             </div>
           </div>
 
-          {/* Clean Top-Right Action Buttons */}
-          <div className="flex items-center gap-3 shrink-0">
-            <MktgGhostLink href={docsMcpPath}>{copy.secondaryCta}</MktgGhostLink>
-            <a
-              className="group inline-flex h-12 items-center gap-2 rounded-md border border-white/16 bg-white/[0.045] px-5 text-[14px] font-semibold text-white transition-colors hover:border-white/30 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#c4ee87]"
-              href="https://github.com/zz41354899/SlideX"
-              rel="noreferrer"
-              target="_blank"
-            >
-              GitHub
-              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-            </a>
+          <div className="rounded-2xl border border-white/12 bg-[#090a08]/70 p-2 shadow-[0_24px_70px_rgba(0,0,0,0.3)] sm:p-3">
+            <CodeCard code={MCP_INSTALL_COMMAND} copyLabel={copy.copyLabel} copiedLabel={copy.copiedLabel} title="START LOCALLY" />
           </div>
-        </motion.div>
-
-        {/* Stage Grid */}
-        <div className="mt-14 grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12 items-start">
-          {/* Left Side: Unified macOS Interactive Terminal Stage */}
-          <motion.div {...reveal(0.06)} className="overflow-hidden rounded-2xl border border-white/16 bg-white/[0.02] shadow-[0_30px_90px_rgba(0,0,0,0.5)] backdrop-blur-xl">
-            {/* macOS Terminal Header with Interactive Tabs */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.09] bg-white/[0.03] px-5 py-3">
-              <div className="flex items-center gap-3">
-                <span aria-hidden="true" className="flex gap-1.5">
-                  <span className="h-3 w-3 rounded-full bg-[#ff5f56]/80 border border-[#e0443e]/40" />
-                  <span className="h-3 w-3 rounded-full bg-[#ffbd2e]/80 border border-[#dea123]/40" />
-                  <span className="h-3 w-3 rounded-full bg-[#27c93f]/80 border border-[#1aab29]/40" />
-                </span>
-                <span className="font-mono-geist text-[11px] text-white/50">slidex-mcp-server</span>
-              </div>
-
-              {/* Ultra-Refined macOS Segmented Control Tab Switcher */}
-              <div className="relative flex items-center gap-1 rounded-xl border border-white/14 bg-black/40 p-1 backdrop-blur-md">
-                {(
-                  [
-                    { id: "workflow", label: "WORKFLOW", icon: Zap },
-                    { id: "install", label: "INSTALL", icon: Terminal },
-                    { id: "config", label: "CONFIG", icon: SlidersHorizontal }
-                  ] as const
-                ).map((tab) => {
-                  const isActive = activeTab === tab.id;
-                  const IconComponent = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`relative z-10 flex items-center gap-1.5 px-3.5 py-1.5 font-mono-geist text-[11px] font-bold transition-colors rounded-lg ${
-                        isActive ? "text-on-accent" : "text-white/60 hover:text-white"
-                      }`}
-                    >
-                      {isActive && (
-                        <motion.span
-                          layoutId="activeMcpTabPill"
-                          className="absolute inset-0 z-0 rounded-lg bg-accent shadow-[0_0_14px_rgba(196,238,135,0.4)] border border-accent/60"
-                          transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                        />
-                      )}
-                      <span className="relative z-10 flex items-center gap-1.5">
-                        <IconComponent className={`h-3.5 w-3.5 ${isActive ? "text-on-accent" : "text-white/50"}`} />
-                        {tab.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Terminal Body Content */}
-            <div className="p-6">
-              <AnimatePresence mode="wait">
-                {activeTab === "workflow" && (
-                  <motion.div
-                    key="workflow"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
-                      <p className="flex items-center gap-2.5 font-mono-geist text-[11px] tracking-[0.2em] text-white/50">
-                        <span className="relative flex h-2 w-2">
-                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
-                          <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
-                        </span>
-                        AGENT SESSION EXECUTION
-                      </p>
-                      <Terminal className="h-4 w-4 text-accent" />
-                    </div>
-                    
-                    <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
-                      <p className="font-mono-geist text-[10px] tracking-[0.22em] text-accent">USER PROMPT</p>
-                      <p className="mt-1.5 font-mono-geist text-[14.5px] font-semibold text-white">{copy.mcpAgentPrompt}</p>
-                    </div>
-
-                    <div className="mt-5 space-y-2.5">
-                      <p className="font-mono-geist text-[11px] tracking-[0.18em] text-white/40">COMPLETED ACTIONS:</p>
-                      {copy.mcpAgentDone.map((item, index) => (
-                        <div className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3.5 py-2 font-mono-geist text-[13px] text-white/80" key={item}>
-                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent/20 text-accent">
-                            <Check className="h-3 w-3" />
-                          </div>
-                          <span>{item}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-
-                {activeTab === "install" && (
-                  <motion.div
-                    key="install"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <CodeCard code={MCP_INSTALL_COMMAND} copyLabel={copy.copyLabel} copiedLabel={copy.copiedLabel} title="TERMINAL INSTALL COMMAND" />
-                  </motion.div>
-                )}
-
-                {activeTab === "config" && (
-                  <motion.div
-                    key="config"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <CodeCard code={MCP_CONFIG_SNIPPET} copyLabel={copy.copyLabel} copiedLabel={copy.copiedLabel} title="MCP CONFIGURATION SNIPPET" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-
-          {/* Right Side: 4 Frosted Glass Visual Capability Cards */}
-          <motion.div {...reveal(0.12)} className="grid gap-4">
-            {capabilities.map((cap, index) => {
-              const IconComponent = cap.icon;
-              return (
-                <div
-                  className="group relative flex items-start gap-4 rounded-2xl border border-white/12 bg-white/[0.025] p-5 backdrop-blur-md transition-all duration-300 hover:border-accent/40 hover:bg-white/[0.05]"
-                  key={cap.label}
-                >
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-accent/30 bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-on-accent">
-                    <IconComponent className="h-5 w-5" />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono-geist text-[12px] font-bold tracking-[0.2em] text-accent">{cap.label}</span>
-                      <span className="rounded bg-white/[0.06] px-2 py-0.5 font-mono-geist text-[10px] text-white/50">{cap.badge}</span>
-                    </div>
-                    <p className="mt-2 text-[14.5px] leading-relaxed text-ink/75 group-hover:text-ink">{cap.detail}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </motion.div>
         </div>
-      </div>
-    </section>
+
+        <div className="relative z-10 mt-12 grid border-t border-white/10 pt-5 sm:grid-cols-2 lg:mt-14 lg:grid-cols-4 lg:pt-6">
+          {capabilities.map((cap, index) => {
+            const IconComponent = cap.icon;
+            return (
+              <article
+                className={`py-5 sm:px-5 lg:px-6 ${index % 2 === 1 ? "sm:border-l sm:border-white/10" : ""} ${index > 1 ? "sm:border-t sm:border-white/10 lg:border-t-0" : ""} ${index > 0 ? "lg:border-l lg:border-white/10" : ""}`}
+                key={cap.label}
+              >
+                <IconComponent className="h-4 w-4 text-accent" />
+                <h3 className="mt-5 font-mono-geist text-[11px] font-semibold uppercase tracking-[0.18em] text-white/85">{cap.label}</h3>
+                <p className="mt-2 text-[14px] leading-relaxed text-white/48">{cap.detail}</p>
+              </article>
+            );
+          })}
+        </div>
+      </motion.section>
+    </MktgSection>
   );
 }
 
-function WorkflowSection({ items, reveal }: { items: HomeCopy["workflow"]; reveal: Reveal }) {
+function WorkflowSection({ items, reveal, title }: { items: HomeCopy["workflow"]; reveal: Reveal; title: string }) {
   return (
     <MktgSection className="py-24 lg:py-32">
       <motion.div {...reveal()} className="text-center">
-        <Eyebrow className="justify-center">HOW IT WORKS</Eyebrow>
-        <h2 className="mt-4 text-[clamp(32px,4.6vw,56px)] font-semibold leading-[1.02] tracking-[-0.035em] [text-wrap:balance]">
-          Simple three-step workflow.
+        <h2 className="text-[clamp(32px,4.6vw,56px)] font-semibold leading-[1.02] tracking-[-0.035em] [text-wrap:balance]">
+          {title}
         </h2>
       </motion.div>
 
-      {/* Minarah inspired 3-step cards */}
+      {/* Revone inspired minimalist cards */}
       <motion.div {...reveal(0.08)} className="mt-14 grid gap-6 md:grid-cols-3">
         {items.map((step, index) => (
           <article
-            className="group relative flex flex-col justify-between rounded-2xl border border-white/12 bg-white/[0.02] p-8 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:bg-white/[0.04]"
+            className="group relative flex flex-col justify-between rounded-3xl border border-white/12 bg-white/[0.02] p-8 backdrop-blur-md transition-all duration-300 hover:border-accent/40 hover:bg-white/[0.04]"
             key={step.title}
           >
             <div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15 border border-accent/30 font-mono-geist text-[14px] font-bold text-accent">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/15 font-mono-geist text-[14px] font-bold text-white">
                 0{index + 1}
               </div>
               <h3 className="mt-6 text-[clamp(22px,2.4vw,28px)] font-semibold leading-tight tracking-[-0.03em]">{step.title}</h3>
-              <p className="mt-3 text-[14.5px] leading-relaxed text-ink/60">{step.detail}</p>
+              <p className="mt-3 text-[14.5px] leading-relaxed text-white/50">{step.detail}</p>
             </div>
             
-            <div className="mt-8 h-1 w-full rounded-full bg-white/10 overflow-hidden">
-              <div className="h-full w-full bg-accent/60 transition-transform duration-500 -translate-x-full group-hover:translate-x-0" />
+            <div className="mt-8 h-1 w-full rounded-full bg-white/5 overflow-hidden">
+              <div className="h-full w-full bg-white transition-transform duration-500 -translate-x-full group-hover:translate-x-0" />
             </div>
           </article>
         ))}
@@ -969,24 +741,22 @@ function FaqSection({
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <MktgSection className="border-t border-white/[0.08] py-24 lg:py-32">
+    <MktgSection className="py-24 lg:py-32">
       <div className="grid gap-12 lg:grid-cols-[0.65fr_1fr] lg:gap-20">
         <motion.div {...reveal()} className="lg:sticky lg:top-32 lg:self-start">
-          <Eyebrow>FAQ</Eyebrow>
-          <h2 className="mt-4 max-w-md text-[clamp(32px,4.4vw,54px)] font-semibold leading-[1.02] tracking-[-0.035em] [text-wrap:balance]">
+          <h2 className="max-w-md text-[clamp(32px,4.4vw,54px)] font-semibold leading-[1.02] tracking-[-0.035em] [text-wrap:balance]">
             {title}
           </h2>
-          <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-ink/60">{body}</p>
+          <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-white/50">{body}</p>
         </motion.div>
 
-        {/* Super Shortcuts Accordion */}
-        <motion.div {...reveal(0.06)} className="border-t border-white/14">
+        <motion.div {...reveal(0.06)} className="border-t border-white/10">
           {items.map(([question, answer], index) => {
             const isOpen = openIndex === index;
             const answerId = `faq-answer-${index}`;
 
             return (
-              <motion.div key={question} layout={!reduceMotion} className="border-b border-white/14">
+              <motion.div key={question} layout={!reduceMotion} className="border-b border-white/10">
                 <button
                   type="button"
                   aria-controls={answerId}
@@ -994,10 +764,10 @@ function FaqSection({
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                   className="group flex w-full items-start justify-between gap-6 py-6 text-left focus:outline-none"
                 >
-                  <span className="max-w-[38rem] text-[17px] font-medium leading-7 text-ink/86 transition-colors group-hover:text-accent sm:text-lg">
+                  <span className="max-w-[38rem] text-[17px] font-medium leading-7 text-white/80 transition-colors group-hover:text-white sm:text-lg">
                     {question}
                   </span>
-                  <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/16 text-white/52 transition-all duration-300 ${isOpen ? "bg-accent/15 border-accent/50 text-accent rotate-180" : "group-hover:border-accent/40 group-hover:text-accent"}`}>
+                  <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 text-white/40 transition-all duration-300 ${isOpen ? "bg-white/5 border-white/20 text-white rotate-180" : "group-hover:border-white/20 group-hover:text-white"}`}>
                     <ChevronDown className="h-4 w-4" aria-hidden="true" />
                   </span>
                 </button>
@@ -1012,7 +782,7 @@ function FaqSection({
                       transition={{ duration: 0.28, ease: mktgEase }}
                       className="overflow-hidden"
                     >
-                      <p className="max-w-[38rem] pb-7 pr-12 text-[15px] leading-relaxed text-ink/60 sm:text-[16px]">{answer}</p>
+                      <p className="max-w-[38rem] pb-7 pr-12 text-[15px] leading-relaxed text-white/50 sm:text-[16px]">{answer}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -1025,38 +795,40 @@ function FaqSection({
   );
 }
 
-function FinalCtaSection({ copy, docsMcpPath, reveal }: { copy: HomeCopy; docsMcpPath: string; reveal: Reveal }) {
+function FinalCtaSection({ copy, mcpServerPath, reveal }: { copy: HomeCopy; mcpServerPath: string; reveal: Reveal }) {
   return (
     <section className="px-5 py-24 sm:px-7 lg:px-10 lg:py-32">
       <div className="mx-auto max-w-[1200px]">
-        {/* Minarah & Super Shortcuts Inspired Gradient Banner */}
+        {/* Deep Black Minimalist CTA */}
         <motion.div
           {...reveal()}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-accent via-[#a8ea49] to-[#88d626] p-10 text-on-accent shadow-[0_30px_90px_rgba(196,238,135,0.2)] sm:p-16 text-center"
+          className="relative overflow-hidden rounded-3xl bg-white/[0.02] border border-white/12 p-10 sm:p-16 text-center shadow-[0_20px_60px_rgba(196,238,135,0.12)] backdrop-blur-xl"
         >
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.4),transparent_60%)]" />
-          
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-accent/20 rounded-full blur-[120px] mix-blend-screen" />
+          </div>
+
           <div className="relative z-10 mx-auto max-w-3xl">
             <h2 className="text-[clamp(38px,5.8vw,76px)] font-semibold leading-[0.98] tracking-[-0.04em] [text-wrap:balance]">
               {copy.ctaTitle}
             </h2>
-            <p className="mx-auto mt-6 max-w-md text-[16px] leading-relaxed text-on-accent/80 font-medium sm:text-[17px]">
+            <p className="mx-auto mt-6 max-w-md text-[16px] leading-relaxed text-white/50 font-medium sm:text-[17px]">
               {copy.ctaBody}
             </p>
             
             <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
-                className="inline-flex h-13 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-canvas px-8 text-[15px] font-semibold text-ink transition-all duration-200 hover:bg-[#16181c] hover:scale-[1.02] active:translate-y-px shadow-lg"
+                className="inline-flex h-14 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-accent px-8 text-[15px] font-semibold text-on-accent transition-all duration-200 hover:bg-accent-hover active:translate-y-px"
                 href={appRoutes.liveDemo}
               >
                 {copy.primaryCta}
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                className="inline-flex h-13 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-on-accent/30 bg-on-accent/10 px-7 text-[15px] font-semibold text-on-accent backdrop-blur-md transition-all duration-200 hover:bg-on-accent/20 active:translate-y-px"
-                href={docsMcpPath}
+                className="inline-flex h-14 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/16 bg-white/[0.045] px-7 text-[15px] font-semibold text-white/80 transition-all duration-200 hover:border-white/30 hover:text-white active:translate-y-px"
+                href={mcpServerPath}
               >
-                {copy.secondaryCta}
+                {copy.docsCta}
               </Link>
             </div>
           </div>

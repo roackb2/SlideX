@@ -20,17 +20,17 @@
   --color-accent-green-hover: #d4f4a7;
 
   /* SlideX marketing site palette (site pages only) */
-  --color-canvas: #0a0b0d;
-  --color-canvas-deep: #07080a;
-  --color-ink: #fcfbf8;
-  --color-accent: #c4ee87;
-  --color-accent-hover: #d7f5aa;
-  --color-on-accent: #0a1a00;
+  --color-canvas: #11130f;
+  --color-canvas-deep: #090a08;
+  --color-ink: #f5f2e9;
+  --color-accent: #d8f27d;
+  --color-accent-hover: #e4f7a4;
+  --color-on-accent: #11130f;
 }
 
 :root {
   color-scheme: dark;
-  background-color: #070707;
+  background-color: #11130f;
   
   /* Premium Dark Theme Variables (Frosted Glass Base) */
   --surface-1: rgba(255, 255, 255, 0.03);
@@ -46,10 +46,10 @@
   --glow-pink-soft: #FE7BBF;
   --glow-accent: #CEFF32;
 
-  /* Accent Green CTA */
-  --accent-green: #c4ee87;
-  --accent-green-hover: #d4f4a7;
-  --accent-green-text: #0a1a00;
+  /* Accent CTA */
+  --accent-green: #d8f27d;
+  --accent-green-hover: #e4f7a4;
+  --accent-green-text: #11130f;
 
   /* Richer Surfaces & Borders */
   --surface-elevated: rgba(255, 255, 255, 0.06);
@@ -74,7 +74,7 @@ body {
 body {
   margin: 0;
   color: var(--text-primary);
-  background-color: #070707;
+  background-color: #11130f;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -86,8 +86,37 @@ button {
 }
 
 ::selection {
-  background: rgba(154, 215, 255, 0.30);
-  color: #ffffff;
+  background: rgba(216, 242, 125, 0.30);
+  color: #f5f2e9;
+}
+
+.marketing-shell {
+  background:
+    radial-gradient(circle at 84% 18%, rgba(216, 242, 125, 0.045), transparent 26rem),
+    radial-gradient(circle at 10% 55%, rgba(144, 157, 104, 0.055), transparent 30rem),
+    #11130f;
+}
+
+.marketing-hero-surface {
+  background:
+    radial-gradient(ellipse 78% 56% at 50% -12%, rgba(216, 242, 125, 0.22), transparent 72%),
+    radial-gradient(ellipse 38% 38% at 8% 48%, rgba(102, 121, 71, 0.22), transparent 80%),
+    radial-gradient(ellipse 42% 50% at 92% 38%, rgba(54, 69, 38, 0.34), transparent 78%),
+    linear-gradient(180deg, #202719 0%, #161a13 52%, #11130f 100%);
+}
+
+.marketing-footer-surface {
+  background:
+    repeating-linear-gradient(118deg, rgba(245, 242, 233, 0.018) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(28deg, rgba(216, 242, 125, 0.012) 0 1px, transparent 1px 11px),
+    radial-gradient(ellipse 64% 48% at 14% 8%, rgba(102, 121, 71, 0.18), transparent 78%),
+    radial-gradient(ellipse 44% 42% at 88% 92%, rgba(216, 242, 125, 0.075), transparent 82%),
+    linear-gradient(180deg, #161a13 0%, #11130f 56%, #0d0f0b 100%);
+}
+
+.paper-panel {
+  background: rgba(18, 20, 15, 0.72);
+  box-shadow: 0 28px 100px rgba(2, 3, 2, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 ::-webkit-scrollbar {

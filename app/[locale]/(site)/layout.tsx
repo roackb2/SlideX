@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { isLocale, locales } from "@/common/lib/i18n";
-import { SiteNav, SiteFooter } from "@/common/ui";
+import { SiteNav } from "@/common/ui";
+import { MarketingFooter } from "@/features/marketing";
 
 type LocaleSiteLayoutProps = {
   children: React.ReactNode;
@@ -27,7 +28,7 @@ export default async function LocaleSiteLayout({
     <>
       <SiteNav />
       {children}
-      <SiteFooter />
+      <MarketingFooter />
     </>
   );
 }
