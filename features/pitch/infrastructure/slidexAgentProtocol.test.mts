@@ -69,6 +69,29 @@ test("preserves reasoning-summary progress as a distinct activity", () => {
   });
 });
 
+test("preserves assistant commentary as streamed work progress", () => {
+  const event = SlideXAgentRunProtocol.parseEvent({
+    kind: "activity",
+    runId: "run-1",
+    sequence: 2,
+    timestamp,
+    activity: {
+      type: "assistant.commentary",
+      messageId: "commentary-1",
+      text: "I checked the current deck. Next I’m comparing the available layouts.",
+      done: false
+    }
+  });
+
+  assert.equal(event.kind, "activity");
+  assert.deepEqual(event.activity, {
+    type: "assistant.commentary",
+    messageId: "commentary-1",
+    text: "I checked the current deck. Next I’m comparing the available layouts.",
+    done: false
+  });
+});
+
 test("validates hydrated conversation history and active-run discovery", () => {
   const state = AgentSessionStateSchema.parse({
     session: createSession(),
