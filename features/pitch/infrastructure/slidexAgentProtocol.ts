@@ -7,6 +7,7 @@ import type {
   AgentSessionPage,
   AgentSessionState,
   AttachAgentSessionResult,
+  OpenAiDeviceCodeChallenge,
   StartAgentRunResult
 } from "@/features/pitch/domain/agentRun";
 
@@ -83,9 +84,47 @@ export const ResetAgentSessionResultSchema = z.object({
   reset: z.literal(true)
 });
 
+export const OpenAiRuntimeCredentialSchema = z.object({
+  type: z.literal("oauth-access-token"),
+  provider: z.literal("openai"),
+  accessToken: z.string().trim().min(1).max(20_000),
+  expiresAt: z.number().int().positive(),
+  accountId: z.string().trim().min(1).max(512).optional()
+});
+
+export const ModelCredentialSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("api-key"),
+    provider: z.literal("openai"),
+    apiKey: z.string().trim().min(8).max(20_000)
+  }),
+  OpenAiRuntimeCredentialSchema
+]);
+
+export const OpenAiDeviceCodeChallengeSchema: z.ZodType<OpenAiDeviceCodeChallenge> = z.object({
+  deviceAuthId: z.string().trim().min(1).max(2_048),
+  userCode: z.string().trim().min(1).max(128),
+  verificationUrl: z.url().refine(isOpenAiAuthUrl, {
+    message: "OpenAI device verification must use auth.openai.com over HTTPS"
+  }),
+  intervalMs: z.number().int().positive(),
+  expiresAt: z.number().int().positive()
+});
+
+export const OpenAiDeviceCodePollResultSchema = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("pending") }),
+  z.object({ status: z.literal("expired") }),
+  z.object({
+    status: z.literal("authorized"),
+    credential: OpenAiRuntimeCredentialSchema
+  })
+]);
+
 const AgentApiErrorCodeSchema: z.ZodType<AgentApiErrorCode> = z.enum([
   "auth_required",
   "invalid_request",
+  "rate_limited",
+  "model_auth_unavailable",
   "session_not_found",
   "run_not_found",
   "active_run_conflict",
@@ -104,3 +143,12 @@ export const SlideXAgentRunProtocol = new ConversationRunProtocolCodec({
   activity: AgentActivitySchema,
   result: AgentRunResultSchema
 });
+
+function isOpenAiAuthUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === "auth.openai.com";
+  } catch {
+    return false;
+  }
+}

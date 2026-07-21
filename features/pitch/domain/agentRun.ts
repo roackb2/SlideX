@@ -50,6 +50,35 @@ export type AgentSessionState = {
   activeRun: ActiveAgentRun | null;
 };
 
+export type OpenAiApiKeyCredential = {
+  type: "api-key";
+  provider: "openai";
+  apiKey: string;
+};
+
+export type OpenAiRuntimeCredential = {
+  type: "oauth-access-token";
+  provider: "openai";
+  accessToken: string;
+  expiresAt: number;
+  accountId?: string;
+};
+
+export type ModelCredential = OpenAiApiKeyCredential | OpenAiRuntimeCredential;
+
+export type OpenAiDeviceCodeChallenge = {
+  deviceAuthId: string;
+  userCode: string;
+  verificationUrl: string;
+  intervalMs: number;
+  expiresAt: number;
+};
+
+export type OpenAiDeviceCodePollResult =
+  | { status: "pending" }
+  | { status: "expired" }
+  | { status: "authorized"; credential: OpenAiRuntimeCredential };
+
 export type AttachAgentSessionResult = {
   session: AgentSession;
 };
@@ -57,6 +86,8 @@ export type AttachAgentSessionResult = {
 export type AgentApiErrorCode =
   | "auth_required"
   | "invalid_request"
+  | "rate_limited"
+  | "model_auth_unavailable"
   | "session_not_found"
   | "run_not_found"
   | "active_run_conflict"

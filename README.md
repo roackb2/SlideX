@@ -149,7 +149,11 @@ The relationship is:
 
 Codex and GPT-5.6 were development tools for this project. They are not required runtime dependencies of the current SlideX browser application.
 
-The repository does not expose an OpenAI API key to the frontend, and user presentations are not automatically sent to OpenAI.
+The repository does not bundle an operator OpenAI API key into the frontend.
+When the optional conversational agent is enabled, the user selects an API key
+or connects a Codex subscription in the Agent panel; that credential remains
+in current-tab React memory and is sent only with a user-initiated agent run.
+User presentations are not automatically sent to OpenAI.
 
 If a production model API is added in the future, it will require a separate server-side API boundary, user consent, data-processing documentation, usage limits, and corresponding security policies.
 
