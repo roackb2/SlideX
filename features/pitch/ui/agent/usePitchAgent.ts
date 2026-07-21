@@ -11,6 +11,21 @@ import {
 import { ConversationRunConsumerService } from "@roackb2/heddle-remote";
 import { ConversationRunHttpSseClientError } from "@roackb2/heddle-remote/http-sse";
 import {
+  applyAgentProgress,
+  ensureAgentProgressPlaceholder,
+  reconcileAgentProgress,
+  type PitchAgentMessage
+} from "@/features/pitch/application/agentProgress";
+import type {
+  AgentActivity,
+  AgentRunEvent,
+  AgentSession,
+  AgentSessionSummary,
+  AgentSessionState,
+  AgentToolActivity,
+  ModelCredential
+} from "@/features/pitch/domain/agentRun";
+import {
   type SlideXAgentClient,
   SlideXAgentClientError
 } from "@/features/pitch/infrastructure/slidexAgentClient";
@@ -20,30 +35,9 @@ import {
   writeAgentPresentationBinding
 } from "@/features/pitch/infrastructure/slidexAgentPersistence";
 import { embedPitchLocalImagesForPersistence } from "@/features/pitch/infrastructure/pitchLocalAssets";
-import type {
-  AgentRunEvent,
-  AgentSession,
-  AgentSessionSummary,
-  AgentSessionState,
-  AgentToolActivity,
-  ModelCredential
-} from "@/features/pitch/domain/agentRun";
 
 type AgentRunConsumer = ConversationRunConsumerService<{ runId: string }>;
 export type AgentStatus = "idle" | "running" | "reconnecting" | "detached" | "error";
-
-export type PitchAgentMessage =
-  | {
-    id: string;
-    role: "user" | "assistant";
-    content: string;
-  }
-  | {
-    id: string;
-    role: "reasoning";
-    content: string;
-    done: boolean;
-  };
 
 export type PendingMotionDoc = {
   motionDoc: string;
@@ -171,29 +165,20 @@ export function usePitchAgent(
 
   const setAssistantMessage = useCallback((content: string) => {
     setMessages((current) => {
-      const index = current.findLastIndex(({ role }) => role !== "user");
-      return index < 0
-        ? [...current, { id: crypto.randomUUID(), role: "assistant", content }]
-        : current.map((item, itemIndex) => itemIndex === index
-          ? { id: item.id, role: "assistant", content }
-          : item);
+      const last = current.at(-1);
+      return last?.role === "assistant" && !last.content
+        ? current.map((item) => item.id === last.id
+          ? { ...item, content }
+          : item)
+        : [...current, { id: crypto.randomUUID(), role: "assistant", content }];
     });
   }, []);
 
-  const setReasoningSummary = useCallback((content: string, done: boolean) => {
-    setMessages((current) => {
-      const index = current.findLastIndex(({ role }) => role === "reasoning");
-      return index < 0
-        ? [...current, {
-          id: crypto.randomUUID(),
-          role: "reasoning",
-          content,
-          done
-        }]
-        : current.map((item, itemIndex) => itemIndex === index
-          ? { ...item, content, done }
-          : item);
-    });
+  const setProgressActivity = useCallback((
+    runId: string,
+    activity: AgentActivity
+  ) => {
+    setMessages((current) => applyAgentProgress(current, runId, activity));
   }, []);
 
   const settleRun = useCallback((nextStatus: AgentStatus) => {
@@ -208,7 +193,7 @@ export function usePitchAgent(
       return;
     }
     if (event.kind === "activity") {
-      applyActivity(event, setReasoningSummary, setTools);
+      applyActivity(event, setProgressActivity, setTools);
       return;
     }
     if (event.kind === "result") {
@@ -223,7 +208,11 @@ export function usePitchAgent(
       if (!mountedRef.current) {
         return;
       }
-      setMessages(toPitchMessages(result.session));
+      setMessages((current) => reconcileAgentProgress(
+        current,
+        event.runId,
+        toPitchMessages(result.session)
+      ));
       setPendingMotionDoc(reconciliation.pending);
       setError(reconciliation.error);
       setErrorCode(undefined);
@@ -243,7 +232,12 @@ export function usePitchAgent(
     setErrorCode(event.error.code);
     notifySessionChanged();
     settleRun("error");
-  }, [notifySessionChanged, setAssistantMessage, setReasoningSummary, settleRun]);
+  }, [
+    notifySessionChanged,
+    setAssistantMessage,
+    setProgressActivity,
+    settleRun
+  ]);
 
   const subscribeWithReconnect = useCallback(async (
     runId: string,
@@ -335,19 +329,23 @@ export function usePitchAgent(
       return;
     }
 
-    const restoresStoredRun = binding?.runId === state.activeRun.runId;
+    const activeRunId = state.activeRun.runId;
+    const restoresStoredRun = binding?.runId === activeRunId;
     const afterSequence = restoresStoredRun ? binding.afterSequence : undefined;
     activeSequenceRef.current = afterSequence;
     activeSourceRevisionRef.current = restoresStoredRun
       ? binding.baseSourceRevision
       : undefined;
-    updateActiveRunId(state.activeRun.runId);
-    persistBinding(state.activeRun.runId, afterSequence);
-    setMessages((current) => ensureReasoningPlaceholder(current));
+    updateActiveRunId(activeRunId);
+    persistBinding(activeRunId, afterSequence);
+    setMessages((current) => ensureAgentProgressPlaceholder(
+      current,
+      activeRunId
+    ));
     setStatus("reconnecting");
     setIsHydrating(false);
     await subscribeWithReconnect(
-      state.activeRun.runId,
+      activeRunId,
       controller.signal,
       afterSequence
     );
@@ -535,7 +533,10 @@ export function usePitchAgent(
       activeSourceRevisionRef.current = sourceRevision;
       updateSessionId(accepted.session.id);
       updateActiveRunId(accepted.runId);
-      setMessages(ensureReasoningPlaceholder(toPitchMessages(accepted.session)));
+      setMessages(ensureAgentProgressPlaceholder(
+        toPitchMessages(accepted.session),
+        accepted.runId
+      ));
       persistBinding(accepted.runId, 0);
       notifySessionChanged();
       await subscribeWithReconnect(accepted.runId, controller.signal);
@@ -550,14 +551,18 @@ export function usePitchAgent(
         try {
           const state = await client.session(sessionIdRef.current, controller.signal);
           if (state.activeRun) {
+            const recoveredRunId = state.activeRun.runId;
             restoreSessionState(state);
             acceptedRun = true;
             activeSourceRevisionRef.current = undefined;
-            updateActiveRunId(state.activeRun.runId);
-            setMessages((current) => ensureReasoningPlaceholder(current));
-            persistBinding(state.activeRun.runId, 0);
+            updateActiveRunId(recoveredRunId);
+            setMessages((current) => ensureAgentProgressPlaceholder(
+              current,
+              recoveredRunId
+            ));
+            persistBinding(recoveredRunId, 0);
             setStatus("reconnecting");
-            await subscribeWithReconnect(state.activeRun.runId, controller.signal);
+            await subscribeWithReconnect(recoveredRunId, controller.signal);
             return;
           }
         } catch (recoveryError) {
@@ -614,6 +619,7 @@ export function usePitchAgent(
 
   const checkRunStatus = useCallback(async () => {
     const currentSessionId = sessionIdRef.current;
+    const currentRunId = activeRunIdRef.current;
     if (!currentSessionId || isCheckingStatus) {
       return;
     }
@@ -646,7 +652,10 @@ export function usePitchAgent(
         onApply: inputRef.current.onApplyMotionDoc
       });
       updateSessionId(state.session.id);
-      setMessages(toPitchMessages(state.session));
+      const durableMessages = toPitchMessages(state.session);
+      setMessages((current) => currentRunId
+        ? reconcileAgentProgress(current, currentRunId, durableMessages)
+        : durableMessages);
       setTools([]);
       setPendingMotionDoc(reconciliation.pending);
       setError(reconciliation.error);
@@ -826,13 +835,11 @@ export type PitchAgentRuntime = ReturnType<typeof usePitchAgent>;
 
 function applyActivity(
   event: Extract<AgentRunEvent, { kind: "activity" }>,
-  setReasoningSummary: (content: string, done: boolean) => void,
+  setProgressActivity: (runId: string, activity: AgentActivity) => void,
   setTools: Dispatch<SetStateAction<AgentToolActivity[]>>
 ): void {
   const activity = event.activity;
-  if (activity.type === "reasoning.summary" && activity.text) {
-    setReasoningSummary(activity.text, activity.done === true);
-  }
+  setProgressActivity(event.runId, activity);
   if ((activity.type === "tool.calling" || activity.type === "tool.completed") && activity.tool) {
     const next: AgentToolActivity = {
       key: activity.tool,
@@ -893,17 +900,6 @@ async function reconcileMotionDoc(input: {
       error: MOTION_DOC_APPLY_ERROR
     };
   }
-}
-
-function ensureReasoningPlaceholder(messages: PitchAgentMessage[]): PitchAgentMessage[] {
-  return messages.at(-1)?.role === "reasoning"
-    ? messages
-    : [...messages, {
-      id: crypto.randomUUID(),
-      role: "reasoning",
-      content: "",
-      done: false
-    }];
 }
 
 function createRunConsumer(runId: string, afterSequence?: number): AgentRunConsumer {
