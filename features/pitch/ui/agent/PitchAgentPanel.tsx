@@ -233,7 +233,7 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
       <>
       <div
         aria-label={copy.conversationActivity}
-        className="min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-48 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/30"
+        className="min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-24 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/30"
         ref={scrollRef}
         role="region"
         tabIndex={0}
@@ -291,8 +291,8 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
                     </div>
                     <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-neutral-200">
                       {item.content || (
-                        <span className="flex items-center gap-3 text-neutral-500 mt-2">
-                          <Loader2 className="animate-spin text-white/40" size={16} /> {copy.thinking}
+                        <span className="flex items-center gap-3 text-neutral-400 mt-2">
+                          <Loader2 className="animate-spin text-white/50" size={16} /> {copy.thinking}
                         </span>
                       )}
                     </div>
@@ -303,17 +303,17 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
           )}
 
           {state.tools.length > 0 && (
-            <div className="mt-8 ml-12 rounded-2xl border border-white/[0.02] bg-white/[0.02] p-5">
-              <p className="mb-4 flex items-center gap-2 text-[11px] font-semibold tracking-wider text-neutral-500">
+            <div className="mt-8 ml-12 rounded-2xl border border-white/[0.04] bg-white/[0.03] p-5">
+              <p className="mb-4 flex items-center gap-2 text-[11px] font-semibold tracking-wider text-neutral-400">
                 <Wrench aria-hidden="true" size={12} /> {copy.toolActivity}
               </p>
               <ul className="space-y-3">
                 {state.tools.map((tool) => (
                   <li className="flex items-center justify-between text-[13px]" key={tool.key}>
-                    <span className="truncate font-medium text-neutral-400">{tool.name}</span>
-                    <span className={tool.status === "failed" ? "text-red-400" : tool.status === "completed" ? "text-emerald-400" : "text-neutral-500"}>
+                    <span className="truncate font-medium text-neutral-200">{tool.name}</span>
+                    <span className={tool.status === "failed" ? "text-red-400" : tool.status === "completed" ? "text-emerald-400" : "text-neutral-400"}>
                       {tool.status === "completed" ? <Check aria-label={copy.completed} size={14} /> : tool.status === "failed" ? <X aria-label={copy.failed} size={14} /> : (
-                        <span className="flex items-center gap-2"><Loader2 className="animate-spin text-neutral-600" size={14} /> {copy.running}</span>
+                        <span className="flex items-center gap-2"><Loader2 className="animate-spin text-white/50" size={14} /> {copy.running}</span>
                       )}
                     </span>
                   </li>
@@ -351,14 +351,14 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 z-20">
-        <div className="pointer-events-none absolute inset-x-0 bottom-full h-32 bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-transparent" />
+      <div className="relative shrink-0 z-20">
+        <div className="pointer-events-none absolute inset-x-0 bottom-full h-24 bg-gradient-to-t from-[#09090b] via-[#09090b]/60 to-transparent" />
         <form className="bg-[#09090b] px-4 pb-6 pt-2" onSubmit={handleSubmit}>
           <div className="mx-auto max-w-3xl">
             <label className="sr-only" htmlFor="slidex-agent-message">{copy.messageAgent}</label>
             <div className="relative flex flex-col overflow-hidden rounded-[24px] border border-white/[0.06] bg-[#141416] shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.02)] transition-all focus-within:border-white/[0.12] focus-within:shadow-[0_8px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)]">
               <textarea
-                className="min-h-[110px] max-h-64 w-full resize-none bg-transparent px-5 pb-14 pt-4 text-[15px] leading-relaxed text-white outline-none placeholder:text-neutral-600"
+                className="min-h-[110px] max-h-64 w-full resize-none bg-transparent px-5 pb-14 pt-4 text-[15px] leading-relaxed text-white outline-none placeholder:text-neutral-400"
                 disabled={meta.isRunning
                   || meta.isHydrating
                   || meta.isDeleting
@@ -369,7 +369,7 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
                 value={state.draft}
               />
               <div className="absolute bottom-3 inset-x-4 flex items-center justify-between">
-                <p className="px-1 text-[11px] font-medium tracking-wide text-neutral-600">{copy.usesCurrentMotionDoc}</p>
+                <p className="px-1 text-[11px] font-medium tracking-wide text-neutral-400">{copy.usesCurrentMotionDoc}</p>
                 {meta.isRunning ? (
                   <button
                     className="flex size-9 items-center justify-center rounded-full bg-white/[0.1] text-white transition-colors hover:bg-white/[0.15] disabled:cursor-wait disabled:opacity-50"
