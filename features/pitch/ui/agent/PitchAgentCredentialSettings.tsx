@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
+import "dayjs/locale/zh-tw";
 import { Check, CheckCircle2, Copy, ExternalLink, KeyRound, LogIn } from "lucide-react";
 import { usePitchAgentContext } from "@/features/pitch/ui/agent/PitchAgentProvider";
+import { usePitchAgentI18n } from "@/features/pitch/ui/agent/pitchAgentI18n";
 
 type CredentialMethod = "api-key" | "codex";
 
@@ -15,6 +17,7 @@ export function PitchAgentCredentialSettings({
   onCredentialChanged: () => void;
 }) {
   const { actions, state } = usePitchAgentContext();
+  const { copy, locale } = usePitchAgentI18n();
   const [method, setMethod] = useState<CredentialMethod>(() => (
     state.modelCredential?.type === "oauth-access-token" ? "codex" : "api-key"
   ));
@@ -79,10 +82,10 @@ export function PitchAgentCredentialSettings({
         className="text-balance text-xs font-semibold text-neutral-200"
         id="slidex-agent-model-access"
       >
-        Model access
+        {copy.modelAccess}
       </h3>
       <div
-        aria-label="OpenAI authentication method"
+        aria-label={copy.authenticationMethod}
         className="mt-2 grid grid-cols-2 gap-1 rounded-lg border border-white/[0.1] bg-black/30 p-1"
         role="group"
       >
@@ -93,7 +96,7 @@ export function PitchAgentCredentialSettings({
           onClick={() => selectMethod("api-key")}
           type="button"
         >
-          API key
+          {copy.apiKey}
         </button>
         <button
           aria-pressed={method === "codex"}
@@ -102,7 +105,7 @@ export function PitchAgentCredentialSettings({
           onClick={() => selectMethod("codex")}
           type="button"
         >
-          Codex subscription
+          {copy.codexSubscription}
         </button>
       </div>
 
@@ -112,7 +115,7 @@ export function PitchAgentCredentialSettings({
             className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-neutral-300"
             htmlFor="slidex-agent-api-key"
           >
-            <KeyRound aria-hidden="true" size={14} /> OpenAI API key
+            <KeyRound aria-hidden="true" size={14} /> {copy.openAiApiKey}
           </label>
           <input
             aria-describedby={visibleError
@@ -133,7 +136,7 @@ export function PitchAgentCredentialSettings({
             className="mt-2 text-pretty text-xs leading-5 text-neutral-500"
             id="slidex-agent-api-key-help"
           >
-            Current tab only. Sent only when a run starts; SlideX does not store it.
+            {copy.apiKeyHelp}
           </p>
           <button
             className="mt-3 flex h-11 w-full items-center justify-center rounded-md border border-white/[0.12] px-3 text-sm font-medium text-neutral-200 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
@@ -146,7 +149,7 @@ export function PitchAgentCredentialSettings({
             }}
             type="button"
           >
-            Forget key
+            {copy.forgetKey}
           </button>
         </div>
       ) : (
@@ -154,19 +157,21 @@ export function PitchAgentCredentialSettings({
           {runtimeCredential ? (
             <div className="rounded-md border border-emerald-400/25 bg-emerald-400/[0.06] p-3">
               <p className="flex items-center gap-2 text-sm font-medium text-emerald-200">
-                <CheckCircle2 aria-hidden="true" size={16} /> Codex connected
+                <CheckCircle2 aria-hidden="true" size={16} /> {copy.codexConnected}
               </p>
               <p className="mt-1 text-pretty text-xs leading-5 text-emerald-100/70">
-                Available until <time className="tabular-nums" dateTime={new Date(runtimeCredential.expiresAt).toISOString()}>{dayjs(runtimeCredential.expiresAt).format("h:mm A")}</time> in this tab.
+                {copy.codexAvailableUntil(dayjs(runtimeCredential.expiresAt)
+                  .locale(locale === "zh-TW" ? "zh-tw" : "en")
+                  .format(locale === "zh-TW" ? "A h:mm" : "h:mm A"))}
               </p>
             </div>
           ) : deviceAuthChallenge ? (
             <div className="rounded-md border border-white/[0.12] bg-white/[0.04] p-3">
               <p className="text-pretty text-xs leading-5 text-neutral-300">
-                Copy this one-time code, then enter it on the official OpenAI page:
+                {copy.deviceCodeInstruction}
               </p>
               <button
-                aria-label={`Copy OpenAI device code ${deviceAuthChallenge.userCode}`}
+                aria-label={copy.copyDeviceCode(deviceAuthChallenge.userCode)}
                 className="mt-2 flex w-full items-center gap-1.5 rounded-md border border-white/[0.1] bg-black p-1.5 text-left hover:border-white/[0.2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
                 onClick={() => void copyDeviceCode(deviceAuthChallenge.userCode)}
                 type="button"
@@ -183,12 +188,12 @@ export function PitchAgentCredentialSettings({
                   {isDeviceCodeCopied
                     ? <Check aria-hidden="true" size={13} />
                     : <Copy aria-hidden="true" size={13} />}
-                  {isDeviceCodeCopied ? "Copied" : "Copy"}
+                  {isDeviceCodeCopied ? copy.copied : copy.copy}
                 </span>
               </button>
               {didDeviceCodeCopyFail && (
                 <p className="mt-2 text-pretty text-xs leading-5 text-red-300" role="alert">
-                  Copy failed. Select the code and copy it manually.
+                  {copy.copyFailed}
                 </p>
               )}
               <a
@@ -197,15 +202,15 @@ export function PitchAgentCredentialSettings({
                 rel="noreferrer"
                 target="_blank"
               >
-                Open OpenAI sign-in <ExternalLink aria-hidden="true" size={15} />
+                {copy.openOpenAiSignIn} <ExternalLink aria-hidden="true" size={15} />
               </a>
               <p className="mt-2 text-pretty text-xs leading-5 text-neutral-500">
-                Only enter the code at <strong className="font-medium text-neutral-400">auth.openai.com</strong>. SlideX never asks for your OpenAI password.
+                {copy.officialOpenAiOnly}
               </p>
             </div>
           ) : (
             <p className="text-pretty text-xs leading-5 text-neutral-500">
-              Use the Codex access included with an eligible ChatGPT plan. You will sign in on OpenAI&apos;s site.
+              {copy.codexPlanHelp}
             </p>
           )}
 
@@ -222,10 +227,10 @@ export function PitchAgentCredentialSettings({
             >
               <LogIn aria-hidden="true" size={15} />
               {state.deviceAuth.status === "requesting"
-                ? "Starting OpenAI sign-in…"
+                ? copy.startingSignIn
                 : state.deviceAuth.status === "error" || state.deviceAuth.status === "expired"
-                  ? "Try Codex sign-in again"
-                  : "Connect Codex subscription"}
+                  ? copy.retryCodexSignIn
+                  : copy.connectCodex}
             </button>
           )}
           {(runtimeCredential || state.deviceAuth.status === "pending") && (
@@ -242,7 +247,7 @@ export function PitchAgentCredentialSettings({
               }}
               type="button"
             >
-              {runtimeCredential ? "Disconnect Codex" : "Cancel sign-in"}
+              {runtimeCredential ? copy.disconnectCodex : copy.cancelSignIn}
             </button>
           )}
         </div>
@@ -258,7 +263,7 @@ export function PitchAgentCredentialSettings({
         </p>
       )}
       <p className="mt-2 text-pretty text-xs leading-5 text-neutral-500">
-        Refreshing the page forgets the selected model credential. The server never stores it.
+        {copy.credentialPrivacy}
       </p>
     </section>
   );

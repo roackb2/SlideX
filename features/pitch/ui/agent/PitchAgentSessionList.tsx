@@ -3,6 +3,7 @@
 import { useState } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/zh-tw";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import {
   ArrowLeft,
@@ -14,11 +15,13 @@ import {
   Trash2
 } from "lucide-react";
 import { usePitchAgentContext } from "@/features/pitch/ui/agent/PitchAgentProvider";
+import { usePitchAgentI18n } from "@/features/pitch/ui/agent/pitchAgentI18n";
 
 dayjs.extend(relativeTime);
 
 export function PitchAgentSessionList({ onClose }: { onClose: () => void }) {
   const { actions, meta, state } = usePitchAgentContext();
+  const { copy, locale } = usePitchAgentI18n();
   const [selectingSessionId, setSelectingSessionId] = useState<string>();
   const [selectionError, setSelectionError] = useState<string>();
 
@@ -44,7 +47,7 @@ export function PitchAgentSessionList({ onClose }: { onClose: () => void }) {
         onClose();
         return;
       }
-      setSelectionError("Couldn’t open that conversation. Try again.");
+      setSelectionError(copy.conversationOpenFailed);
     } finally {
       setSelectingSessionId(undefined);
     }
@@ -62,7 +65,7 @@ export function PitchAgentSessionList({ onClose }: { onClose: () => void }) {
           type="button"
         >
           <ArrowLeft aria-hidden="true" size={14} />
-          Back to conversation
+          {copy.backToConversation}
         </button>
         <button
           className="flex h-11 shrink-0 items-center gap-2 rounded-md border border-white/[0.12] px-3 text-xs font-medium text-neutral-200 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
@@ -71,22 +74,22 @@ export function PitchAgentSessionList({ onClose }: { onClose: () => void }) {
           type="button"
         >
           <Plus aria-hidden="true" size={14} />
-          New
+          {copy.new}
         </button>
       </div>
 
       <div className="mb-4">
         <h3 className="text-balance text-sm font-semibold text-white" id="slidex-agent-conversations-title">
-          Conversations
+          {copy.conversations}
         </h3>
         <p className="mt-0.5 text-pretty text-xs text-neutral-500">
-          Continue work across your presentations.
+          {copy.conversationsDescription}
         </p>
         {!meta.canSwitchConversation && (
           <p className="mt-2 text-pretty text-xs leading-5 text-amber-200/80" role="status">
             {meta.isRunning
-              ? "Return to the conversation to stop the active run before switching."
-              : "Conversation actions will be available when the current operation finishes."}
+              ? copy.stopBeforeSwitching
+              : copy.actionsAvailableLater}
           </p>
         )}
       </div>
@@ -105,13 +108,13 @@ export function PitchAgentSessionList({ onClose }: { onClose: () => void }) {
             onClick={() => void actions.retrySessions()}
             type="button"
           >
-            <RefreshCw aria-hidden="true" size={14} /> Retry
+            <RefreshCw aria-hidden="true" size={14} /> {copy.retry}
           </button>
         </div>
       )}
 
       {meta.isLoadingSessions ? (
-        <div aria-label="Loading conversations" className="space-y-2" role="status">
+        <div aria-label={copy.loadingConversations} className="space-y-2" role="status">
           {[0, 1, 2].map((item) => (
             <div className="h-20 rounded-md bg-white/[0.05]" key={item} />
           ))}
@@ -119,16 +122,16 @@ export function PitchAgentSessionList({ onClose }: { onClose: () => void }) {
       ) : state.sessions.length === 0 && !state.sessionsError ? (
         <div className="border border-dashed border-white/[0.12] p-4 text-center">
           <MessageSquare aria-hidden="true" className="mx-auto text-neutral-500" size={20} />
-          <p className="mt-3 text-sm font-medium text-white">No saved conversations yet</p>
+          <p className="mt-3 text-sm font-medium text-white">{copy.noSavedConversations}</p>
           <p className="mt-1 text-pretty text-xs leading-5 text-neutral-500">
-            Start chatting with the agent and the conversation will appear here.
+            {copy.noSavedConversationsDescription}
           </p>
           <button
             className="mt-4 h-11 rounded-md bg-white px-4 text-sm font-semibold text-black hover:bg-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             onClick={onClose}
             type="button"
           >
-            Start a conversation
+            {copy.startConversation}
           </button>
         </div>
       ) : (
@@ -157,7 +160,7 @@ export function PitchAgentSessionList({ onClose }: { onClose: () => void }) {
                       </span>
                       {isSelected && (
                         <span className="flex shrink-0 items-center gap-1 rounded-full border border-emerald-300/20 bg-emerald-300/[0.08] px-2 py-0.5 text-[11px] font-medium text-emerald-200">
-                          <Check aria-hidden="true" size={11} /> Current
+                          <Check aria-hidden="true" size={11} /> {copy.current}
                         </span>
                       )}
                     </span>
@@ -166,11 +169,13 @@ export function PitchAgentSessionList({ onClose }: { onClose: () => void }) {
                     </span>
                     <span className="mt-1 flex items-center justify-between gap-2 text-xs">
                       <span className="truncate text-neutral-500">
-                        {dayjs(session.lastActivityAt).fromNow()} · {session.messageCount} {session.messageCount === 1 ? "message" : "messages"}
+                        {dayjs(session.lastActivityAt)
+                          .locale(locale === "zh-TW" ? "zh-tw" : "en")
+                          .fromNow()} · {copy.messageCount(session.messageCount)}
                       </span>
                       {!isSelected && (
                         <span className="flex shrink-0 items-center gap-0.5 font-medium text-neutral-300">
-                          {isSelecting ? "Opening…" : "Open"}
+                          {isSelecting ? copy.opening : copy.open}
                           {!isSelecting && <ChevronRight aria-hidden="true" size={13} />}
                         </span>
                       )}
@@ -197,7 +202,7 @@ export function PitchAgentSessionList({ onClose }: { onClose: () => void }) {
           onClick={() => void actions.loadMoreSessions()}
           type="button"
         >
-          {meta.isFetchingMoreSessions ? "Loading…" : "Load more"}
+          {meta.isFetchingMoreSessions ? copy.loading : copy.loadMore}
         </button>
       )}
     </section>
@@ -213,11 +218,13 @@ function SessionDeleteButton({
   onDelete: () => Promise<void>;
   title: string;
 }) {
+  const { copy } = usePitchAgentI18n();
+
   return (
     <AlertDialog.Root>
       <AlertDialog.Trigger asChild>
         <button
-          aria-label={`Delete ${title}`}
+          aria-label={copy.deleteNamedConversation(title)}
           className="flex min-h-20 w-11 shrink-0 items-center justify-center border-l border-white/[0.08] text-neutral-500 hover:bg-red-400/[0.08] hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red-300/60"
           disabled={disabled}
           type="button"
@@ -236,10 +243,10 @@ function SessionDeleteButton({
           }}
         >
           <AlertDialog.Title className="text-balance text-base font-semibold text-white">
-            Delete “{title}”?
+            {copy.deleteNamedConversationTitle(title)}
           </AlertDialog.Title>
           <AlertDialog.Description className="mt-2 text-pretty text-sm leading-6 text-neutral-400">
-            This permanently deletes the chat history. Its presentation stays unchanged.
+            {copy.deleteNamedConversationDescription}
           </AlertDialog.Description>
           <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <AlertDialog.Cancel asChild>
@@ -247,7 +254,7 @@ function SessionDeleteButton({
                 className="h-11 rounded-md border border-white/[0.16] px-4 text-sm font-medium text-white hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
                 type="button"
               >
-                Keep conversation
+                {copy.keepConversation}
               </button>
             </AlertDialog.Cancel>
             <AlertDialog.Action asChild>
@@ -256,7 +263,7 @@ function SessionDeleteButton({
                 onClick={() => void onDelete()}
                 type="button"
               >
-                Delete conversation
+                {copy.deleteConversation}
               </button>
             </AlertDialog.Action>
           </div>

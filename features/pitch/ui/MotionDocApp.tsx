@@ -510,7 +510,9 @@ export function MotionDocApp({
       agent={{
         isEnabled: isAgentAvailable,
         isPanelOpen: isAgentAvailable && isAgentPanelOpen,
-        panel: isAgentAvailable && isAgentPanelOpen ? <PitchAgentPanel /> : undefined,
+        panel: isAgentAvailable && isAgentPanelOpen
+          ? <PitchAgentPanel onClose={() => setIsAgentPanelOpen(false)} />
+          : undefined,
         togglePanel: () => setIsAgentPanelOpen((current) => !current)
       }}
       commands={{

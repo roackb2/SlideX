@@ -28,6 +28,7 @@ import type {
   AgentToolActivity,
   ModelCredential
 } from "@/features/pitch/domain/agentRun";
+import { usePitchAgentI18n } from "@/features/pitch/ui/agent/pitchAgentI18n";
 
 type AgentRunConsumer = ConversationRunConsumerService<{ runId: string }>;
 export type AgentStatus = "idle" | "running" | "reconnecting" | "detached" | "error";
@@ -48,9 +49,6 @@ type MotionDocReconciliation = {
   error?: string;
 };
 
-const MOTION_DOC_APPLY_ERROR =
-  "The agent finished, but SlideX could not apply its deck result automatically.";
-
 export type PitchAgentRuntimeInput = {
   initialSessionId?: string;
   presentationId: string;
@@ -70,6 +68,8 @@ export function usePitchAgent(
   client: SlideXAgentClient,
   onSessionChanged?: () => void
 ) {
+  const { copy } = usePitchAgentI18n();
+  const copyRef = useRef(copy);
   const inputRef = useRef(input);
   const initialSessionIdRef = useRef(input.initialSessionId);
   const sourceRef = useRef(input.source);
@@ -93,6 +93,10 @@ export function usePitchAgent(
   const activeSourceRevisionRef = useRef<string | undefined>(undefined);
   const requestAbortRef = useRef<AbortController | undefined>(undefined);
   const mountedRef = useRef(true);
+
+  useEffect(() => {
+    copyRef.current = copy;
+  }, [copy]);
 
   useEffect(() => {
     inputRef.current = input;
@@ -189,6 +193,7 @@ export function usePitchAgent(
     if (event.kind === "result") {
       const result = event.result;
       const reconciliation = await reconcileMotionDoc({
+        applyError: copyRef.current.motionDocApplyError,
         assistantMessage: result.assistantMessage,
         baseSourceRevision: result.baseSourceRevision,
         currentSource: sourceRef.current,
@@ -207,7 +212,7 @@ export function usePitchAgent(
       return;
     }
     if (event.kind === "cancelled") {
-      setAssistantMessage("Run cancelled.");
+      setAssistantMessage(copyRef.current.runCancelled);
       setErrorCode(undefined);
       notifySessionChanged();
       settleRun("idle");
@@ -370,7 +375,7 @@ export function usePitchAgent(
             input.presentationId
           );
           resetRuntimeState(
-            "The previous conversation was unavailable, so a new one will start."
+            copyRef.current.previousConversationUnavailable
           );
           inputRef.current.onSelectedSessionChange?.();
           notifySessionChanged();
@@ -423,7 +428,7 @@ export function usePitchAgent(
         return false;
       }
       if (isMissingSessionError(caught)) {
-        setNotice("That conversation is no longer available.");
+        setNotice(copyRef.current.conversationUnavailable);
         notifySessionChanged();
         return false;
       }
@@ -502,7 +507,7 @@ export function usePitchAgent(
         );
         inputRef.current.onSelectedSessionChange?.();
         updateSessionId(undefined);
-        setNotice("The previous conversation was unavailable, so this message started a new one.");
+        setNotice(copyRef.current.previousConversationReplaced);
         accepted = await client.runs.start(request, controller.signal);
       }
 
@@ -579,9 +584,9 @@ export function usePitchAgent(
     try {
       const { cancelled } = await client.runs.cancel(runId);
       if (!cancelled) {
-        throw new Error("The agent run is no longer active");
+        throw new Error(copyRef.current.runNoLongerActive);
       }
-      setNotice("Cancellation requested.");
+      setNotice(copyRef.current.cancellationRequested);
     } catch (caught) {
       setError(errorMessage(caught));
     }
@@ -609,12 +614,16 @@ export function usePitchAgent(
         updateActiveRunId(state.activeRun.runId);
         persistBinding(state.activeRun.runId);
         setStatus("detached");
-        setNotice("The agent is still working. Check again shortly or stop the run.");
+        setNotice(copyRef.current.agentStillWorking);
         return;
       }
 
       const reconciliation = await reconcileMotionDoc({
-        assistantMessage: latestAssistantMessage(state.session),
+        applyError: copyRef.current.motionDocApplyError,
+        assistantMessage: latestAssistantMessage(
+          state.session,
+          copyRef.current.agentChangesReady
+        ),
         baseSourceRevision: activeSourceRevisionRef.current,
         currentSource: sourceRef.current,
         motionDoc: state.session.latestMotionDoc,
@@ -631,8 +640,8 @@ export function usePitchAgent(
       persistBinding();
       setStatus(reconciliation.error ? "error" : "idle");
       setNotice(reconciliation.pending
-        ? "The run finished. Review the agent result before replacing your current deck."
-        : "Conversation status updated.");
+        ? copyRef.current.reviewFinishedResult
+        : copyRef.current.conversationStatusUpdated);
     } catch (caught) {
       if (!mountedRef.current) {
         return;
@@ -644,7 +653,7 @@ export function usePitchAgent(
         );
         inputRef.current.onSelectedSessionChange?.();
         resetRuntimeState(
-          "The previous conversation was unavailable, so a new one will start."
+          copyRef.current.previousConversationUnavailable
         );
         return;
       }
@@ -674,7 +683,7 @@ export function usePitchAgent(
     );
     inputRef.current.onSelectedSessionChange?.();
     resetRuntimeState(
-      "New conversation started. The previous conversation was kept."
+      copyRef.current.newConversationStarted
     );
   }, [isCheckingStatus, isDeleting, isHydrating, resetRuntimeState]);
 
@@ -697,9 +706,9 @@ export function usePitchAgent(
           inputRef.current.presentationId
         );
         inputRef.current.onSelectedSessionChange?.();
-        resetRuntimeState("Conversation deleted. The current deck was kept.");
+        resetRuntimeState(copyRef.current.conversationDeletedDeckKept);
       } else {
-        setNotice("Conversation deleted.");
+        setNotice(copyRef.current.conversationDeleted);
       }
       notifySessionChanged();
     } catch (caught) {
@@ -711,10 +720,10 @@ export function usePitchAgent(
           );
           inputRef.current.onSelectedSessionChange?.();
           resetRuntimeState(
-            "The conversation was already unavailable. A new one will start."
+            copyRef.current.conversationAlreadyUnavailable
           );
         } else {
-          setNotice("That conversation was already unavailable.");
+          setNotice(copyRef.current.namedConversationAlreadyUnavailable);
         }
         notifySessionChanged();
       } else {
@@ -746,7 +755,7 @@ export function usePitchAgent(
       setError(undefined);
       setStatus("idle");
     } catch {
-      setError(MOTION_DOC_APPLY_ERROR);
+      setError(copyRef.current.motionDocApplyError);
       setStatus("error");
     }
   }, [pendingMotionDoc]);
@@ -828,12 +837,13 @@ function toPitchMessages(session: AgentSession): PitchAgentMessage[] {
     .map(({ id, role, content }) => ({ id, role, content }));
 }
 
-function latestAssistantMessage(session: AgentSession): string {
+function latestAssistantMessage(session: AgentSession, fallback: string): string {
   return session.messages.findLast(({ role }) => role === "assistant")?.content
-    || "Agent changes are ready.";
+    || fallback;
 }
 
 async function reconcileMotionDoc(input: {
+  applyError: string;
   assistantMessage: string;
   baseSourceRevision?: string;
   currentSource: string;
@@ -865,7 +875,7 @@ async function reconcileMotionDoc(input: {
   } catch {
     return {
       pending,
-      error: MOTION_DOC_APPLY_ERROR
+      error: input.applyError
     };
   }
 }

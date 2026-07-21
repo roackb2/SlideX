@@ -13,6 +13,7 @@ import { WorkspaceTemplateDialog } from "@/features/pitch/ui/workspace/Workspace
 import type { PitchWorkspaceProps } from "@/features/pitch/ui/workspace/PitchWorkspaceTypes";
 import { usePitchI18n } from "@/features/pitch/ui/pitchI18n";
 import { useVisibleRemoteMcpOperations } from "@/features/pitch/ui/hooks/useVisibleRemoteMcpOperations";
+import { PitchAgentFab } from "@/features/pitch/ui/agent/PitchAgentFab";
 
 export function PitchWorkspace({ agent, commands, document, remoteMcp, selection, view }: PitchWorkspaceProps) {
   const { tx } = usePitchI18n();
@@ -52,8 +53,6 @@ export function PitchWorkspace({ agent, commands, document, remoteMcp, selection
         accessMode={view.accessMode}
         actualScale={zoomLevel === "fit" ? fitScale : zoomLevel}
         exportMenuRef={view.exportMenuRef}
-        isAgentEnabled={agent?.isEnabled ?? false}
-        isAgentPanelOpen={agent?.isPanelOpen ?? false}
         isMobileInspectorOpen={view.isMobileInspectorOpen}
         isMobileSidebarOpen={view.isMobileSidebarOpen}
         notice={view.notice}
@@ -67,7 +66,6 @@ export function PitchWorkspace({ agent, commands, document, remoteMcp, selection
           view.setIsMobileSidebarOpen((value) => !value);
           view.setIsMobileInspectorOpen(false);
         }}
-        onToggleAgentPanel={agent?.togglePanel}
         onUndo={commands.undoLastChange}
         projectName={`${document.projectName}${document.isProjectDirty ? ` - ${tx("Edited")}` : ""}`}
         setZoomLevel={setZoomLevel}
@@ -141,14 +139,16 @@ export function PitchWorkspace({ agent, commands, document, remoteMcp, selection
             onPassComment={commands.onPassActiveSlideComment}
             slideNumber={document.activeSlideIndex + 1}
           />
+          {agent?.isEnabled ? (
+            <PitchAgentFab
+              isOpen={agent.isPanelOpen}
+              onToggle={agent.togglePanel}
+              panel={agent.panel}
+            />
+          ) : null}
         </div>
 
         <WorkspaceInspectorPanel commands={commands} document={document} selection={selection} view={view} />
-        {agent?.panel ? (
-          <div className="absolute inset-y-0 right-0 z-[70] shadow-[-20px_0_50px_rgba(0,0,0,0.45)]">
-            {agent.panel}
-          </div>
-        ) : null}
       </div>
 
       <WorkspaceCodeEditorOverlay commands={commands} document={document} sceneCount={sceneCount} selection={selection} view={view} />
