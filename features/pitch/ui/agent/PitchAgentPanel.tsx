@@ -14,6 +14,7 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
   const [showSettings, setShowSettings] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { actions, meta, state } = usePitchAgentContext();
   const { copy } = usePitchAgentI18n();
 
@@ -27,6 +28,12 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
   const visibleCredentialError = credentialValidationError
     ?? runCredentialError
     ?? state.deviceAuth.error;
+  const shouldShowEmptyState = state.messages.length === 0
+    && !state.error
+    && !state.notice
+    && state.status !== "detached"
+    && state.tools.length === 0
+    && !state.pendingMotionDoc;
 
   useEffect(() => {
     if (visibleCredentialError) {
@@ -34,8 +41,7 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
     }
   }, [visibleCredentialError]);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault();
+  function submitDraft() {
     const nextMessage = state.draft.trim();
     if (!nextMessage) {
       return;
@@ -48,6 +54,31 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
     actions.setDraft("");
     setCredentialValidationError(undefined);
     void actions.submit(nextMessage, state.modelCredential);
+
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    submitDraft();
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      if (!meta.isRunning && !meta.isHydrating && !meta.isDeleting && !meta.isCheckingStatus) {
+        submitDraft();
+      }
+    }
+  }
+
+  function handleInput(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    actions.setDraft(event.target.value);
+    const target = event.target;
+    target.style.height = "auto";
+    target.style.height = `${target.scrollHeight}px`;
   }
 
   return (
@@ -118,20 +149,20 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
             error={visibleCredentialError}
             onCredentialChanged={() => setCredentialValidationError(undefined)}
           />
-          <div className="mt-6 flex justify-center gap-4">
+          <div className="mt-6 flex flex-col gap-3">
             <AlertDialog.Root>
               <AlertDialog.Trigger asChild>
                 <button
                   aria-label={copy.newConversation}
-                  className="group relative flex h-14 flex-1 items-center justify-center rounded-[20px] border-b border-black/60 border-t border-white/[0.15] bg-gradient-to-b from-white/[0.1] to-white/[0.02] text-neutral-300 shadow-[0_4px_12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all hover:-translate-y-0.5 hover:text-white hover:shadow-[0_6px_16px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.2)] active:translate-y-0.5 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] disabled:pointer-events-none disabled:opacity-30"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.04] px-4 text-[14px] font-medium text-neutral-200 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 disabled:pointer-events-none disabled:opacity-30"
                   disabled={!meta.canStartNewConversation
                     || meta.isCheckingStatus
                     || meta.isDeleting
                     || meta.isHydrating}
-                  title={copy.newConversation}
                   type="button"
                 >
-                  <RotateCcw aria-hidden="true" size={22} className="transition-transform duration-300 group-hover:-rotate-90" />
+                  <RotateCcw aria-hidden="true" size={16} />
+                  {copy.newConversation}
                 </button>
               </AlertDialog.Trigger>
               <AlertDialog.Portal>
@@ -176,15 +207,15 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
               <AlertDialog.Trigger asChild>
                 <button
                   aria-label={meta.isDeleting ? copy.deletingConversation : copy.deleteConversation}
-                  className="group relative flex h-14 flex-1 items-center justify-center rounded-[20px] border-b border-black/60 border-t border-red-400/[0.2] bg-gradient-to-b from-red-500/[0.15] to-red-500/[0.02] text-red-400 shadow-[0_4px_12px_rgba(239,68,68,0.15),inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all hover:-translate-y-0.5 hover:text-red-300 hover:shadow-[0_6px_16px_rgba(239,68,68,0.25),inset_0_1px_1px_rgba(255,255,255,0.2)] active:translate-y-0.5 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] disabled:pointer-events-none disabled:opacity-30"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-400/[0.2] bg-red-500/[0.05] px-4 text-[14px] font-medium text-red-400 transition-colors hover:bg-red-500/[0.1] hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50 disabled:pointer-events-none disabled:opacity-30"
                   disabled={!meta.canDeleteConversation
                     || meta.isCheckingStatus
                     || meta.isDeleting
                     || meta.isHydrating}
-                  title={meta.isDeleting ? copy.deletingConversation : copy.deleteConversation}
                   type="button"
                 >
-                  <Trash2 aria-hidden="true" size={22} className="transition-transform duration-200 group-hover:scale-110" />
+                  <Trash2 aria-hidden="true" size={16} />
+                  {meta.isDeleting ? copy.deletingConversation : copy.deleteConversation}
                 </button>
               </AlertDialog.Trigger>
               <AlertDialog.Portal>
@@ -233,12 +264,12 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
       <>
       <div
         aria-label={copy.conversationActivity}
-        className="min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-24 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/30"
+        className="scroll-smooth min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/30"
         ref={scrollRef}
         role="region"
         tabIndex={0}
       >
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col">
           {state.error && state.errorCode !== "model_credential_rejected" && (
             <p className="mb-6 rounded-xl border border-red-400/25 bg-red-400/[0.06] p-4 text-sm leading-relaxed text-red-200" role="alert">
               {state.error}
@@ -265,9 +296,9 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
               </button>
             </div>
           )}
-          {state.messages.length === 0 ? (
-            <div className="flex h-full min-h-[60vh] flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in-[0.98] duration-1000">
-              <div className="relative mb-8 flex size-14 items-center justify-center rounded-2xl bg-white shadow-[0_0_40px_rgba(255,255,255,0.15)] ring-1 ring-white/20">
+          {shouldShowEmptyState ? (
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 py-8 text-center animate-in fade-in zoom-in-[0.98] duration-1000">
+              <div className="relative mb-8 flex size-14 items-center justify-center rounded-2xl bg-white shadow-[0_0_40px_rgba(255,255,255,0.15)] ring-1 ring-white/20 animate-in slide-in-from-bottom-4 fade-in duration-700 delay-150">
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white to-white/50 blur-xl opacity-30" />
                 <Bot size={26} className="text-black relative z-10" />
               </div>
@@ -278,10 +309,10 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
                 {copy.emptyConversationDescription}
               </p>
             </div>
-          ) : (
+          ) : state.messages.length > 0 ? (
             <div className="space-y-10 py-6" aria-live="polite">
               {state.messages.map((item) => (
-                <div className="flex gap-5" key={item.id}>
+                <div className="flex gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out" key={item.id}>
                   <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-white/[0.05] border border-white/[0.05]">
                     {item.role === "user" ? <User size={13} className="text-neutral-300" /> : <Bot size={13} className="text-white" />}
                   </div>
@@ -300,10 +331,10 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
                 </div>
               ))}
             </div>
-          )}
+          ) : null}
 
           {state.tools.length > 0 && (
-            <div className="mt-8 ml-12 rounded-2xl border border-white/[0.04] bg-white/[0.03] p-5">
+            <div className="mt-8 ml-12 rounded-2xl border border-white/[0.04] bg-white/[0.03] p-5 animate-in fade-in slide-in-from-bottom-3 duration-500 ease-out">
               <p className="mb-4 flex items-center gap-2 text-[11px] font-semibold tracking-wider text-neutral-400">
                 <Wrench aria-hidden="true" size={12} /> {copy.toolActivity}
               </p>
@@ -352,24 +383,24 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="relative shrink-0 z-20">
-        <div className="pointer-events-none absolute inset-x-0 bottom-full h-24 bg-gradient-to-t from-[#09090b] via-[#09090b]/60 to-transparent" />
         <form className="bg-[#09090b] px-4 pb-6 pt-2" onSubmit={handleSubmit}>
           <div className="mx-auto max-w-3xl">
             <label className="sr-only" htmlFor="slidex-agent-message">{copy.messageAgent}</label>
             <div className="relative flex flex-col overflow-hidden rounded-[24px] border border-white/[0.06] bg-[#141416] shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.02)] transition-all focus-within:border-white/[0.12] focus-within:shadow-[0_8px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)]">
               <textarea
-                className="min-h-[110px] max-h-64 w-full resize-none bg-transparent px-5 pb-14 pt-4 text-[15px] leading-relaxed text-white outline-none placeholder:text-neutral-400"
+                className="min-h-[110px] max-h-40 w-full resize-none overflow-y-auto bg-transparent px-5 pb-14 pt-4 text-[15px] leading-relaxed text-white outline-none placeholder:text-neutral-400"
                 disabled={meta.isRunning
                   || meta.isHydrating
                   || meta.isDeleting
                   || meta.isCheckingStatus}
                 id="slidex-agent-message"
-                onChange={(event) => actions.setDraft(event.target.value)}
+                onChange={handleInput}
+                onKeyDown={handleKeyDown}
                 placeholder={copy.messagePlaceholder}
+                ref={textareaRef}
                 value={state.draft}
               />
-              <div className="absolute bottom-3 inset-x-4 flex items-center justify-between">
-                <p className="px-1 text-[11px] font-medium tracking-wide text-neutral-400">{copy.usesCurrentMotionDoc}</p>
+              <div className="absolute bottom-3 inset-x-4 flex items-center justify-end">
                 {meta.isRunning ? (
                   <button
                     className="flex size-9 items-center justify-center rounded-full bg-white/[0.1] text-white transition-colors hover:bg-white/[0.15] disabled:cursor-wait disabled:opacity-50"

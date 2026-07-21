@@ -39,6 +39,46 @@ final result: passed
 
 ---
 
+# Pitch Agent panel layout QA
+
+- Source visual truth: `/Users/zz41354899/Desktop/截圖 2026-07-21 下午5.59.06.png`
+- Reported broken state: `/var/folders/fp/bv98vn2s2v9dchl651zpsvn00000gn/T/TemporaryItems/NSIRD_screencaptureui_nhgmEL/截圖 2026-07-21 下午5.58.48.png`
+- Implementation screenshot: `/private/tmp/slidex-agent-layout-after-panel.png`
+- Side-by-side comparison: `/private/tmp/slidex-agent-layout-comparison.png`
+- Viewport: 1920 x 768; focused panel region 382 x 574
+- State: signed-in Pitch editor with the Agent panel open and no active messages
+
+## Full-view comparison evidence
+
+The implementation keeps the existing SlideX visual system while matching the reference's structural behavior: the header remains fixed, the conversation area owns the flexible middle region, and the composer remains pinned to the bottom. The reference contains an existing agent message while the captured implementation is in the empty state, so the comparison is limited to panel structure and persistent-control placement.
+
+## Focused region comparison evidence
+
+- Fonts and typography: existing SlideX type sizes, weights, wrapping, and Traditional Chinese copy remain unchanged.
+- Spacing and layout rhythm: the 574px panel has a 364px conversation region and a 120px composer; measured dialog `clientHeight` and `scrollHeight` are both 574px, so persistent controls do not overflow.
+- Colors and visual tokens: no color, border, radius, shadow, icon, or button token was changed for this fix.
+- Image quality and asset fidelity: both designs use library icons and contain no raster content that requires replacement.
+- Copy and content: all existing SlideX Agent labels and i18n copy remain unchanged.
+- Interaction: a status or notice now suppresses the large empty-state hero, leaving the flexible conversation region available instead of stacking two competing empty states. The composer auto-growth is capped at 160px so it cannot consume the panel.
+
+## Comparison history
+
+1. The reported state stacked a new-conversation notice above an empty-state block with a viewport-relative minimum height, producing a P1 layout overflow and clipping content behind the composer.
+2. The empty state now renders only when no notice, error, detached state, tool activity, or pending document exists. Its container uses the remaining flex height instead of a viewport minimum.
+3. Post-fix browser evidence shows the panel, conversation region, and composer fitting without internal dialog overflow at the reported desktop height.
+
+## Findings
+
+No actionable P0, P1, or P2 layout issues remain for the requested scope. The existing visual style is intentionally preserved rather than changed to match the reference's branding.
+
+## Follow-up polish
+
+No additional style changes are recommended for this scoped fix.
+
+final result: passed
+
+---
+
 # Workspace interactive dot field design QA
 
 - Source visual truth: `/var/folders/fp/bv98vn2s2v9dchl651zpsvn00000gn/T/TemporaryItems/NSIRD_screencaptureui_eoIFdc/截圖 2026-07-15 上午11.23.43.png`
