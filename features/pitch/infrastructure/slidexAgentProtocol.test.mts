@@ -48,6 +48,27 @@ test("validates the product payload carried by Heddle's run protocol", () => {
   );
 });
 
+test("preserves reasoning-summary progress as a distinct activity", () => {
+  const event = SlideXAgentRunProtocol.parseEvent({
+    kind: "activity",
+    runId: "run-1",
+    sequence: 1,
+    timestamp,
+    activity: {
+      type: "reasoning.summary",
+      text: "Inspecting the deck structure",
+      done: false
+    }
+  });
+
+  assert.equal(event.kind, "activity");
+  assert.deepEqual(event.activity, {
+    type: "reasoning.summary",
+    text: "Inspecting the deck structure",
+    done: false
+  });
+});
+
 test("validates hydrated conversation history and active-run discovery", () => {
   const state = AgentSessionStateSchema.parse({
     session: createSession(),
