@@ -109,7 +109,7 @@ export function SiteNav() {
       </AnimatePresence>
       <header className="fixed inset-x-0 top-6 z-[110] flex justify-center px-4 pointer-events-none">
         <motion.div
-          className={`pointer-events-auto relative isolate mx-auto flex flex-col overflow-hidden border border-white/[0.12] bg-[#10120f]/[0.94] shadow-[0_22px_64px_rgba(3,6,2,0.56)] backdrop-blur-2xl before:pointer-events-none before:absolute before:inset-x-8 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/35 before:to-transparent after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-[radial-gradient(circle_at_86%_4%,rgba(216,242,125,0.11),transparent_28%),radial-gradient(circle_at_12%_80%,rgba(100,128,65,0.09),transparent_34%)] lg:h-14 lg:w-auto lg:overflow-visible lg:rounded-full ${
+          className={`pointer-events-auto relative isolate mx-auto flex flex-col overflow-hidden border border-white/[0.12] bg-[#10120f]/[0.94] shadow-[0_22px_64px_rgba(3,6,2,0.56)] backdrop-blur-2xl before:pointer-events-none before:absolute before:inset-x-8 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/35 before:to-transparent after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:opacity-0 after:bg-[radial-gradient(circle_at_86%_4%,rgba(216,242,125,0.11),transparent_28%),radial-gradient(circle_at_12%_80%,rgba(100,128,65,0.09),transparent_34%)] lg:after:opacity-100 lg:h-14 lg:w-auto lg:overflow-visible lg:rounded-full ${
             menuOpen
               ? "h-auto max-h-[calc(100dvh-3rem)] w-[calc(100vw-2rem)] max-w-[560px] rounded-[28px]"
               : "h-14 w-[calc(100vw-2rem)] max-w-[260px] rounded-full sm:max-w-[300px] lg:max-w-none"
