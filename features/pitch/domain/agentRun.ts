@@ -3,6 +3,7 @@ import type { ConversationRunProtocolEvent } from "@roackb2/heddle-remote";
 export type AgentActivity = {
   type: string;
   text?: string;
+  done?: boolean;
   tool?: string;
   result?: { ok?: boolean };
 };

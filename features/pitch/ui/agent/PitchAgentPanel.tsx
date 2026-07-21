@@ -263,9 +263,11 @@ export function PitchAgentPanel() {
             {state.messages.map((item) => (
               <div className={item.role === "user" ? "pl-8" : "pr-4"} key={item.id}>
                 <p className="mb-1 text-xs font-medium text-neutral-500">
-                  {item.role === "user" ? "You" : "SlideX Agent"}
+                  {item.role === "user"
+                    ? "You"
+                    : item.role === "reasoning" ? "Thinking" : "SlideX Agent"}
                 </p>
-                <p className={`whitespace-pre-wrap text-sm leading-6 ${item.role === "user" ? "border border-white/[0.12] bg-white/[0.06] p-3 text-white" : "text-neutral-300"}`}>
+                <p className={`whitespace-pre-wrap text-sm leading-6 ${item.role === "user" ? "border border-white/[0.12] bg-white/[0.06] p-3 text-white" : item.role === "reasoning" ? "text-neutral-400" : "text-neutral-300"}`}>
                   {item.content || "Thinking…"}
                 </p>
               </div>

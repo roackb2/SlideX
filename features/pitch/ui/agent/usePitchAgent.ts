@@ -32,11 +32,18 @@ import type {
 type AgentRunConsumer = ConversationRunConsumerService<{ runId: string }>;
 export type AgentStatus = "idle" | "running" | "reconnecting" | "detached" | "error";
 
-export type PitchAgentMessage = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-};
+export type PitchAgentMessage =
+  | {
+    id: string;
+    role: "user" | "assistant";
+    content: string;
+  }
+  | {
+    id: string;
+    role: "reasoning";
+    content: string;
+    done: boolean;
+  };
 
 export type PendingMotionDoc = {
   motionDoc: string;
@@ -164,10 +171,28 @@ export function usePitchAgent(
 
   const setAssistantMessage = useCallback((content: string) => {
     setMessages((current) => {
-      const index = current.findLastIndex(({ role }) => role === "assistant");
+      const index = current.findLastIndex(({ role }) => role !== "user");
       return index < 0
         ? [...current, { id: crypto.randomUUID(), role: "assistant", content }]
-        : current.map((item, itemIndex) => itemIndex === index ? { ...item, content } : item);
+        : current.map((item, itemIndex) => itemIndex === index
+          ? { id: item.id, role: "assistant", content }
+          : item);
+    });
+  }, []);
+
+  const setReasoningSummary = useCallback((content: string, done: boolean) => {
+    setMessages((current) => {
+      const index = current.findLastIndex(({ role }) => role === "reasoning");
+      return index < 0
+        ? [...current, {
+          id: crypto.randomUUID(),
+          role: "reasoning",
+          content,
+          done
+        }]
+        : current.map((item, itemIndex) => itemIndex === index
+          ? { ...item, content, done }
+          : item);
     });
   }, []);
 
@@ -183,7 +208,7 @@ export function usePitchAgent(
       return;
     }
     if (event.kind === "activity") {
-      applyActivity(event, setAssistantMessage, setTools);
+      applyActivity(event, setReasoningSummary, setTools);
       return;
     }
     if (event.kind === "result") {
@@ -218,7 +243,7 @@ export function usePitchAgent(
     setErrorCode(event.error.code);
     notifySessionChanged();
     settleRun("error");
-  }, [notifySessionChanged, setAssistantMessage, settleRun]);
+  }, [notifySessionChanged, setAssistantMessage, setReasoningSummary, settleRun]);
 
   const subscribeWithReconnect = useCallback(async (
     runId: string,
@@ -318,7 +343,7 @@ export function usePitchAgent(
       : undefined;
     updateActiveRunId(state.activeRun.runId);
     persistBinding(state.activeRun.runId, afterSequence);
-    setMessages((current) => ensureAssistantPlaceholder(current));
+    setMessages((current) => ensureReasoningPlaceholder(current));
     setStatus("reconnecting");
     setIsHydrating(false);
     await subscribeWithReconnect(
@@ -510,7 +535,7 @@ export function usePitchAgent(
       activeSourceRevisionRef.current = sourceRevision;
       updateSessionId(accepted.session.id);
       updateActiveRunId(accepted.runId);
-      setMessages(ensureAssistantPlaceholder(toPitchMessages(accepted.session)));
+      setMessages(ensureReasoningPlaceholder(toPitchMessages(accepted.session)));
       persistBinding(accepted.runId, 0);
       notifySessionChanged();
       await subscribeWithReconnect(accepted.runId, controller.signal);
@@ -529,7 +554,7 @@ export function usePitchAgent(
             acceptedRun = true;
             activeSourceRevisionRef.current = undefined;
             updateActiveRunId(state.activeRun.runId);
-            setMessages((current) => ensureAssistantPlaceholder(current));
+            setMessages((current) => ensureReasoningPlaceholder(current));
             persistBinding(state.activeRun.runId, 0);
             setStatus("reconnecting");
             await subscribeWithReconnect(state.activeRun.runId, controller.signal);
@@ -801,12 +826,12 @@ export type PitchAgentRuntime = ReturnType<typeof usePitchAgent>;
 
 function applyActivity(
   event: Extract<AgentRunEvent, { kind: "activity" }>,
-  setAssistantMessage: (content: string) => void,
+  setReasoningSummary: (content: string, done: boolean) => void,
   setTools: Dispatch<SetStateAction<AgentToolActivity[]>>
 ): void {
   const activity = event.activity;
-  if (activity.type === "assistant.stream" && activity.text) {
-    setAssistantMessage(activity.text);
+  if (activity.type === "reasoning.summary" && activity.text) {
+    setReasoningSummary(activity.text, activity.done === true);
   }
   if ((activity.type === "tool.calling" || activity.type === "tool.completed") && activity.tool) {
     const next: AgentToolActivity = {
@@ -870,10 +895,15 @@ async function reconcileMotionDoc(input: {
   }
 }
 
-function ensureAssistantPlaceholder(messages: PitchAgentMessage[]): PitchAgentMessage[] {
-  return messages.at(-1)?.role === "assistant"
+function ensureReasoningPlaceholder(messages: PitchAgentMessage[]): PitchAgentMessage[] {
+  return messages.at(-1)?.role === "reasoning"
     ? messages
-    : [...messages, { id: crypto.randomUUID(), role: "assistant", content: "" }];
+    : [...messages, {
+      id: crypto.randomUUID(),
+      role: "reasoning",
+      content: "",
+      done: false
+    }];
 }
 
 function createRunConsumer(runId: string, afterSequence?: number): AgentRunConsumer {
