@@ -416,6 +416,7 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
               <div className="absolute bottom-3 inset-x-4 flex items-center justify-end">
                 {meta.isRunning ? (
                   <button
+                    aria-label={copy.stop}
                     className="flex size-9 items-center justify-center rounded-full bg-white/[0.1] text-white transition-colors hover:bg-white/[0.15] disabled:cursor-wait disabled:opacity-50"
                     disabled={meta.isCheckingStatus}
                     onClick={() => void actions.cancel()}
@@ -425,6 +426,7 @@ export function PitchAgentPanel({ onClose }: { onClose: () => void }) {
                   </button>
                 ) : (
                   <button
+                    aria-label={copy.send}
                     className="flex size-9 items-center justify-center rounded-full bg-white text-black shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-30"
                     disabled={!state.draft.trim()
                       || meta.isHydrating

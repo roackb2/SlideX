@@ -67,7 +67,7 @@ test("keeps one conversational deck across turns, refresh, detach, and explicit 
   expect(agent.startRequests[1]?.motionDoc).toBe(agent.producedMotionDocs[0]);
 
   await page.reload();
-  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await page.getByRole("button", { name: "Open SlideX Agent" }).click();
   await expect(panel.getByText("Make the opening slide clearer", { exact: true })).toBeVisible();
   await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
   expect(agent.sessionReads).toBeGreaterThan(0);
@@ -77,10 +77,13 @@ test("keeps one conversational deck across turns, refresh, detach, and explicit 
   const resetDialog = page.getByRole("alertdialog", { name: "Start a new conversation?" });
   await expect(resetDialog).toBeVisible();
   await resetDialog.getByRole("button", { name: "Keep conversation" }).click();
+  await panel.getByRole("button", { name: "Agent settings" }).click();
   await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
+  await panel.getByRole("button", { name: "Agent settings" }).click();
   await panel.getByRole("button", { name: "New conversation" }).click();
   await resetDialog.getByRole("button", { name: "New conversation" }).click();
-  await expect(panel.getByText("Edit this deck conversationally", { exact: true })).toBeVisible();
+  await panel.getByRole("button", { name: "Agent settings" }).click();
+  await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeHidden();
   await expect(panel.getByText(
     "New conversation started. The previous conversation was kept.",
     { exact: true }
@@ -94,15 +97,19 @@ test("keeps one conversational deck across turns, refresh, detach, and explicit 
   expect(agent.startRequests[2]?.sessionId).toBeUndefined();
   expect(agent.startRequests[2]?.motionDoc).toBe(agent.producedMotionDocs[1]);
 
+  await panel.getByRole("button", { name: "Agent settings" }).click();
   await panel.getByRole("button", { name: "Delete conversation" }).click();
   const deleteDialog = page.getByRole("alertdialog", {
     name: "Delete this conversation?"
   });
   await expect(deleteDialog).toBeVisible();
   await deleteDialog.getByRole("button", { name: "Keep conversation" }).click();
+  await panel.getByRole("button", { name: "Agent settings" }).click();
   await expect(panel.getByText("Turn 3 complete", { exact: true })).toBeVisible();
+  await panel.getByRole("button", { name: "Agent settings" }).click();
   await panel.getByRole("button", { name: "Delete conversation" }).click();
   await deleteDialog.getByRole("button", { name: "Delete conversation" }).click();
+  await panel.getByRole("button", { name: "Agent settings" }).click();
   await expect(panel.getByText("Conversation deleted. The current deck was kept.", {
     exact: true
   })).toBeVisible();
@@ -116,10 +123,12 @@ test("lists saved conversations and restores one without rolling back the deck",
 
   await submitAgentMessage(page, "First conversation");
   await expect(panel.getByText("Turn 1 complete", { exact: true })).toBeVisible();
+  await panel.getByRole("button", { name: "Agent settings" }).click();
   await panel.getByRole("button", { name: "New conversation" }).click();
   await page.getByRole("alertdialog", { name: "Start a new conversation?" })
     .getByRole("button", { name: "New conversation" })
     .click();
+  await panel.getByRole("button", { name: "Agent settings" }).click();
   await submitAgentMessage(page, "Second conversation");
   await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
 
@@ -184,7 +193,7 @@ test("opens a saved conversation with its presentation", async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(
     `presentation=${otherPresentationId}.*agentSession=other-session`
   ));
-  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await page.getByRole("button", { name: "Open SlideX Agent" }).click();
   await expect(panel.getByText("Seeded request", { exact: true })).toBeVisible();
   await expect(panel.getByText("Seeded response", { exact: true })).toBeVisible();
   await panel.getByRole("button", { name: "Agent settings" }).click();
@@ -206,14 +215,15 @@ test("keeps the agent runtime and current-tab composer state when the panel remo
   await page.getByRole("button", { name: "Send" }).click();
   await expect(panel.getByRole("button", { name: "Stop" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await panel.getByRole("button", { name: "Close SlideX Agent" }).click();
   await expect(panel).toBeHidden();
-  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await page.getByRole("button", { name: "Open SlideX Agent" }).click();
   await expect(panel.getByRole("button", { name: "Stop" })).toBeVisible();
   await panel.getByRole("button", { name: "Agent settings" }).click();
   await expect(panel.getByLabel("OpenAI API key")).toHaveValue(
     "sk-panel-remount-key"
   );
+  await panel.getByRole("button", { name: "Agent settings" }).click();
 
   await panel.getByRole("button", { name: "Stop" }).click();
   await expect(panel.getByText("Run cancelled.", { exact: true })).toBeVisible();
@@ -267,6 +277,7 @@ test("keeps the model key only in current-tab memory", async ({ page }) => {
   const sentinel = "sk-ephemeral-browser-sentinel-key";
 
   await setAgentApiKey(panel, sentinel);
+  await panel.getByRole("button", { name: "Agent settings" }).click();
   await panel.getByRole("button", { name: "Forget key" }).click();
   await expect(panel.getByLabel("OpenAI API key")).toHaveValue("");
   await submitAgentMessage(page, "Use a current-tab key", sentinel);
@@ -285,7 +296,7 @@ test("keeps the model key only in current-tab memory", async ({ page }) => {
   expect(browserStorage).not.toContain(sentinel);
 
   await page.reload();
-  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await page.getByRole("button", { name: "Open SlideX Agent" }).click();
   await panel.getByRole("button", { name: "Agent settings" }).click();
   await expect(panel.getByLabel("OpenAI API key")).toHaveValue("");
   expect(agent.authorizationHeaders.every(
@@ -336,6 +347,7 @@ test("uses a Codex subscription credential only in current-tab memory", async ({
   await expect(panel.getByText("Codex connected", { exact: true })).toBeVisible({
     timeout: 5_000
   });
+  await panel.getByRole("button", { name: "Agent settings" }).click();
 
   await page.getByLabel("Message the SlideX agent").fill("Use my Codex subscription");
   await page.getByRole("button", { name: "Send" }).click();
@@ -354,7 +366,7 @@ test("uses a Codex subscription credential only in current-tab memory", async ({
   expect(browserStorage).not.toContain(agent.codexAccessToken);
 
   await page.reload();
-  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await page.getByRole("button", { name: "Open SlideX Agent" }).click();
   await panel.getByRole("button", { name: "Agent settings" }).click();
   await panel.getByRole("button", { name: "Codex subscription" }).click();
   await expect(panel.getByRole("button", { name: "Connect Codex subscription" })).toBeVisible();
@@ -390,7 +402,7 @@ test("resumes a refreshed active run from its persisted cursor", async ({ page }
   });
 
   await page.reload();
-  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await page.getByRole("button", { name: "Open SlideX Agent" }).click();
 
   await expect(panel.getByText("Continue from retained progress", { exact: true })).toBeVisible();
   await expect(panel.getByText("Turn 2 complete", { exact: true })).toBeVisible();
@@ -407,6 +419,7 @@ test("keeps the selected conversation when content is imported into the same pre
   const importedMotionDoc = agent.startRequests[0]?.motionDoc;
   expect(importedMotionDoc).toBeTruthy();
 
+  await panel.getByRole("button", { name: "Close SlideX Agent" }).click();
   await page.getByRole("button", { name: "Export presentation", exact: true }).click();
   const fileDialog = page.getByRole("dialog", { name: "Presentation file" });
   await fileDialog.getByRole("tab", { name: "Import" }).click();
@@ -417,6 +430,7 @@ test("keeps the selected conversation when content is imported into the same pre
   });
 
   await expect(fileDialog).toBeHidden();
+  await page.getByRole("button", { name: "Open SlideX Agent" }).click();
   await expect(panel.getByText(
     "Create a conversation for the first Untitled deck",
     { exact: true }
@@ -489,7 +503,7 @@ test("clears a stale conversation binding and starts fresh", async ({ page }) =>
   agent.expireSession();
 
   await page.reload();
-  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
+  await page.getByRole("button", { name: "Open SlideX Agent" }).click();
   await expect(panel.getByText(
     "The previous conversation was unavailable, so a new one will start.",
     { exact: true }
@@ -590,8 +604,8 @@ async function openAgentPanel(
   page.on("pageerror", (error) => consoleErrors.push(error.message));
   await page.route("**/api/agent/**", (route) => agent.handle(route));
   await page.goto(`/workspace/pitch/?presentation=${workspacePresentationId}`);
-  await page.getByRole("button", { name: "Toggle SlideX agent" }).click();
-  const panel = page.getByRole("complementary", { name: "SlideX agent" });
+  await page.getByRole("button", { name: "Open SlideX Agent" }).click();
+  const panel = page.getByRole("dialog", { name: "SlideX Agent" });
   await expect(panel).toBeVisible();
   return { consoleErrors, panel };
 }
@@ -601,7 +615,7 @@ async function submitAgentMessage(
   message: string,
   modelKey = defaultModelKey
 ): Promise<void> {
-  const panel = page.getByRole("complementary", { name: "SlideX agent" });
+  const panel = page.getByRole("dialog", { name: "SlideX Agent" });
   await setAgentApiKey(panel, modelKey);
   const input = page.getByLabel("Message the SlideX agent");
   await input.fill(message);
@@ -616,6 +630,7 @@ async function setAgentApiKey(panel: Locator, modelKey: string): Promise<void> {
     await panel.getByRole("button", { name: "Agent settings" }).click();
   }
   await input.fill(modelKey);
+  await panel.getByRole("button", { name: "Agent settings" }).click();
 }
 
 type StartRequest = {
