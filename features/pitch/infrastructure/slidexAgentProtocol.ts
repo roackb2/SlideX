@@ -46,7 +46,9 @@ export const AttachAgentSessionResultSchema: z.ZodType<AttachAgentSessionResult>
 
 const AgentActivitySchema: z.ZodType<AgentActivity> = z.object({
   type: z.string().min(1),
+  messageId: z.string().min(1).optional(),
   text: z.string().optional(),
+  done: z.boolean().optional(),
   tool: z.string().optional(),
   result: z.object({
     ok: z.boolean().optional()

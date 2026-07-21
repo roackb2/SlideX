@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-import { AlertTriangle, Bot, Check, History, RotateCcw, Send, Settings2, Square, Trash2, Wrench, X } from "lucide-react";
+import { AlertTriangle, Bot, Check, History, RotateCcw, Send, Settings2, Sparkles, Square, Trash2, Wrench, X } from "lucide-react";
+import Markdown from "react-markdown";
 import { usePitchAgentContext } from "@/features/pitch/ui/agent/PitchAgentProvider";
 import { PitchAgentCredentialSettings } from "@/features/pitch/ui/agent/PitchAgentCredentialSettings";
 import { PitchAgentSessionList } from "@/features/pitch/ui/agent/PitchAgentSessionList";
@@ -262,12 +263,20 @@ export function PitchAgentPanel() {
           <div className="space-y-4" aria-live="polite">
             {state.messages.map((item) => (
               <div className={item.role === "user" ? "pl-8" : "pr-4"} key={item.id}>
-                <p className="mb-1 text-xs font-medium text-neutral-500">
-                  {item.role === "user" ? "You" : "SlideX Agent"}
-                </p>
-                <p className={`whitespace-pre-wrap text-sm leading-6 ${item.role === "user" ? "border border-white/[0.12] bg-white/[0.06] p-3 text-white" : "text-neutral-300"}`}>
-                  {item.content || "Thinking…"}
-                </p>
+                {item.role === "reasoning" ? (
+                  <ReasoningSummary content={item.content} done={item.done} />
+                ) : (
+                  <>
+                    <p className="mb-1 text-xs font-medium text-neutral-500">
+                      {item.role === "user"
+                        ? "You"
+                        : item.role === "commentary" ? "Working" : "SlideX Agent"}
+                    </p>
+                    <p className={`whitespace-pre-wrap text-pretty text-sm leading-6 ${item.role === "user" ? "border border-white/[0.12] bg-white/[0.06] p-3 text-white" : "text-neutral-300"}`}>
+                      {item.content || "Working…"}
+                    </p>
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -360,6 +369,44 @@ export function PitchAgentPanel() {
       </>
       )}
     </aside>
+  );
+}
+
+function ReasoningSummary({
+  content,
+  done
+}: {
+  content: string;
+  done: boolean;
+}) {
+  return (
+    <div className="rounded-md border border-white/[0.08] bg-white/[0.025] px-3 py-2.5">
+      <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-neutral-500">
+        <Sparkles aria-hidden="true" size={12} />
+        Thinking
+        {!done && <span aria-hidden="true" className="size-1.5 rounded-full bg-neutral-500" />}
+      </p>
+      <Markdown
+        allowedElements={["p", "strong", "em", "code"]}
+        components={{
+          p: ({ children }) => (
+            <p className="text-pretty text-sm leading-6 text-neutral-400">{children}</p>
+          ),
+          strong: ({ children }) => (
+            <strong className="font-medium text-neutral-300">{children}</strong>
+          ),
+          em: ({ children }) => <em className="text-neutral-300">{children}</em>,
+          code: ({ children }) => (
+            <code className="rounded bg-white/[0.06] px-1 py-0.5 text-xs text-neutral-300">
+              {children}
+            </code>
+          )
+        }}
+        unwrapDisallowed
+      >
+        {content || "Working through the request…"}
+      </Markdown>
+    </div>
   );
 }
 
