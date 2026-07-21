@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
-import { CheckCircle2, ExternalLink, KeyRound, LogIn } from "lucide-react";
+import { Check, CheckCircle2, Copy, ExternalLink, KeyRound, LogIn } from "lucide-react";
 import { usePitchAgentContext } from "@/features/pitch/ui/agent/PitchAgentProvider";
 
 type CredentialMethod = "api-key" | "codex";
@@ -18,6 +18,8 @@ export function PitchAgentCredentialSettings({
   const [method, setMethod] = useState<CredentialMethod>(() => (
     state.modelCredential?.type === "oauth-access-token" ? "codex" : "api-key"
   ));
+  const [copiedDeviceCode, setCopiedDeviceCode] = useState<string>();
+  const [copyFailedDeviceCode, setCopyFailedDeviceCode] = useState<string>();
   const keyInputRef = useRef<HTMLInputElement>(null);
   const apiKey = state.modelCredential?.type === "api-key"
     ? state.modelCredential.apiKey
@@ -26,6 +28,14 @@ export function PitchAgentCredentialSettings({
     ? state.modelCredential
     : undefined;
   const visibleError = error ?? state.deviceAuth.error;
+  const deviceAuthChallenge = state.deviceAuth.challenge;
+  const activeDeviceCode = deviceAuthChallenge?.userCode;
+  const isDeviceCodeCopied = Boolean(
+    activeDeviceCode && copiedDeviceCode === activeDeviceCode
+  );
+  const didDeviceCodeCopyFail = Boolean(
+    activeDeviceCode && copyFailedDeviceCode === activeDeviceCode
+  );
 
   useEffect(() => {
     if (method === "api-key" && visibleError) {
@@ -49,6 +59,20 @@ export function PitchAgentCredentialSettings({
     onCredentialChanged();
   }
 
+  async function copyDeviceCode(userCode: string): Promise<void> {
+    try {
+      if (!navigator.clipboard) {
+        throw new Error("Clipboard unavailable");
+      }
+      await navigator.clipboard.writeText(userCode);
+      setCopiedDeviceCode(userCode);
+      setCopyFailedDeviceCode(undefined);
+    } catch {
+      setCopiedDeviceCode(undefined);
+      setCopyFailedDeviceCode(userCode);
+    }
+  }
+
   return (
     <section aria-labelledby="slidex-agent-model-access">
       <h3
@@ -59,12 +83,12 @@ export function PitchAgentCredentialSettings({
       </h3>
       <div
         aria-label="OpenAI authentication method"
-        className="mt-2 grid grid-cols-2 rounded-md border border-white/[0.12] p-1"
+        className="mt-2 grid grid-cols-2 gap-1 rounded-lg border border-white/[0.1] bg-black/30 p-1"
         role="group"
       >
         <button
           aria-pressed={method === "api-key"}
-          className="h-10 rounded text-xs font-medium text-neutral-400 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 data-[selected=true]:bg-white data-[selected=true]:text-black data-[selected=true]:hover:bg-white"
+          className="h-9 whitespace-nowrap rounded-md border border-transparent px-2 text-xs font-medium text-neutral-500 transition-colors duration-150 hover:bg-white/[0.06] hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 data-[selected=true]:border-white/[0.08] data-[selected=true]:bg-white/[0.12] data-[selected=true]:text-white data-[selected=true]:shadow-sm"
           data-selected={method === "api-key"}
           onClick={() => selectMethod("api-key")}
           type="button"
@@ -73,7 +97,7 @@ export function PitchAgentCredentialSettings({
         </button>
         <button
           aria-pressed={method === "codex"}
-          className="h-10 rounded text-xs font-medium text-neutral-400 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 data-[selected=true]:bg-white data-[selected=true]:text-black data-[selected=true]:hover:bg-white"
+          className="h-9 whitespace-nowrap rounded-md border border-transparent px-2 text-xs font-medium text-neutral-500 transition-colors duration-150 hover:bg-white/[0.06] hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 data-[selected=true]:border-white/[0.08] data-[selected=true]:bg-white/[0.12] data-[selected=true]:text-white data-[selected=true]:shadow-sm"
           data-selected={method === "codex"}
           onClick={() => selectMethod("codex")}
           type="button"
@@ -128,7 +152,7 @@ export function PitchAgentCredentialSettings({
       ) : (
         <div className="mt-3" aria-live="polite">
           {runtimeCredential ? (
-            <div className="border border-emerald-400/25 bg-emerald-400/[0.06] p-3">
+            <div className="rounded-md border border-emerald-400/25 bg-emerald-400/[0.06] p-3">
               <p className="flex items-center gap-2 text-sm font-medium text-emerald-200">
                 <CheckCircle2 aria-hidden="true" size={16} /> Codex connected
               </p>
@@ -136,20 +160,40 @@ export function PitchAgentCredentialSettings({
                 Available until <time className="tabular-nums" dateTime={new Date(runtimeCredential.expiresAt).toISOString()}>{dayjs(runtimeCredential.expiresAt).format("h:mm A")}</time> in this tab.
               </p>
             </div>
-          ) : state.deviceAuth.challenge ? (
-            <div className="border border-white/[0.12] bg-white/[0.04] p-3">
+          ) : deviceAuthChallenge ? (
+            <div className="rounded-md border border-white/[0.12] bg-white/[0.04] p-3">
               <p className="text-pretty text-xs leading-5 text-neutral-300">
-                Open the official OpenAI page and enter this one-time code:
+                Copy this one-time code, then enter it on the official OpenAI page:
               </p>
-              <code
-                aria-label="OpenAI device code"
-                className="mt-2 block rounded bg-black px-3 py-2 text-center font-mono text-base font-semibold text-white tabular-nums"
+              <button
+                aria-label={`Copy OpenAI device code ${deviceAuthChallenge.userCode}`}
+                className="mt-2 flex w-full items-center gap-1.5 rounded-md border border-white/[0.1] bg-black p-1.5 text-left hover:border-white/[0.2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                onClick={() => void copyDeviceCode(deviceAuthChallenge.userCode)}
+                type="button"
               >
-                {state.deviceAuth.challenge.userCode}
-              </code>
+                <code
+                  className="min-w-0 flex-1 select-all px-2 text-center font-mono text-base font-semibold text-white tabular-nums"
+                >
+                  {deviceAuthChallenge.userCode}
+                </code>
+                <span
+                  className="flex h-8 shrink-0 items-center gap-1 rounded bg-white/[0.08] px-2 text-[11px] font-medium text-neutral-300 data-[copied=true]:bg-emerald-400/[0.12] data-[copied=true]:text-emerald-200"
+                  data-copied={isDeviceCodeCopied}
+                >
+                  {isDeviceCodeCopied
+                    ? <Check aria-hidden="true" size={13} />
+                    : <Copy aria-hidden="true" size={13} />}
+                  {isDeviceCodeCopied ? "Copied" : "Copy"}
+                </span>
+              </button>
+              {didDeviceCodeCopyFail && (
+                <p className="mt-2 text-pretty text-xs leading-5 text-red-300" role="alert">
+                  Copy failed. Select the code and copy it manually.
+                </p>
+              )}
               <a
                 className="mt-3 flex h-11 items-center justify-center gap-2 rounded-md bg-white px-3 text-sm font-semibold text-black hover:bg-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-                href={state.deviceAuth.challenge.verificationUrl}
+                href={deviceAuthChallenge.verificationUrl}
                 rel="noreferrer"
                 target="_blank"
               >

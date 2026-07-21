@@ -311,14 +311,24 @@ test("puts a rejected model credential next to its control and allows retry", as
   expect(consoleErrors).toEqual([]);
 });
 
-test("uses a Codex subscription credential only in current-tab memory", async ({ page }) => {
+test("uses a Codex subscription credential only in current-tab memory", async ({ context, page }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"], {
+    origin: "http://127.0.0.1:3100"
+  });
   const agent = new DeterministicAgentApi();
   const { consoleErrors, panel } = await openAgentPanel(page, agent);
 
   await panel.getByRole("button", { name: "Agent settings" }).click();
   await panel.getByRole("button", { name: "Codex subscription" }).click();
   await panel.getByRole("button", { name: "Connect Codex subscription" }).click();
-  await expect(panel.getByLabel("OpenAI device code")).toHaveText("ABCD-EFGH");
+  const copyCodeButton = panel.getByRole("button", {
+    name: /^Copy OpenAI device code/
+  });
+  await expect(copyCodeButton).toContainText("ABCD-EFGH");
+  await copyCodeButton.click();
+  await expect(copyCodeButton).toContainText("Copied");
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText()))
+    .toBe("ABCD-EFGH");
   await expect(panel.getByRole("link", { name: "Open OpenAI sign-in" })).toHaveAttribute(
     "href",
     "https://auth.openai.com/codex/device"
